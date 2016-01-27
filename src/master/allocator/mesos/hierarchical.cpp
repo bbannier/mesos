@@ -863,19 +863,23 @@ void HierarchicalAllocatorProcess::recoverResources(
   // MesosAllocatorProcess::deactivateFramework, in which case we will
   // have already recovered all of its resources).
   if (frameworks.contains(frameworkId)) {
-    const string& role = frameworks[frameworkId].role;
+    foreach(const Resource& resource, resources) {
+      const string& role = resource.active_role();
 
-    CHECK(frameworkSorters.contains(role));
+      CHECK(frameworkSorters.contains(role));
 
-    if (frameworkSorters[role]->contains(frameworkId.value())) {
-      frameworkSorters[role]->unallocated(
-          frameworkId.value(), slaveId, resources);
-      frameworkSorters[role]->remove(slaveId, resources);
-      roleSorter->unallocated(role, slaveId, resources);
+      if (frameworkSorters[role]->contains(frameworkId.value())) {
+        frameworkSorters[role]->unallocated(
+            frameworkId.value(), slaveId, Resources(resource));
+        frameworkSorters[role]->remove(slaveId, Resources(resource));
+        roleSorter->unallocated(role, slaveId, Resources(resource));
 
-      if (quotas.contains(role)) {
-        // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-        quotaRoleSorter->unallocated(role, slaveId, resources.nonRevocable());
+        if (quotas.contains(role)) {
+          // See comment at `quotaRoleSorter` declaration regarding
+          // non-revocable.
+          quotaRoleSorter->unallocated(
+              role, slaveId, Resources(resource).nonRevocable());
+        }
       }
     }
   }
