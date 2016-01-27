@@ -1247,6 +1247,12 @@ void HierarchicalAllocatorProcess::allocate(
                 << " to framework " << frameworkId
                 << " as part of its role quota";
 
+        // To be able to recover resources we need to keep track of the role
+        // a resource was offered for.
+        foreach(Resource& resource, resources) {
+          resource.set_active_role(role);
+        }
+
         // NOTE: We perform "coarse-grained" allocation for quota'ed
         // resources, which may lead to overcommitment of resources beyond
         // quota. This is fine since quota currently represents a guarantee.
@@ -1376,6 +1382,12 @@ void HierarchicalAllocatorProcess::allocate(
 
         VLOG(2) << "Allocating " << resources << " on slave " << slaveId
                 << " to framework " << frameworkId;
+
+        // To be able to recover resources we need to keep track of the role
+        // a resource was offered for.
+        foreach(Resource& resource, resources) {
+          resource.set_active_role(role);
+        }
 
         // NOTE: We perform "coarse-grained" allocation, meaning that we always
         // allocate the entire remaining slave resources to a single framework.
