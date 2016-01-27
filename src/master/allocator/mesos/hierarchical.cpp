@@ -260,7 +260,8 @@ void HierarchicalAllocatorProcess::addFramework(
     }
   }
 
-  frameworks[frameworkId].suppressed = false;
+  // TODO(nfnt): Adapt to multi-roles.
+  frameworks[frameworkId].suppressed[role] = false;
 
   LOG(INFO) << "Added framework " << frameworkId;
 
@@ -370,7 +371,7 @@ void HierarchicalAllocatorProcess::deactivateFramework(
 
   // Clear the suppressed flag to make sure the framework can be offered
   // resources immediately after getting activated.
-  frameworks[frameworkId].suppressed = false;
+  frameworks[frameworkId].suppressed[role] = false;
 
   LOG(INFO) << "Deactivated framework " << frameworkId;
 }
@@ -961,24 +962,40 @@ void HierarchicalAllocatorProcess::recoverResources(
 
 
 void HierarchicalAllocatorProcess::suppressOffers(
-    const FrameworkID& frameworkId)
+    const FrameworkID& frameworkId,
+    const Option<string>& role)
 {
   CHECK(initialized);
 
-  frameworks[frameworkId].suppressed = true;
+  if (role.isSome()) {
+    frameworks[frameworkId].suppressed[role.get()] = true;
+  } else {
+    foreachkey(const string& r, frameworks[frameworkId].suppressed) {
+      frameworks[frameworkId].suppressed[r] = true;
+    }
+  }
 
-  LOG(INFO) << "Suppressed offers for framework " << frameworkId;
+  LOG(INFO) << "Suppressed offers for framework " << frameworkId
+            << " with role " << role.get();
 }
 
 
 void HierarchicalAllocatorProcess::reviveOffers(
-    const FrameworkID& frameworkId)
+    const FrameworkID& frameworkId,
+    const Option<string>& role)
 {
   CHECK(initialized);
 
   frameworks[frameworkId].offerFilters.clear();
   frameworks[frameworkId].inverseOfferFilters.clear();
-  frameworks[frameworkId].suppressed = false;
+
+  if (role.isSome()) {
+    frameworks[frameworkId].suppressed[role.get()] = false;
+  } else {
+    foreachkey(const string& r, frameworks[frameworkId].suppressed) {
+      frameworks[frameworkId].suppressed[r] = false;
+    }
+  }
 
   // We delete each actual `OfferFilter` when
   // `HierarchicalAllocatorProcess::expire` gets invoked. If we delete the
@@ -987,7 +1004,8 @@ void HierarchicalAllocatorProcess::reviveOffers(
   // would expire that filter too soon. Note that this only works
   // right now because ALL Filter types "expire".
 
-  LOG(INFO) << "Removed offer filters for framework " << frameworkId;
+  LOG(INFO) << "Removed offer filters for framework " << frameworkId
+            << " with role " << role.get();
 
   allocate();
 }
@@ -1207,7 +1225,7 @@ void HierarchicalAllocatorProcess::allocate(
 
         // If the framework has suppressed offers, ignore. The Unallocated
         // part of the quota will not be allocated to other roles.
-        if (frameworks[frameworkId].suppressed) {
+        if (frameworks[frameworkId].suppressed[role]) {
           continue;
         }
 
@@ -1330,7 +1348,7 @@ void HierarchicalAllocatorProcess::allocate(
         frameworkId.set_value(frameworkId_);
 
         // If the framework has suppressed offers, ignore.
-        if (frameworks[frameworkId].suppressed) {
+        if (frameworks[frameworkId].suppressed[role]) {
           continue;
         }
 

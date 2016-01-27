@@ -332,14 +332,16 @@ public:
    * Informs the allocator to stop sending offers to the framework.
    */
   virtual void suppressOffers(
-      const FrameworkID& frameworkId) = 0;
+      const FrameworkID& frameworkId,
+      const Option<std::string>& role = None()) = 0;
 
   /**
    * Revives offers for a framework. This is invoked by a framework when
    * it wishes to receive filtered resources or offers immediately.
    */
   virtual void reviveOffers(
-      const FrameworkID& frameworkId) = 0;
+      const FrameworkID& frameworkId,
+      const Option<std::string>& role = None()) = 0;
 
   /**
    * Informs the allocator to set quota for the given role.

@@ -175,10 +175,12 @@ public:
       const Option<Filters>& filters);
 
   void suppressOffers(
-      const FrameworkID& frameworkId);
+      const FrameworkID& frameworkId,
+      const Option<std::string>& role = None());
 
   void reviveOffers(
-      const FrameworkID& frameworkId);
+      const FrameworkID& frameworkId,
+      const Option<std::string>& role = None());
 
   void setQuota(
       const std::string& role,
@@ -282,8 +284,8 @@ protected:
   {
     std::string role;
 
-    // Whether the framework suppresses offers.
-    bool suppressed;
+    // Whether the framework suppresses offers for certain roles.
+    hashmap<std::string, bool> suppressed;
 
     // Whether the framework desires revocable resources.
     bool revocable;
