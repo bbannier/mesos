@@ -129,6 +129,28 @@ TEST(ResourcesTest, ParsingWithRoles)
 }
 
 
+TEST(ResourcesTest, ActiveRoleArithmetic) {
+  Resource resource;
+  resource.set_name("resource");
+  resource.set_type(Value::SCALAR);
+  resource.mutable_scalar()->set_value(1);
+
+  {
+    Resource resourceA = resource;
+    resourceA.set_active_role("roleA");
+    Resource resourceB = resource;
+    resourceA.set_active_role("roleB");
+
+    // Active role does not take part in equality comparisons.
+    EXPECT_EQ(Resources(resourceA), Resources(resourceB));
+
+    // Active role is not dropped in resource addition.
+    EXPECT_NE(Resources(resourceA) + Resources(resourceB),
+              Resources::parse("resource(*):2").get());
+  }
+}
+
+
 TEST(ResourcesTest, ParseError)
 {
   // Missing colon.
@@ -1535,7 +1557,6 @@ TEST(ResourcesTest, DISABLED_Precision)
 
   EXPECT_EQ(r1, r2);
 }
-
 
 // Helper for creating a reserved resource.
 static Resource createReservedResource(

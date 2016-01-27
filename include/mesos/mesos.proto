@@ -562,6 +562,10 @@ message Resource {
   // be offered to frameworks that belong to this role.
   optional string role = 6 [default = "*"];
 
+  // Describes the role this resource was offered for. While e.g., frameworks
+  // might inspect this value, it should only be set by the allocator.
+  optional string active_role = 10 [default ="*"];
+
   message ReservationInfo {
     // Describes a dynamic reservation. A dynamic reservation is
     // acquired by an operator via the '/reserve' HTTP endpoint or by
