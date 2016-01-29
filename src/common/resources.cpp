@@ -172,8 +172,7 @@ bool operator==(const Resource& left, const Resource& right)
 {
   if (left.name() != right.name() ||
       left.type() != right.type() ||
-      left.role() != right.role() ||
-      left.active_role() != right.active_role()) {
+      left.role() != right.role()) {
     return false;
   }
 
@@ -227,7 +226,8 @@ static bool addable(const Resource& left, const Resource& right)
 {
   if (left.name() != right.name() ||
       left.type() != right.type() ||
-      left.role() != right.role()) {
+      left.role() != right.role() ||
+      left.active_role() != right.active_role()) {
     return false;
   }
 
@@ -284,7 +284,8 @@ static bool subtractable(const Resource& left, const Resource& right)
 {
   if (left.name() != right.name() ||
       left.type() != right.type() ||
-      left.role() != right.role()) {
+      left.role() != right.role() ||
+      left.active_role() != right.active_role()) {
     return false;
   }
 

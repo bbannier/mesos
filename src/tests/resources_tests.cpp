@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iterator>
 #include <set>
 #include <sstream>
 #include <string>
@@ -31,6 +32,7 @@
 
 using namespace mesos::internal::master;
 
+using std::distance;
 using std::map;
 using std::ostringstream;
 using std::pair;
@@ -130,24 +132,38 @@ TEST(ResourcesTest, ParsingWithRoles)
 
 
 TEST(ResourcesTest, ActiveRoleArithmetic) {
-  Resource resource;
-  resource.set_name("resource");
-  resource.set_type(Value::SCALAR);
-  resource.mutable_scalar()->set_value(1);
+  Resource resourceTemplate;
+  resourceTemplate.set_name("resource");
+  resourceTemplate.set_type(Value::SCALAR);
+  resourceTemplate.mutable_scalar()->set_value(1);
 
-  {
-    Resource resourceA = resource;
-    resourceA.set_active_role("roleA");
-    Resource resourceB = resource;
-    resourceA.set_active_role("roleB");
+  Resource resourceA = resourceTemplate;
+  resourceA.set_active_role("roleA");
 
-    // Active role does not take part in equality comparisons.
-    EXPECT_EQ(Resources(resourceA), Resources(resourceB));
+  Resource resourceB = resourceTemplate;
+  resourceB.set_active_role("roleB");
 
-    // Active role is not dropped in resource addition.
-    EXPECT_NE(Resources(resourceA) + Resources(resourceB),
-              Resources::parse("resource(*):2").get());
+  // `Resource`s with different `active_role`s should not compare
+  // equal.
+  EXPECT_NE(Resources(resourceA), Resources(resourceB));
+
+  // `Resource`s with different roles should not be combined.
+  const auto sum = Resources(resourceA) + Resources(resourceB);
+  EXPECT_EQ(2, distance(sum.begin(), sum.end()));
+
+  // Active role is not dropped in resource addition.
+  EXPECT_NE(Resources(resourceA) + Resources(resourceB),
+      Resources::parse("resource(*):2").get());
+
+  // The active roles of the accumulated `Resource`s can be recovered
+  // from a `Resources`.
+  set<string> active_roles;
+  foreach (const Resource& resource,
+      Resources(resourceA) + Resources(resourceB)) {
+    active_roles.insert(resource.active_role());
   }
+  const set<string> expected{"roleA", "roleB"};
+  EXPECT_EQ(expected, active_roles);
 }
 
 
