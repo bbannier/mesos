@@ -967,9 +967,17 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
   EXPECT_TRUE(allocation.get().resources.contains(slave.id()));
   EXPECT_EQ(slave.resources(),
             sumIgnoringActiveRole(allocation.get().resources));
+  foreach (const Resource& resource,
+           Resources::sum(allocation.get().resources)) {
+    EXPECT_EQ(framework1.role(), resource.active_role());
+  }
 
   // Recover the reserved resources, expect them to be re-offered.
-  Resources reserved = Resources(slave.resources()).reserved("role1");
+  Resources reserved;
+  foreach (Resource resource, Resources(slave.resources()).reserved("role1")) {
+    resource.set_active_role("role1");
+    reserved += resource;
+  }
 
   allocator->recoverResources(
       allocation.get().frameworkId,
@@ -984,10 +992,14 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
   EXPECT_EQ(framework1.id(), allocation.get().frameworkId);
   EXPECT_EQ(1u, allocation.get().resources.size());
   EXPECT_TRUE(allocation.get().resources.contains(slave.id()));
-  EXPECT_EQ(reserved, sumIgnoringActiveRole(allocation.get().resources));
+  EXPECT_EQ(reserved, Resources::sum(allocation.get().resources));
 
   // Recover the unreserved resources, expect them to be re-offered.
-  Resources unreserved = Resources(slave.resources()).unreserved();
+  Resources unreserved;
+  foreach (Resource resource, Resources(slave.resources()).unreserved()) {
+    resource.set_active_role("role1");
+    unreserved += resource;
+  }
 
   allocator->recoverResources(
       allocation.get().frameworkId,
@@ -1002,7 +1014,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
   EXPECT_EQ(framework1.id(), allocation.get().frameworkId);
   EXPECT_EQ(1u, allocation.get().resources.size());
   EXPECT_TRUE(allocation.get().resources.contains(slave.id()));
-  EXPECT_EQ(unreserved, sumIgnoringActiveRole(allocation.get().resources));
+  EXPECT_EQ(unreserved, Resources::sum(allocation.get().resources));
 }
 
 

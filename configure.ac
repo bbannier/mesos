@@ -43,6 +43,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 # if we want to do tests with libtool during configuration).
 LT_PREREQ([2.2])
 LT_INIT
+DOLT
 LT_LANG([C++])
 LT_OUTPUT
 
