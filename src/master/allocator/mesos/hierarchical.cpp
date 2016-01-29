@@ -1249,24 +1249,26 @@ void HierarchicalAllocatorProcess::allocate(
 
         // To be able to recover resources we need to keep track of the role
         // a resource was offered for.
-        foreach(Resource& resource, resources) {
+        Resources resources_;
+        foreach(Resource resource, resources) {
           resource.set_active_role(role);
+          resources_ += resource;
         }
 
         // NOTE: We perform "coarse-grained" allocation for quota'ed
         // resources, which may lead to overcommitment of resources beyond
         // quota. This is fine since quota currently represents a guarantee.
-        offerable[frameworkId][slaveId] += resources;
-        slaves[slaveId].allocated += resources;
+        offerable[frameworkId][slaveId] += resources_;
+        slaves[slaveId].allocated += resources_;
 
         // Resources allocated as part of the quota count towards the
         // role's and the framework's fair share.
         //
         // NOTE: Revocable resources have already been excluded.
-        frameworkSorters[role]->add(slaveId, resources);
-        frameworkSorters[role]->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
-        quotaRoleSorter->allocated(role, slaveId, resources);
+        frameworkSorters[role]->add(slaveId, resources_);
+        frameworkSorters[role]->allocated(frameworkId_, slaveId, resources_);
+        roleSorter->allocated(role, slaveId, resources_);
+        quotaRoleSorter->allocated(role, slaveId, resources_);
       }
     }
   }
@@ -1386,8 +1388,10 @@ void HierarchicalAllocatorProcess::allocate(
 
         // To be able to recover resources we need to keep track of the role
         // a resource was offered for.
-        foreach(Resource& resource, resources) {
+        Resources resources_;
+        foreach(Resource resource, resources) {
           resource.set_active_role(role);
+          resources_ += resource;
         }
 
         // NOTE: We perform "coarse-grained" allocation, meaning that we always
@@ -1395,18 +1399,18 @@ void HierarchicalAllocatorProcess::allocate(
         //
         // NOTE: We may have already allocated some resources on the current
         // agent as part of quota.
-        offerable[frameworkId][slaveId] += resources;
+        offerable[frameworkId][slaveId] += resources_;
         allocatedStage2 += scalarResources;
-        slaves[slaveId].allocated += resources;
+        slaves[slaveId].allocated += resources_;
 
-        frameworkSorters[role]->add(slaveId, resources);
-        frameworkSorters[role]->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
+        frameworkSorters[role]->add(slaveId, resources_);
+        frameworkSorters[role]->allocated(frameworkId_, slaveId, resources_);
+        roleSorter->allocated(role, slaveId, resources_);
 
         if (quotas.contains(role)) {
           // See comment at `quotaRoleSorter` declaration regarding
           // non-revocable.
-          quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
+          quotaRoleSorter->allocated(role, slaveId, resources_.nonRevocable());
         }
       }
     }
