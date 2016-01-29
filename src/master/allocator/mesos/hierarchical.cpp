@@ -1244,8 +1244,8 @@ void HierarchicalAllocatorProcess::allocate(
         }
 
         VLOG(2) << "Allocating " << resources << " on slave " << slaveId
-                << " to framework " << frameworkId
-                << " as part of its role quota";
+                << " to framework '" << frameworkId << "' in role '" << role
+                << "' as part of its role quota";
 
         // To be able to recover resources we need to keep track of the role
         // a resource was offered for.
@@ -1381,7 +1381,8 @@ void HierarchicalAllocatorProcess::allocate(
         }
 
         VLOG(2) << "Allocating " << resources << " on slave " << slaveId
-                << " to framework " << frameworkId;
+                << " to framework '" << frameworkId << "' in role '" << role
+                << "'";
 
         // To be able to recover resources we need to keep track of the role
         // a resource was offered for.
