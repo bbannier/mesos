@@ -170,7 +170,7 @@ TEST(ResourcesTest, ActiveRoleArithmetic) {
 
   // A Resource with an active_role cannot contain a Resource with no active
   // role.
-  EXPECT_TRUE(Resources(resourceTemplate).contains(resourceA));
+  EXPECT_FALSE(Resources(resourceA).contains(resourceTemplate));
 }
 
 
