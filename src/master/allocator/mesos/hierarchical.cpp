@@ -1431,6 +1431,13 @@ void HierarchicalAllocatorProcess::allocate(
         allocatedStage2 += scalarResources;
         slaves[slaveId].allocated += resources_;
 
+
+        // Update the active_role of the used resources in the totals.
+        slaves[slaveId].total += resources_;
+        slaves[slaveId].total -= resources;
+        roleSorter->update(slaveId,
+                           slaves[slaveId].total - resources + resources_);
+
         frameworkSorters[role]->add(slaveId, resources_);
         frameworkSorters[role]->allocated(frameworkId_, slaveId, resources_);
         roleSorter->allocated(role, slaveId, resources_);
