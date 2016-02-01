@@ -284,12 +284,8 @@ static bool subtractable(const Resource& left, const Resource& right)
 {
   if (left.name() != right.name() ||
       left.type() != right.type() ||
-      left.role() != right.role()) {
-    return false;
-  }
-
-  // A Resource with an active_role is subtractable from one without.
-  if (left.has_active_role() && left.active_role() != right.active_role()) {
+      left.role() != right.role() ||
+      left.active_role() != right.active_role()) {
     return false;
   }
 

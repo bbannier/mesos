@@ -165,12 +165,10 @@ TEST(ResourcesTest, ActiveRoleArithmetic) {
   const set<string> expected{"roleA", "roleB"};
   EXPECT_EQ(expected, active_roles);
 
-  // A Resource with no active_role can contain a Resource with an active role.
-  EXPECT_TRUE(Resources(resourceTemplate).contains(resourceA));
-
-  // A Resource with an active_role cannot contain a Resource with no active
-  // role.
+  // Resources with different active roles cannot contain one another.
+  EXPECT_FALSE(Resources(resourceTemplate).contains(resourceA));
   EXPECT_FALSE(Resources(resourceA).contains(resourceTemplate));
+  EXPECT_FALSE(Resources(resourceA).contains(resourceB));
 }
 
 
