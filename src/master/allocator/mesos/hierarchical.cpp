@@ -936,13 +936,7 @@ void HierarchicalAllocatorProcess::recoverResources(
             << " for " << timeout.get();
 
     // Create a new filter.
-    // The active_role is irrelevant for OfferFilters.
-    Resources resources_;
-    foreach(Resource resource, resources) {
-      resource.clear_active_role();
-      resources_ += resource;
-    }
-    OfferFilter* offerFilter = new RefusedOfferFilter(resources_);
+    OfferFilter* offerFilter = new RefusedOfferFilter(resources);
     frameworks[frameworkId].offerFilters[slaveId].insert(offerFilter);
 
     // We need to disambiguate the function call to pick the correct
