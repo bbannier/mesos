@@ -884,6 +884,14 @@ void HierarchicalAllocatorProcess::recoverResources(
     }
   }
 
+  // Update the active_role of the used resources in the totals.
+  Resources resources_;
+  for (Resource resource : resources) {
+    resource.clear_active_role();
+    resources_ += resource;
+  }
+  roleSorter->update(slaveId, slaves[slaveId].total + resources_ - resources);
+
   // Update resources allocated on slave (if slave still exists,
   // which it might not in the event that we dispatched Master::offer
   // before we received Allocator::removeSlave).
@@ -893,6 +901,15 @@ void HierarchicalAllocatorProcess::recoverResources(
     // CHECK(slaves[slaveId].allocated.contains(resources));
 
     slaves[slaveId].allocated -= resources;
+
+    // Update the active_role of the used resources in the totals;
+    Resources resources_;
+    for (Resource resource : resources) {
+      resource.clear_active_role();
+      resources_ += resource;
+    }
+    slaves[slaveId].total -= resources;
+    slaves[slaveId].total += resources_;
 
     VLOG(1) << "Recovered " << resources
             << " (total: " << slaves[slaveId].total
@@ -1430,7 +1447,7 @@ void HierarchicalAllocatorProcess::allocate(
         slaves[slaveId].total += resources_;
         slaves[slaveId].total -= resources;
         roleSorter->update(slaveId,
-                           slaves[slaveId].total - resources + resources_);
+                           slaves[slaveId].total + resources_ - resources);
 
         frameworkSorters[role]->add(slaveId, resources_);
         frameworkSorters[role]->allocated(frameworkId_, slaveId, resources_);

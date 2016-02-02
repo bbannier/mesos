@@ -1120,6 +1120,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
   Resource volume = Resources::parse("disk", "5", "*").get();
   volume.mutable_disk()->mutable_persistence()->set_id("ID");
   volume.mutable_disk()->mutable_volume()->set_container_path("data");
+  volume.set_active_role("role1");
 
   Offer::Operation create;
   create.set_type(Offer::Operation::CREATE);
@@ -1127,7 +1128,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
 
   // Ensure the offer operation can be applied.
   Try<Resources> updated =
-    sumIgnoringActiveRole(allocation.get().resources).apply(create);
+    Resources::sum(allocation.get().resources).apply(create);
 
   ASSERT_SOME(updated);
 
@@ -1153,8 +1154,12 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
   EXPECT_EQ(1u, allocation.get().resources.size());
   EXPECT_TRUE(allocation.get().resources.contains(slave.id()));
 
-  // The allocation should be the slave's resources with the offer
-  // operation applied.
+  // The allocated amount of resource should be the slave's resources with the
+  // offer operation applied.
+  // NOTE: We need to clear the role of the volume here so it can actually be
+  // applied onto the slaves Resources (which have no active role at the
+  // moment).
+  create.mutable_create()->mutable_volumes(0)->clear_active_role();
   updated = Resources(slave.resources()).apply(create);
   ASSERT_SOME(updated);
 
