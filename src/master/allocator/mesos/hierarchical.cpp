@@ -1269,23 +1269,6 @@ void HierarchicalAllocatorProcess::allocate(
         Resources resources =
           (available.unreserved() + available.reserved(role)).nonRevocable();
 
-        // NOTE: The resources may not be allocatable here, but they can be
-        // accepted by one of the frameworks during the second allocation
-        // stage.
-        if (!allocatable(resources)) {
-          continue;
-        }
-
-        // If the framework filters these resources, ignore. The unallocated
-        // part of the quota will not be allocated to other roles.
-        if (isFiltered(frameworkId, slaveId, resources)) {
-          continue;
-        }
-
-        VLOG(2) << "Allocating " << resources << " on slave " << slaveId
-                << " to framework '" << frameworkId << "' in role '" << role
-                << "' as part of its role quota";
-
         // To be able to recover resources we need to keep track of the role
         // a resource was offered for.
         Resources resources_;
@@ -1293,6 +1276,23 @@ void HierarchicalAllocatorProcess::allocate(
           resource.set_active_role(role);
           resources_ += resource;
         }
+
+        // NOTE: The resources may not be allocatable here, but they can be
+        // accepted by one of the frameworks during the second allocation
+        // stage.
+        if (!allocatable(resources_)) {
+          continue;
+        }
+
+        // If the framework filters these resources, ignore. The unallocated
+        // part of the quota will not be allocated to other roles.
+        if (isFiltered(frameworkId, slaveId, resources_)) {
+          continue;
+        }
+
+        VLOG(2) << "Allocating " << resources_ << " on slave " << slaveId
+                << " to framework '" << frameworkId << "' in role '" << role
+                << "' as part of its role quota";
 
         // NOTE: We perform "coarse-grained" allocation for quota'ed
         // resources, which may lead to overcommitment of resources beyond
@@ -1401,13 +1401,21 @@ void HierarchicalAllocatorProcess::allocate(
           resources = resources.nonRevocable();
         }
 
+        // To be able to recover resources we need to keep track of the role
+        // a resource was offered for.
+        Resources resources_;
+        foreach(Resource resource, resources) {
+          resource.set_active_role(role);
+          resources_ += resource;
+        }
+
         // If the resources are not allocatable, ignore.
-        if (!allocatable(resources)) {
+        if (!allocatable(resources_)) {
           continue;
         }
 
         // If the framework filters these resources, ignore.
-        if (isFiltered(frameworkId, slaveId, resources)) {
+        if (isFiltered(frameworkId, slaveId, resources_)) {
           continue;
         }
 
@@ -1421,17 +1429,9 @@ void HierarchicalAllocatorProcess::allocate(
           continue;
         }
 
-        VLOG(2) << "Allocating " << resources << " on slave " << slaveId
+        VLOG(2) << "Allocating " << resources_ << " on slave " << slaveId
                 << " to framework '" << frameworkId << "' in role '" << role
                 << "'";
-
-        // To be able to recover resources we need to keep track of the role
-        // a resource was offered for.
-        Resources resources_;
-        foreach(Resource resource, resources) {
-          resource.set_active_role(role);
-          resources_ += resource;
-        }
 
         // NOTE: We perform "coarse-grained" allocation, meaning that we always
         // allocate the entire remaining slave resources to a single framework.
