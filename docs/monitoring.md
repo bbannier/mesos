@@ -872,6 +872,14 @@ and resource allocations in the hierarchical allocator.
   </td>
   <td>Allocated resources of kind <code>KIND</code></td>
   <td>Gauge</td>
+
+</tr>
+<tr>
+  <td>
+  <code>allocator/allocation_runs</code>
+  </td>
+  <td>Number of times allocations were triggered</td>
+  <td>Counter</td>
 </tr>
 <tr>
   <td>

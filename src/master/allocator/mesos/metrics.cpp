@@ -39,9 +39,11 @@ Metrics::Metrics(const HierarchicalAllocatorProcess& _allocator)
         "allocator/event_queue_dispatches",
         process::defer(
             allocator->self(),
-            &HierarchicalAllocatorProcess::_event_queue_dispatches))
+            &HierarchicalAllocatorProcess::_event_queue_dispatches)),
+    allocation_runs("allocator/allocation_runs")
 {
   process::metrics::add(event_queue_dispatches);
+  process::metrics::add(allocation_runs);
 
   // Create and install gauges for the total and allocated amount of
   // standard resources.
@@ -75,6 +77,7 @@ Metrics::Metrics(const HierarchicalAllocatorProcess& _allocator)
 Metrics::~Metrics()
 {
   process::metrics::remove(event_queue_dispatches);
+  process::metrics::remove(allocation_runs);
 
   foreachvalue (const Gauge& gauge, total) {
     process::metrics::remove(gauge);

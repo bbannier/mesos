@@ -2674,6 +2674,38 @@ TEST_F(HierarchicalAllocatorTest, UpdateWeight)
 }
 
 
+// This test checks that the number of times the allocator was
+// triggered is correctly reflected in the metrics endpoint.
+TEST_F(HierarchicalAllocatorTest, AllocationRunsMetrics)
+{
+  // Pausing the clock is not necessary, but ensures that the test
+  // doesn't rely on the batch allocation in the allocator, which
+  // would slow down the test.
+  Clock::pause();
+
+  initialize();
+
+  unsigned int allocations = 0;
+
+  // Allocations were not triggered yet.
+  JSON::Object metrics = Metrics();
+  EXPECT_EQ(0u, metrics.values.count("allocations/allocation_runs"));
+
+  SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
+  allocator->addSlave(agent.id(), agent, None(), agent.resources(), {});
+  ++allocations; // Adding an agent triggers allocations.
+
+  FrameworkInfo framework = createFrameworkInfo("role");
+  allocator->addFramework(framework.id(), framework, {});
+  ++allocations; // Adding a framework triggers allocations.
+
+  Clock::settle();
+
+  metrics = Metrics();
+  EXPECT_EQ(allocations, metrics.values["allocator/allocation_runs"]);
+}
+
+
 class HierarchicalAllocator_BENCHMARK_Test
   : public HierarchicalAllocatorTestBase,
     public WithParamInterface<std::tr1::tuple<size_t, size_t>> {};

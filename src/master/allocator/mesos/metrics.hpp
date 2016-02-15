@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include <process/metrics/counter.hpp>
 #include <process/metrics/gauge.hpp>
 
 #include <stout/hashmap.hpp>
@@ -57,6 +58,9 @@ public:
 
   // Number of dispatch events currently waiting in the allocator process.
   process::metrics::Gauge event_queue_dispatches;
+
+  // Number of times the allocation loop was triggered.
+  process::metrics::Counter allocation_runs;
 
   // Gauges for the total amount of each resource kind in the cluster.
   hashmap<std::string, process::metrics::Gauge> total;
