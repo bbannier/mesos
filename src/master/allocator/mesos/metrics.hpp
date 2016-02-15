@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include <process/metrics/counter.hpp>
 #include <process/metrics/gauge.hpp>
 
 #include <process/pid.hpp>
@@ -54,6 +55,9 @@ struct Metrics
   // TODO(bbannier) This metric is identical to `event_queue_dispatches`, but
   // uses a name deprecated in 0.29. This metric should be removed with 0.30.
   process::metrics::Gauge event_queue_dispatches_;
+
+  // Number of times the allocation loop was triggered.
+  process::metrics::Counter allocation_runs;
 
   // Gauges for the total amount of each resource kind in the cluster.
   hashmap<std::string, process::metrics::Gauge> total;

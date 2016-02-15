@@ -868,6 +868,13 @@ and resource allocations in the allocator.
 </thead>
 <tr>
   <td>
+  <code>allocator/mesos/allocation_runs</code>
+  </td>
+  <td>Number of times allocations were triggered</td>
+  <td>Counter</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/mesos/cpus/offered_or_allocated</code>
   </td>
   <td>Number of CPUs offered or allocated</td>
