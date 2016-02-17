@@ -41,10 +41,12 @@ Metrics::Metrics(const HierarchicalAllocatorProcess& _allocator)
         process::defer(
             allocator->self(),
             &HierarchicalAllocatorProcess::_event_queue_dispatches)),
-    allocation_runs("allocator/allocation_runs")
+    allocation_runs("allocator/allocation_runs"),
+    allocation_time("allocator/allocation_time")
 {
   process::metrics::add(event_queue_dispatches);
   process::metrics::add(allocation_runs);
+  process::metrics::add(allocation_time);
 
   // Create and install gauges for the total and allocated amount of
   // standard resources.
@@ -106,6 +108,8 @@ Metrics::~Metrics()
   foreachvalue (const Counter& counter, framework_allocations) {
     process::metrics::remove(counter);
   }
+
+  process::metrics::remove(allocation_time);
 }
 
 

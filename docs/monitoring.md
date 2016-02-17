@@ -890,6 +890,13 @@ and resource allocations in the hierarchical allocator.
 </tr>
 <tr>
   <td>
+  <code>allocator/allocation_time_ms</code>
+  </td>
+  <td>Duration of an allocation loop in ms</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/framework_allocations/ID</code>
   </td>
   <td>Number of times framework <code>ID</code> received allocations</td>
