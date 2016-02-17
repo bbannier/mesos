@@ -2708,6 +2708,10 @@ TEST_F(HierarchicalAllocatorTest, AllocationRunsMetrics)
   Clock::settle();
 
   metrics = Metrics();
+  string metricKey =
+    strings::join("/", "allocator/mesos/framework_allocations", framework.id());
+  EXPECT_EQ(1, metrics.values[metricKey]);
+
   EXPECT_EQ(allocations, metrics.values["allocator/mesos/allocation_runs"]);
 }
 

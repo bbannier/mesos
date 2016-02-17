@@ -262,6 +262,8 @@ void HierarchicalAllocatorProcess::addFramework(
 
   frameworks[frameworkId].suppressed = false;
 
+  metrics.addFramework(frameworkId);
+
   LOG(INFO) << "Added framework " << frameworkId;
 
   allocate();
@@ -322,6 +324,8 @@ void HierarchicalAllocatorProcess::removeFramework(
   // HierarchicalAllocatorProcess::reviveOffers and
   // HierarchicalAllocatorProcess::expire.
   frameworks.erase(frameworkId);
+
+  metrics.removeFramework(frameworkId);
 
   LOG(INFO) << "Removed framework " << frameworkId;
 }
@@ -1305,6 +1309,9 @@ void HierarchicalAllocatorProcess::allocate(
         frameworkSorters[role]->allocated(frameworkId_, slaveId, resources);
         roleSorter->allocated(role, slaveId, resources);
         quotaRoleSorter->allocated(role, slaveId, resources);
+
+        CHECK_SOME(metrics.framework_allocations.get(frameworkId));
+        ++metrics.framework_allocations.get(frameworkId).get();
       }
     }
   }
@@ -1451,6 +1458,9 @@ void HierarchicalAllocatorProcess::allocate(
           // non-revocable.
           quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
         }
+
+        CHECK_SOME(metrics.framework_allocations.get(frameworkId));
+        ++metrics.framework_allocations.get(frameworkId).get();
       }
     }
   }

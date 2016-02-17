@@ -19,8 +19,12 @@
 
 #include <string>
 
+#include <mesos/mesos.hpp>
+#include <mesos/type_utils.hpp>
+
 #include <process/metrics/counter.hpp>
 #include <process/metrics/gauge.hpp>
+#include <process/metrics/timer.hpp>
 
 #include <process/pid.hpp>
 
@@ -47,6 +51,10 @@ struct Metrics
 
   void removeQuota(const std::string& role);
 
+  void addFramework(const FrameworkID& frameworkId);
+
+  void removeFramework(const FrameworkID& frameworkId);
+
   const process::PID<HierarchicalAllocatorProcess> allocator;
 
   // Number of dispatch events currently waiting in the allocator process.
@@ -72,6 +80,9 @@ struct Metrics
   // Gauges for the per-role quota guarantee for each resource kind.
   hashmap<std::string, hashmap<std::string, process::metrics::Gauge>>
       quota_guarantee;
+
+  // Number of times a framework received allocations.
+  hashmap<FrameworkID, process::metrics::Counter> framework_allocations;
 };
 
 } // namespace internal {
