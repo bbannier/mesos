@@ -25,6 +25,7 @@
 
 using std::string;
 
+using process::metrics::Counter;
 using process::metrics::Gauge;
 
 namespace mesos {
@@ -101,6 +102,10 @@ Metrics::~Metrics()
   foreachvalue (const Gauge& gauge, allocated) {
     process::metrics::remove(gauge);
   }
+
+  foreachvalue (const Counter& counter, framework_allocations) {
+    process::metrics::remove(counter);
+  }
 }
 
 
@@ -137,6 +142,31 @@ void Metrics::removeQuota(const std::string& role)
   }
 
   quota_allocated.erase(role);
+}
+
+
+void Metrics::addFramework(const FrameworkID& frameworkId)
+{
+  CHECK_NONE(framework_allocations.get(frameworkId));
+
+  framework_allocations.put(
+      frameworkId,
+      Counter(
+          strings::join(
+              "/", "allocator/framework_allocations", frameworkId.value())));
+
+  process::metrics::add(framework_allocations.get(frameworkId).get());
+}
+
+
+void Metrics::removeFramework(const FrameworkID& frameworkId)
+{
+  Option<Counter> counter = framework_allocations.get(frameworkId);
+  CHECK_SOME(counter);
+
+  process::metrics::remove(counter.get());
+
+  framework_allocations.erase(frameworkId);
 }
 
 } // namespace internal {
