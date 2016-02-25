@@ -23,15 +23,37 @@
 
 #include <process/metrics/metrics.hpp>
 
+#include <stout/os/environment.hpp>
 #include <stout/foreach.hpp>
 #include <stout/hashmap.hpp>
 
 using std::list;
+using std::map;
 using std::string;
 
 namespace process {
 namespace metrics {
 namespace internal {
+
+// A RateLimiter which does not limit at all.
+class NopRateLimiter : public RateLimiter
+{
+public:
+  NopRateLimiter() : RateLimiter(1) {}
+  Future<Nothing> acquire() override { return Nothing(); }
+};
+
+
+RateLimiter* MetricsProcess::createLimiter() {
+  map<string, string> env = os::environment();
+
+  const char* variable = "LIBPROCESS_METRICS_ENDPOINT_RATE_LIMIT_DISABLED";
+  if (env.count(variable) > 0) {
+    return new NopRateLimiter();
+  }
+
+  return new RateLimiter(2, Seconds(1));
+}
 
 MetricsProcess* MetricsProcess::instance()
 {
@@ -103,7 +125,7 @@ Future<Nothing> MetricsProcess::remove(const string& name)
 
 Future<http::Response> MetricsProcess::snapshot(const http::Request& request)
 {
-  return limiter.acquire()
+  return limiter->acquire()
     .then(defer(self(), &Self::_snapshot, request));
 }
 

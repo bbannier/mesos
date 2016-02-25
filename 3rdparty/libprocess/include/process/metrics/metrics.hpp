@@ -13,6 +13,7 @@
 #ifndef __PROCESS_METRICS_METRICS_HPP__
 #define __PROCESS_METRICS_METRICS_HPP__
 
+#include <memory>
 #include <string>
 
 #include <process/dispatch.hpp>
@@ -49,7 +50,7 @@ private:
 
   MetricsProcess()
     : ProcessBase("metrics"),
-      limiter(2, Seconds(1))
+      limiter(createLimiter())
   {}
 
   // Non-copyable, non-assignable.
@@ -70,7 +71,9 @@ private:
   hashmap<std::string, Owned<Metric> > metrics;
 
   // Used to rate limit the endpoint.
-  RateLimiter limiter;
+  std::unique_ptr<RateLimiter> limiter;
+
+  static RateLimiter* createLimiter();
 };
 
 }  // namespace internal {
