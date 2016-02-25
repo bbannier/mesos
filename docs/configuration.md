@@ -1685,6 +1685,15 @@ isolator. (default: false)
       provided separately.
     </td>
   </tr>
+  <tr>
+    <td>
+      LIBPROCESS_METRICS_ENDPOINT_RATE_LIMIT_DISABLED
+    </td>
+    <td>
+    If set, this disables the rate limiting on the global metrics
+    endpoint.
+    </td>
+  </tr>
 </table>
 
 
