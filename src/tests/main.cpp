@@ -70,6 +70,10 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
+  // Disable rate limiting in the global metrics endpoint, but do not
+  // overwrite whatever the user set.
+  setenv("LIBPROCESS_METRICS_ENDPOINT_RATE_LIMIT_DISABLED", "1", false);
+
   // Initialize libprocess.
   process::initialize();
 
