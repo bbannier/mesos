@@ -296,6 +296,8 @@ protected:
   double _quota_allocated(
       const std::string& role, const std::string& resourceName) const;
 
+  double _offer_filters(const FrameworkID& frameworkId) const;
+
   hashmap<FrameworkID, Framework> frameworks;
 
   struct Slave

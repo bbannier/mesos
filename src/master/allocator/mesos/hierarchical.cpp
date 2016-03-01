@@ -28,6 +28,7 @@
 #include <process/timeout.hpp>
 
 #include <process/metrics/counter.hpp>
+#include <process/metrics/gauge.hpp>
 #include <process/metrics/metrics.hpp>
 #include <process/metrics/timer.hpp>
 
@@ -46,6 +47,7 @@ using process::Future;
 using process::Timeout;
 
 using process::metrics::Counter;
+using process::metrics::Gauge;
 using process::metrics::TimerGuard;
 
 namespace mesos {
@@ -1747,6 +1749,15 @@ double HierarchicalAllocatorProcess::_quota_allocated(
         resourceName);
 
   return used.isSome() ? used.get().value() : 0;
+}
+
+
+double HierarchicalAllocatorProcess::_offer_filters(
+    const FrameworkID& frameworkId) const
+{
+  Option<Framework> framework = frameworks.get(frameworkId);
+
+  return framework.isSome() ? framework.get().offerFilters.size() : 0;
 }
 
 } // namespace internal {

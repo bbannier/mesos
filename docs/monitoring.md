@@ -904,6 +904,12 @@ and resource allocations in the hierarchical allocator.
 </tr>
 <tr>
   <td>
+  <code>allocator/total/KIND</code>
+  </td>
+  <td>Total resources of kind <code>KIND</code></td>
+  <td>Gauge</td>
+</tr>
+  <td>
   <code>allocator/quota/ROLE/allocated/KIND</code>
   </td>
   <td>Amount of role <code>ROLE</code>'s quota for resource kind
