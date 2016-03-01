@@ -124,6 +124,37 @@ private:
   std::shared_ptr<Data> data;
 };
 
+
+// A RAII helper which starts a wrapped `Timer` on construction and
+// stops it on destruction.
+//
+// NOTE: This wrapper does not manage the lifetime of the wrapper
+// `Timer` object which needs to be valid for the whole lifetime of
+// the `TimerGuard`.
+template <typename T>
+class TimerGuard
+{
+public:
+  explicit TimerGuard(Timer<T>& _timer) : timer(&_timer)
+  {
+    timer->start();
+  }
+
+  // Disable copy and move construction since we do not own the
+  // wrapped `Timer`.
+  TimerGuard(const TimerGuard&) = delete;
+  TimerGuard(TimerGuard&&) = delete;
+
+  ~TimerGuard()
+  {
+    timer->stop();
+  }
+
+private:
+  Timer<T>* timer;
+};
+
+
 } // namespace metrics {
 } // namespace process {
 
