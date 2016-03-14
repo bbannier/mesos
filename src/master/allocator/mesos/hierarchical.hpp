@@ -287,6 +287,12 @@ protected:
     return static_cast<double>(eventCount<process::DispatchEvent>());
   }
 
+  // Total amount of a resource kind in the cluster.
+  double _total(const std::string& resourceName);
+
+  // Allocated amount of a resource kind in the cluster.
+  double _allocated(const std::string& resourceName);
+
   double _quota_allocated(
       const std::string& role,
       const std::string& resource);

@@ -868,9 +868,51 @@ and resource allocations in the allocator.
 </thead>
 <tr>
   <td>
+  <code>allocator/mesos/cpus/offered_or_allocated</code>
+  </td>
+  <td>Number of CPUs offered or allocated</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/cpus/total</code>
+  </td>
+  <td>Number of CPUs</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/disk/offered_or_allocated</code>
+  </td>
+  <td>Allocated of offered disk space in MB</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/disk/total</code>
+  </td>
+  <td>Total disk space in MB</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/mesos/event_queue_dispatches</code>
   </td>
   <td>Number of dispatch events in the event queue</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/mem/offered_or_allocated</code>
+  </td>
+  <td>Allocated of offered memory in MB</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/mem/total</code>
+  </td>
+  <td>Total memory in MB</td>
   <td>Gauge</td>
 </tr>
 <tr>
