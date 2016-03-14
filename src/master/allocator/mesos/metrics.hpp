@@ -58,6 +58,12 @@ public:
   // Number of dispatch events currently waiting in the allocator process.
   process::metrics::Gauge event_queue_dispatches;
 
+  // Gauges for the total amount of each resource kind in the cluster.
+  hashmap<std::string, process::metrics::Gauge> total;
+
+  // Gauges for the allocated amount of each resource kind in the cluster.
+  hashmap<std::string, process::metrics::Gauge> allocated;
+
   // Gauges for the per-role quota allocation for each resource kind.
   hashmap<std::string, hashmap<std::string, process::metrics::Gauge>>
       quota_allocated;

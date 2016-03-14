@@ -2427,6 +2427,58 @@ TEST_F(HierarchicalAllocatorTest, DeactivateAndReactivateFramework)
 }
 
 
+// This test checks that total and allocator resources are correctly
+// reflected in the metrics endpoint.
+TEST_F(HierarchicalAllocatorTest, ResourceMetrics)
+{
+  // Pausing the clock is not necessary, but ensures that the test
+  // doesn't rely on the batch allocation in the allocator, which
+  // would slow down the test.
+  Clock::pause();
+
+  initialize();
+
+  SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
+  allocator->addSlave(agent.id(), agent, None(), agent.resources(), {});
+
+  Clock::settle();
+
+  JSON::Object metrics = Metrics();
+  EXPECT_EQ(2, metrics.values["allocator/total/cpus"]);
+  EXPECT_EQ(1024, metrics.values["allocator/total/mem"]);
+  EXPECT_EQ(0, metrics.values["allocator/total/disk"]);
+
+  // No frameworks are registered yet, so nothing can be allocated.
+  EXPECT_EQ(0, metrics.values["allocator/allocated/cpus"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/mem"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/disk"]);
+
+  FrameworkInfo framework = createFrameworkInfo("role1");
+  allocator->addFramework(framework.id(), framework, {});
+
+  Clock::settle();
+
+  // Coarse-grained allocation leads to offering all of `agent` to
+  // `framework`.
+  metrics = Metrics();
+  EXPECT_EQ(2, metrics.values["allocator/allocated/cpus"]);
+  EXPECT_EQ(1024, metrics.values["allocator/allocated/mem"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/disk"]);
+
+  allocator->removeSlave(agent.id());
+
+  Clock::settle();
+
+  metrics = Metrics();
+  EXPECT_EQ(0, metrics.values["allocator/total/cpus"]);
+  EXPECT_EQ(0, metrics.values["allocator/total/mem"]);
+  EXPECT_EQ(0, metrics.values["allocator/total/disk"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/cpus"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/mem"]);
+  EXPECT_EQ(0, metrics.values["allocator/allocated/disk"]);
+}
+
+
 // This test ensures that resource allocation is done according to each role's
 // weight. This is done by having six agents and three frameworks and making
 // sure each framework gets the appropriate number of resources.

@@ -42,6 +42,33 @@ Metrics::Metrics(const HierarchicalAllocatorProcess& _allocator)
             &HierarchicalAllocatorProcess::_event_queue_dispatches))
 {
   process::metrics::add(event_queue_dispatches);
+
+  // Create and install gauges for the total and allocated amount of
+  // standard resources.
+  // TODO(bbannier) Add support for more than just scalar resources.
+  // TODO(bbannier) Simplify this once MESOS-3214 is fixed.
+  string resourceKinds[] = {"cpus", "mem", "disk"};
+  foreach (const string& resourceName, resourceKinds) {
+    total.put(
+        resourceName,
+        Gauge(
+            strings::join("/", "allocator/total", resourceName),
+            process::defer(allocator->self(), [this, resourceName]() {
+              return this->allocator->_total(resourceName);
+            })));
+
+    process::metrics::add(total.get(resourceName).get());
+
+    allocated.put(
+        resourceName,
+        Gauge(
+            strings::join("/", "allocator/allocated", resourceName),
+            process::defer(allocator->self(), [this, resourceName]() {
+              return this->allocator->_allocated(resourceName);
+            })));
+
+    process::metrics::add(allocated.get(resourceName).get());
+  }
 }
 
 
@@ -49,11 +76,27 @@ Metrics::~Metrics()
 {
   process::metrics::remove(event_queue_dispatches);
 
+  foreachvalue (const Gauge& gauge, total) {
+    process::metrics::remove(gauge);
+  }
+
+  foreachvalue (const Gauge& gauge, allocated) {
+    process::metrics::remove(gauge);
+  }
+
   typedef hashmap<string, Gauge> RoleQuotaGauges;
   foreachvalue (const RoleQuotaGauges& roleQuotaGauges, quota_allocated) {
     foreachvalue (const Gauge& gauge, roleQuotaGauges) {
       process::metrics::remove(gauge);
     }
+  }
+
+  foreachvalue (const Gauge& gauge, total) {
+    process::metrics::remove(gauge);
+  }
+
+  foreachvalue (const Gauge& gauge, allocated) {
+    process::metrics::remove(gauge);
   }
 }
 

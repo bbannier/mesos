@@ -868,6 +868,13 @@ and resource allocations in the hierarchical allocator.
 </thead>
 <tr>
   <td>
+  <code>allocator/allocated/KIND</code>
+  </td>
+  <td>Allocated resources of kind <code>KIND</code></td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/event_queue_dispatches</code>
   </td>
   <td>Number of dispatch events currently waiting in the allocator process</td>
@@ -881,6 +888,14 @@ and resource allocations in the hierarchical allocator.
       <code>KIND</code> allocated</td>
   <td>Gauge</td>
 </tr>
+<tr>
+  <td>
+  <code>allocator/total/KIND</code>
+  </td>
+  <td>Total resources of kind <code>KIND</code></td>
+  <td>Gauge</td>
+</tr>
+<tr>
 </table>
 
 ### Basic Alerts
