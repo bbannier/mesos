@@ -857,6 +857,24 @@ slave registrar.
 </table>
 
 
+#### Allocator
+
+The following metrics provide information about performance
+and resource allocations in the hierarchical allocator.
+
+<table class="table table-stripped">
+<thead>
+<tr><th>Metric</th><th>Description</th><th>Type</th>
+</thead>
+<tr>
+  <td>
+  <code>allocator/event_queue_dispatches</code>
+  </td>
+  <td>Number of dispatch events currently waiting in the allocator process</td>
+  <td>Gauge</td>
+</tr>
+</table>
+
 ### Basic Alerts
 
 This section lists some examples of basic alerts that you can use to detect
