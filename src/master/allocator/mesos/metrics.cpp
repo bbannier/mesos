@@ -16,8 +16,16 @@
 
 #include <process/metrics/metrics.hpp>
 
+#include <stout/strings.hpp>
+
+#include <mesos/quota/quota.hpp>
+
 #include "master/allocator/mesos/hierarchical.hpp"
 #include "master/allocator/mesos/metrics.hpp"
+
+using std::string;
+
+using process::metrics::Gauge;
 
 namespace mesos {
 namespace internal {
@@ -25,11 +33,12 @@ namespace master {
 namespace allocator {
 namespace internal {
 
-Metrics::Metrics(const HierarchicalAllocatorProcess& allocator)
-  : event_queue_dispatches(
+Metrics::Metrics(const HierarchicalAllocatorProcess& _allocator)
+  : allocator(&_allocator),
+    event_queue_dispatches(
         "allocator/event_queue_dispatches",
         process::defer(
-            allocator.self(),
+            allocator->self(),
             &HierarchicalAllocatorProcess::_event_queue_dispatches))
 {
   process::metrics::add(event_queue_dispatches);
@@ -39,6 +48,49 @@ Metrics::Metrics(const HierarchicalAllocatorProcess& allocator)
 Metrics::~Metrics()
 {
   process::metrics::remove(event_queue_dispatches);
+
+  typedef hashmap<string, Gauge> RoleQuotaGauges;
+  foreachvalue (const RoleQuotaGauges& roleQuotaGauges, quota_allocated) {
+    foreachvalue (const Gauge& gauge, roleQuotaGauges) {
+      process::metrics::remove(gauge);
+    }
+  }
+}
+
+
+void Metrics::setQuota(const std::string& role, const Quota& quota)
+{
+  hashmap<string, Gauge> quotaedResources;
+
+  foreach (const Resource& resource, quota.info.guarantee()) {
+    string resourceName = resource.name();
+
+    quotaedResources.put(
+        resourceName,
+        Gauge(
+            strings::join(
+                "/", "allocator/quota", role, "allocated", resourceName),
+            process::defer(allocator->self(), [this, role, resourceName]() {
+              return this->allocator->_quota_allocated(role, resourceName);
+            })));
+
+    process::metrics::add(quotaedResources.get(resourceName).get());
+  }
+
+  quota_allocated.put(role, quotaedResources);
+}
+
+
+void Metrics::removeQuota(const std::string& role)
+{
+  Option<hashmap<string, Gauge>> roleQuotaGauges = quota_allocated.get(role);
+  CHECK_SOME(roleQuotaGauges);
+
+  foreachvalue (const Gauge& gauge, roleQuotaGauges.get()) {
+    process::metrics::remove(gauge);
+  }
+
+  quota_allocated.erase(role);
 }
 
 } // namespace internal {

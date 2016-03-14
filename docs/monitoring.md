@@ -873,6 +873,14 @@ and resource allocations in the hierarchical allocator.
   <td>Number of dispatch events currently waiting in the allocator process</td>
   <td>Gauge</td>
 </tr>
+<tr>
+  <td>
+  <code>allocator/quota/ROLE/allocated/KIND</code>
+  </td>
+  <td>Amount of role <code>ROLE</code>'s quota for resource kind
+      <code>KIND</code> allocated</td>
+  <td>Gauge</td>
+</tr>
 </table>
 
 ### Basic Alerts

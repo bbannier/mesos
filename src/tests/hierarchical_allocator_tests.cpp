@@ -33,6 +33,7 @@
 #include <stout/gtest.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
+#include <stout/json.hpp>
 #include <stout/os.hpp>
 #include <stout/stopwatch.hpp>
 #include <stout/utils.hpp>
@@ -44,6 +45,7 @@
 
 #include "tests/allocator.hpp"
 #include "tests/mesos.hpp"
+#include "tests/utils.hpp"
 
 using mesos::internal::master::MIN_CPUS;
 using mesos::internal::master::MIN_MEM;
@@ -1654,6 +1656,14 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
   //   framework1 share = 1
   // NO_QUOTA_ROLE share = 0.5 (cpus=1, mem=512)
   //   framework2 share = 1
+
+  JSON::Object metrics = Metrics();
+  string metricKey =
+    strings::join("/", "allocator/quota", QUOTA_ROLE, "allocated/cpus");
+  EXPECT_EQ(0u, metrics.values.count(metricKey));
+  metricKey =
+    strings::join("/", "allocator/quota", QUOTA_ROLE, "allocated/mem");
+  EXPECT_EQ(0u, metrics.values.count(metricKey));
 }
 
 
@@ -1900,6 +1910,17 @@ TEST_F(HierarchicalAllocatorTest, DRFWithQuota)
   EXPECT_EQ(framework2.id(), allocation.get().frameworkId);
   EXPECT_EQ(agent1.resources() - Resources(quota1.info.guarantee()),
             Resources::sum(allocation.get().resources));
+
+  JSON::Object metrics = Metrics();
+  string metricKey =
+    strings::join("/", "allocator/quota", QUOTA_ROLE, "allocated/cpus");
+  EXPECT_EQ(0.25, metrics.values[metricKey]);
+  metricKey =
+    strings::join("/", "allocator/quota", QUOTA_ROLE, "allocated/mem");
+  EXPECT_EQ(128, metrics.values[metricKey]);
+  metricKey =
+    strings::join("/", "allocator/quota", QUOTA_ROLE, "allocated/disk");
+  EXPECT_EQ(0u, metrics.values.count(metricKey));
 
   // Total cluster resources (1 agent): cpus=1, mem=512.
   // QUOTA_ROLE share = 0.25 (cpus=0.25, mem=128) [quota: cpus=0.25, mem=128]
