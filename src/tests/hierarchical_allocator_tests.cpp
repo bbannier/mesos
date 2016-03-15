@@ -3143,6 +3143,52 @@ TEST_F(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
   Clock::resume();
 }
 
+TEST_P(HierarchicalAllocator_BENCHMARK_Test, Metrics)
+{
+  size_t slaveCount = std::tr1::get<0>(GetParam());
+  size_t frameworkCount = std::tr1::get<1>(GetParam());
+
+  // Pause the clock because we want to manually drive the allocations.
+  Clock::pause();
+
+  initialize();
+
+  vector<Quota> quotas;
+  for (unsigned i = 0; i < frameworkCount; ++i) {
+    string role = stringify(i);
+    quotas.push_back(createQuota(role, "cpus:1;mem:512;disk:256"));
+    allocator->setQuota(role, quotas[i]);
+  }
+
+  vector<FrameworkInfo> frameworks;
+  for (unsigned i = 0; i < frameworkCount; ++i) {
+    frameworks.push_back(createFrameworkInfo(stringify(i)));
+    allocator->addFramework(frameworks[i].id(), frameworks[i], {});
+  }
+
+  vector<SlaveInfo> slaves;
+  for (unsigned i = 0; i < slaveCount; ++i) {
+    slaves.push_back(createSlaveInfo("cpus:16;mem:2048;disk:1024"));
+    allocator->addSlave(
+        slaves[i].id(), slaves[i], None(), slaves[i].resources(), {});
+  }
+
+  // Wait for all the `addSlave` operations to be processed.
+  Clock::settle();
+
+  {
+    Stopwatch watch;
+
+    watch.start();
+
+    JSON::Object metrics = Metrics();
+
+    cout << "Querying metrics endpoint took " << watch.elapsed() << " for "
+         << slaveCount << " slaves and " << frameworkCount << " frameworks"
+         << endl;
+  }
+}
+
 } // namespace tests {
 } // namespace internal {
 } // namespace mesos {
