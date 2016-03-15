@@ -903,6 +903,13 @@ and resource allocations in the allocator.
 </tr>
 <tr>
   <td>
+  <code>allocator/mesos/allocation_time_ms</code>
+  </td>
+  <td>Duration of an allocation loop in ms</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/mesos/event_queue_dispatches</code>
   </td>
   <td>Number of dispatch events in the event queue</td>

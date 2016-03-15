@@ -83,6 +83,9 @@ struct Metrics
 
   // Number of times a framework received allocations.
   hashmap<FrameworkID, process::metrics::Counter> framework_allocations;
+
+  // Duration of the allocation loop.
+  process::metrics::Timer<Milliseconds> allocation_time;
 };
 
 } // namespace internal {

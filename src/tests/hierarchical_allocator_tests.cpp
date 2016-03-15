@@ -2716,6 +2716,36 @@ TEST_F(HierarchicalAllocatorTest, AllocationRunsMetrics)
 }
 
 
+// This test checks that the allocation time is correctly reported in
+// the metrics endpoint.
+// NOTE: This test tests cannot be run with paused clock as it
+// verifies that a timer metric produces non-zero values.
+TEST_F(HierarchicalAllocatorTest, AllocationTimeMetric) {
+  initialize();
+
+  JSON::Object metrics = Metrics();
+  EXPECT_EQ(0u, metrics.values.count("allocator/mesos/allocation_time_ms"));
+
+  FrameworkInfo framework = createFrameworkInfo("role1");
+  allocator->addFramework(framework.id(), framework, {});
+
+  SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
+  allocator->addSlave(agent.id(), agent, None(), agent.resources(), {});
+
+  // Wait until at least one allocation run was made so the allocation
+  // time could be measured.
+  Future<Allocation> allocation = allocations.get();
+  AWAIT_READY(allocation);
+
+  metrics = Metrics();
+  JSON::Value value = metrics.values["allocator/mesos/allocation_time_ms"];
+  ASSERT_TRUE(value.is<JSON::Number>());
+  JSON::Number time = value.as<JSON::Number>();
+  ASSERT_EQ(JSON::Number::FLOATING, time.type);
+  EXPECT_NE(0, time.as<double>());
+}
+
+
 class HierarchicalAllocator_BENCHMARK_Test
   : public HierarchicalAllocatorTestBase,
     public WithParamInterface<std::tr1::tuple<size_t, size_t>> {};
