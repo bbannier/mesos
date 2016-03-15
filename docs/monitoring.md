@@ -917,6 +917,13 @@ and resource allocations in the allocator.
 </tr>
 <tr>
   <td>
+  <code>allocator/mesos/filters/&lt;framework&gt;/framework_offer_filters</code>
+  </td>
+  <td>Number of active offer filters for a framework</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/mesos/framework_allocations/&lt;framework&gt;</code>
   </td>
   <td>Number of times a framework received allocations</td>

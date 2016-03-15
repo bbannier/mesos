@@ -84,6 +84,9 @@ struct Metrics
   // Number of times a framework received allocations.
   hashmap<FrameworkID, process::metrics::Counter> framework_allocations;
 
+  // Gauges for the number of active offer filters for each framework.
+  hashmap<FrameworkID, process::metrics::Gauge> framework_offer_filters;
+
   // Duration of the allocation loop.
   process::metrics::Timer<Milliseconds> allocation_time;
 };

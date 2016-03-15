@@ -1744,6 +1744,15 @@ double HierarchicalAllocatorProcess::_quota_allocated(
   return used.isSome() ? used->value() : 0;
 }
 
+
+double HierarchicalAllocatorProcess::_offer_filters(
+    const FrameworkID& frameworkId)
+{
+  Option<Framework> framework = frameworks.get(frameworkId);
+
+  return framework.isSome() ? framework.get().offerFilters.size() : 0;
+}
+
 } // namespace internal {
 } // namespace allocator {
 } // namespace master {

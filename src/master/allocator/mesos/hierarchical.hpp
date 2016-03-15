@@ -297,6 +297,8 @@ protected:
       const std::string& role,
       const std::string& resource);
 
+  double _offer_filters(const FrameworkID& frameworkId);
+
   hashmap<FrameworkID, Framework> frameworks;
 
   struct Slave

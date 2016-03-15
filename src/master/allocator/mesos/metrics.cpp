@@ -112,6 +112,10 @@ Metrics::~Metrics()
   }
 
   process::metrics::remove(allocation_time);
+
+  foreachvalue (const Gauge& gauge, framework_offer_filters) {
+    process::metrics::remove(gauge);
+  }
 }
 
 
@@ -185,6 +189,23 @@ void Metrics::addFramework(const FrameworkID& frameworkId)
               frameworkId.value())));
 
   process::metrics::add(framework_allocations.get(frameworkId).get());
+
+  CHECK_NONE(framework_offer_filters.get(frameworkId));
+
+  framework_offer_filters.put(
+      frameworkId,
+      Gauge(
+          strings::join(
+              "/",
+              "allocator/mesos/filters",
+              frameworkId.value(),
+              "framework_offer_filters"),
+          process::defer(
+              allocator,
+              &HierarchicalAllocatorProcess::_offer_filters,
+              frameworkId)));
+
+  process::metrics::add(framework_offer_filters.get(frameworkId).get());
 }
 
 
@@ -192,11 +213,15 @@ void Metrics::removeFramework(const FrameworkID& frameworkId)
 {
   Option<Counter> counter = framework_allocations.get(frameworkId);
   CHECK_SOME(counter);
-
   process::metrics::remove(counter.get());
-
   framework_allocations.erase(frameworkId);
+
+  Option<Gauge> gauge = framework_offer_filters.get(frameworkId);
+  CHECK_SOME(gauge);
+  process::metrics::remove(gauge.get());
+  framework_offer_filters.erase(frameworkId);
 }
+
 
 } // namespace internal {
 } // namespace allocator {
