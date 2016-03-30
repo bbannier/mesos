@@ -945,6 +945,13 @@ and resource allocations in the allocator.
 </tr>
 <tr>
   <td>
+  <code>allocator/mesos/dominant_share/roles/&lt;role&gt;</code>
+  </td>
+  <td>Dominant share of a role used in prioritization of allocations</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
   <code>allocator/mesos/event_queue_dispatches</code>
   </td>
   <td>Number of dispatch events in the event queue</td>
@@ -955,6 +962,13 @@ and resource allocations in the allocator.
   <code>allocator/mesos/offer_filters/roles/&lt;role&gt;/active</code>
   </td>
   <td>Number of active offer filters for all frameworks within the role</td>
+  <td>Gauge</td>
+</tr>
+<tr>
+  <td>
+  <code>allocator/mesos/quota/dominant_share/roles/&lt;role&gt;</code>
+  </td>
+  <td>Dominant share of a role used in prioritization of quota allocations</td>
   <td>Gauge</td>
 </tr>
 <tr>

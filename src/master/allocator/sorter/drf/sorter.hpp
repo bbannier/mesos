@@ -17,12 +17,15 @@
 #ifndef __MASTER_ALLOCATOR_SORTER_DRF_SORTER_HPP__
 #define __MASTER_ALLOCATOR_SORTER_DRF_SORTER_HPP__
 
+#include <functional>
 #include <set>
 #include <string>
 
 #include <mesos/resources.hpp>
 
 #include <stout/hashmap.hpp>
+
+#include "master/allocator/sorter/drf/metrics.hpp"
 
 #include "master/allocator/sorter/sorter.hpp"
 
@@ -61,6 +64,12 @@ struct DRFComparator
 class DRFSorter : public Sorter
 {
 public:
+  DRFSorter() = default;
+
+  explicit DRFSorter(
+      const process::UPID& context,
+      const std::function<std::string(const std::string&)>& keyFactory);
+
   virtual ~DRFSorter() {}
 
   virtual void add(const std::string& name, double weight = 1);
@@ -160,6 +169,10 @@ private:
 
   // Maps client names to the resources they have been allocated.
   hashmap<std::string, Allocation> allocations;
+
+  // If this sorter was constructed with a process context it has a `Metrics`.
+  friend Metrics;
+  Option<Metrics> metrics;
 };
 
 } // namespace allocator {

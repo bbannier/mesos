@@ -17,11 +17,14 @@
 #ifndef __MASTER_ALLOCATOR_SORTER_SORTER_HPP__
 #define __MASTER_ALLOCATOR_SORTER_SORTER_HPP__
 
+#include <functional>
 #include <list>
 #include <string>
 
 #include <mesos/resources.hpp>
 #include <mesos/type_utils.hpp>
+
+#include <process/pid.hpp>
 
 namespace mesos {
 namespace internal {
@@ -38,7 +41,17 @@ namespace allocator {
 class Sorter
 {
 public:
-  virtual ~Sorter() {}
+  Sorter() = default;
+
+  // In addition to a default constructor, `Sorter` provides a
+  // constructor from an `UPID` and a callback creating a key; this
+  // allows setting up metrics which can execute callbacks inside the
+  // given context and publish values calculated with the `keyFactory`.
+  explicit Sorter(
+      const process::UPID& context,
+      const std::function<std::string(const std::string&)>& keyFactory) {}
+
+  virtual ~Sorter() = default;
 
   // Adds a client to allocate resources to. A client
   // may be a user or a framework.

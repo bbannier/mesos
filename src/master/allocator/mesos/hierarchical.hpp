@@ -481,9 +481,20 @@ class HierarchicalAllocatorProcess
 public:
   HierarchicalAllocatorProcess()
     : internal::HierarchicalAllocatorProcess(
-          []() -> Sorter* { return new RoleSorter(); },
-          []() -> Sorter* { return new FrameworkSorter(); },
-          []() -> Sorter* { return new QuotaRoleSorter(); }) {}
+          [this]() -> Sorter* {
+            return new RoleSorter(this->self(), [](const std::string& role) {
+              return "allocator/mesos/dominant_share/roles/" + role;
+            });
+          },
+          []() -> Sorter* {
+            return new FrameworkSorter();
+          },
+          [this]() -> Sorter* {
+            return new QuotaRoleSorter(
+                this->self(), [](const std::string& role) {
+                  return "allocator/mesos/quota/dominant_share/roles/" + role;
+                });
+          }) {}
 };
 
 } // namespace allocator {
