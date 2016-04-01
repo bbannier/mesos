@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'rake/clean'
 require 'fileutils'
+require 'tidy'
 
 task :default => [:update_docs, :build, :clean]
 
@@ -85,4 +86,24 @@ end
 desc "Run the site in development mode. Preview available at http://localhost:4567/"
 task :dev do
   system("middleman server")
+end
+
+desc "Validate HTML/XHTML output"
+task :validate do
+  Tidy.open({:show_warnings => true}) do |tidy|
+    FileList['publish/**/*.html'].map do |html|
+      src = File.open(html) { |f| f.read }
+      tidy.clean(src)
+
+      tidy.errors.scan(/(\d+) warnings?, (\d+) errors? were found!/) do |w, e|
+        warnings = w.to_i
+        errors = e.to_i
+
+        unless warnings == 0 && errors == 0
+          puts html
+          raise tidy.errors
+        end
+      end
+    end
+  end
 end
