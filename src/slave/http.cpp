@@ -32,8 +32,9 @@
 
 #include <process/collect.hpp>
 #include <process/help.hpp>
-#include <process/owned.hpp>
+#include <process/http.hpp>
 #include <process/limiter.hpp>
+#include <process/owned.hpp>
 
 #include <process/metrics/metrics.hpp>
 
@@ -616,37 +617,61 @@ string Slave::Http::STATISTICS_HELP()
 
 Future<Response> Slave::Http::statistics(
     const Request& request,
-    const Option<string>& /* principal */) const
+    const Option<string>& principal) const
 {
-  return statisticsLimiter->acquire()
-    .then(defer(slave->self(), &Slave::usage))
-    .then([=](const Future<ResourceUsage>& usage) -> Future<Response> {
-      JSON::Array result;
+  const PID<Slave> context = slave->self();
+  Shared<RateLimiter> limiter = statisticsLimiter;
 
-      foreach (const ResourceUsage::Executor& executor,
-               usage.get().executors()) {
-        if (executor.has_statistics()) {
-          const ExecutorInfo info = executor.executor_info();
+  return authorizeEndpoint(principal, request.url)
+      .then(defer(
+          context,
+          [context, limiter, request](bool authorized) {
+            return !authorized
+                ? Forbidden()
+                : _statistics(context, *limiter, request);
+          }))
+      .repair([](const Future<Response>& future) {
+        LOG(WARNING) << "Could not authorize request: "
+                     << (future.isFailed() ? future.failure() : "discard");
 
-          JSON::Object entry;
-          entry.values["framework_id"] = info.framework_id().value();
-          entry.values["executor_id"] = info.executor_id().value();
-          entry.values["executor_name"] = info.name();
-          entry.values["source"] = info.source();
-          entry.values["statistics"] = JSON::protobuf(executor.statistics());
+        return InternalServerError();
+      });
+}
 
-          result.values.push_back(entry);
+
+Future<Response> Slave::Http::_statistics(
+    const PID<Slave>& slave,
+    const RateLimiter& limiter,
+    const Request& request) {
+  return limiter.acquire()
+      .then(defer(slave, &Slave::usage))
+      .then([request](const Future<ResourceUsage>& usage) -> Future<Response> {
+        JSON::Array result;
+
+        foreach (
+            const ResourceUsage::Executor& executor, usage.get().executors()) {
+          if (executor.has_statistics()) {
+            const ExecutorInfo info = executor.executor_info();
+
+            JSON::Object entry;
+            entry.values["framework_id"] = info.framework_id().value();
+            entry.values["executor_id"] = info.executor_id().value();
+            entry.values["executor_name"] = info.name();
+            entry.values["source"] = info.source();
+            entry.values["statistics"] = JSON::protobuf(executor.statistics());
+
+            result.values.push_back(entry);
+          }
         }
-      }
 
-      return process::http::OK(result, request.url.query.get("jsonp"));
-    })
-    .repair([](const Future<Response>& future) {
-      LOG(WARNING) << "Could not collect resource usage: "
-                   << (future.isFailed() ? future.failure() : "discarded");
+        return OK(result, request.url.query.get("jsonp"));
+      })
+      .repair([](const Future<Response>& future) {
+        LOG(WARNING) << "Could not collect resource usage: "
+                     << (future.isFailed() ? future.failure() : "discarded");
 
-      return process::http::InternalServerError();
-    });
+        return InternalServerError();
+      });
 }
 
 

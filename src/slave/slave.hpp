@@ -454,7 +454,7 @@ private:
     // /slave/monitor/statistics.json
     process::Future<process::http::Response> statistics(
         const process::http::Request& request,
-        const Option<std::string>& /* principal */) const;
+        const Option<std::string>& principal) const;
 
     // /slave/containers
     process::Future<process::http::Response> containers(
@@ -471,6 +471,14 @@ private:
     process::Future<bool> authorizeEndpoint(
         const Option<std::string>& principal,
         const process::http::URL& url) const;
+
+
+    // Make continuation for `statistics` `static` as it might
+    // execute when the invoking `Http` is already destructed.
+    static process::Future<process::http::Response> _statistics(
+        const PID<Slave>& slave,
+        const RateLimiter& limiter,
+        const process::http::Request& request);
 
     Slave* slave;
 
