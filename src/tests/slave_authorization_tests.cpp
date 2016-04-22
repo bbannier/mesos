@@ -186,7 +186,8 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
           None(),
           createBasicAuthHeaders(DEFAULT_CREDENTIAL));
 
-      AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
+      AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response)
+          << response.get().body;
     }
 
     // Test that without an active authorizer authorizations always succeed.
@@ -201,7 +202,8 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
           None(),
           createBasicAuthHeaders(DEFAULT_CREDENTIAL));
 
-      AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
+      AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response)
+          << response.get().body;
     }
   }
 }
