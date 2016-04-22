@@ -191,16 +191,8 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
 
     // Test that without an active authorizer authorizations always succeed.
     {
-      Try<Owned<cluster::Slave>> agent = cluster::Slave::start(
-          detector.get(),
-          CreateSlaveFlags(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None());
+      Try<Owned<cluster::Slave>> agent =
+        cluster::Slave::start(detector.get(), CreateSlaveFlags());
       ASSERT_SOME(agent);
 
       Future<Response> response = process::http::get(
