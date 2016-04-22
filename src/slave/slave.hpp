@@ -439,7 +439,7 @@ private:
     // /slave/flags
     process::Future<process::http::Response> flags(
         const process::http::Request& request,
-        const Option<std::string>& /* principal */) const;
+        const Option<std::string>& principal) const;
 
     // /slave/health
     process::Future<process::http::Response> health(
@@ -468,6 +468,10 @@ private:
     static std::string CONTAINERS_HELP();
 
   private:
+    process::Future<bool> authorizeEndpoint(
+        const Option<std::string>& principal,
+        const process::http::URL& url) const;
+
     Slave* slave;
 
     // Used to rate limit the statistics endpoint.

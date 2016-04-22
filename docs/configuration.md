@@ -891,6 +891,16 @@ other than <code>local</code>, the ACLs contents will be
 ignored.
 <p/>
 See the ACLs protobuf in acls.proto for the expected format.
+<p/>
+Example:
+<pre><code>{
+  "access_endpoints": [
+    {
+      "principals": { "values": ["a"] },
+      "paths": { "values": ["/b", "/c"] }
+    }
+  ]
+}</code></pre>
   </td>
 </tr>
 <tr>

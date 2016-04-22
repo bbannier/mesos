@@ -19,6 +19,9 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <vector>
+
+#include <mesos/authorizer/authorizer.hpp>
 
 #include <mesos/executor/executor.hpp>
 
@@ -80,6 +83,7 @@ using process::metrics::internal::MetricsProcess;
 using std::list;
 using std::string;
 using std::tuple;
+using std::vector;
 
 
 namespace mesos {
@@ -350,22 +354,36 @@ string Slave::Http::FLAGS_HELP()
 
 Future<Response> Slave::Http::flags(
     const Request& request,
-    const Option<string>& /* principal */) const
+    const Option<string>& principal) const
 {
-  JSON::Object object;
+  const Slave* slave_ = slave;
 
-  {
-    JSON::Object flags;
-    foreachpair (const string& name, const flags::Flag& flag, slave->flags) {
-      Option<string> value = flag.stringify(slave->flags);
-      if (value.isSome()) {
-        flags.values[name] = value.get();
-      }
-    }
-    object.values["flags"] = std::move(flags);
-  }
+  return authorizeEndpoint(principal, request.url)
+    .then(defer(
+          slave->self(),
+          [slave_, request](bool authorized) -> Future<Response> {
+            if (!authorized) {
+              return Forbidden();
+            }
 
-  return OK(object, request.url.query.get("jsonp"));
+            JSON::Object object;
+
+            {
+              JSON::Object flags;
+              foreachpair (
+                  const string& name,
+                  const flags::Flag& flag,
+                  slave_->flags) {
+                Option<string> value = flag.stringify(slave_->flags);
+                if (value.isSome()) {
+                  flags.values[name] = value.get();
+                }
+              }
+              object.values["flags"] = std::move(flags);
+            }
+
+            return OK(object, request.url.query.get("jsonp"));
+          }));
 }
 
 
@@ -759,6 +777,40 @@ Future<Response> Slave::Http::containers(const Request& request) const
 
         return process::http::InternalServerError();
       });
+}
+
+
+Future<bool> Slave::Http::authorizeEndpoint(
+    const Option<string>& principal,
+    const process::http::URL& url) const
+{
+  if (slave->authorizer.isNone()) {
+    return true;
+  }
+
+  // Strip the agent component of the path.
+  const vector<string> pathComponents =
+    strings::split(url.path, "/", 3);
+
+  if (pathComponents.size() != 3u) {
+    return Failure("Unexpected path '" + url.path + "'");
+  }
+  const string endpoint = "/" + pathComponents[2];
+
+  LOG(INFO) << "Authorizing principal '"
+            << (principal.isSome() ? principal.get() : "ANY")
+            << "' to access the '" << endpoint << "' endpoint";
+
+  authorization::Request request;
+  request.set_action(authorization::ACCESS_ENDPOINT_WITH_PATH);
+
+  if (principal.isSome()) {
+    request.mutable_subject()->set_value(principal.get());
+  }
+
+  request.mutable_object()->set_value(endpoint);
+
+  return slave->authorizer.get()->authorized(request);
 }
 
 } // namespace slave {

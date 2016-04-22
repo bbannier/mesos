@@ -42,11 +42,16 @@ message Object {
 
 // List of authorizable actions supported in Mesos.
 enum Action {
+  // Master and agent actions.
+
   // This must be the first enum value in this list, to
   // ensure that if 'type' is not set, the default value
   // is UNKNOWN. This enables enum values to be added
   // in a backwards-compatible way. See: MESOS-4997.
   UNKNOWN = 0;
+
+
+  // Master only actions.
 
   REGISTER_FRAMEWORK_WITH_ROLE = 1;
   RUN_TASK_WITH_USER = 2;
@@ -58,6 +63,11 @@ enum Action {
   SET_QUOTA_WITH_ROLE = 8;
   DESTROY_QUOTA_WITH_PRINCIPAL = 9;
   UPDATE_WEIGHTS_WITH_ROLE = 10;
+
+
+  // Agent only actions.
+
+  ACCESS_ENDPOINT_WITH_PATH = 11;
 }
 
 
