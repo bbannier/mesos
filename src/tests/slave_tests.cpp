@@ -32,7 +32,6 @@
 #include <process/clock.hpp>
 #include <process/future.hpp>
 #include <process/gmock.hpp>
-#include <process/http.hpp>
 #include <process/owned.hpp>
 #include <process/pid.hpp>
 #include <process/reap.hpp>
@@ -84,7 +83,6 @@ using process::PID;
 using process::Promise;
 using process::UPID;
 
-using process::http::Forbidden;
 using process::http::InternalServerError;
 using process::http::OK;
 using process::http::Response;
@@ -1892,91 +1890,6 @@ TEST_F(SlaveTest, StatisticsEndpointAuthentication)
 }
 
 
-// This test checks that an agent's statistics endpoint is authorized.
-TEST_F(SlaveTest, StatisticsEndpointAuthorization)
-{
-  Try<Owned<cluster::Master>> master = StartMaster();
-  ASSERT_SOME(master);
-
-  Owned<MasterDetector> detector = master.get()->createDetector();
-
-  MockAuthorizer mockAuthorizer;
-
-  Try<Owned<cluster::Slave>> agent =
-    StartSlave(detector.get(), &mockAuthorizer);
-  ASSERT_SOME(agent);
-
-  const string statisticsEndpoints[] =
-    {"monitor/statistics", "monitor/statistics.json"};
-
-  foreach (const string& statisticsEndpoint, statisticsEndpoints) {
-    // Test that the endpoint handler forms correct queries against
-    // the authorizer.
-    {
-      Future<authorization::Request> request;
-      EXPECT_CALL(mockAuthorizer, authorized(_))
-        .WillOnce(DoAll(FutureArg<0>(&request), Return(true)));
-
-      Future<Response> response = process::http::get(
-          agent.get()->pid,
-          statisticsEndpoint,
-          None(),
-          createBasicAuthHeaders(DEFAULT_CREDENTIAL));
-
-      AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response)
-          << response.get().body;
-
-      AWAIT_READY(request);
-
-      const string principal = DEFAULT_CREDENTIAL.principal();
-      EXPECT_EQ(principal, request.get().subject().value());
-
-      EXPECT_EQ(
-          authorization::ACCESS_ENDPOINT_WITH_PATH, request.get().action());
-
-      EXPECT_EQ("/" + statisticsEndpoint, request.get().object().value());
-    }
-
-    // Test that unauthorized requests are properly rejected.
-    {
-      EXPECT_CALL(mockAuthorizer, authorized(_))
-        .WillOnce(Return(false));
-
-      Future<Response> response = process::http::get(
-          agent.get()->pid,
-          statisticsEndpoint,
-          None(),
-          createBasicAuthHeaders(DEFAULT_CREDENTIAL));
-
-      AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
-    }
-
-    // Test that without an active authorizer authorizations always succeed.
-    {
-      Try<Owned<cluster::Slave>> agent = cluster::Slave::start(
-          detector.get(),
-          CreateSlaveFlags(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None(),
-          None());
-      ASSERT_SOME(agent);
-
-      Future<Response> response = process::http::get(
-          agent.get()->pid,
-          statisticsEndpoint,
-          None(),
-          createBasicAuthHeaders(DEFAULT_CREDENTIAL));
-
-      AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
-    }
-  }
-}
-
-
 // This test verifies correct handling of containers endpoint when
 // there is no exeuctor running.
 TEST_F(SlaveTest, ContainersEndpointNoExecutor)
@@ -2114,6 +2027,7 @@ TEST_F(SlaveTest, ContainersEndpoint)
   terminate(slave);
   wait(slave);
 }
+
 
 // This test ensures that when a slave is shutting down, it will not
 // try to re-register with the master.
