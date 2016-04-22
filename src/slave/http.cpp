@@ -619,16 +619,16 @@ Future<Response> Slave::Http::statistics(
     const Request& request,
     const Option<string>& principal) const
 {
-  const PID<Slave> context = slave->self();
+  const PID<Slave> pid = slave->self();
   Shared<RateLimiter> limiter = statisticsLimiter;
 
   return authorizeEndpoint(principal, request.url)
       .then(defer(
-          context,
-          [context, limiter, request](bool authorized) {
+          pid,
+          [pid, limiter, request](bool authorized) {
             return !authorized
                 ? Forbidden()
-                : _statistics(context, *limiter, request);
+                : _statistics(pid, *limiter, request);
           }))
       .repair([](const Future<Response>& future) {
         LOG(WARNING) << "Could not authorize request: "
