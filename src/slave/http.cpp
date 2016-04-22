@@ -632,7 +632,7 @@ Future<Response> Slave::Http::statistics(
           }))
       .repair([](const Future<Response>& future) {
         LOG(WARNING) << "Could not authorize request: "
-                     << (future.isFailed() ? future.failure() : "discard");
+                     << (future.isFailed() ? future.failure() : "discarded");
 
         return InternalServerError();
       });
