@@ -626,9 +626,9 @@ Future<Response> Slave::Http::statistics(
       .then(defer(
           pid,
           [pid, limiter, request](bool authorized) {
-            return !authorized
-                ? Forbidden()
-                : _statistics(pid, *limiter, request);
+            return authorized
+                ? _statistics(pid, *limiter, request)
+                : Forbidden();
           }))
       .repair([](const Future<Response>& future) {
         LOG(WARNING) << "Could not authorize request: "
