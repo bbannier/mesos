@@ -648,8 +648,8 @@ Future<Response> Slave::Http::_statistics(
       .then([request](const Future<ResourceUsage>& usage) -> Future<Response> {
         JSON::Array result;
 
-        foreach (
-            const ResourceUsage::Executor& executor, usage.get().executors()) {
+        foreach (const ResourceUsage::Executor& executor,
+                 usage.get().executors()) {
           if (executor.has_statistics()) {
             const ExecutorInfo info = executor.executor_info();
 
