@@ -163,8 +163,8 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
       const string principal = DEFAULT_CREDENTIAL.principal();
       EXPECT_EQ(principal, request.get().subject().value());
 
-      EXPECT_EQ(
-          authorization::ACCESS_ENDPOINT_WITH_PATH, request.get().action());
+      EXPECT_EQ(authorization::ACCESS_ENDPOINT_WITH_PATH,
+                request.get().action());
 
       EXPECT_EQ("/" + statisticsEndpoint, request.get().object().value());
     }
