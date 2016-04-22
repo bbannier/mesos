@@ -132,12 +132,6 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
-  MockAuthorizer mockAuthorizer;
-
-  Try<Owned<cluster::Slave>> agent =
-    StartSlave(detector.get(), &mockAuthorizer);
-  ASSERT_SOME(agent);
-
   const string statisticsEndpoints[] =
     {"monitor/statistics", "monitor/statistics.json"};
 
@@ -145,6 +139,12 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
     // Test that the endpoint handler forms correct queries against
     // the authorizer.
     {
+      MockAuthorizer mockAuthorizer;
+
+      Try<Owned<cluster::Slave>> agent =
+        StartSlave(detector.get(), &mockAuthorizer);
+      ASSERT_SOME(agent);
+
       Future<authorization::Request> request;
       EXPECT_CALL(mockAuthorizer, authorized(_))
         .WillOnce(DoAll(FutureArg<0>(&request), Return(true)));
@@ -171,6 +171,12 @@ TEST_F(SlaveAuthorizationTest, StatisticsEndpointAuthorization)
 
     // Test that unauthorized requests are properly rejected.
     {
+      MockAuthorizer mockAuthorizer;
+
+      Try<Owned<cluster::Slave>> agent =
+        StartSlave(detector.get(), &mockAuthorizer);
+      ASSERT_SOME(agent);
+
       EXPECT_CALL(mockAuthorizer, authorized(_))
         .WillOnce(Return(false));
 
