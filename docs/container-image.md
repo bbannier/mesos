@@ -41,8 +41,8 @@ images which will then be passed to the corresponding isolators for
 proper isolation.
 
 There are a few container image specifications, notably
-[Docker](https://github.com/docker/docker/blob/master/image/spec/v1.md),
-[Appc](https://github.com/appc/spec/blob/master/SPEC.md), and
+[Docker](https://github.com/docker/docker/blob/master/image/spec/v1.md/),
+[Appc](https://github.com/appc/spec/blob/master/SPEC.md/), and
 [OCI](https://github.com/opencontainers/specs) (future). Currently, we
 support Docker and Appc images. More details about what features are
 supported or not can be found in the following sections.
@@ -92,7 +92,7 @@ now: `APPC` and `DOCKER`, representing Appc and Docker images
 respectively.
 
 For Appc images, the `name` and `labels` are what described in the
-[spec](https://github.com/appc/spec/blob/master/spec/aci.md#image-manifest-schema).
+[spec](https://github.com/appc/spec/blob/master/spec/aci.md/#image-manifest-schema).
 
 For Docker images, the `name` is the Docker image reference in the
 following form (the same format expected by `docker pull`):
