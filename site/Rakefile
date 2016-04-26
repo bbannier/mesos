@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'rake/clean'
 require 'fileutils'
+require 'html/proofer'
 
 task :default => [:update_docs, :build, :clean]
 
@@ -85,4 +86,12 @@ end
 desc "Run the site in development mode. Preview available at http://localhost:4567/"
 task :dev do
   system("middleman server")
+end
+
+# TODO(bbannier) This should properly track that it depends on both
+# `build` and `doxygen`.
+desc "Validate the generate HTML."
+task :validate do
+  # TODO(bbannier) Make this ignore doxygen output (`publish/api`).
+  system("bundle exec htmlproof --disable-external --check-html ./publish")
 end
