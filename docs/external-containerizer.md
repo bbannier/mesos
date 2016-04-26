@@ -112,6 +112,8 @@ While a container is active, a resource limitation was identified
 
 ## Slave Recovery Overview
 
+<a name="slave-recovery-overview"></a>
+
 * Slave recovers via check pointed state.
 * EC invokes `recover` on the ECP - there is no protobuf message sent
 or expected as a result from this command.
@@ -362,6 +364,8 @@ as well as protobuf messages referenced by them, please check:
 
 ## **Sandbox**
 
+<a name="sandbox"></a>
+
 A sandbox environment is formed by `cd` into the work-directory of the
 executor as well as a stderr redirect into the executor's "stderr"
 log-file.
@@ -394,6 +398,8 @@ calls to `launch`.
 # Debugging
 
 ## Enhanced Verbosity Logging
+
+<a name="enhanced-verbosity-logging"></a>
 
 For receiving an increased level of status information from the EC
 use the GLOG verbosity level. Prefix your mesos startup call by
@@ -464,6 +470,9 @@ Example Hexdump:
     00000240:  3033 4000
 
 ## Record-IO De/Serializing Example
+
+<a name="record-io-deserializing-example"></a>
+
 How to send and receive such record-io formatted message
 using Python
 

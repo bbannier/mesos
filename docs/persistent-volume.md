@@ -61,6 +61,8 @@ interfaces described above.
 
 ### `Offer::Operation::Create`
 
+<a name="offeroperationcreate"></a>
+
 A framework can create volumes through the resource offer cycle.  Suppose we
 receive a resource offer with 2048 MB of dynamically reserved disk.
 

@@ -45,6 +45,8 @@ Use `--modules="{...}"` to specify the list of modules inline.
 
 ### Example JSON strings:
 
+<a name="Example-JSON-strings"></a>
+
 1. Load a library `libfoo.so` with two modules `org_apache_mesos_bar` and
    `org_apache_mesos_baz`.
 

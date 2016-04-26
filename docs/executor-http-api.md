@@ -337,6 +337,8 @@ NOTE: Additionally, the executor also inherits all the agent's environment varia
 
 ## Disconnections
 
+<a name="disconnections"></a>
+
 An executor considers itself disconnected if the persistent subscription connection (opened via SUBSCRIBE request) to "/executor" breaks. The disconnection can happen due to an agent process failure etc.
 
 Upon detecting a disconnection from the agent, the retry behavior depends on whether framework checkpointing is enabled:
@@ -353,5 +355,7 @@ Upon agent startup, an agent performs [recovery](slave-recovery.md). This allows
 
 
 ## Backoff Strategies
+
+<a name="backoff-strategies"></a>
 
 Executors are encouraged to retry subscription using a suitable backoff strategy like linear backoff, when they notice a disconnection with the agent. A disconnection typically happens when the agent process terminates (e.g., restarted for an upgrade). Each retry interval should be bounded by the value of `MESOS_SUBSCRIPTION_BACKOFF_MAX` which is set as an environment variable.

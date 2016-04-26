@@ -15,6 +15,8 @@ To use a custom allocator in Mesos, one must:
 
 ## Writing a custom allocator
 
+<a name="writing-a-custom-allocator"></a>
+
 Allocator modules are implemented in C++, the same language in which Mesos is written. They must subclass the `Allocator` interface defined in `mesos/master/allocator.hpp`. However, your implementation can be a C++ proxy, which delegates calls to an actual allocator written in a language of your choice.
 
 The default allocator is `HierarchicalDRFAllocatorProcess`, which lives in `$MESOS_HOME/src/master/allocator/mesos/hierarchical.hpp`. Like most Mesos components, it is actor-based, which means all interface methods are non-blocking and return immediately after putting the corresponding action into the actor's queue. If you would like to design your custom allocator in a similar manner, subclass `MesosAllocatorProcess` from `$MESOS_HOME/src/master/allocator/mesos/allocator.hpp` and wrap your actor-based allocator in `MesosAllocator`. This dispatches calls to the underlying actor and controls its lifetime. You can refer to `HierarchicalDRFAllocatorProcess` as a starting place if you choose to write your own actor-based allocation module.
@@ -25,6 +27,8 @@ Additionally, the built-in hierarchical allocator can be extended without the ne
 Sorters are implemented in C++ and inherit the `Sorter` class defined in `$MESOS_HOME/src/master/allocator/sorter/sorter.hpp`. The default sorter is `DRFSorter`, which implements fair sharing and can be found in `$MESOS_HOME/src/master/allocator/sorter/drf/sorter.hpp`. This sorter is capable of expressing priorities by specifying weights in `Sorter::add()`. Each client's share is divided by its weight. For example, a role that has a weight of 2 will be offered twice as many resources as a role with weight 1.
 
 ## Wiring up a custom allocator
+
+<a name="wiring-up-a-custom-allocator"></a>
 
 Once a custom allocator has been written, the next step is to override the built-in implementation with your own. This process consists of several steps:
 

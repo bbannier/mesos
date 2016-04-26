@@ -82,6 +82,8 @@ A given Mesos installation might host multiple versions of the same API i.e., Sc
 
 ### API Compatibility
 
+<a name="api-compatibility"></a>
+
 The API compatibility is determined by the corresponding protobuf guarantees.
 
 As an example, the following are considered "backwards compatible" changes for Scheduler API:

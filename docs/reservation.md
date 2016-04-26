@@ -16,6 +16,8 @@ In both types of reservations, resources are reserved for a [__role__](roles.md)
 
 ## Static Reservation
 
+<a name="static-reservation-since-0140"></a>
+
 An operator can configure a slave with resources reserved for a role.
 The reserved resources are specified via the `--resources` flag.
 For example, suppose we have 12 CPUs and 6144 MB of RAM available on a slave and
@@ -92,6 +94,8 @@ same slave and use the same role.
 ### Framework Scheduler API
 
 #### `Offer::Operation::Reserve`
+
+<a name="offeroperationreserve"></a>
 
 A framework can reserve resources through the resource offer cycle.  Suppose we
 receive a resource offer with 12 CPUs and 6144 MB of RAM unreserved.
