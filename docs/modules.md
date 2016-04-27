@@ -171,7 +171,7 @@ In order to enable decorator modules to remove metadata (environment variables
 or labels), the effect of the return value for decorator hooks changed in
 Mesos 0.23.0.
 
-The Result<T> return values before and after Mesos 0.23.0 means:
+The `Result<T>` return values before and after Mesos 0.23.0 means:
 
 <table>
 <tr>

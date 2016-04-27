@@ -1884,8 +1884,8 @@ quotas for container sandbox directories. Valid project IDs range from
     <td>
       If set, this variable can be used to configure the rate limit
       applied to the /metrics/snapshot endpoint. The format is
-      `<number of requests>/<interval duration>`.
-      Examples: `10/1secs`, `100/10secs`, etc.
+      &lt;number of requests&gt;/&lt;interval duration&gt;.
+      Examples: <code>10/1secs</code>, <code>100/10secs</code>, etc.
     </td>
   </tr>
   <tr>
