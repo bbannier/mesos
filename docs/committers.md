@@ -286,21 +286,21 @@ When sending reviews, it can be valuable to consult the component maintainers, a
       <th>Component</th>
       <th>Maintainers (alphabetical)</th>
     </tr>
-    <tbody>
-      <tr>
-        <td>Mesos Containerizer</td>
-        <td>Ian Downes, Jie Yu</td>
-      </tr>
-      <tr>
-        <td>Docker Containerizer</td>
-        <td>Tim Chen, Benjamin Hindman</td>
-      </tr>
-      <tr>
-        <td>External Containerizer</td>
-        <td>Till Toenshoff, Benjamin Hindman</td>
-      </tr>
-    </tbody>
   </thead>
+  <tbody>
+    <tr>
+      <td>Mesos Containerizer</td>
+      <td>Ian Downes, Jie Yu</td>
+    </tr>
+    <tr>
+      <td>Docker Containerizer</td>
+      <td>Tim Chen, Benjamin Hindman</td>
+    </tr>
+    <tr>
+      <td>External Containerizer</td>
+      <td>Till Toenshoff, Benjamin Hindman</td>
+    </tr>
+  </tbody>
 </table>
 
 #### C++ Libraries
