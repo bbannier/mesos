@@ -602,6 +602,15 @@ void Master::initialize()
                 << "' HTTP authenticator";
       httpAuthenticator = module.get();
     }
+  } else if (flags.credentials.isSome()) {
+    EXIT(EXIT_FAILURE)
+      << "The '--credentials' flag was provided, but HTTP"
+      << " authentication was not enabled via '--authenticate_http'";
+  } else if (httpAuthenticatorNames[0] != DEFAULT_HTTP_AUTHENTICATOR) {
+    EXIT(EXIT_FAILURE)
+      << "A custom HTTP authenticator was specified with the"
+      << " '--http_authenticators' flag, but HTTP authentication was not"
+      << " enabled via '--authenticate_http'";
   }
 
   if (httpAuthenticator.isSome() && httpAuthenticator.get() != nullptr) {
