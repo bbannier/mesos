@@ -937,6 +937,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   watcher/whitelist_watcher.hpp
 
 MESOS_LINUX_FILES =							\
+  linux/capabilities.cpp						\
   linux/cgroups.cpp							\
   linux/fs.cpp								\
   linux/perf.cpp							\
@@ -956,6 +957,7 @@ MESOS_LINUX_FILES =							\
   slave/containerizer/mesos/provisioner/backends/overlay.cpp
 
 MESOS_LINUX_FILES +=							\
+  linux/capabilities.hpp						\
   linux/cgroups.hpp							\
   linux/fs.hpp								\
   linux/ns.hpp								\

@@ -132,6 +132,7 @@ set(HDFS_SRC
 
 set(LINUX_SRC
   ${LINUX_SRC}
+  linux/capabilities.cpp
   linux/cgroups.cpp
   linux/fs.cpp
   linux/perf.cpp
