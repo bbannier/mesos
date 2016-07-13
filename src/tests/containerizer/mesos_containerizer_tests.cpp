@@ -136,6 +136,7 @@ public:
         Owned<ContainerLogger>(logger.get()),
         Owned<Launcher>(launcher.get()),
         provisioner.get(),
+        None(),
         isolators));
   }
 
@@ -467,6 +468,7 @@ public:
           logger,
           launcher,
           provisioner,
+          None(),
           isolators)
   {
     // NOTE: See TestContainerizer::setup for why we use
@@ -761,6 +763,7 @@ TEST_F(MesosContainerizerProvisionerTest, ProvisionFailed)
       Owned<ContainerLogger>(logger.get()),
       Owned<Launcher>(launcher),
       Owned<Provisioner>(provisioner),
+      None(),
       vector<Owned<Isolator>>());
 
   MesosContainerizer containerizer((Owned<MesosContainerizerProcess>(process)));
@@ -856,6 +859,7 @@ TEST_F(MesosContainerizerProvisionerTest, DestroyWhileProvisioning)
       Owned<ContainerLogger>(logger.get()),
       Owned<Launcher>(launcher),
       Owned<Provisioner>(provisioner),
+      None(),
       vector<Owned<Isolator>>());
 
   MesosContainerizer containerizer((Owned<MesosContainerizerProcess>(process)));
@@ -953,6 +957,7 @@ TEST_F(MesosContainerizerDestroyTest, LauncherDestroyFailure)
       Owned<ContainerLogger>(logger.get()),
       Owned<Launcher>(launcher),
       provisioner.get(),
+      None(),
       vector<Owned<Isolator>>());
 
   MesosContainerizer containerizer((Owned<MesosContainerizerProcess>(process)));

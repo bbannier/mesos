@@ -175,6 +175,7 @@ protected:
             Owned<ContainerLogger>(logger.get()),
             Owned<Launcher>(launcher.get()),
             provisioner,
+            None(),
             {Owned<Isolator>(isolator.get())}));
   }
 

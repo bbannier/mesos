@@ -25,6 +25,7 @@
 #include <vector>
 
 #include <mesos/executor.hpp>
+#include <mesos/mesos.hpp>
 #include <mesos/type_utils.hpp>
 
 #include <process/defer.hpp>
@@ -51,6 +52,7 @@
 #include "common/status_utils.hpp"
 
 #ifdef __linux__
+#include "linux/capabilities.hpp"
 #include "linux/fs.hpp"
 #endif
 
@@ -85,6 +87,9 @@ public:
       const Option<string>& _sandboxDirectory,
       const Option<string>& _workingDirectory,
       const Option<string>& _user,
+#ifdef __linux__
+      const Option<CapabilityInfo>& _netCapabilities,
+#endif
       const Option<string>& _taskCommand,
       const Duration& _shutdownGracePeriod)
     : state(REGISTERING),
@@ -104,6 +109,9 @@ public:
       sandboxDirectory(_sandboxDirectory),
       workingDirectory(_workingDirectory),
       user(_user),
+#ifdef __linux__
+      netCapabilities(_netCapabilities),
+#endif
       taskCommand(_taskCommand) {}
 
   virtual ~CommandExecutorProcess() {}
@@ -347,8 +355,32 @@ public:
                << cwd << "': " << chdir.error() << endl;
           abort();
         }
+#ifdef __linux__
+        Try<Owned<capabilities::Capabilities>> capabilities =
+          capabilities::Capabilities::create();
 
+        if (capabilities.isError()) {
+          cerr << "Failed to instantiate Capabilities: "
+               << capabilities.error() << endl;
+          abort();
+        }
+#endif // __linux__
         if (user.isSome()) {
+#ifdef __linux__
+          // If the net capability flags is set, we assume that the task
+          // needs capabilities to be set.
+          if (netCapabilities.isSome()) {
+            Try<Nothing> keepCaps =
+              capabilities.get()->keepCapabilitiesOnSetUid();
+
+            if (keepCaps.isError()) {
+              cerr << "Failed to set process control for keeping capabilities"
+                   << " on uid change: '" << keepCaps.error() << "' for user: '"
+                   << user.get() << "'" << endl;
+              abort();
+            }
+          }
+#endif // __linux__
           Try<Nothing> su = os::su(user.get());
           if (su.isError()) {
             cerr << "Failed to change user to '" << user.get() << "': "
@@ -356,6 +388,18 @@ public:
             abort();
           }
         }
+
+#ifdef __linux__
+        if (netCapabilities.isSome()) {
+          Try<Nothing> setCaps =
+            capabilities.get()->setCapabilitiesOnExec(netCapabilities.get());
+
+          if (setCaps.isError()) {
+            cerr << "Failed to set capabilities: " << setCaps.error() << endl;
+            abort();
+          }
+        }
+#endif // __linux__
 #else
         cerr << "Rootfs is only supported on Linux" << endl;
         abort();
@@ -724,6 +768,9 @@ private:
   Option<string> sandboxDirectory;
   Option<string> workingDirectory;
   Option<string> user;
+#ifdef __linux__
+  Option<CapabilityInfo> netCapabilities;
+#endif
   Option<string> taskCommand;
 };
 
@@ -738,6 +785,9 @@ public:
       const Option<string>& sandboxDirectory,
       const Option<string>& workingDirectory,
       const Option<string>& user,
+#ifdef __linux__
+      const Option<CapabilityInfo>& netCapabilities,
+#endif
       const Option<string>& taskCommand,
       const Duration& shutdownGracePeriod)
   {
@@ -748,6 +798,9 @@ public:
         sandboxDirectory,
         workingDirectory,
         user,
+#ifdef __linux__
+        netCapabilities,
+#endif
         taskCommand,
         shutdownGracePeriod);
 
@@ -862,6 +915,12 @@ public:
         "If specified, this is the overrided command for launching the\n"
         "task (instead of the command from TaskInfo).");
 
+#ifdef __linux__
+    add(&net_capabilities,
+        "net_capabilities",
+        "Capabilities assigned for the task.");
+#endif
+
     // TODO(nnielsen): Add 'prefix' option to enable replacing
     // 'sh -c' with user specified wrapper.
   }
@@ -871,6 +930,9 @@ public:
   Option<string> sandbox_directory;
   Option<string> working_directory;
   Option<string> user;
+#ifdef __linux__
+  Option<mesos::CapabilityInfo> net_capabilities;
+#endif
   Option<string> task_command;
 };
 
@@ -941,6 +1003,9 @@ int main(int argc, char** argv)
       flags.sandbox_directory,
       flags.working_directory,
       flags.user,
+#ifdef __linux__
+      flags.net_capabilities,
+#endif
       flags.task_command,
       shutdownGracePeriod);
 

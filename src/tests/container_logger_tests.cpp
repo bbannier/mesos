@@ -169,6 +169,7 @@ TEST_F(ContainerLoggerTest, MesosContainerizerRecover)
       Owned<ContainerLogger>(logger),
       Owned<Launcher>(launcher.get()),
       provisioner.get(),
+      None(),
       vector<Owned<Isolator>>());
 
   // Create the container's sandbox to get past a `CHECK` inside

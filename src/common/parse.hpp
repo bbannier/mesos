@@ -28,6 +28,10 @@
 
 #include <stout/flags/parse.hpp>
 
+#ifdef __linux__
+#include "linux/capabilities.hpp"
+#endif
+
 #include "messages/messages.hpp"
 
 namespace flags {

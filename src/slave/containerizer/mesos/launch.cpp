@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+#include <process/owned.hpp>
+
 #include <stout/foreach.hpp>
 #include <stout/os.hpp>
 #include <stout/protobuf.hpp>
@@ -26,7 +28,8 @@
 
 #ifdef __linux__
 #include "linux/fs.hpp"
-#endif
+#include "linux/capabilities.hpp"
+#endif // __linux__
 
 #include "mesos/mesos.hpp"
 
@@ -37,12 +40,15 @@ using std::cout;
 using std::endl;
 using std::string;
 
+using process::Owned;
+
 namespace mesos {
 namespace internal {
 namespace slave {
 
-const string MesosContainerizerLaunch::NAME = "launch";
+using capabilities::Capabilities;
 
+const string MesosContainerizerLaunch::NAME = "launch";
 
 MesosContainerizerLaunch::Flags::Flags()
 {
@@ -85,6 +91,12 @@ MesosContainerizerLaunch::Flags::Flags()
       "commands",
       "The additional preparation commands to execute before\n"
       "executing the command.");
+
+#ifdef __linux__
+  add(&net_capabilities,
+      "net_capabilities",
+      "Capabilities assigned for the task.");
+#endif
 }
 
 
@@ -250,13 +262,36 @@ int MesosContainerizerLaunch::execute()
     }
   }
 
+#ifdef __linux__
+  Try<Owned<Capabilities>> capabilities = Capabilities::create();
+  if (capabilities.isError()) {
+    cerr << "Failed to instantiate Capabilities: "
+         << capabilities.error() << endl;
+    return 1;
+  }
+#endif // __linux__
+
   // Change user if provided. Note that we do that after executing the
   // preparation commands so that those commands will be run with the
   // same privilege as the mesos-agent.
   // NOTE: The requisite user/group information must be present if
   // a container root filesystem is used.
 #ifndef __WINDOWS__
-  if (flags.user.isSome()) {
+  if (flags.user.isSome() && command.get().shell()) {
+#ifdef __linux__
+    if (flags.net_capabilities.isSome()) {
+      Try<Nothing> keepCaps =
+        capabilities.get()->keepCapabilitiesOnSetUid();
+
+      if (keepCaps.isError()) {
+        cerr << "Failed to set process control for keeping capabilities"
+             << " on uid change: '" << keepCaps.error() << "' for user: '"
+             << flags.user.get() << "'" << endl;
+        return 1;
+      }
+    }
+#endif // __linux__
+
     Try<Nothing> su = os::su(flags.user.get());
     if (su.isError()) {
       cerr << "Failed to change user to '" << flags.user.get() << "': "
@@ -285,6 +320,17 @@ int MesosContainerizerLaunch::execute()
   // TODO(jieyu): Consider using a clean environment.
 
   if (command.get().shell()) {
+#ifdef __linux__
+    if (flags.net_capabilities.isSome()) {
+      Try<Nothing> setCaps =
+        capabilities.get()->setCapabilitiesOnExec(flags.net_capabilities.get());
+
+      if (setCaps.isError()) {
+        cerr << "Failed to set capabilities: " << setCaps.error() << endl;
+        return 1;
+      }
+    }
+#endif // __linux__
     // Execute the command using shell.
     os::execlp(os::Shell::name, os::Shell::arg0,
                os::Shell::arg1, command.get().value().c_str(), (char*) NULL);

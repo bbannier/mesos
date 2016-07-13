@@ -88,7 +88,7 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::isolation,
       "isolation",
       "Isolation mechanisms to use, e.g., `posix/cpu,posix/mem`, or\n"
-      "`cgroups/cpu,cgroups/mem`, or network/port_mapping\n"
+      "`cgroups/cpu,cgroups/mem`, `capabilities` or network/port_mapping\n"
       "(configure with flag: `--with-network-isolator` to enable),\n"
       "or `cgroups/devices/gpus/nvidia` for nvidia specific gpu isolation\n"
       "(configure with flag: `--enable-nvidia-gpu-support` to enable),\n"
@@ -416,6 +416,31 @@ mesos::internal::slave::Flags::Flags()
       "systemd_runtime_directory",
       "The path to the systemd system run time directory\n",
       "/run/systemd/system");
+
+  add(&Flags::allowed_capabilities,
+      "allowed_capabilities",
+      "JSON representation of system capabilities that the agent will allow \n"
+      "for a task that will be run in a container launched by the the \n"
+      "unified containerizer. This set overrides the default capabilities \n"
+      "for the user and the capabilities requested by the framework. \n"
+      "\n"
+      "The net capability for a task running in the container would be: \n"
+      "   ((F & A) & U) \n"
+      "   where F = capabilities requested by the framework.\n"
+      "         U = permitted capabilities for the user.\n"
+      "         A = allowed capabilities specified by this flag.\n"
+      "\n"
+      "This flag is effective iff `capabilities` isolation is enabled.\n"
+      "When `capabilities` isolation is enabled, the absense of this flag\n"
+      "would imply that the agent would allow ALL capabilities.\n"
+      "\n"
+      "Example:\n"
+      "{\n"
+      "   \"capabilities\": [\n"
+      "       \"NET_RAW\",\n"
+      "       \"SYS_ADMIN\"\n"
+      "     ]\n"
+      "}");
 #endif
 
   add(&Flags::firewall_rules,

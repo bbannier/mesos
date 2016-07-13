@@ -62,6 +62,7 @@ public:
       const process::Owned<mesos::slave::ContainerLogger>& logger,
       const process::Owned<Launcher>& launcher,
       const process::Owned<Provisioner>& provisioner,
+      const Option<CapabilityInfo>& allowedCapabilities,
       const std::vector<process::Owned<mesos::slave::Isolator>>& isolators);
 
   // Used for testing.
@@ -124,6 +125,7 @@ public:
       const process::Owned<mesos::slave::ContainerLogger>& _logger,
       const process::Owned<Launcher>& _launcher,
       const process::Owned<Provisioner>& _provisioner,
+      const Option<CapabilityInfo>& _allowedCapabilities,
       const std::vector<process::Owned<mesos::slave::Isolator>>& _isolators)
     : flags(_flags),
       local(_local),
@@ -131,6 +133,7 @@ public:
       logger(_logger),
       launcher(_launcher),
       provisioner(_provisioner),
+      allowedCapabilities(_allowedCapabilities),
       isolators(_isolators) {}
 
   virtual ~MesosContainerizerProcess() {}
@@ -283,6 +286,7 @@ private:
   process::Owned<mesos::slave::ContainerLogger> logger;
   const process::Owned<Launcher> launcher;
   const process::Owned<Provisioner> provisioner;
+  const Option<CapabilityInfo> allowedCapabilities;
   const std::vector<process::Owned<mesos::slave::Isolator>> isolators;
 
   enum State

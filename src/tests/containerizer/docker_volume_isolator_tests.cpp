@@ -201,6 +201,7 @@ protected:
             Owned<ContainerLogger>(logger.get()),
             Owned<Launcher>(launcher.get()),
             provisioner.get(),
+            None(),
             {Owned<Isolator>(linuxIsolator.get()),
              Owned<Isolator>(runtimeIsolator.get()),
              Owned<Isolator>(volumeIsolator.get())}));

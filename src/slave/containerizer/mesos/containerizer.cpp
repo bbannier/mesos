@@ -34,6 +34,7 @@
 #include <stout/lambda.hpp>
 #include <stout/os.hpp>
 #include <stout/path.hpp>
+#include <stout/protobuf.hpp>
 #include <stout/strings.hpp>
 
 #include "common/protobuf_utils.hpp"
@@ -50,6 +51,8 @@
 
 #include "slave/containerizer/mesos/launcher.hpp"
 #ifdef __linux__
+#include "linux/capabilities.hpp"
+
 #include "slave/containerizer/mesos/linux_launcher.hpp"
 #endif
 
@@ -259,9 +262,34 @@ Try<MesosContainerizer*> MesosContainerizer::create(
 #endif
   };
 
+  Option<CapabilityInfo> allowedCapabilities = None();
+
   vector<Owned<Isolator>> isolators;
 
   foreach (const string& type, strings::tokenize(flags_.isolation, ",")) {
+#ifdef __linux__
+    if (type == "capabilities") {
+      if (flags.allowed_capabilities.isSome()) {
+        allowedCapabilities = flags.allowed_capabilities.get();
+      } else {
+        // If `allowed_capabilities` are not provided to the agent,
+        // then ALL capabilities are allowed.
+        Try<CapabilityInfo> _allowedCaps =
+          capabilities::getAllSupportedCapabilities();
+
+        if (_allowedCaps.isError()) {
+          return Error(
+              "Failed to get all system capabilities: " +
+              _allowedCaps.error());
+        }
+
+        allowedCapabilities = _allowedCaps.get();
+      }
+
+      continue;
+    }
+#endif // __linux__
+
     Try<Isolator*> isolator = [&creators, &type, &flags_]() -> Try<Isolator*> {
       if (creators.contains(type)) {
         return creators.at(type)(flags_);
@@ -293,6 +321,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
       Owned<ContainerLogger>(logger.get()),
       Owned<Launcher>(launcher.get()),
       provisioner.get(),
+      allowedCapabilities,
       isolators);
 }
 
@@ -304,6 +333,7 @@ MesosContainerizer::MesosContainerizer(
     const Owned<ContainerLogger>& logger,
     const Owned<Launcher>& launcher,
     const Owned<Provisioner>& provisioner,
+    const Option<CapabilityInfo>& allowedCapabilities,
     const vector<Owned<Isolator>>& isolators)
   : process(new MesosContainerizerProcess(
       flags,
@@ -312,6 +342,7 @@ MesosContainerizer::MesosContainerizer(
       logger,
       launcher,
       provisioner,
+      allowedCapabilities,
       isolators))
 {
   spawn(process.get());
@@ -998,6 +1029,60 @@ Future<Nothing> MesosContainerizerProcess::fetch(
 }
 
 
+#ifdef __linux__
+static Option<CapabilityInfo> getRequestedCapabilities(
+    const ExecutorInfo& executorInfo)
+{
+  if (executorInfo.has_container() &&
+      executorInfo.container().has_linux_info() &&
+      executorInfo.container().linux_info().has_capability_info()) {
+    return executorInfo.container().linux_info().capability_info();
+  }
+
+  return None();
+}
+
+
+// Helper method to centralize agent's capability control logic.
+static Try<CapabilityInfo> getNetCapabilities(
+    const CapabilityInfo& allowedCaps,
+    const Option<CapabilityInfo>& requestedCaps)
+{
+  if (requestedCaps.isSome()) {
+    // If requested capabilities cannot be satisfied by agent's allowed
+    // capabilities, then we cant proceed.
+    bool found;
+
+    for (int i = 0; i < requestedCaps.get().capabilities_size(); i++) {
+      const CapabilityInfo::Capability &req =
+        requestedCaps.get().capabilities(i);
+
+      found = false;
+      for (int j = 0; j < allowedCaps.capabilities_size(); j++) {
+        if (req == allowedCaps.capabilities(j)) {
+          found = true;
+          break;
+        }
+      }
+
+      if (found == false) {
+        return Error(
+            "Failed to satisfy requested capability '" +
+            stringify(capabilities::convert(req)) + "' "
+            "as it is not allowed by the agent");
+      }
+    }
+
+    return requestedCaps.get();
+  }
+
+  // When framework did not request any capabilities, we provide NO
+  // capabilities (only when `capabilities` isolation is enabled).
+  return CapabilityInfo();
+}
+#endif // __linux__
+
+
 Future<bool> MesosContainerizerProcess::__launch(
     const ContainerID& containerId,
     const Option<TaskInfo>& taskInfo,
@@ -1075,6 +1160,32 @@ Future<bool> MesosContainerizerProcess::__launch(
       }
     }
   }
+
+#ifdef __linux__
+  Option<CapabilityInfo> netCaps = None();
+
+  if (allowedCapabilities.isSome()) {
+    Try<CapabilityInfo> _netCaps = getNetCapabilities(
+        allowedCapabilities.get(),
+        getRequestedCapabilities(executorInfo));
+
+    if (_netCaps.isError()) {
+      return Failure(
+          "Failed to get net capabilities: " + _netCaps.error());
+    }
+
+    netCaps = _netCaps.get();
+
+    const string netCapsStr = stringify(JSON::protobuf(netCaps.get()));
+
+    VLOG(1) << "Net capabilities: " << netCapsStr;
+
+    if (executorLaunchCommand.isSome()) {
+      executorLaunchCommand.get().add_arguments(
+          "--net_capabilities=" + netCapsStr);
+    }
+  }
+#endif // __linux__
 
   // TODO(jieyu): Consider moving this to 'executorEnvironment' and
   // consolidating with docker containerizer.
@@ -1185,6 +1296,11 @@ Future<bool> MesosContainerizerProcess::__launch(
     launchFlags.pipe_read = pipes[0];
     launchFlags.pipe_write = pipes[1];
     launchFlags.commands = commands;
+#ifdef __linux__
+    if (taskInfo.isNone() || taskInfo.get().has_command()) {
+      launchFlags.net_capabilities = netCaps;
+    }
+#endif
 
     // Fork the child using launcher.
     vector<string> argv(2);

@@ -21,6 +21,8 @@
 #include <stout/option.hpp>
 #include <stout/subcommand.hpp>
 
+#include <mesos/mesos.hpp>
+
 namespace mesos {
 namespace internal {
 namespace slave {
@@ -44,6 +46,9 @@ public:
     Option<int> pipe_read;
     Option<int> pipe_write;
     Option<JSON::Object> commands; // Additional preparation commands.
+#ifdef __linux__
+    Option<CapabilityInfo> net_capabilities;
+#endif
   };
 
   MesosContainerizerLaunch() : Subcommand(NAME) {}
