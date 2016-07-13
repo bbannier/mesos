@@ -904,6 +904,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   slave/qos_controllers/noop.hpp					\
   slave/resource_estimators/noop.hpp					\
   tests/allocator.hpp							\
+  tests/capabilities_test_helper.hpp					\
   tests/cluster.hpp							\
   tests/containerizer.hpp						\
   tests/environment.hpp							\
@@ -1788,6 +1789,13 @@ setns_test_helper_SOURCES =					\
   tests/containerizer/setns_test_helper.cpp
 setns_test_helper_CPPFLAGS = $(MESOS_CPPFLAGS)
 setns_test_helper_LDADD = libmesos.la $(LDADD)
+
+check_PROGRAMS += capabilities-test-helper
+capabilities_test_helper_SOURCES =			\
+  tests/capabilities_test_helper_main.cpp		\
+  tests/capabilities_test_helper.cpp
+capabilities_test_helper_CPPFLAGS = $(MESOS_CPPFLAGS)
+capabilities_test_helper_LDADD = libmesos.la $(LDADD)
 endif
 
 check_PROGRAMS += memory-test-helper
@@ -2052,6 +2060,8 @@ mesos_tests_DEPENDENCIES =					\
 
 if OS_LINUX
 mesos_tests_SOURCES +=						\
+  tests/capabilities_tests.cpp					\
+  tests/capabilities_test_helper.cpp				\
   tests/containerizer/cgroups_isolator_tests.cpp		\
   tests/containerizer/cgroups_tests.cpp				\
   tests/containerizer/docker_volume_isolator_tests.cpp		\
