@@ -57,6 +57,7 @@ using std::vector;
 using mesos::internal::devolve;
 
 using mesos::v1::AgentID;
+using mesos::v1::CapabilityInfo;
 using mesos::v1::CommandInfo;
 using mesos::v1::ContainerInfo;
 using mesos::v1::Credential;
@@ -66,6 +67,7 @@ using mesos::v1::FrameworkInfo;
 using mesos::v1::Image;
 using mesos::v1::Label;
 using mesos::v1::Labels;
+using mesos::v1::LinuxInfo;
 using mesos::v1::Offer;
 using mesos::v1::Resources;
 using mesos::v1::TaskID;
@@ -160,6 +162,24 @@ public:
         "Containerizer to be used (i.e., docker, mesos).",
         "mesos");
 
+    add(&user,
+        "user",
+        "User name to use when executing the command.");
+
+#ifdef __linux__
+    add(&capabilities,
+        "capabilities",
+        "JSON representation of system capabilities needed to execute \n"
+        "the command.\n"
+        "Example:\n"
+        "{\n"
+        "   \"capabilities\": [\n"
+        "       \"NET_RAW\",\n"
+        "       \"SYS_ADMIN\"\n"
+        "     ]\n"
+        "}");
+#endif
+
     add(&role,
         "role",
         "Role to use when registering.",
@@ -198,6 +218,10 @@ public:
   Option<string> appc_image;
   Option<string> docker_image;
   string containerizer;
+  Option<string> user;
+#ifdef __linux__
+  Option<string> capabilities;
+#endif
   string role;
   Option<Duration> kill_after;
   Option<string> networks;
@@ -221,6 +245,10 @@ public:
       const Option<string>& _appcImage,
       const Option<string>& _dockerImage,
       const string& _containerizer,
+      const Option<string>& _user,
+#ifdef __linux__
+      const Option<string>& _capabilities,
+#endif
       const Option<Duration>& _killAfter,
       const Option<string>& _networks,
       const Option<Credential> _credential)
@@ -236,6 +264,10 @@ public:
       appcImage(_appcImage),
       dockerImage(_dockerImage),
       containerizer(_containerizer),
+      user(_user),
+#ifdef __linux__
+      capabilities(_capabilities),
+#endif
       killAfter(_killAfter),
       networks(_networks),
       credential(_credential),
@@ -339,6 +371,10 @@ protected:
 
         CommandInfo* commandInfo = task.mutable_command();
 
+        if (user.isSome()) {
+          commandInfo->set_user(user.get());
+        }
+
         if (shell) {
           CHECK_SOME(command);
 
@@ -373,6 +409,31 @@ protected:
         }
 
         if (containerInfo.isSome()) {
+#ifdef __linux__
+          if (capabilities.isSome()) {
+            Try<JSON::Object> json =
+              JSON::parse<JSON::Object>(capabilities.get());
+
+            if (json.isError()) {
+              EXIT(EXIT_FAILURE) << "Failed to parse 'capabilities' flag: "
+                                 << json.error();
+            }
+
+            Try<CapabilityInfo> capabilityInfo =
+              ::protobuf::parse<CapabilityInfo>(json.get());
+
+            if (capabilityInfo.isError()) {
+              EXIT(EXIT_FAILURE) << "Failed to parse the flag 'capabilities' "
+                                 << "to 'CapabilityInfo' protobuf: "
+                                 << capabilityInfo.error();
+            }
+
+            LinuxInfo linuxInfo;
+
+            linuxInfo.mutable_capability_info()->CopyFrom(capabilityInfo.get());
+            containerInfo.get().mutable_linux_info()->CopyFrom(linuxInfo);
+          }
+#endif
           task.mutable_container()->CopyFrom(containerInfo.get());
         }
 
@@ -611,6 +672,10 @@ private:
   const Option<string> appcImage;
   const Option<string> dockerImage;
   const string containerizer;
+  const Option<string> user;
+#ifdef __linux__
+  const Option<string> capabilities;
+#endif
   const Option<Duration> killAfter;
   const Option<string> networks;
   const Option<Credential> credential;
@@ -788,6 +853,10 @@ int main(int argc, char** argv)
         appcImage,
         dockerImage,
         flags.containerizer,
+        flags.user,
+#ifdef __linux__
+        flags.capabilities,
+#endif
         flags.kill_after,
         flags.networks,
         credential));
