@@ -139,8 +139,6 @@ Try<pid_t> MemoryTestHelper::pid()
 }
 
 
-// Send a request to the subprocess and wait for its signal that the
-// work has been done.
 Try<Nothing> MemoryTestHelper::requestAndWait(const string& request)
 {
   if (s.isNone()) {

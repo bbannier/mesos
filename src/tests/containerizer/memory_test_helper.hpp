@@ -66,6 +66,8 @@ protected:
   virtual int execute();
 
 private:
+  // Send a request to the subprocess and wait for its signal that the
+  // work has been done.
   Try<Nothing> requestAndWait(const std::string& request);
 
   Option<process::Subprocess> s;
