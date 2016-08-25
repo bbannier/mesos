@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <stout/flags/flags.hpp>
+
 #include <stout/os.hpp>
 
 #include "tests/active_user_test_helper.hpp"
