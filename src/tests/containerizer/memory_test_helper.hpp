@@ -63,8 +63,6 @@ public:
   Try<Nothing> increasePageCache(const Bytes& size = Megabytes(1));
 
 protected:
-  // The main function of the subprocess. It runs in a loop and
-  // executes commands passed from stdin.
   virtual int execute();
 
 private:
