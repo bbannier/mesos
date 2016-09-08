@@ -2325,8 +2325,15 @@ uninstall-hook:
 # runner that ships with newer versions of autotools.
 # See the following discussion for the workaround:
 # http://lists.gnu.org/archive/html/automake/2013-01/msg00051.html
+#
+# If we use our own test runner to parallelize gtests we can run
+# everything but ROOT tests in parallel.
 check-local: tests
+if MESOS_TEST_RUNNER
+	$(MESOS_TEST_RUNNER) --sequential='*_ROOT_*' ./mesos-tests
+else
 	./mesos-tests
+endif
 
 if INSTALL_TESTS
 # If we enabled test installation, we can run the tests from the
