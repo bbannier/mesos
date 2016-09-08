@@ -188,8 +188,17 @@ BUILT_SOURCES = $(BUNDLED_DEPS)
 # runner that ships with newer versions of autotools.
 # See the following discussion for the workaround:
 # http://lists.gnu.org/archive/html/automake/2013-01/msg00051.html
+#
+# If we use our own test runner to parallelize gtests (e.g., to align
+# the test output with the rest of the code base), run just a single
+# job since the stout test suite is already so fast that parallelizing
+# would make it slower.
 check-local: tests
-	./stout-tests
+if MESOS_TEST_RUNNER
+	$(MESOS_TEST_RUNNER) -j 1 ./stout-tests
+else
+	./mesos-tests
+endif
 
 tests: $(BUNDLED_DEPS)
 	$(MAKE) $(AM_MAKEFLAGS) stout-tests
