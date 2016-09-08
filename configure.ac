@@ -253,6 +253,9 @@ AC_ARG_ENABLE([zlib],
                            will be far less responsive; not recommended]),
             [enable_zlib=no], [enable_zlib=yes])
 
+AC_ARG_ENABLE([parallel_test_execution],
+              AS_HELP_STRING([--enable-parallel-test-execution],
+                             [execute tests in parallel where possible]))
 
 ###############################################################################
 # Optional packages.
@@ -604,6 +607,13 @@ AS_IF([test "x$enable_install_module_dependencies" = "xyes"],
 AM_CONDITIONAL([INSTALL_TESTS], [test x"$enable_tests_install" = "xyes"])
 AS_IF([test x"$enable_tests_install" = "xyes"],
       [AC_DEFINE([MESOS_INSTALL_TESTS], [1])])
+
+AM_CONDITIONAL([MESOS_TEST_RUNNER],
+               [test x"$enable_parallel_test_execution" = "xyes"])
+AS_IF([test "x$enable_parallel_test_execution" = "xyes"],
+      [AC_SUBST(MESOS_TEST_RUNNER,
+       '${abs_top_srcdir}/support/mesos-gtest-runner.py']))
+
 
 # Check for libunwind, and link it in if present.
 if test "x$OS_NAME" = "xfreebsd"; then
