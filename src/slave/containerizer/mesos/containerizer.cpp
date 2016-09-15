@@ -1270,8 +1270,11 @@ Future<bool> MesosContainerizerProcess::_launch(
     }
 
     if (launchInfo->has_command()) {
+      // NOTE: 'command' from 'launchInfo' will be merged. It is
+      // isolators' responsibility to make sure that the merged
+      // command is a valid command.
       if (launchCommand.isSome()) {
-        return Failure("At most one command can be returned from isolators");
+        launchCommand->MergeFrom(launchInfo->command());
       } else {
         launchCommand = launchInfo->command();
       }
@@ -1295,18 +1298,28 @@ Future<bool> MesosContainerizerProcess::_launch(
     }
   }
 
+  // Determine the launch command for the container.
   if (launchCommand.isNone()) {
     launchCommand = container->config.command_info();
   }
 
   // For the command executor case, we should add the rootfs flag to
   // the launch command of the command executor.
+  // TODO(jieyu): Remove this once we no longer support the old style
+  // command task (i.e., that uses mesos-execute).
   if (container->config.has_task_info() &&
       container->config.has_rootfs()) {
     CHECK_SOME(launchCommand);
     launchCommand->add_arguments(
         "--rootfs=" + container->config.rootfs());
   }
+
+  // TODO(jieyu): 'uris', 'environment' and 'user' in 'launchCommand'
+  // will be ignored. In fact, the above fields should be moved to
+  // TaskInfo or ExecutorInfo, instead of putting them in CommandInfo.
+  launchCommand->clear_uris();
+  launchCommand->clear_environment();
+  launchCommand->clear_user();
 
   // Include any enviroment variables from CommandInfo.
   foreach (const Environment::Variable& variable,
