@@ -300,8 +300,31 @@ void reinitialize()
   // To be backward compatible, for each environment variable prefixed
   // by SSL_, we generate the corresponding LIBPROCESS_SSL_ version.
   // See details in MESOS-5863.
-  map<string, string> environments = os::environment();
+
+  // Since flags names are case-insensitive after the prefix replicate the
+  // logic of `Flags::extract`: There environment variables are processed in
+  // the order they appear in `os::environment()`. The part after the suffix is
+  // converted to lowercase and then stored. This causes e.g., only one of
+  // e.g., `LIBPROCESS_SSL_string` and `LIBPROCESS_SSL_STRING` to be seen by
+  // the flags loading.
+
+  // We first create a map of normalized environment variables, and then
+  // perform the soft upgrade from `SSL_` variables to their new
+  // `LIBPROCESS_SSL_` form.
+  map<string, string> normalized_environment;
   foreachpair (const string& key, const string& value, os::environment()) {
+    const string prefixes[] = {"SSL_", "LIBPROCESS_SSL_"};
+    foreach (const string &prefix, prefixes) {
+      if (strings::startsWith(key, prefix)) {
+        const string new_key =
+            strings::lower(strings::remove(key, prefix, strings::PREFIX));
+        normalized_environment[new_key] = value;
+      }
+    }
+  }
+
+  map<string, string> environments = normalized_environment;
+  foreachpair (const string& key, const string& value, normalized_environment) {
     if (strings::startsWith(key, "SSL_")) {
       const string new_key = "LIBPROCESS_" + key;
       if (environments.count(new_key) == 0) {
@@ -314,8 +337,10 @@ void reinitialize()
     }
   }
 
+  // Load the flags from the given map, not the environment anymore.
   Try<flags::Warnings> load =
-      ssl_flags->load(environments, true, "LIBPROCESS_SSL_");
+      ssl_flags->load(environments, false, "LIBPROCESS_SSL_");
+
   if (load.isError()) {
     EXIT(EXIT_FAILURE)
       << "Failed to load flags from environment variables "
