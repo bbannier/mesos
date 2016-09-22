@@ -301,11 +301,11 @@ void reinitialize()
   // by SSL_, we generate the corresponding LIBPROCESS_SSL_ version.
   // See details in MESOS-5863.
   map<string, string> environments = os::environment();
-  foreachpair (const string& key, const string& value, environments) {
+  foreachpair (const string& key, const string& value, os::environment()) {
     if (strings::startsWith(key, "SSL_")) {
       const string new_key = "LIBPROCESS_" + key;
       if (environments.count(new_key) == 0) {
-        os::setenv(new_key, value);
+        environments[new_key] = value;
       } else if (environments[new_key] != value) {
         LOG(WARNING) << "Mismatched SSL environment variables: "
                      << key << "=" << value << ", "
@@ -314,7 +314,8 @@ void reinitialize()
     }
   }
 
-  Try<flags::Warnings> load = ssl_flags->load("LIBPROCESS_SSL_");
+  Try<flags::Warnings> load =
+      ssl_flags->load(environments, true, "LIBPROCESS_SSL_");
   if (load.isError()) {
     EXIT(EXIT_FAILURE)
       << "Failed to load flags from environment variables "
