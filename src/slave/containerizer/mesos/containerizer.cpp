@@ -1197,6 +1197,79 @@ Future<Nothing> MesosContainerizerProcess::fetch(
 }
 
 
+static Option<CommandInfo> getCommandInfoFromLaunchInfos(
+    const std::list<Option<ContainerLaunchInfo>>& launchInfos)
+{
+  Option<CommandInfo> command = None();
+
+  foreach (const Option<ContainerLaunchInfo>& launchInfo, launchInfos) {
+    if (launchInfo.isNone()) {
+      continue;
+    }
+
+    if (command.isNone()) {
+      if (launchInfo->has_command()) {
+        command = launchInfo->command();
+      }
+    } else {
+      // Merge already seen `CommandInfo` with the current one.
+
+      // Check messages for compatibility.  We create stripped-down
+      // messages containing just the fields we expect to be equal and
+      // compare them for equality.
+      CommandInfo expected;
+      expected.CopyFrom(command.get());
+      expected.clear_arguments();
+
+      CommandInfo given;
+      given.CopyFrom(launchInfo->command());
+      given.clear_arguments();
+
+      string expectedSerialized;
+      string givenSerialized;
+
+      expected.SerializeToString(&expectedSerialized);
+      given.SerializeToString(&givenSerialized);
+
+      if (expectedSerialized != givenSerialized) {
+        VLOG(1) << "Isolators returned ContainerLaunchInfos with ncompatible "
+                   "fields, will drop all updates but for arguments";
+      }
+
+      command->mutable_arguments()->MergeFrom(
+          launchInfo->command().arguments());
+    }
+  }
+
+  if (command.isSome()) {
+    // Handled ignored fields.
+    // TODO(jieyu): 'uris', 'environment' and 'user' in 'launchCommand'
+    // will be ignored. In fact, the above fields should be moved to
+    // TaskInfo or ExecutorInfo, instead of putting them in CommandInfo.
+    if (!command->uris().empty()) {
+      VLOG(1) << "Isolators set CommandInfo::uris which will be dropped";
+      command->clear_uris();
+    }
+
+    if (command->has_environment()) {
+      VLOG(1) << "Isolators set CommandInfo::environment which will be dropped";
+      command->clear_environment();
+    }
+
+    if (command->has_user()) {
+      VLOG(1) << "Isolators set CommandInfo::user which will be dropped";
+      command->clear_user();
+    }
+
+    command->clear_uris();
+    command->clear_environment();
+    command->clear_user();
+  }
+
+  return command;
+};
+
+
 Future<bool> MesosContainerizerProcess::_launch(
     const ContainerID& containerId,
     map<string, string> environment,
@@ -1235,7 +1308,6 @@ Future<bool> MesosContainerizerProcess::_launch(
     rootfs = container->config.rootfs();
   }
 
-  Option<CommandInfo> launchCommand;
   Option<string> workingDirectory;
   JSON::Array preExecCommands;
 
@@ -1269,17 +1341,6 @@ Future<bool> MesosContainerizerProcess::_launch(
       }
     }
 
-    if (launchInfo->has_command()) {
-      // NOTE: 'command' from 'launchInfo' will be merged. It is
-      // isolators' responsibility to make sure that the merged
-      // command is a valid command.
-      if (launchCommand.isSome()) {
-        launchCommand->MergeFrom(launchInfo->command());
-      } else {
-        launchCommand = launchInfo->command();
-      }
-    }
-
     if (launchInfo->has_working_directory()) {
       if (workingDirectory.isSome()) {
         return Failure(
@@ -1298,7 +1359,12 @@ Future<bool> MesosContainerizerProcess::_launch(
     }
   }
 
-  // Determine the launch command for the container.
+  // The launch command of the container is determined either from the
+  // merging the commands given in the `ContainerLaunchInfo`s, or
+  // nothing is set there from the `ContainerConfig`'s command.
+  Option<CommandInfo> launchCommand =
+    getCommandInfoFromLaunchInfos(container->launchInfos.get());
+
   if (launchCommand.isNone()) {
     launchCommand = container->config.command_info();
   }
@@ -1313,13 +1379,6 @@ Future<bool> MesosContainerizerProcess::_launch(
     launchCommand->add_arguments(
         "--rootfs=" + container->config.rootfs());
   }
-
-  // TODO(jieyu): 'uris', 'environment' and 'user' in 'launchCommand'
-  // will be ignored. In fact, the above fields should be moved to
-  // TaskInfo or ExecutorInfo, instead of putting them in CommandInfo.
-  launchCommand->clear_uris();
-  launchCommand->clear_environment();
-  launchCommand->clear_user();
 
   // Include any enviroment variables from CommandInfo.
   foreach (const Environment::Variable& variable,
