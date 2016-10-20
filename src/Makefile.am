@@ -835,6 +835,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   slave/containerizer/mesos/isolators/network/cni/paths.cpp		\
   slave/containerizer/mesos/isolators/network/cni/spec.cpp		\
   slave/containerizer/mesos/isolators/posix/disk.cpp			\
+  slave/containerizer/mesos/isolators/posix/rlimit.cpp			\
   slave/containerizer/mesos/isolators/volume/sandbox_path.cpp		\
   slave/containerizer/mesos/provisioner/backend.cpp			\
   slave/containerizer/mesos/provisioner/paths.cpp			\
@@ -961,6 +962,7 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   slave/containerizer/mesos/isolators/filesystem/posix.hpp		\
   slave/containerizer/mesos/isolators/filesystem/windows.hpp		\
   slave/containerizer/mesos/isolators/posix/disk.hpp			\
+  slave/containerizer/mesos/isolators/posix/rlimit.hpp			\
   slave/containerizer/mesos/isolators/docker/volume/driver.hpp		\
   slave/containerizer/mesos/isolators/docker/volume/paths.hpp		\
   slave/containerizer/mesos/isolators/docker/volume/state.hpp		\
@@ -2169,6 +2171,7 @@ mesos_tests_SOURCES =						\
   tests/containerizer/memory_test_helper.cpp			\
   tests/containerizer/mesos_containerizer_tests.cpp		\
   tests/containerizer/mesos_containerizer_paths_tests.cpp	\
+  tests/containerizer/posix_rlimit_isolator_tests.cpp		\
   tests/containerizer/provisioner_appc_tests.cpp		\
   tests/containerizer/provisioner_backend_tests.cpp		\
   tests/containerizer/provisioner_docker_tests.cpp		\
