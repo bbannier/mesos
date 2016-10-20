@@ -42,6 +42,8 @@
 #include "linux/ns.hpp"
 #endif
 
+#include "posix/rlimit.hpp"
+
 #include "slave/containerizer/mesos/launch.hpp"
 #include "slave/containerizer/mesos/paths.hpp"
 
@@ -93,6 +95,30 @@ MesosContainerizerLaunch::Flags::Flags()
   add(&Flags::user,
       "user",
       "The user to change to.");
+
+  add(&Flags::rlimits,
+      "rlimits",
+      "Resource limits for the launched process. This might require\n"
+      "additional priviledges if the new limits exceed the system\n"
+      "limits\n"
+      "Example:\n"
+      // --rlimits='{"rlimits":[{"type":"RLMT_FSIZE","hard":1,"soft":1}]}'
+      "{\n"
+      "  \"rlimits\":[\n"
+      "    {\n"
+      "      \"type\":\"RLMT_CPU\",\n"
+      "      \"soft\":\"1\",\n"
+      "      \"hard\":\"1\",\n"
+      "    },\n"
+      "    {\n"
+      "      \"type\":\"RLMT_FSIZE\",\n"
+      "      \"soft\":\"100\",\n"
+      "      \"hard\":\"200\",\n"
+      "    }\n"
+      "  ]\n"
+      "}"
+
+      );
 #endif // __WINDOWS__
 
   add(&Flags::pipe_read,
@@ -534,10 +560,11 @@ int MesosContainerizerLaunch::execute()
     }
   }
 
+
+#ifndef __WINDOWS__
   // Change user if provided. Note that we do that after executing the
   // preparation commands so that those commands will be run with the
   // same privilege as the mesos-agent.
-#ifndef __WINDOWS__
   if (uid.isSome()) {
     Try<Nothing> setgid = os::setgid(gid.get());
     if (setgid.isError()) {
@@ -560,6 +587,20 @@ int MesosContainerizerLaunch::execute()
       exitWithStatus(EXIT_FAILURE);
     }
   }
+
+  // Set rlimits if provided. This needs to be performed after
+  // changing the user so tasks do not exceed limits configured system
+  // levels.
+  if (flags.rlimits.isSome()) {
+    foreach (const RLimitInfo::RLimit& limit, flags.rlimits->rlimits()) {
+      Try<Nothing> set = rlimit::set(limit);
+
+      if (set.isError()) {
+        cerr << "Failed to set rlimit: " + set.error();
+      }
+    }
+  }
+
 #endif // __WINDOWS__
 
 #ifdef __linux__
