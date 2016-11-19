@@ -16,6 +16,7 @@
 #include <gmock/gmock.h>
 
 #include <stout/duration.hpp>
+#include <stout/error.hpp>
 #include <stout/flags.hpp>
 #include <stout/foreach.hpp>
 #include <stout/gtest.hpp>
@@ -26,6 +27,7 @@
 #include <stout/os.hpp>
 #include <stout/path.hpp>
 #include <stout/some.hpp>
+#include <stout/stringify.hpp>
 #include <stout/utils.hpp>
 
 #include <stout/os/write.hpp>

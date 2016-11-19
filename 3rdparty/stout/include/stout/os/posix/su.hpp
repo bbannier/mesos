@@ -18,6 +18,7 @@
 #define __STOUT_OS_POSIX_SU_HPP__
 
 #include <string>
+#include <vector>
 
 #include <errno.h>
 #include <grp.h>

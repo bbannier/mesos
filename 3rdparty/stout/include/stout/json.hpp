@@ -35,6 +35,7 @@
 #include <boost/variant.hpp>
 
 #include <stout/check.hpp>
+#include <stout/error.hpp>
 #include <stout/foreach.hpp>
 #include <stout/numify.hpp>
 #include <stout/result.hpp>

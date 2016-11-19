@@ -10,6 +10,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+#include <errno.h>
+#include <fcntl.h>
+
 #include <list>
 #include <map>
 #include <set>
@@ -17,18 +20,27 @@
 
 #include <stout/foreach.hpp>
 #include <stout/fs.hpp>
+#include <stout/gtest.hpp>
 #include <stout/hashset.hpp>
+#include <stout/hashset.hpp>
+#include <stout/nothing.hpp>
 #include <stout/path.hpp>
+#include <stout/result.hpp>
 #include <stout/try.hpp>
 #include <stout/uuid.hpp>
 
+#include <stout/os/close.hpp>
+#include <stout/os/exists.hpp>
 #include <stout/os/find.hpp>
 #include <stout/os/getcwd.hpp>
 #include <stout/os/ls.hpp>
 #include <stout/os/mkdir.hpp>
+#include <stout/os/open.hpp>
 #include <stout/os/read.hpp>
 #include <stout/os/rename.hpp>
 #include <stout/os/rm.hpp>
+#include <stout/os/stat.hpp>
+#include <stout/os/strerror.hpp>
 #include <stout/os/touch.hpp>
 #include <stout/os/write.hpp>
 #include <stout/os/xattr.hpp>

@@ -18,6 +18,7 @@
 #include <stout/gtest.hpp>
 #include <stout/none.hpp>
 #include <stout/option.hpp>
+#include <stout/some.hpp>
 
 using std::string;
 

@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include <stout/foreach.hpp>
 #include <stout/gtest.hpp>
 #include <stout/linkedhashmap.hpp>
 

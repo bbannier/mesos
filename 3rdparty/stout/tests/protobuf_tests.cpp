@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <string>
 
+#include <stout/foreach.hpp>
 #include <stout/gtest.hpp>
 #include <stout/json.hpp>
 #include <stout/jsonify.hpp>

@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <string>
+#include <type_traits>
 
 #include <stout/abort.hpp>
 #include <stout/error.hpp>

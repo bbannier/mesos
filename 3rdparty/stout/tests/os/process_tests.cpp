@@ -10,15 +10,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+#include <signal.h>
+
 #ifdef __WINDOWS__
 #include <process.h>
 #endif // __WINDOWS__
 
+#include <list>
 #include <set>
 
 #include <gtest/gtest.h>
 
+#include <stout/bytes.hpp>
+#include <stout/duration.hpp>
+#include <stout/foreach.hpp>
+#include <stout/gtest.hpp>
+#include <stout/none.hpp>
 #include <stout/os.hpp>
+#include <stout/result.hpp>
+#include <stout/stringify.hpp>
 
 #ifndef __WINDOWS__
 #include <stout/os/fork.hpp>

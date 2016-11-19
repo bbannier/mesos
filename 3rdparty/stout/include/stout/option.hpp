@@ -16,6 +16,7 @@
 #include <assert.h>
 
 #include <algorithm>
+#include <type_traits>
 
 #include <stout/none.hpp>
 #include <stout/some.hpp>

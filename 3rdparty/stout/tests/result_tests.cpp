@@ -16,6 +16,7 @@
 
 #include <stout/error.hpp>
 #include <stout/gtest.hpp>
+#include <stout/none.hpp>
 #include <stout/result.hpp>
 #include <stout/try.hpp>
 

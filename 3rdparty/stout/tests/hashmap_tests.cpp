@@ -20,6 +20,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <stout/foreach.hpp>
 #include <stout/gtest.hpp>
 #include <stout/hashmap.hpp>
 

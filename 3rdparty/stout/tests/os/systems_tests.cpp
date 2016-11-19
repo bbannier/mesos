@@ -10,7 +10,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+#include <string>
+
+#include <stout/gtest.hpp>
 #include <stout/os.hpp>
+#include <stout/try.hpp>
+#include <stout/version.hpp>
 
 #include <stout/tests/utils.hpp>
 

@@ -15,6 +15,11 @@
 
 #include <sys/xattr.h>
 
+#include <string>
+
+#include <stout/nothing.hpp>
+#include <stout/try.hpp>
+
 namespace os {
 
 inline Try<Nothing> setxattr(

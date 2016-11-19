@@ -15,9 +15,16 @@
 #include <set>
 #include <string>
 
+#include <gtest/gtest.h>
+
+#include <stout/foreach.hpp>
 #include <stout/fs.hpp>
+#include <stout/gtest.hpp>
+#include <stout/hashset.hpp>
 #include <stout/os.hpp>
 #include <stout/path.hpp>
+#include <stout/result.hpp>
+#include <stout/try.hpp>
 
 #include <stout/os/getcwd.hpp>
 #include <stout/os/ls.hpp>

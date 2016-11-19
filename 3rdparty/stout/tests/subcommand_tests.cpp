@@ -18,8 +18,13 @@
 
 #include <gtest/gtest.h>
 
+#include <stout/bytes.hpp>
+#include <stout/duration.hpp>
 #include <stout/flags.hpp>
 #include <stout/foreach.hpp>
+#include <stout/json.hpp>
+#include <stout/none.hpp>
+#include <stout/option.hpp>
 #include <stout/subcommand.hpp>
 
 using std::string;

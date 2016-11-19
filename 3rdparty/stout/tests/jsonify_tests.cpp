@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <stout/jsonify.hpp>
+#include <stout/strings.hpp>
 
 using std::map;
 using std::multimap;

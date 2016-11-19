@@ -22,6 +22,7 @@
 #include <stout/gtest.hpp>
 #include <stout/mac.hpp>
 #include <stout/net.hpp>
+#include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/strings.hpp>
 

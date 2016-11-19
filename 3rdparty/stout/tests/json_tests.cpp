@@ -16,12 +16,15 @@
 
 #include <string>
 
+#include <boost/variant.hpp> // for boost:::get
+
 #include <gtest/gtest.h>
 
 #include <gmock/gmock.h>
 
 #include <stout/gtest.hpp>
 #include <stout/json.hpp>
+#include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/strings.hpp>
 

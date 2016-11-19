@@ -10,15 +10,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
+#include <signal.h>
 #include <stdint.h>
 
 #if !defined(__linux__) && !defined(__WINDOWS__)
 #include <sys/time.h> // For gettimeofday.
 #endif
-#ifdef __FreeBSD__
+#include <fcntl.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
-#endif
 
 #include <cstdlib> // For rand.
 #include <list>
@@ -32,18 +32,25 @@
 
 #include <gtest/gtest.h>
 
+#include <stout/abort.hpp>
+#include <stout/bytes.hpp>
 #include <stout/duration.hpp>
 #include <stout/foreach.hpp>
 #include <stout/fs.hpp>
 #include <stout/gtest.hpp>
+#include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
+#include <stout/none.hpp>
 #include <stout/numify.hpp>
 #include <stout/os.hpp>
 #include <stout/os/environment.hpp>
 #include <stout/os/kill.hpp>
 #include <stout/os/killtree.hpp>
 #include <stout/os/write.hpp>
+#include <stout/path.hpp>
+#include <stout/result.hpp>
 #include <stout/stopwatch.hpp>
+#include <stout/stringify.hpp>
 #include <stout/strings.hpp>
 #include <stout/try.hpp>
 #include <stout/uuid.hpp>

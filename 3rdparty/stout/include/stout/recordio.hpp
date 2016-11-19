@@ -13,14 +13,13 @@
 #ifndef __STOUT_RECORDIO_HPP__
 #define __STOUT_RECORDIO_HPP__
 
-#include <stdlib.h>
-
 #include <deque>
 #include <functional>
 #include <string>
 
 #include <stout/check.hpp>
 #include <stout/foreach.hpp>
+#include <stout/gtest.hpp>
 #include <stout/numify.hpp>
 #include <stout/option.hpp>
 #include <stout/stringify.hpp>

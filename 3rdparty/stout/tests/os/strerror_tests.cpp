@@ -12,6 +12,8 @@
 
 #include <errno.h> // For errno defines.
 
+#include <netdb.h>
+
 #include <limits>
 
 #include <gtest/gtest.h>

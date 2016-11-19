@@ -10,11 +10,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fcntl.h>
+#include <sys/stat.h>
+
 #include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
 
+#include <stout/gtest.hpp>
 #include <stout/path.hpp>
 
 #include <stout/os/exists.hpp>

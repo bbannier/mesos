@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <stout/gtest.hpp>
+#include <stout/option.hpp>
 #include <stout/try.hpp>
 
 #include <stout/os/chdir.hpp>

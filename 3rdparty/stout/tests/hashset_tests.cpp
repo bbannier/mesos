@@ -15,6 +15,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <stout/foreach.hpp>
 #include <stout/hashset.hpp>
 
 #include <gtest/gtest.h>

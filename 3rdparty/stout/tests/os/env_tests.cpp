@@ -12,6 +12,7 @@
 
 #include <gtest/gtest.h>
 
+#include <stout/gtest.hpp>
 #include <stout/os.hpp>
 
 #include <stout/tests/utils.hpp>
