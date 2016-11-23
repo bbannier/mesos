@@ -1,0 +1,470 @@
+module stout {
+
+module abort {
+  textual header "abort.hpp"
+}
+module adaptor {
+  header "adaptor.hpp"
+}
+module attributes {
+  header "attributes.hpp"
+}
+module base64 {
+  header "base64.hpp"
+}
+module bits {
+  header "bits.hpp"
+}
+module bytes {
+  header "bytes.hpp"
+}
+module cache {
+  header "cache.hpp"
+}
+module check {
+  header "check.hpp"
+}
+module duration {
+  header "duration.hpp"
+}
+module dynamiclibrary {
+  header "dynamiclibrary.hpp"
+  header "posix/dynamiclibrary.hpp"
+  // header "windows/dynamiclibrary.hpp"
+}
+module elf {
+  header "elf.hpp"
+}
+module error {
+  header "errorbase.hpp"
+  header "error.hpp"
+}
+module exit {
+  header "exit.hpp"
+}
+module flags {
+  module fetch {
+    header "flags/fetch.hpp"
+  }
+  module flag {
+    header "flags/flag.hpp"
+  }
+  module flags {
+    header "flags/flags.hpp"
+  }
+  module parse {
+    header "flags/parse.hpp"
+  }
+  header "flags.hpp"
+}
+module foreach {
+  textual header "foreach.hpp"
+}
+module format {
+  header "format.hpp"
+}
+module fs {
+  header "fs.hpp"
+  header "posix/fs.hpp"
+  // header "windows/fs.hpp"
+}
+
+module gtest {
+  header "gtest.hpp"
+  export *
+}
+
+module gzip {
+  header "gzip.hpp"
+}
+module hashmap {
+  header "hashmap.hpp"
+  export std.unordered_map
+}
+module hashset {
+  header "hashset.hpp"
+  export std.unordered_set
+}
+// TODO(bbannier): not applicable on OS X.
+// module internal {
+//   module windows {
+//     module dirent {
+//       header "internal/windows/dirent.hpp"
+//     }
+//     module grp {
+//       header "internal/windows/grp.hpp"
+//     }
+//     module pwd {
+//       header "internal/windows/pwd.hpp"
+//     }
+//     module reparsepoint {
+//       header "internal/windows/reparsepoint.hpp"
+//     }
+//     module symlink {
+//       header "internal/windows/symlink.hpp"
+//     }
+//   }
+// }
+
+// TODO(bbannier): currently broken due to Boost header dependency mess.
+module interval {
+  exclude header "interval.hpp"
+}
+
+module ip {
+  header "ip.hpp"
+}
+module json {
+  header "json.hpp"
+  export std.map
+}
+module jsonify {
+  header "jsonify.hpp"
+}
+module lambda {
+  header "lambda.hpp"
+}
+module linkedhashmap {
+  header "linkedhashmap.hpp"
+  export hashmap
+}
+module mac {
+  header "mac.hpp"
+}
+module multihashmap {
+  header "multihashmap.hpp"
+}
+module multimap {
+  header "multimap.hpp"
+}
+module net {
+  header "net.hpp"
+  header "posix/net.hpp"
+  // header "windows/net.hpp"
+}
+module none {
+  header "none.hpp"
+}
+module nothing {
+  header "nothing.hpp"
+}
+
+// TODO(bbannier): currently broken due to Boost header dependency mess.
+module numify {
+  exclude header "numify.hpp"
+}
+
+module option {
+  header "option.hpp"
+}
+module os {
+  module access {
+    header "os/access.hpp"
+  }
+  module bootid {
+    header "os/bootid.hpp"
+    header "os/posix/bootid.hpp"
+    // header "os/windows/bootid.hpp"
+  }
+  module chdir {
+    header "os/chdir.hpp"
+  }
+  module chroot {
+    header "os/chroot.hpp"
+    header "os/posix/chroot.hpp"
+    // header "os/windows/chroot.hpp"
+  }
+  module close {
+    header "os/close.hpp"
+    header "os/posix/close.hpp"
+    // header "os/windows/close.hpp"
+  }
+  module constants {
+    header "os/constants.hpp"
+  }
+  module environment {
+    header "os/environment.hpp"
+  }
+  module exists {
+    header "os/exists.hpp"
+    header "os/posix/exists.hpp"
+    // header "os/windows/exists.hpp"
+  }
+  module fcntl {
+    header "os/fcntl.hpp"
+    header "os/posix/fcntl.hpp"
+    // header "os/windows/fcntl.hpp"
+  }
+  module find {
+    header "os/find.hpp"
+  }
+  module fork {
+    header "os/fork.hpp"
+    header "os/posix/fork.hpp"
+    // header "os/windows/fork.hpp"
+  }
+
+  // TODO(bbannier): not applicable on OS X.
+  // module freebsd {
+  //   header "os/freebsd.hpp"
+  // }
+
+  module fsync {
+    header "os/fsync.hpp"
+    header "os/posix/fsync.hpp"
+    // header "os/windows/fsync.hpp"
+  }
+  module ftruncate {
+    header "os/ftruncate.hpp"
+    header "os/posix/ftruncate.hpp"
+    // header "os/windows/ftruncate.hpp"
+  }
+  module getcwd {
+    header "os/getcwd.hpp"
+  }
+  module kill {
+    header "os/kill.hpp"
+    header "os/posix/kill.hpp"
+    // header "os/windows/kill.hpp"
+  }
+  module killtree {
+    header "os/killtree.hpp"
+    header "os/posix/killtree.hpp"
+    // header "os/windows/killtree.hpp"
+  }
+
+  // TODO(bbannier): not applicable on OS X.
+  // module linux {
+  //   header "os/linux.hpp"
+  // }
+
+  module ls {
+    header "os/ls.hpp"
+  }
+  module mkdir {
+    header "os/mkdir.hpp"
+  }
+  module mkdtemp {
+    header "os/mkdtemp.hpp"
+    header "os/posix/mkdtemp.hpp"
+    // header "os/windows/mkdtemp.hpp"
+  }
+  module mktemp {
+    header "os/mktemp.hpp"
+  }
+  module open {
+    header "os/open.hpp"
+  }
+  module os {
+    header "os/os.hpp"
+  }
+  module osx {
+    header "os/osx.hpp"
+  }
+  module pagesize {
+    header "os/pagesize.hpp"
+    header "os/posix/pagesize.hpp"
+    // header "os/windows/pagesize.hpp"
+  }
+  module permissions {
+    header "os/permissions.hpp"
+  }
+  module posix {
+    module chown {
+      header "os/posix/chown.hpp"
+    }
+  }
+  module process {
+    header "os/process.hpp"
+  }
+  module pstree {
+    header "os/pstree.hpp"
+  }
+  module raw {
+    module argv {
+      header "os/raw/argv.hpp"
+    }
+    module environment {
+      header "os/raw/environment.hpp"
+    }
+  }
+  module read {
+    header "os/read.hpp"
+    header "os/posix/read.hpp"
+    // header "os/windows/read.hpp"
+  }
+  module realpath {
+    header "os/realpath.hpp"
+  }
+  module rename {
+    header "os/rename.hpp"
+    header "os/posix/rename.hpp"
+    // header "os/windows/rename.hpp"
+  }
+  module rm {
+    header "os/rm.hpp"
+    header "os/posix/rm.hpp"
+    // header "os/windows/rm.hpp"
+  }
+  module rmdir {
+    header "os/rmdir.hpp"
+    header "os/posix/rmdir.hpp"
+    // header "os/windows/rmdir.hpp"
+  }
+  module sendfile {
+    header "os/sendfile.hpp"
+    header "os/posix/sendfile.hpp"
+    // header "os/windows/sendfile.hpp"
+  }
+  module shell {
+    header "os/shell.hpp"
+    header "os/posix/shell.hpp"
+    // header "os/windows/shell.hpp"
+  }
+  module signals {
+    header "os/signals.hpp"
+    header "os/posix/signals.hpp"
+    // header "os/windows/signals.hpp"
+  }
+  module socket {
+    header "os/socket.hpp"
+    header "os/posix/socket.hpp"
+    // header "os/windows/socket.hpp"
+  }
+  module stat {
+    header "os/stat.hpp"
+    header "os/posix/stat.hpp"
+    // header "os/windows/stat.hpp"
+  }
+  module strerror {
+    header "os/strerror.hpp"
+  }
+  module su {
+    header "os/su.hpp"
+    header "os/posix/su.hpp"
+    // header "os/windows/su.hpp"
+  }
+
+  // TODO(bbannier): not applicable on OS X.
+  // module sunos {
+  //   header "os/sunos.hpp"
+  // }
+
+  module sysctl {
+    header "os/sysctl.hpp"
+  }
+  module touch {
+    header "os/touch.hpp"
+  }
+  module utime {
+    header "os/utime.hpp"
+  }
+  module wait {
+    header "os/wait.hpp"
+  }
+  module write {
+    header "os/write.hpp"
+    header "os/posix/write.hpp"
+    // header "os/windows/write.hpp"
+  }
+  module xattr {
+    header "os/xattr.hpp"
+    header "os/posix/xattr.hpp"
+    // header "os/windows/xattr.hpp"
+  }
+
+  header "os.hpp"
+  header "posix/os.hpp"
+  // header "windows/os.hpp"
+}
+
+module path {
+  header "path.hpp"
+}
+module preprocessor {
+  textual header "preprocessor.hpp"
+}
+
+// TODO(bbannier): not applicable on OS X.
+// module proc {
+//   header "proc.hpp"
+// }
+
+module protobuf {
+  header "protobuf.hpp"
+}
+module recordio {
+  header "recordio.hpp"
+}
+module representation {
+  header "representation.hpp"
+}
+module result {
+  header "result.hpp"
+  export try
+}
+module result_of {
+  header "result_of.hpp"
+}
+module set {
+  header "set.hpp"
+}
+module some {
+  header "some.hpp"
+}
+module stopwatch {
+  header "stopwatch.hpp"
+}
+module stringify {
+  header "stringify.hpp"
+}
+module strings {
+  header "strings.hpp"
+}
+module subcommand {
+  header "subcommand.hpp"
+}
+module svn {
+  header "svn.hpp"
+}
+module synchronized {
+  header "synchronized.hpp"
+}
+module tests {
+  module utils {
+    header "tests/utils.hpp"
+  }
+}
+module thread_local {
+  header "thread_local.hpp"
+}
+module try {
+  header "try.hpp"
+}
+module unimplemented {
+  header "unimplemented.hpp"
+}
+module unreachable {
+  header "unreachable.hpp"
+}
+module utils {
+  header "utils.hpp"
+}
+module uuid {
+  header "uuid.hpp"
+}
+module version {
+  header "version.hpp"
+}
+
+// TODO(bbannier): not applicable on OS X.
+// module windows {
+//   module error {
+//     header "windows/error.hpp"
+//   }
+//   module format {
+//     header "windows/format.hpp"
+//   }
+//   header "windows.hpp"
+// }
+}
