@@ -14,6 +14,8 @@
 
 #include <netinet/in.h>
 
+#include <glog/logging.h> // FIXME(bbannier): remove again, just for CHECK.
+
 #include <string>
 
 #include <openssl/err.h>

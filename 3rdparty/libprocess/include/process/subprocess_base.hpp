@@ -23,6 +23,8 @@
 
 #include <process/future.hpp>
 
+#include <stout/adaptor.hpp> // FIXME(bbannier): just for mpl mess
+
 #include <stout/flags.hpp>
 #include <stout/lambda.hpp>
 #include <stout/none.hpp>

@@ -23,6 +23,8 @@
 #include <process/metrics/gauge.hpp>
 #include <process/metrics/metrics.hpp>
 
+#include <stout/adaptor.hpp> // FIXME(bbannier): just for mpl mess
+
 #include <stout/json.hpp>
 #include <stout/os.hpp>
 
