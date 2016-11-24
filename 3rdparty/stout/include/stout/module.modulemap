@@ -115,8 +115,8 @@ module ip {
   header "ip.hpp"
 }
 module json {
-  header "json.hpp"
-  export std.map
+  // boost.variant uses boost.preprocessor.
+  textual header "json.hpp"
 }
 module jsonify {
   header "jsonify.hpp"
@@ -257,6 +257,7 @@ module os {
   }
   module os {
     header "os/os.hpp"
+    export bytes
   }
   module osx {
     header "os/osx.hpp"
@@ -428,7 +429,7 @@ module svn {
   header "svn.hpp"
 }
 module synchronized {
-  header "synchronized.hpp"
+  textual header "synchronized.hpp"
 }
 module tests {
   module utils {
@@ -440,6 +441,7 @@ module thread_local {
 }
 module try {
   header "try.hpp"
+  export option
 }
 module unimplemented {
   header "unimplemented.hpp"
