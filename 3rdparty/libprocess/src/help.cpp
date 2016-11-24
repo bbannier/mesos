@@ -28,6 +28,7 @@
 #include <stout/json.hpp>
 #include <stout/option.hpp>
 #include <stout/preprocessor.hpp>
+#include <stout/some.hpp>
 #include <stout/stringify.hpp>
 #include <stout/strings.hpp>
 

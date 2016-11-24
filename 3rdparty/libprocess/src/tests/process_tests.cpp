@@ -57,6 +57,7 @@
 #include <stout/lambda.hpp>
 #include <stout/nothing.hpp>
 #include <stout/os.hpp>
+#include <stout/path.hpp>
 #include <stout/stopwatch.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>

@@ -13,6 +13,8 @@
 #ifndef __PROCESS_POSIX_SUBPROCESS_HPP__
 #define __PROCESS_POSIX_SUBPROCESS_HPP__
 
+#include <signal.h>
+
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif // __linux__

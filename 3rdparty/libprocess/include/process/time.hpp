@@ -16,6 +16,7 @@
 #include <iomanip>
 
 #include <stout/duration.hpp>
+#include <stout/try.hpp>
 
 namespace process {
 

@@ -30,6 +30,8 @@
 #include <stout/windows.hpp>
 #endif // __WINDOWS__
 
+#include <stout/os/close.hpp>
+
 namespace process {
 namespace network {
 

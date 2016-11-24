@@ -17,6 +17,7 @@
 
 #include <stout/check.hpp>
 #include <stout/option.hpp>
+#include <stout/some.hpp>
 
 #include <process/future.hpp>
 

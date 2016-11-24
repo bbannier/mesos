@@ -29,9 +29,11 @@
 #include <boost/functional/hash.hpp>
 
 #include <stout/abort.hpp>
+#include <stout/error.hpp>
 #include <stout/ip.hpp>
 #include <stout/net.hpp>
 #include <stout/stringify.hpp>
+#include <stout/try.hpp>
 
 namespace process {
 namespace network {

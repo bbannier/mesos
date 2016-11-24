@@ -10,7 +10,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License
 
-#include <process/ssl/utilities.hpp>
+#include "process/ssl/utilities.hpp"
+
+#include <netinet/in.h>
+
+#include <string>
 
 #include <openssl/err.h>
 #include <openssl/rsa.h>
@@ -18,7 +22,9 @@
 #include <openssl/x509v3.h>
 
 #include <stout/check.hpp>
+#include <stout/error.hpp>
 #include <stout/net.hpp>
+#include <stout/none.hpp>
 #include <stout/stringify.hpp>
 
 // TODO(jmlvanre): Add higher level abstractions for key and

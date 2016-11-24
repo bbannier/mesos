@@ -28,6 +28,9 @@
 
 #include <process/ssl/flags.hpp>
 
+#include <stout/error.hpp>
+#include <stout/exit.hpp>
+#include <stout/foreach.hpp>
 #include <stout/os.hpp>
 #include <stout/strings.hpp>
 

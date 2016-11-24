@@ -26,9 +26,11 @@
 #include <stout/flags.hpp>
 #include <stout/lambda.hpp>
 #include <stout/none.hpp>
+#include <stout/nothing.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 
+#include <stout/os/close.hpp>
 #include <stout/os/shell.hpp>
 
 

@@ -26,6 +26,7 @@
 
 #include <stout/duration.hpp>
 #include <stout/error.hpp>
+#include <stout/exit.hpp>
 #include <stout/foreach.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/numify.hpp>

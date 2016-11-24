@@ -20,6 +20,7 @@
 #include <stout/duration.hpp>
 #include <stout/gtest.hpp>
 #include <stout/os.hpp>
+#include <stout/stringify.hpp>
 
 using process::Clock;
 using process::RFC1123;

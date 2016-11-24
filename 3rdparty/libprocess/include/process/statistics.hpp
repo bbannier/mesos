@@ -13,6 +13,8 @@
 #ifndef __PROCESS_STATISTICS_HPP__
 #define __PROCESS_STATISTICS_HPP__
 
+#include <math.h>
+
 #include <glog/logging.h>
 
 #include <algorithm>

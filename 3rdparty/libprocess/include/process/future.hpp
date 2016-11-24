@@ -35,6 +35,7 @@
 #include <stout/check.hpp>
 #include <stout/duration.hpp>
 #include <stout/error.hpp>
+#include <stout/foreach.hpp>
 #include <stout/lambda.hpp>
 #include <stout/none.hpp>
 #include <stout/option.hpp>

@@ -20,6 +20,8 @@
 #ifdef USE_SSL_SOCKET
 #include <string>
 
+#include <gtest/gtest.h>
+
 #include <openssl/rsa.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>

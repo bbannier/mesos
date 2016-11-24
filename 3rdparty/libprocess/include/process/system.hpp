@@ -23,6 +23,7 @@
 #include <process/metrics/gauge.hpp>
 #include <process/metrics/metrics.hpp>
 
+#include <stout/json.hpp>
 #include <stout/os.hpp>
 
 namespace process {

@@ -28,6 +28,8 @@
 #include <stout/net.hpp>
 #include <stout/synchronized.hpp>
 
+#include <stout/os/fcntl.hpp>
+
 #include "libevent.hpp"
 #include "libevent_ssl_socket.hpp"
 #include "openssl.hpp"

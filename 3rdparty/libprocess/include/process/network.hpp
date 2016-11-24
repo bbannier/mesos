@@ -16,6 +16,7 @@
 #include <process/address.hpp>
 
 #include <stout/net.hpp>
+#include <stout/nothing.hpp>
 #include <stout/try.hpp>
 
 #include <stout/os/socket.hpp>
