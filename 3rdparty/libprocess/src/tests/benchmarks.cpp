@@ -33,6 +33,7 @@
 #include <stout/duration.hpp>
 #include <stout/gtest.hpp>
 #include <stout/hashset.hpp>
+#include <stout/numify.hpp>
 #include <stout/stopwatch.hpp>
 
 namespace http = process::http;

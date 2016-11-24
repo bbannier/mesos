@@ -13,10 +13,14 @@
 #ifndef __PROCESS_NETWORK_HPP__
 #define __PROCESS_NETWORK_HPP__
 
+#include <sys/socket.h>
+
 #include <process/address.hpp>
 
+#include <stout/error.hpp>
 #include <stout/net.hpp>
 #include <stout/nothing.hpp>
+#include <stout/stringify.hpp>
 #include <stout/try.hpp>
 
 #include <stout/os/socket.hpp>

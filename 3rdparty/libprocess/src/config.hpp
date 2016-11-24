@@ -34,6 +34,7 @@
 #define MSG_NOSIGNAL 0
 #endif
 #ifndef SOL_TCP
+#include <netinet/in.h>
 #define SOL_TCP IPPROTO_TCP
 #endif
 #ifndef MAP_32BIT

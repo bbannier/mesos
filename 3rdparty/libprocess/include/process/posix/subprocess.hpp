@@ -29,11 +29,12 @@
 #include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/foreach.hpp>
-#include <stout/nothing.hpp>
 #include <stout/lambda.hpp>
 #include <stout/none.hpp>
+#include <stout/nothing.hpp>
 #include <stout/option.hpp>
 #include <stout/os.hpp>
+#include <stout/stringify.hpp>
 #include <stout/try.hpp>
 #include <stout/unreachable.hpp>
 

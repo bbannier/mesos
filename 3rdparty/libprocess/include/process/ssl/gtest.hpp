@@ -17,6 +17,8 @@
 #ifndef __PROCESS_SSL_TEST_HPP__
 #define __PROCESS_SSL_TEST_HPP__
 
+#include <netinet/in.h>
+
 #ifdef USE_SSL_SOCKET
 #include <string>
 
@@ -34,10 +36,11 @@
 
 #include <process/ssl/utilities.hpp>
 
+#include <stout/net.hpp>
 #include <stout/none.hpp>
 #include <stout/option.hpp>
-#include <stout/try.hpp>
 #include <stout/result.hpp>
+#include <stout/try.hpp>
 #endif // USE_SSL_SOCKET
 
 #include <stout/tests/utils.hpp>
