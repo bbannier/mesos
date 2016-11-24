@@ -38,6 +38,7 @@ module elf {
 module error {
   header "errorbase.hpp"
   header "error.hpp"
+  export std.string
 }
 module exit {
   header "exit.hpp"
