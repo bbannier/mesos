@@ -122,9 +122,7 @@ stout_tests_SOURCES =			\
   tests/main.cpp			\
   tests/multimap_tests.cpp		\
   tests/none_tests.cpp			\
-  tests/numify_tests.cpp		\
   tests/option_tests.cpp		\
-  tests/os_tests.cpp			\
   tests/os/env_tests.cpp		\
   tests/os/filesystem_tests.cpp		\
   tests/os/process_tests.cpp		\
@@ -139,7 +137,6 @@ stout_tests_SOURCES =			\
   tests/protobuf_tests.pb.cc		\
   tests/protobuf_tests.pb.h		\
   tests/protobuf_tests.proto		\
-  tests/recordio_tests.cpp		\
   tests/result_tests.cpp		\
   tests/some_tests.cpp			\
   tests/strings_tests.cpp		\
