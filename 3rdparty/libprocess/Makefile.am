@@ -144,7 +144,6 @@ libprocess_la_SOURCES =		\
   src/firewall.cpp		\
   src/gate.hpp			\
   src/help.cpp			\
-  src/http.cpp			\
   src/io.cpp			\
   src/latch.cpp			\
   src/logging.cpp		\
@@ -181,11 +180,13 @@ libprocess_la_CPPFLAGS =			\
   $(BOOST_INCLUDE_FLAGS)			\
   $(ELFIO_INCLUDE_FLAGS)			\
   $(GLOG_INCLUDE_FLAGS)				\
+  $(GTEST_INCLUDE_FLAGS)			\
   $(GPERFTOOLS_INCLUDE_FLAGS)			\
   $(HTTP_PARSER_INCLUDE_FLAGS)			\
   $(LIB_EV_INCLUDE_FLAGS)			\
   $(PICOJSON_INCLUDE_FLAGS)			\
   $(STOUT_INCLUDE_FLAGS)			\
+  -isystem $(PROTOBUF)/src			\
   $(AM_CPPFLAGS)
 
 if ENABLE_LIBEVENT
@@ -219,10 +220,7 @@ check_PROGRAMS = libprocess-tests benchmarks
 libprocess_tests_SOURCES =					\
   src/tests/collect_tests.cpp					\
   src/tests/decoder_tests.cpp					\
-  src/tests/encoder_tests.cpp					\
   src/tests/future_tests.cpp					\
-  src/tests/http_tests.cpp					\
-  src/tests/io_tests.cpp					\
   src/tests/limiter_tests.cpp					\
   src/tests/main.cpp						\
   src/tests/metrics_tests.cpp					\
