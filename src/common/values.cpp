@@ -29,6 +29,8 @@
 
 #include <mesos/resources.hpp>
 #include <mesos/values.hpp>
+#include <mesos/mesos.ph.h> // FIXME(bbannier):
+#include <google/protobuf/repeated_field.h> // FIXME(bbannier):
 
 #include <stout/error.hpp>
 #include <stout/foreach.hpp>

@@ -36,6 +36,7 @@
 #include <stout/ip.hpp>
 #include <stout/json.hpp>
 #include <stout/jsonify.hpp>
+#include <stout/lambda.hpp>
 #include <stout/none.hpp>
 #include <stout/nothing.hpp>
 #include <stout/option.hpp>
@@ -68,7 +69,7 @@ class Authenticator;
  */
 Future<Nothing> setAuthenticator(
     const std::string& realm,
-    Owned<Authenticator> authenticator);
+    Owned<process::http::authentication::Authenticator> authenticator);
 
 
 /**

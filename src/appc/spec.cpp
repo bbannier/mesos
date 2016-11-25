@@ -14,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <stout/flags.hpp> // FIXME(bbannier)
+
+#include <stout/json.hpp>
+#include <stout/none.hpp>
 #include <stout/os.hpp>
 #include <stout/path.hpp>
 #include <stout/protobuf.hpp>

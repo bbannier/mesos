@@ -17,6 +17,7 @@
 
 #include <process/future.hpp>
 #include <process/http.hpp>
+#include <process/owned.hpp>
 
 #include <stout/hashmap.hpp>
 #include <stout/option.hpp>

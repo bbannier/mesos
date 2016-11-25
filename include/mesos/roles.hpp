@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <stout/error.hpp>
 #include <stout/try.hpp>
 
 namespace mesos {

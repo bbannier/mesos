@@ -22,6 +22,8 @@
 #include <mesos/mesos.hpp>
 
 #include <mesos/authorizer/acls.hpp>
+#include <mesos/authorizer/authorizer.hpp>
+#include <mesos/quota/quota.pb.h> // FIXME(bbannier)
 
 #include <process/dispatch.hpp>
 #include <process/future.hpp>

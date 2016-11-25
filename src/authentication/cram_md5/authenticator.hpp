@@ -19,6 +19,9 @@
 
 #include <string>
 
+#include <mesos/mesos.hpp>
+#include <mesos/mesos.pb.h> // FIXME(bbannier):
+
 #include <mesos/module/authenticator.hpp>
 
 #include <process/future.hpp>

@@ -17,6 +17,7 @@
 #ifndef __AUTHENTICATION_CRAM_MD5_AUXPROP_HPP__
 #define __AUTHENTICATION_CRAM_MD5_AUXPROP_HPP__
 
+#include <list>
 #include <mutex>
 #include <string>
 

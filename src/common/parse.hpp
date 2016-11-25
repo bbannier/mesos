@@ -22,6 +22,7 @@
 #include <stout/error.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/json.hpp>
+#include <stout/numify.hpp>
 #include <stout/protobuf.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>

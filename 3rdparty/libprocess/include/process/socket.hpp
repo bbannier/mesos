@@ -24,6 +24,8 @@
 #include <process/future.hpp>
 
 #include <stout/abort.hpp>
+#include <stout/check.hpp>
+#include <stout/none.hpp>
 #include <stout/nothing.hpp>
 #include <stout/try.hpp>
 #ifdef __WINDOWS__

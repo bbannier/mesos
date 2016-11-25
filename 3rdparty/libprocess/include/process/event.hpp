@@ -22,6 +22,7 @@
 
 #include <stout/abort.hpp>
 #include <stout/lambda.hpp>
+#include <stout/option.hpp>
 
 namespace process {
 

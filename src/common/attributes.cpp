@@ -20,9 +20,13 @@
 #include <glog/logging.h>
 
 #include <mesos/attributes.hpp>
+#include <mesos/mesos.hpp>
+#include <mesos/mesos.pb.h> // FIXME(bbannier)
+#include <google/protobuf/repeated_field.h> // FIXME(bbannier)
 #include <mesos/values.hpp>
 
 #include <stout/foreach.hpp>
+#include <stout/none.hpp>
 #include <stout/strings.hpp>
 
 using std::ostream;

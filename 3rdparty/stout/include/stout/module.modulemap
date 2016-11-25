@@ -23,6 +23,9 @@ module cache {
 }
 module check {
   header "check.hpp"
+  export error
+  export std.string
+  export std.ostream
 }
 module duration {
   header "duration.hpp"
@@ -118,12 +121,14 @@ module ip {
 module json {
   // boost.variant uses boost.preprocessor.
   textual header "json.hpp"
+  export *
 }
 module jsonify {
   header "jsonify.hpp"
 }
 module lambda {
   header "lambda.hpp"
+  export std.functional
 }
 module linkedhashmap {
   header "linkedhashmap.hpp"

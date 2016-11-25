@@ -18,6 +18,7 @@
 #define __AUTHENTICATION_CRAM_MD5_AUTHENTICATEE_HPP__
 
 #include <mesos/mesos.hpp>
+#include <mesos/mesos.pb.h> // FIXME(bbannier):
 
 #include <mesos/module/authenticatee.hpp>
 

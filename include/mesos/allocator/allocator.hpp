@@ -35,6 +35,7 @@
 #include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
 #include <stout/lambda.hpp>
+#include <stout/nothing.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 

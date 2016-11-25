@@ -36,6 +36,7 @@
 #include <stout/hashmap.hpp>
 #include <stout/json.hpp>
 #include <stout/lambda.hpp>
+#include <stout/none.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
 

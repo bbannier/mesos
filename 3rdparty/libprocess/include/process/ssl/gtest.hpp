@@ -45,6 +45,8 @@
 
 #include <stout/tests/utils.hpp>
 
+static constexpr char BUILD_DIR[] = "/Users/bbannier/src/mesos/build/";
+
 #ifdef USE_SSL_SOCKET
 namespace process {
 namespace network {

@@ -17,6 +17,7 @@
 #include <mesos/roles.hpp>
 
 #include <stout/foreach.hpp>
+#include <stout/none.hpp>
 #include <stout/strings.hpp>
 
 using std::initializer_list;

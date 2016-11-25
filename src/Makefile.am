@@ -753,7 +753,6 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   authentication/http/basic_authenticator_factory.cpp			\
   authorizer/acls.cpp							\
   authorizer/authorizer.cpp						\
-  authorizer/local/authorizer.cpp					\
   common/attributes.cpp							\
   common/command_utils.cpp						\
   common/http.cpp							\
@@ -1168,7 +1167,7 @@ else
 EXTRA_DIST += $(MESOS_NETWORK_ISOLATOR_FILES)
 endif
 
-libmesos_no_3rdparty_la_CPPFLAGS = $(MESOS_CPPFLAGS)
+libmesos_no_3rdparty_la_CPPFLAGS = $(MESOS_CPPFLAGS) -isystem../$(GTEST)/include -isystem ../$(GMOCK)/include
 
 libmesos_no_3rdparty_la_LIBADD = # Initialized to enable using +=.
 

@@ -21,6 +21,7 @@
 
 #include <mesos/http.hpp>
 #include <mesos/mesos.hpp>
+#include <mesos/mesos.pb.h> // FIXME(bbannier):
 
 #include <mesos/authorizer/authorizer.hpp>
 

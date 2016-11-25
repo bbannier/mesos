@@ -21,6 +21,7 @@
 
 // ONLY USEFUL AFTER RUNNING PROTOC.
 #include <mesos/authorizer/authorizer.pb.h>
+#include <mesos/quota/quota.pb.h>
 
 #include <process/future.hpp>
 

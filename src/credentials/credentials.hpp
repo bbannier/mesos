@@ -28,6 +28,9 @@
 #include <stout/os/permissions.hpp>
 #include <stout/os/read.hpp>
 
+#include <mesos/mesos.hpp>
+#include <mesos/mesos.pb.h> // FIXME(bbannier):
+
 namespace mesos {
 namespace internal {
 namespace credentials {
