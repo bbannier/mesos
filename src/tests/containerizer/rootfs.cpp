@@ -26,7 +26,14 @@
 #include <stout/strings.hpp>
 #include <stout/try.hpp>
 
+#include "linux/ldd.hpp"
+
 #include "rootfs.hpp"
+
+using std::string;
+using std::vector;
+
+using process::Owned;
 
 namespace mesos {
 namespace internal {
@@ -40,10 +47,36 @@ Rootfs::~Rootfs()
 }
 
 
-Try<Nothing> Rootfs::add(const std::string& path)
+Try<Nothing> Rootfs::add(const string& file)
+{
+  Result<std::string> realpath = os::realpath(file);
+  if (realpath.isError()) {
+      return Error("Failed to add '" + file +
+                    "' to rootfs: " + realpath.error());
+  }
+
+  Try<Nothing> result = copyPath(realpath.get());
+  if (result.isError()) {
+    return Error("Failed to add '" + realpath.get() +
+                  "' to rootfs: " + result.error());
+  }
+
+  if (file != realpath.get()) {
+    result = copyPath(file);
+    if (result.isError()) {
+      return Error("Failed to add '" + file + "' to rootfs: " +
+                    result.error());
+    }
+  }
+
+  return Nothing();
+}
+
+
+Try<Nothing> Rootfs::copyPath(const std::string& path)
 {
   if (!os::exists(path)) {
-    return Error("File or directory not found on the host");
+    return ErrnoError();
   }
 
   if (!strings::startsWith(path, "/")) {
@@ -56,26 +89,26 @@ Try<Nothing> Rootfs::add(const std::string& path)
   if (!os::exists(target)) {
     Try<Nothing> mkdir = os::mkdir(target);
     if (mkdir.isError()) {
-      return Error("Failed to create directory in rootfs: " +
+      return Error("Failed to create directory '" + target + "'in rootfs: " +
                     mkdir.error());
     }
   }
 
   // TODO(jieyu): Make sure 'path' is not under 'root'.
 
-  // Copy the files. We perserve all attributes so that e.g., `ping`
+  // Copy the files. We preserve all attributes so that e.g., `ping`
   // keeps its file-based capabilities.
   if (os::stat::isdir(path)) {
     if (os::system(strings::format(
             "cp -r --preserve=all '%s' '%s'",
             path, target).get()) != 0) {
-      return ErrnoError("Failed to copy '" + path + "' to rootfs");
+      return ErrnoError("Failed to copy to rootfs");
     }
   } else {
     if (os::system(strings::format(
             "cp --preserve=all '%s' '%s'",
             path, target).get()) != 0) {
-      return ErrnoError("Failed to copy '" + path + "' to rootfs");
+      return ErrnoError("Failed to copy to rootfs");
     }
   }
 
@@ -94,53 +127,51 @@ Try<process::Owned<Rootfs>> LinuxRootfs::create(const std::string& root)
     }
   }
 
-  std::vector<std::string> files = {
+  Try<vector<ldcache::Entry>> cache = ldcache::parse();
+
+  if (cache.isError()) {
+    return Error("Failed to parse ld.so cache: " + cache.error());
+  }
+
+  const std::vector<std::string> programs = {
     "/bin/echo",
     "/bin/ls",
     "/bin/ping",
     "/bin/sh",
     "/bin/sleep",
-    "/usr/bin/sh",
-    "/lib/x86_64-linux-gnu",
-    "/lib64/ld-linux-x86-64.so.2",
-    "/lib64/libc.so.6",
-    "/lib64/libdl.so.2",
-    "/lib64/libidn.so.11",
-    "/lib64/libtinfo.so.5",
-    "/lib64/libselinux.so.1",
-    "/lib64/libpcre.so.1",
-    "/lib64/liblzma.so.5",
-    "/lib64/libpthread.so.0",
-    "/lib64/libcap.so.2",
-    "/lib64/libacl.so.1",
-    "/lib64/libattr.so.1",
-    "/lib64/librt.so.1",
+  };
+
+  const std::vector<std::string> files = {
     "/etc/passwd"
   };
 
-  foreach (const std::string& file, files) {
-    // Some linux distros are moving all binaries and libraries to
-    // /usr, in which case /bin, /lib, and /lib64 will be symlinks
-    // to their equivalent directories in /usr.
-    Result<std::string> realpath = os::realpath(file);
-    if (realpath.isSome()) {
-      Try<Nothing> result = rootfs->add(realpath.get());
-      if (result.isError()) {
-        return Error("Failed to add '" + realpath.get() +
-                     "' to rootfs: " + result.error());
-      }
+  hashset<string> needed;
 
-      if (file != realpath.get()) {
-        result = rootfs->add(file);
-        if (result.isError()) {
-          return Error("Failed to add '" + file + "' to rootfs: " +
-                       result.error());
-        }
-      }
+  foreach(const string& program, programs) {
+    Try<hashset<string>> dependencies = ldd(program, cache.get());
+    if (dependencies.isError()) {
+      return Error("Failed to find dependencies for '" + program + "': " +
+          dependencies.error());
+    }
+
+    needed = needed | dependencies.get();
+  }
+
+  foreach (const std::string& file, needed) {
+    Try<Nothing> result = rootfs->add(file);
+    if (result.isError()) {
+      return Error(result.error());
     }
   }
 
-  std::vector<std::string> directories = {
+  foreach (const std::string& file, files) {
+    Try<Nothing> result = rootfs->add(file);
+    if (result.isError()) {
+      return Error(result.error());
+    }
+  }
+
+  const std::vector<std::string> directories = {
     "/proc",
     "/sys",
     "/dev",
