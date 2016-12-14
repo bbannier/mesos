@@ -28,6 +28,8 @@
 #include <stout/none.hpp>
 #include <stout/option.hpp>
 
+#include "slave/flags.hpp"
+
 #include "slave/containerizer/mesos/isolator.hpp"
 
 #include "slave/containerizer/mesos/isolators/docker/volume/driver.hpp"

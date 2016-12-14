@@ -22,8 +22,10 @@
 #include <mesos/slave/qos_controller.hpp>
 
 #include <stout/lambda.hpp>
-#include <stout/os/os.hpp>
+#include <stout/os.hpp>
 #include <stout/try.hpp>
+
+#include <stout/os/os.hpp>
 
 #include <process/future.hpp>
 #include <process/owned.hpp>

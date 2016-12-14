@@ -21,6 +21,8 @@
 #include <unistd.h> // For pid_t.
 #endif // __WINDOWS__
 
+#include <stout/try.hpp>
+
 #include "mesos/mesos.hpp"
 
 namespace mesos {

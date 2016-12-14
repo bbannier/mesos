@@ -28,6 +28,8 @@
 #include <stout/os/permissions.hpp>
 #include <stout/os/read.hpp>
 
+#include <mesos/mesos.hpp>
+
 namespace mesos {
 namespace internal {
 namespace credentials {

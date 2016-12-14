@@ -18,6 +18,7 @@
 #define __MESOS_MASTER_MACHINE_HPP__
 
 #include <mesos/mesos.hpp>
+#include <mesos/type_utils.hpp>
 
 #include <stout/hashset.hpp>
 

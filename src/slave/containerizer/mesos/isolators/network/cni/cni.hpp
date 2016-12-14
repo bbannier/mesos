@@ -131,7 +131,7 @@ private:
   process::Future<Nothing> _isolate(
       const ContainerID& containerId,
       pid_t pid,
-      const list<process::Future<Nothing>>& attaches);
+      const std::list<process::Future<Nothing>>& attaches);
 
   process::Future<Nothing> __isolate(
       const NetworkCniIsolatorSetup& setup);

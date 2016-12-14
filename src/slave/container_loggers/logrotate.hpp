@@ -24,6 +24,7 @@
 #include <stout/error.hpp>
 #include <stout/flags.hpp>
 #include <stout/option.hpp>
+#include <stout/os.hpp>
 #include <stout/path.hpp>
 
 #include <stout/os/pagesize.hpp>

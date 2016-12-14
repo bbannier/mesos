@@ -19,6 +19,8 @@
 
 #include <string>
 
+#include <stout/option.hpp>
+
 namespace mesos {
 namespace internal {
 namespace build {

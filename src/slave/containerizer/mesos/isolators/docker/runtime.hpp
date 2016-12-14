@@ -17,6 +17,8 @@
 #ifndef __DOCKER_RUNTIME_ISOLATOR_HPP__
 #define __DOCKER_RUNTIME_ISOLATOR_HPP__
 
+#include "slave/flags.hpp"
+
 #include "slave/containerizer/mesos/isolator.hpp"
 
 namespace mesos {

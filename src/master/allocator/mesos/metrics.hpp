@@ -28,6 +28,8 @@
 
 #include <stout/hashmap.hpp>
 
+#include <mesos/quota/quota.hpp>
+
 namespace mesos {
 namespace internal {
 namespace master {

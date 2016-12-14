@@ -28,8 +28,13 @@
 
 #include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
+#include <stout/none.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
+
+#include "slave/state.hpp"
+
+#include "slave/containerizer/containerizer.hpp"
 
 namespace mesos {
 namespace internal {

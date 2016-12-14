@@ -13,6 +13,8 @@
 #ifndef __POSIX_SIGNALHANDLER_HPP__
 #define __POSIX_SIGNALHANDLER_HPP__
 
+#include <signal.h>
+
 #include <functional>
 
 namespace os {

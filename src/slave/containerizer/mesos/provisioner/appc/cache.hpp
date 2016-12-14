@@ -23,6 +23,8 @@
 #include <process/owned.hpp>
 
 #include <stout/hashmap.hpp>
+#include <stout/nothing.hpp>
+#include <stout/path.hpp>
 
 #include <mesos/mesos.hpp>
 

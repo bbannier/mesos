@@ -32,6 +32,8 @@
 #include <stout/nothing.hpp>
 #include <stout/option.hpp>
 
+#include "slave/state.hpp"
+
 #include "slave/containerizer/containerizer.hpp"
 
 namespace mesos {
