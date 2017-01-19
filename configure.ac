@@ -438,6 +438,7 @@ AM_CONDITIONAL([ENABLE_HARDENING], [test x"$enable_hardening" = "xyes"])
 
 AS_CASE($ax_cv_cxx_compiler_vendor,
   [clang], [
+
     # Check if -Wno-unused-local-typedef is needed by checking a sample
     # compilation which contains a local unused typedef.
     # This is needed because Boost 1.53.0 fails to compile with upstream
@@ -1884,6 +1885,35 @@ fi
 
 AM_CONDITIONAL([WITH_BUNDLED_ZOOKEEPER],
                [test "x$with_bundled_zookeeper" = "xyes"])
+
+
+# Once all CXXFLAGS are completely assembled, make sure the we are not
+# affected by libcxx undefined behavior,
+# https://llvm.org/bugs/show_bug.cgi?id=28469.
+AC_LANG_PUSH([C++])
+AC_RUN_IFELSE([
+  AC_LANG_SOURCE([
+    #include <functional>
+    #include <map>
+
+    struct F {
+      std::map<int, std::function<void()>> m;
+      F() { m[42] = []() {}; }
+    };
+
+    int main() {
+      F f;
+      f = F{};
+    }
+  ])],
+  [], [
+    AC_MSG_WARN([Mesos cannot be built with optimizations against this version of libcxx (MESOS-5745). Adding -O0 to compiler flags.])
+    CFLAGS="$CFLAGS -O0"
+    CXXFLAGS="$CXXFLAGS -O0"
+  ]
+)
+AC_LANG_POP([C++])
+
 
 # NOTE: Do not update any compiler or linker settings (e.g. CXXFLAGS,
 # LDFLAGS, ...) beyond this line.
