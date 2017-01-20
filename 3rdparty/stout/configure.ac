@@ -706,4 +706,31 @@ case "$host_os" in
     ;;
 esac
 
+# Once all CXXFLAGS are completely assembled, make sure the we are not
+# affected by libcxx undefined behavior,
+# https://llvm.org/bugs/show_bug.cgi?id=28469.
+AC_LANG_PUSH([C++])
+AC_RUN_IFELSE([
+  AC_LANG_SOURCE([
+    #include <functional>
+    #include <map>
+
+    struct F {
+      std::map<int, std::function<void()>> m;
+      F() { m[42] = []() {}; }
+    };
+
+    int main() {
+      F f;
+      f = F{};
+    }
+  ])],
+  [], [
+    AC_MSG_WARN([stout cannot be built with optimizations against this version of libcxx (MESOS-5745). Adding -O0 to compiler flags.])
+    CFLAGS="$CFLAGS -O0"
+    CXXFLAGS="$CXXFLAGS -O0"
+  ]
+)
+AC_LANG_POP([C++])
+
 AC_OUTPUT
