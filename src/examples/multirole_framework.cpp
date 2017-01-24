@@ -23,6 +23,7 @@
 
 #include <stout/exit.hpp>
 #include <stout/flags.hpp>
+#include <stout/json.hpp>
 #include <stout/option.hpp>
 #include <stout/os.hpp>
 #include <stout/stringify.hpp>
@@ -34,7 +35,9 @@
 #include <memory>
 #include <string>
 
+#include "common/parse.hpp"
 #include "logging/logging.hpp"
+#include "v1/parse.hpp"
 
 namespace mesos {
 std::ostream& operator<<(std::ostream& stream, const Offer& offer)
@@ -50,8 +53,14 @@ std::ostream& operator<<(std::ostream& stream, const TaskStatus& status)
 
 struct Flags : public virtual flags::FlagsBase
 {
-  Flags() { add(&Flags::master, "master", "Master to connect to"); }
+  Flags()
+  {
+    add(&Flags::master, "master", "Master to connect to");
+  }
+
   std::string master;
+
+  Option<JSON::Array> roles;
 };
 
 class MultiRoleSchedulerProcess
@@ -175,6 +184,15 @@ int main(int argc, char** argv)
   framework.set_user(""); // Have Mesos fill the current user.
   framework.set_name("Multi-role framework (C++)");
   framework.set_checkpoint(true);
+
+  framework.add_capabilities()->set_type(
+      mesos::FrameworkInfo::Capability::MULTI_ROLE);
+
+  if (flags.roles.isSome()) {
+    for (auto&& value : flags.roles->values) {
+      framework.add_roles(stringify(value));
+    }
+  }
 
   MultiRoleScheduler scheduler(flags, framework);
 

@@ -93,7 +93,8 @@ fi
 
 # The main event!
 ${MULTIROLE_FRAMEWORK} \
-    --master=127.0.0.1:5432
+    --master=127.0.0.1:5432 \
+    --roles='["roleA", "roleB"]'
 STATUS=${?}
 
 # # Make sure the disk full framework "failed".
