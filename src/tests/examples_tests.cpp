@@ -47,3 +47,5 @@ TEST_SCRIPT(ExamplesTest, V1JavaFramework, "java_v1_framework_test.sh")
 #ifdef MESOS_HAS_PYTHON
 TEST_SCRIPT(ExamplesTest, PythonFramework, "python_framework_test.sh")
 #endif
+
+TEST_SCRIPT(ExamplesTest, MultiRoleFramework, "multirole_framework_test.sh")
