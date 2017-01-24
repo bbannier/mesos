@@ -94,7 +94,42 @@ fi
 # The main event!
 ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:5432 \
-    --roles='["roleA", "roleB"]'
+    --roles='["roleA", "roleB"]' \
+    --tasks='
+        {
+          "roleA":
+          {
+            "name": "task1",
+            "slave_id": {
+              "value": ""
+            },
+            "task_id": {
+              "value": "task1"
+            },
+"resources": [
+                                         {
+                                           "name": "cpus",
+                                           "type": "SCALAR",
+                                           "scalar": {
+                                             "value": 0.1
+                                           },
+                                           "role": "*"
+                                         },
+                                         {
+                                           "name": "mem",
+                                           "type": "SCALAR",
+                                           "scalar": {
+                                             "value": 32
+                                           },
+                                           "role": "*"
+                                         }
+                                       ],
+                                       "command": {
+                                         "value": "sleep 1000"
+                                       }
+          }
+        }
+        '
 STATUS=${?}
 
 # # Make sure the disk full framework "failed".
