@@ -1987,6 +1987,11 @@ clean-python:
 PHONY_TARGETS += clean-python
 
 # Test (make check) binaries.
+check_PROGRAMS += multirole-framework
+multirole_framework_SOURCES = examples/multirole_framework.cpp
+multirole_framework_CPPFLAGS = $(MESOS_CPPFLAGS)
+multirole_framework_LDADD = libmesos.la $(LDADD)
+
 check_PROGRAMS += dynamic-reservation-framework
 dynamic_reservation_framework_SOURCES = examples/dynamic_reservation_framework.cpp
 dynamic_reservation_framework_CPPFLAGS = $(MESOS_CPPFLAGS)
@@ -2431,6 +2436,7 @@ dist_check_SCRIPTS +=						\
   tests/java_log_test.sh					\
   tests/java_v0_framework_test.sh				\
   tests/java_v1_framework_test.sh				\
+  tests/multirole_framework_test.sh				\
   tests/no_executor_framework_test.sh				\
   tests/persistent_volume_framework_test.sh			\
   tests/python_framework_test.sh				\
@@ -2448,6 +2454,7 @@ dist_testlibexec_SCRIPTS =			\
   tests/java_exception_test.sh			\
   tests/java_framework_test.sh			\
   tests/java_log_test.sh			\
+  tests/multirole_framework_test.sh		\
   tests/no_executor_framework_test.sh		\
   tests/persistent_volume_framework_test.sh	\
   tests/python_framework_test.sh		\
