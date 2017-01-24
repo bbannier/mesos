@@ -180,6 +180,10 @@ int main(int argc, char** argv)
     EXIT(EXIT_FAILURE) << flags.usage(load.error());
   }
 
+  if (flags.help) {
+    EXIT(EXIT_SUCCESS) << flags.usage();
+  }
+
   mesos::FrameworkInfo framework;
   framework.set_user(""); // Have Mesos fill the current user.
   framework.set_name("Multi-role framework (C++)");
