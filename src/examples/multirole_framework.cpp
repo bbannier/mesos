@@ -21,19 +21,27 @@
 #include <process/dispatch.hpp>
 #include <process/process.hpp>
 
+#include <stout/check.hpp>
 #include <stout/exit.hpp>
 #include <stout/flags.hpp>
+#include <stout/foreach.hpp>
 #include <stout/json.hpp>
 #include <stout/option.hpp>
 #include <stout/os.hpp>
+#include <stout/protobuf.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
 
 #include <glog/logging.h>
 
+#include <algorithm>
 #include <cstdlib>
+#include <deque>
+#include <iterator>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "common/parse.hpp"
 #include "logging/logging.hpp"
@@ -51,16 +59,33 @@ std::ostream& operator<<(std::ostream& stream, const TaskStatus& status)
 }
 } // namespace mesos {
 
+struct TaskWithRole {
+  mesos::TaskInfo taskInfo;
+  std::string role;
+};
+
+bool operator==(const TaskWithRole& lhs, const TaskWithRole& rhs)
+{
+  return std::tie(lhs.taskInfo, lhs.role) == std::tie(rhs.taskInfo, rhs.role);
+}
+
 struct Flags : public virtual flags::FlagsBase
 {
   Flags()
   {
     add(&Flags::master, "master", "Master to connect to");
+    add(&Flags::roles,
+        "roles",
+        "Array of roles the framework should subscribe as");
+    add(&Flags::tasks_, "tasks", "FIXME(bbannier)");
   }
 
   std::string master;
 
   Option<JSON::Array> roles;
+
+  JSON::Object tasks_;
+  std::deque<TaskWithRole> tasks;
 };
 
 class MultiRoleSchedulerProcess
@@ -69,14 +94,86 @@ class MultiRoleSchedulerProcess
 public:
   MultiRoleSchedulerProcess(
       const Flags& _flags, const mesos::FrameworkInfo& _frameworkInfo)
-    : flags(_flags), frameworkInfo(_frameworkInfo) {}
+    : flags(_flags), frameworkInfo(_frameworkInfo), waitingTasks(_flags.tasks)
+  {}
 
   void registered() { isRegistered = true; }
+
+  void resourceOffers(
+      mesos::SchedulerDriver* driver, const std::vector<mesos::Offer>& offers)
+  {
+    for (auto&& offer : offers) {
+      // Determine the role the offer was made for.
+      Option<std::string> resourcesRole_ = None();
+      for (auto&& resource : offer.resources()) {
+        CHECK(resource.has_allocation_info());
+        CHECK(resource.allocation_info().has_role());
+
+        if (resourcesRole_.isNone()) {
+          resourcesRole_ = resource.allocation_info().role();
+        } else {
+          CHECK_EQ(resourcesRole_.get(), resource.allocation_info().role());
+        }
+      }
+      CHECK_SOME(resourcesRole_);
+
+      const std::string resourcesRole = resourcesRole_.get();
+      const mesos::Resources resources(offer.resources());
+
+      // Find waiting tasks matching the role this allocation was made to.
+      std::vector<TaskWithRole> candidateTasks;
+      std::copy_if(
+          waitingTasks.begin(),
+          waitingTasks.end(),
+          std::back_inserter(candidateTasks),
+          [&resourcesRole](const TaskWithRole& task) {
+            LOG(INFO) << "NOOOOPE: " << task.role << " " << resourcesRole;
+            return task.role == resourcesRole;
+          });
+
+      LOG(INFO) << "NOPE: " << candidateTasks.size();
+
+      auto it = std::find_if(
+          candidateTasks.begin(),
+          candidateTasks.end(),
+          [&resources](const TaskWithRole& task) {
+            return resources.contains(
+                mesos::Resources(task.taskInfo.resources()));
+          });
+
+      if (it == candidateTasks.end()) {
+        // Decline offer if there is no work to do.
+        LOG(INFO) << "No work to do for resources of role '" << resourcesRole
+                  << "'; with " << waitingTasks.size() << " tasks waiting";
+        driver->declineOffer(offer.id());
+      }
+
+      // Launch the task and transition it from waiting to running.
+      mesos::TaskInfo task = it->taskInfo;
+      task.mutable_slave_id()->CopyFrom(offer.slave_id());
+      driver->launchTasks(offer.id(), {task});
+
+      CHECK(
+          std::find(runningTasks.begin(), runningTasks.end(), it->taskInfo) ==
+          runningTasks.end());
+      runningTasks.push_back(it->taskInfo);
+
+      waitingTasks.erase(
+          std::remove_if(
+              waitingTasks.begin(),
+              waitingTasks.end(),
+              [it](const TaskWithRole& task) { return task == *it; }));
+    }
+  }
+
 private:
   const Flags flags;
   const mesos::FrameworkInfo frameworkInfo;
 
   bool isRegistered = false;
+
+  std::deque<TaskWithRole> waitingTasks;
+  std::deque<mesos::TaskInfo> runningTasks;
 };
 
 class MultiRoleScheduler : public mesos::Scheduler
@@ -86,6 +183,7 @@ public:
       const Flags& flags, const mesos::FrameworkInfo& frameworkInfo)
     : process(flags, frameworkInfo)
   {
+    process::spawn(process);
   }
 
   virtual ~MultiRoleScheduler()
@@ -122,7 +220,10 @@ private:
       mesos::SchedulerDriver* driver,
       const std::vector<mesos::Offer>& offers) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::resourceOffers: " << stringify(offers);
+    LOG(INFO) << "Resource offers received";
+
+    process::dispatch(
+        process, &MultiRoleSchedulerProcess::resourceOffers, driver, offers);
   }
 
   void offerRescinded(
@@ -135,6 +236,7 @@ private:
       mesos::SchedulerDriver* driver, const mesos::TaskStatus& status) override
   {
     LOG(ERROR) << "MultiRoleScheduler::statusUpdate: " << stringify(status);
+    driver->stop(); // FIXME(bbannier):
   }
 
   void frameworkMessage(
@@ -173,6 +275,8 @@ private:
 
 int main(int argc, char** argv)
 {
+  process::initialize();
+
   Flags flags;
   Try<flags::Warnings> load = flags.load("MESOS_", argc, argv);
 
@@ -182,6 +286,18 @@ int main(int argc, char** argv)
 
   if (flags.help) {
     EXIT(EXIT_SUCCESS) << flags.usage();
+  }
+
+  // FIXME(bbannier): Make `role` just a field.
+  foreachpair (auto&& role, auto&& task, flags.tasks_.values) {
+    auto task_ = protobuf::parse<mesos::TaskInfo>(task);
+    if (task_.isError()) {
+      EXIT(EXIT_FAILURE) << "Invalid task definition: " << task_.error();
+    }
+
+    // FIXME(bbannier): why do we need to quote these separately as
+    // opposed to Resource.role ?
+    flags.tasks.push_back({task_.get(), '"' + role + '"'});
   }
 
   mesos::FrameworkInfo framework;
@@ -237,9 +353,6 @@ int main(int argc, char** argv)
   }
 
   int status = driver->run() != mesos::DRIVER_STOPPED;
-
-  // Ensure that the driver process terminates.
-  driver->stop();
 
   return status;
 }
