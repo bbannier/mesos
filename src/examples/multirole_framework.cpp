@@ -102,6 +102,11 @@ public:
       mesos::SchedulerDriver* driver, const std::vector<mesos::Offer>& offers)
   {
     for (auto&& offer : offers) {
+      if (waitingTasks.empty()) {
+        driver->declineOffer(offer.id());
+        continue;
+      }
+
       // Determine the role the offer was made for.
       Option<std::string> resourcesRole_ = None();
       for (auto&& resource : offer.resources()) {
