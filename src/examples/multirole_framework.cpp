@@ -78,7 +78,43 @@ struct Flags : public virtual flags::FlagsBase
     add(&Flags::roles,
         "roles",
         "Array of roles the framework should subscribe as");
-    add(&Flags::tasks_, "tasks", "FIXME(bbannier)");
+    add(&Flags::tasks_,
+        "tasks",
+        "Tasks to run. Each tasks needs to have an associated role. A tasks\n"
+        "`slave_id` field" "can be left empty.\n"
+        "\n"
+        "Example:\n"
+        "{\n"
+        "  \"tasks\": [\n"
+        "    {\n"
+        "      \"role\": \"roleA\",\n"
+        "      \"task\": {\n"
+        "        \"command\": { \"value\": \"sleep 3\" },\n"
+        "        \"name\": \"task1\",\n"
+        "        \"task_id\": { \"value\": \"task1\" },\n"
+        "        \"resources\": [\n"
+        "          {\n"
+        "            \"name\": \"cpus\",\n"
+        "            \"role\": \"*\",\n"
+        "            \"scalar\": {\n"
+        "              \"value\": 0.1\n"
+        "            },\n"
+        "            \"type\": \"SCALAR\"\n"
+        "          },\n"
+        "          {\n"
+        "            \"name\": \"mem\",\n"
+        "            \"role\": \"*\",\n"
+        "            \"scalar\": {\n"
+        "              \"value\": 32\n"
+        "            },\n"
+        "            \"type\": \"SCALAR\"\n"
+        "          }\n"
+        "        ],\n"
+        "        \"slave_id\": { \"value\": \"\" }\n"
+        "      }\n"
+        "    }\n"
+        "  ]\n"
+        "}");
   }
 
   std::string master;
@@ -322,14 +358,24 @@ int main(int argc, char** argv)
     EXIT(EXIT_SUCCESS) << flags.usage();
   }
 
-  // FIXME(bbannier): Make `role` just a field.
-  foreachpair (auto&& role, auto&& task, flags.tasks_.values) {
-    auto task_ = protobuf::parse<mesos::TaskInfo>(task);
+  auto tasks = flags.tasks_.at<JSON::Array>("tasks");
+  CHECK_SOME(tasks) << "Could not extract tasks";
+
+  for (auto&& value : tasks->values) {
+    CHECK(value.is<JSON::Object>()) << "Task is not a JSON object";
+    auto value_ = value.as<JSON::Object>();
+
+    Result<JSON::String> role = value_.at<JSON::String>("role");
+    CHECK_SOME(role) << "Could not find role";
+
+    Result<JSON::Object> task = value_.at<JSON::Object>("task");
+    CHECK_SOME(task) << "Could not find task";
+    auto task_ =  protobuf::parse<mesos::TaskInfo>(task.get());
     if (task_.isError()) {
       EXIT(EXIT_FAILURE) << "Invalid task definition: " << task_.error();
     }
 
-    flags.tasks.push_back({task_.get(), role});
+    flags.tasks.push_back({task_.get(), role->value});
   }
 
   mesos::FrameworkInfo framework;

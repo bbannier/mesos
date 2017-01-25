@@ -96,70 +96,64 @@ ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:5432 \
     --roles='["roleA", "roleB"]' \
     --tasks='
-        {
-          "roleA":
+      {
+        "tasks": [
           {
-            "name": "task1",
-            "slave_id": {
-              "value": ""
-            },
-            "task_id": {
-              "value": "task1"
-            },
-            "resources": [
-              {
-                "name": "cpus",
-                "type": "SCALAR",
-                "scalar": {
-                "value": 0.1
-              },
-              "role": "*"
-              },
-              {
-                "name": "mem",
-                "type": "SCALAR",
-                "scalar": {
-                "value": 32
-              },
-              "role": "*"
-              }
-            ],
-            "command": {
-              "value": "sleep 3"
+            "role": "roleA",
+            "task": {
+              "command": { "value": "sleep 3" },
+              "name": "task1",
+              "task_id": { "value": "task1" },
+              "resources": [
+                {
+                  "name": "cpus",
+                  "role": "*",
+                  "scalar": {
+                    "value": 0.1
+                  },
+                  "type": "SCALAR"
+                },
+                {
+                  "name": "mem",
+                  "role": "*",
+                  "scalar": {
+                    "value": 32
+                  },
+                  "type": "SCALAR"
+                }
+              ],
+              "slave_id": { "value": "" }
             }
           },
-          "roleB":
           {
-            "name": "task2",
-            "slave_id": {
-              "value": ""
-            },
-            "task_id": {
-              "value": "task2"
-            },
-            "resources": [
-              {
-                "name": "cpus",
-                "type": "SCALAR",
-                "scalar": {
-                "value": 0.1
-              },
-              "role": "*"
-              },
-              {
-                "name": "mem",
-                "type": "SCALAR",
-                "scalar": {
-                "value": 32
-              },
-              "role": "*"
-              }
-            ],
-            "command": {
-              "value": "sleep 1"
+            "role": "roleB",
+            "task": {
+              "command": { "value": "sleep 1" },
+              "name": "task2",
+              "task_id": { "value": "task2" },
+              "resources": [
+                {
+                  "name": "cpus",
+                  "role": "*",
+                  "scalar": {
+                    "value": 0.1
+                  },
+                  "type": "SCALAR"
+                },
+                {
+                  "name": "mem",
+                  "role": "*",
+                  "scalar": {
+                    "value": 32
+                  },
+                  "type": "SCALAR"
+                }
+              ],
+              "slave_id": { "value": "" }
             }
           }
-        }'
+        ]
+      }'
 STATUS=${?}
 
 # # Make sure the disk full framework "failed".
