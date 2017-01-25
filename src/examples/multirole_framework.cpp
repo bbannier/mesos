@@ -119,6 +119,10 @@ public:
       const std::string resourcesRole = resourcesRole_.get();
       const mesos::Resources resources(offer.resources());
 
+      LOG(INFO) << "With " << waitingTasks.size()
+                << " unscheduled tasks, looking for tasks to run on resources '"
+                << stringify(resources.flatten()) << "'";
+
       // Find waiting tasks matching the role this allocation was made to.
       std::vector<TaskWithRole> candidateTasks;
       std::copy_if(
@@ -134,6 +138,8 @@ public:
 
       if (candidateTasks.empty()) {
         // Decline offer if there is no work to do.
+        LOG(INFO) << "No tasks can run on '" << stringify(resources.flatten())
+                  << "'";
         driver->declineOffer(offer.id());
       } else {
         // Launch the task and transition it from waiting to running.
@@ -141,6 +147,7 @@ public:
         mesos::TaskInfo task = candidateTask.taskInfo;
         task.mutable_slave_id()->CopyFrom(offer.slave_id());
         driver->launchTasks(offer.id(), {task});
+        LOG(INFO) << "Launched task '" << task.task_id() << "'";
 
         CHECK(
             std::find(
@@ -255,7 +262,7 @@ private:
   void statusUpdate(
       mesos::SchedulerDriver* driver, const mesos::TaskStatus& status) override
   {
-    LOG(INFO) << "Received status update for task " << status.task_id();
+    LOG(INFO) << "Received status update for task '" << status.task_id() << "'";
     process::dispatch(
         process, &MultiRoleSchedulerProcess::statusUpdate, driver, status);
   }
