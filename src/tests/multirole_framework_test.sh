@@ -76,8 +76,6 @@ ${AGENT} \
     --work_dir="${MESOS_WORK_DIR}" \
     --runtime_dir="${MESOS_RUNTIME_DIR}" \
     --master=127.0.0.1:5432 \
-    --isolation='disk/du' \
-    --enforce_container_disk_quota \
     --resources="cpus:1;mem:96;disk:50" &
 AGENT_PID=${!}
 echo "${GREEN}Launched agent at ${AGENT_PID}${NORMAL}"
