@@ -125,6 +125,37 @@ ${MULTIROLE_FRAMEWORK} \
               }
             ],
             "command": {
+              "value": "sleep 3"
+            }
+          },
+          "roleB":
+          {
+            "name": "task2",
+            "slave_id": {
+              "value": ""
+            },
+            "task_id": {
+              "value": "task2"
+            },
+            "resources": [
+              {
+                "name": "cpus",
+                "type": "SCALAR",
+                "scalar": {
+                "value": 0.1
+              },
+              "role": "*"
+              },
+              {
+                "name": "mem",
+                "type": "SCALAR",
+                "scalar": {
+                "value": 32
+              },
+              "role": "*"
+              }
+            ],
+            "command": {
               "value": "sleep 1"
             }
           }
