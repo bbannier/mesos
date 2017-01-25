@@ -106,30 +106,29 @@ ${MULTIROLE_FRAMEWORK} \
             "task_id": {
               "value": "task1"
             },
-"resources": [
-                                         {
-                                           "name": "cpus",
-                                           "type": "SCALAR",
-                                           "scalar": {
-                                             "value": 0.1
-                                           },
-                                           "role": "*"
-                                         },
-                                         {
-                                           "name": "mem",
-                                           "type": "SCALAR",
-                                           "scalar": {
-                                             "value": 32
-                                           },
-                                           "role": "*"
-                                         }
-                                       ],
-                                       "command": {
-                                         "value": "sleep 1"
-                                       }
+            "resources": [
+              {
+                "name": "cpus",
+                "type": "SCALAR",
+                "scalar": {
+                "value": 0.1
+              },
+              "role": "*"
+              },
+              {
+                "name": "mem",
+                "type": "SCALAR",
+                "scalar": {
+                "value": 32
+              },
+              "role": "*"
+              }
+            ],
+            "command": {
+              "value": "sleep 1"
+            }
           }
-        }
-        '
+        }'
 STATUS=${?}
 
 # # Make sure the disk full framework "failed".
