@@ -127,42 +127,37 @@ public:
           waitingTasks.end(),
           std::back_inserter(candidateTasks),
           [&resourcesRole](const TaskWithRole& task) {
-            LOG(INFO) << "NOOOOPE: " << task.role << " " << resourcesRole;
             return task.role == resourcesRole;
           });
 
-      LOG(INFO) << "NOPE: " << candidateTasks.size();
+      // FIXME(bbannier): pick a task that actually fits on the offer
+      // instead of just sending a potentially too big task.
 
-      auto it = std::find_if(
-          candidateTasks.begin(),
-          candidateTasks.end(),
-          [&resources](const TaskWithRole& task) {
-            return resources.contains(
-                mesos::Resources(task.taskInfo.resources()));
-          });
-
-      if (it == candidateTasks.end()) {
+      if (candidateTasks.empty()) {
         // Decline offer if there is no work to do.
-        LOG(INFO) << "No work to do for resources of role '" << resourcesRole
-                  << "'; with " << waitingTasks.size() << " tasks waiting";
         driver->declineOffer(offer.id());
+      } else {
+        // Launch the task and transition it from waiting to running.
+        TaskWithRole candidateTask = candidateTasks[0];
+        mesos::TaskInfo task = candidateTask.taskInfo;
+        task.mutable_slave_id()->CopyFrom(offer.slave_id());
+        driver->launchTasks(offer.id(), {task});
+
+        CHECK(
+            std::find(
+                runningTasks.begin(),
+                runningTasks.end(),
+                candidateTask.taskInfo) == runningTasks.end());
+        runningTasks.push_back(candidateTask.taskInfo);
+
+        waitingTasks.erase(
+            std::remove_if(
+                waitingTasks.begin(),
+                waitingTasks.end(),
+                [&candidateTask](const TaskWithRole& task) {
+                  return task == candidateTask;
+                }));
       }
-
-      // Launch the task and transition it from waiting to running.
-      mesos::TaskInfo task = it->taskInfo;
-      task.mutable_slave_id()->CopyFrom(offer.slave_id());
-      driver->launchTasks(offer.id(), {task});
-
-      CHECK(
-          std::find(runningTasks.begin(), runningTasks.end(), it->taskInfo) ==
-          runningTasks.end());
-      runningTasks.push_back(it->taskInfo);
-
-      waitingTasks.erase(
-          std::remove_if(
-              waitingTasks.begin(),
-              waitingTasks.end(),
-              [it](const TaskWithRole& task) { return task == *it; }));
     }
   }
 
