@@ -329,9 +329,7 @@ int main(int argc, char** argv)
       EXIT(EXIT_FAILURE) << "Invalid task definition: " << task_.error();
     }
 
-    // FIXME(bbannier): why do we need to quote these separately as
-    // opposed to Resource.role ?
-    flags.tasks.push_back({task_.get(), '"' + role + '"'});
+    flags.tasks.push_back({task_.get(), role});
   }
 
   mesos::FrameworkInfo framework;
@@ -344,7 +342,8 @@ int main(int argc, char** argv)
 
   if (flags.roles.isSome()) {
     for (auto&& value : flags.roles->values) {
-      framework.add_roles(stringify(value));
+      CHECK(value.is<JSON::String>());
+      framework.add_roles(value.as<JSON::String>().value);
     }
   }
 
