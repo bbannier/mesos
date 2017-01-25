@@ -152,13 +152,14 @@ public:
         mesos::TaskInfo task = candidateTask.taskInfo;
         task.mutable_slave_id()->CopyFrom(offer.slave_id());
         driver->launchTasks(offer.id(), {task});
-        LOG(INFO) << "Launched task '" << task.task_id() << "'";
+        LOG(INFO) << "Launched task '" << task.task_id()
+                  << "' to run on resources allocated for role "
+                  << resourcesRole;
 
         CHECK(
             std::find(
-                runningTasks.begin(),
-                runningTasks.end(),
-                candidateTask) == runningTasks.end());
+                runningTasks.begin(), runningTasks.end(), candidateTask) ==
+            runningTasks.end());
         runningTasks.push_back(candidateTask);
 
         waitingTasks.erase(
