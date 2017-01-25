@@ -44,6 +44,7 @@
 #include <vector>
 
 #include "common/parse.hpp"
+#include "common/protobuf_utils.hpp"
 #include "logging/logging.hpp"
 #include "v1/parse.hpp"
 
@@ -147,8 +148,8 @@ public:
             std::find(
                 runningTasks.begin(),
                 runningTasks.end(),
-                candidateTask.taskInfo) == runningTasks.end());
-        runningTasks.push_back(candidateTask.taskInfo);
+                candidateTask) == runningTasks.end());
+        runningTasks.push_back(candidateTask);
 
         waitingTasks.erase(
             std::remove_if(
@@ -161,6 +162,35 @@ public:
     }
   }
 
+  void statusUpdate(
+      mesos::SchedulerDriver* driver, const mesos::TaskStatus& status)
+  {
+    auto it = std::find_if(
+        runningTasks.begin(),
+        runningTasks.end(),
+        [&status](const TaskWithRole& task) {
+          return task.taskInfo.task_id() == status.task_id();
+        });
+
+    CHECK(it != runningTasks.end())
+      << "Received status update for unknown task";
+
+    if (mesos::internal::protobuf::isTerminalState(status.state())) {
+      LOG(INFO) << "Task '" << status.task_id()
+                << "' has reached terminal state '" << stringify(status.state())
+                << "'";
+      runningTasks.erase(it);
+    } else {
+      LOG(INFO) << "Task '" << status.task_id()
+                << "' has transitioned to state '" << stringify(status.state())
+                << "'";
+    }
+
+    if (waitingTasks.empty() && runningTasks.empty()) {
+      driver->stop();
+    }
+  }
+
 private:
   const Flags flags;
   const mesos::FrameworkInfo frameworkInfo;
@@ -168,7 +198,7 @@ private:
   bool isRegistered = false;
 
   std::deque<TaskWithRole> waitingTasks;
-  std::deque<mesos::TaskInfo> runningTasks;
+  std::deque<TaskWithRole> runningTasks;
 };
 
 class MultiRoleScheduler : public mesos::Scheduler
@@ -230,8 +260,9 @@ private:
   void statusUpdate(
       mesos::SchedulerDriver* driver, const mesos::TaskStatus& status) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::statusUpdate: " << stringify(status);
-    driver->stop(); // FIXME(bbannier):
+    LOG(INFO) << "Received status update for task " << status.task_id();
+    process::dispatch(
+        process, &MultiRoleSchedulerProcess::statusUpdate, driver, status);
   }
 
   void frameworkMessage(

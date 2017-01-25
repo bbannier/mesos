@@ -125,7 +125,7 @@ ${MULTIROLE_FRAMEWORK} \
                                          }
                                        ],
                                        "command": {
-                                         "value": "sleep 1000"
+                                         "value": "sleep 1"
                                        }
           }
         }
