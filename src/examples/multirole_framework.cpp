@@ -98,8 +98,6 @@ public:
     : flags(_flags), frameworkInfo(_frameworkInfo), waitingTasks(_flags.tasks)
   {}
 
-  void registered() { isRegistered = true; }
-
   void resourceOffers(
       mesos::SchedulerDriver* driver, const std::vector<mesos::Offer>& offers)
   {
@@ -195,8 +193,6 @@ private:
   const Flags flags;
   const mesos::FrameworkInfo frameworkInfo;
 
-  bool isRegistered = false;
-
   std::deque<TaskWithRole> waitingTasks;
   std::deque<TaskWithRole> runningTasks;
 };
@@ -226,7 +222,6 @@ private:
       const mesos::MasterInfo&) override
   {
     LOG(INFO) << "Registered with framework ID: " << frameworkId;
-    process::dispatch(process, &MultiRoleSchedulerProcess::registered);
   }
 
   void reregistered(
