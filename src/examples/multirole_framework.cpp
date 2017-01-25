@@ -228,12 +228,12 @@ private:
       mesos::SchedulerDriver* driver,
       const mesos::MasterInfo& masterInfo) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::reregistered: " << stringify(masterInfo);
+    LOG(FATAL) << "MultiRoleScheduler::reregistered: " << stringify(masterInfo);
   }
 
   void disconnected(mesos::SchedulerDriver* driver) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::disconnected";
+    LOG(FATAL) << "MultiRoleScheduler::disconnected";
   }
 
   void resourceOffers(
@@ -249,7 +249,7 @@ private:
   void offerRescinded(
       mesos::SchedulerDriver* driver, const mesos::OfferID& offerId) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::offerRescinded: " << stringify(offerId);
+    LOG(FATAL) << "MultiRoleScheduler::offerRescinded: " << stringify(offerId);
   }
 
   void statusUpdate(
@@ -266,7 +266,7 @@ private:
       const mesos::SlaveID& slaveId,
       const std::string& data) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::frameworkMessage: "
+    LOG(FATAL) << "MultiRoleScheduler::frameworkMessage: "
                << stringify(executorId) << " " << stringify(slaveId) << " "
                << stringify(data);
   }
@@ -274,7 +274,7 @@ private:
   void slaveLost(
       mesos::SchedulerDriver* driver, const mesos::SlaveID& slaveId) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::slaveLost: " << stringify(slaveId);
+    LOG(FATAL) << "MultiRoleScheduler::slaveLost: " << stringify(slaveId);
   }
 
   void executorLost(
@@ -283,14 +283,14 @@ private:
       const mesos::SlaveID& slaveId,
       int status) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::executorLost: " << stringify(executorId)
+    LOG(FATAL) << "MultiRoleScheduler::executorLost: " << stringify(executorId)
                << " " << stringify(slaveId);
   }
 
   void error(
       mesos::SchedulerDriver* driver, const std::string& message) override
   {
-    LOG(ERROR) << "MultiRoleScheduler::error: " << message;
+    LOG(FATAL) << "MultiRoleScheduler::error: " << message;
   }
 };
 
