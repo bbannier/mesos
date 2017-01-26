@@ -68,10 +68,13 @@ function start_agent {
   MESOS_RUNTIME_DIR=$(mktemp -d -t mesos-agent-runtime-XXXXXX)
   atexit rm -rf "${MESOS_RUNTIME_DIR}"
 
+  AGENT_PORT=$(random_port)
+
   ${AGENT} \
     --work_dir="${MESOS_WORK_DIR}" \
     --runtime_dir="${MESOS_RUNTIME_DIR}" \
     --master=127.0.0.1:"$MASTER_PORT" \
+    --port="$AGENT_PORT" \
     --resources="cpus:1;mem:96;disk:50" &> "${MESOS_WORK_DIR}.log" &
   AGENT_PID=${!}
 
