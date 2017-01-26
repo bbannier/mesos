@@ -99,7 +99,7 @@ ${MULTIROLE_FRAMEWORK} \
           {
             "role": "roleA",
             "task": {
-              "command": { "value": "sleep 3" },
+              "command": { "value": "sleep 2" },
               "name": "task1",
               "task_id": { "value": "task1" },
               "resources": [
