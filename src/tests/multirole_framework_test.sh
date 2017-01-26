@@ -161,6 +161,13 @@ function start_framework {
 }
 
 setup_env
+
+echo ${BOLD}
+echo "********************************************************************************************"
+echo "* A framework can be in two roles and start tasks on resources allocated for either role.  *"
+echo "********************************************************************************************"
+echo ${NORMAL}
+
 start_master
 start_agent
 start_framework
