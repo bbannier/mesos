@@ -114,6 +114,10 @@ struct Flags : public virtual flags::FlagsBase
         "    }\n"
         "  ]\n"
         "}");
+    add(&Flags::maxUnsuccessfulOfferCycles,
+        "max_unsuccessful_offer_cycles",
+        "The maximal number of offer cycles without allocatable offers\n"
+        "before the scheduler will exit.");
   }
 
   std::string master;
@@ -122,6 +126,8 @@ struct Flags : public virtual flags::FlagsBase
 
   JSON::Object tasks_;
   std::deque<TaskWithRole> tasks;
+
+  Option<size_t> maxUnsuccessfulOfferCycles;
 };
 
 class MultiRoleSchedulerProcess
@@ -136,6 +142,8 @@ public:
   void resourceOffers(
       mesos::SchedulerDriver* driver, const std::vector<mesos::Offer>& offers)
   {
+    bool usedOffers = false;
+
     for (auto&& offer : offers) {
       if (waitingTasks.empty()) {
         driver->declineOffer(offer.id());
@@ -161,7 +169,8 @@ public:
 
       LOG(INFO) << "With " << waitingTasks.size()
                 << " unscheduled tasks, looking for tasks to run on resources '"
-                << stringify(resources.flatten()) << "'";
+                << stringify(resources.flatten()) << "' on agent '"
+                << offer.slave_id() << "'";
 
       // Find waiting tasks matching the role this allocation was made to.
       std::vector<TaskWithRole> candidateTasks;
@@ -204,6 +213,21 @@ public:
                 [&candidateTask](const TaskWithRole& task) {
                   return task == candidateTask;
                 }));
+
+        usedOffers = true;
+        numUnsuccessfulOfferCycles = 0;
+      }
+    }
+
+    if (!usedOffers) {
+      ++numUnsuccessfulOfferCycles;
+      if (flags.maxUnsuccessfulOfferCycles.isSome() &&
+          numUnsuccessfulOfferCycles >=
+            flags.maxUnsuccessfulOfferCycles.get()) {
+        LOG(ERROR)
+          << "Unsuccessfully tried for " << numUnsuccessfulOfferCycles
+          << " offer cycles to run remaining tasks, aborting scheduler.";
+        driver->abort();
       }
     }
   }
@@ -243,6 +267,8 @@ private:
 
   std::deque<TaskWithRole> waitingTasks;
   std::deque<TaskWithRole> runningTasks;
+
+  size_t numUnsuccessfulOfferCycles = 0;
 };
 
 class MultiRoleScheduler : public mesos::Scheduler
@@ -393,6 +419,8 @@ int main(int argc, char** argv)
       framework.add_roles(value.as<JSON::String>().value);
     }
   }
+
+  LOG(INFO) << "Scheduling tasks: " << stringify(flags.tasks_);
 
   MultiRoleScheduler scheduler(flags, framework);
 
