@@ -6,10 +6,8 @@ set -e
 set -o pipefail
 
 function random_port {
-  # Generate a random port number in the range [2000, 65000].
-  # We use `awk` here as alternatives like `shuf` or `jot` are not as
-  # universally available (only on Linux or BSDs, respectively).
-  awk 'BEGIN{srand(); print int(rand()*(63000-2000))+2000 }'
+  # Generate a random port number.
+  echo $(($RANDOM + 2000))
 }
 
 function setup_env {
