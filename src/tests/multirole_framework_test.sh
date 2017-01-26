@@ -45,6 +45,8 @@ function start_master {
 
   echo "${GREEN}Launched master at ${MASTER_PID}${NORMAL}"
 
+  sleep 2
+
   # Check the master is still running after 2 seconds.
   kill -0 ${MASTER_PID} >/dev/null 2>&1
   STATUS=${?}
@@ -78,6 +80,8 @@ function start_agent {
   atexit rm "${MESOS_WORK_DIR}.log"
 
   echo "${GREEN}Launched agent at ${AGENT_PID}${NORMAL}"
+
+  sleep 2
 
   # Check the agent is still running after 2 seconds.
   kill -0 ${AGENT_PID} >/dev/null 2>&1
