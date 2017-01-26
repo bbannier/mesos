@@ -39,7 +39,7 @@ function start_master {
     --work_dir="${MESOS_WORK_DIR}" &> "${MESOS_WORK_DIR}.log" &
   MASTER_PID=${!}
 
-  atexit rm "${MESOS_WORK_DIR}.log"
+  atexit rm -rf "${MESOS_WORK_DIR}.log"
 
   echo "${GREEN}Launched master at ${MASTER_PID}${NORMAL}"
 
@@ -78,7 +78,7 @@ function start_agent {
     --resources="cpus:1;mem:96;disk:50" &> "${MESOS_WORK_DIR}.log" &
   AGENT_PID=${!}
 
-  atexit rm "${MESOS_WORK_DIR}.log"
+  atexit rm -rf "${MESOS_WORK_DIR}.log"
 
   echo "${GREEN}Launched agent at ${AGENT_PID}${NORMAL}"
 
