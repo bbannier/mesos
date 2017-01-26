@@ -386,6 +386,8 @@ int main(int argc, char** argv)
       mesos::FrameworkInfo::Capability::MULTI_ROLE);
 
   if (flags.roles.isSome()) {
+    LOG(INFO) << "Running framework with roles "
+              << stringify(flags.roles->values);
     for (auto&& value : flags.roles->values) {
       CHECK(value.is<JSON::String>());
       framework.add_roles(value.as<JSON::String>().value);
