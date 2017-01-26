@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
-
 # FIXME(bbannier): module docstring
 
 set -e
 set -o pipefail
+
+function random_port {
+  # Generate a random port number in the range [2000, 65000].
+  # We use `awk` here as alternatives like `shuf` or `jot` are not as
+  # universally available (only on Linux or BSDs, respectively).
+  awk 'BEGIN{srand(); print int(rand()*(63000-2000))+2000 }'
+}
 
 function setup_env {
   source "${MESOS_SOURCE_DIR}"/support/colors.sh
@@ -27,11 +33,16 @@ function start_master {
   MESOS_WORK_DIR=$(mktemp -d -t mesos-master-XXXXXX)
   atexit rm -rf "${MESOS_WORK_DIR}"
 
+  MASTER_PORT=$(random_port)
+
   ${MASTER} \
     --ip=127.0.0.1 \
-    --port=5432 \
-    --work_dir="${MESOS_WORK_DIR}" &
+    --port="$MASTER_PORT" \
+    --work_dir="${MESOS_WORK_DIR}" &> "${MESOS_WORK_DIR}.log" &
   MASTER_PID=${!}
+
+  atexit rm "${MESOS_WORK_DIR}.log"
+
   echo "${GREEN}Launched master at ${MASTER_PID}${NORMAL}"
 
   # Check the master is still running after 2 seconds.
@@ -51,18 +62,21 @@ function start_agent {
   # does not exist on non-Linux builds.
   export MESOS_SYSTEMD_ENABLE_SUPPORT=false
 
-  MESOS_WORK_DIR=$(mktemp -d -t mesos-master-XXXXXX)
+  MESOS_WORK_DIR=$(mktemp -d -t mesos-agent-XXXXXX)
   atexit rm -rf "${MESOS_WORK_DIR}"
 
-  MESOS_RUNTIME_DIR=$(mktemp -d -t mesos-XXXXXX)
+  MESOS_RUNTIME_DIR=$(mktemp -d -t mesos-agent-runtime-XXXXXX)
   atexit rm -rf "${MESOS_RUNTIME_DIR}"
 
   ${AGENT} \
     --work_dir="${MESOS_WORK_DIR}" \
     --runtime_dir="${MESOS_RUNTIME_DIR}" \
-    --master=127.0.0.1:5432 \
-    --resources="cpus:1;mem:96;disk:50" &
+    --master=127.0.0.1:"$MASTER_PORT" \
+    --resources="cpus:1;mem:96;disk:50" &> "${MESOS_WORK_DIR}.log" &
   AGENT_PID=${!}
+
+  atexit rm "${MESOS_WORK_DIR}.log"
+
   echo "${GREEN}Launched agent at ${AGENT_PID}${NORMAL}"
 
   # Check the agent is still running after 2 seconds.
@@ -82,7 +96,7 @@ start_agent
 
 # The main event!
 ${MULTIROLE_FRAMEWORK} \
-    --master=127.0.0.1:5432 \
+    --master=127.0.0.1:"$MASTER_PORT" \
     --roles='["roleA", "roleB"]' \
     --tasks='
       {
