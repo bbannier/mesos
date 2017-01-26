@@ -7,8 +7,8 @@ set -e
 set -o pipefail
 
 function setup_env {
-  source ${MESOS_SOURCE_DIR}/support/colors.sh
-  source ${MESOS_SOURCE_DIR}/support/atexit.sh
+  source "${MESOS_SOURCE_DIR}"/support/colors.sh
+  source "${MESOS_SOURCE_DIR}"/support/atexit.sh
 
   export LD_LIBRARY_PATH=${MESOS_BUILD_DIR}/src/.libs
   MASTER=${MESOS_SBIN_DIR}/mesos-master
@@ -54,7 +54,7 @@ function start_agent {
   MESOS_WORK_DIR=$(mktemp -d -t mesos-master-XXXXXX)
   atexit rm -rf "${MESOS_WORK_DIR}"
 
-  MESOS_RUNTIME_DIR=`mktemp -d -t mesos-XXXXXX`
+  MESOS_RUNTIME_DIR=$(mktemp -d -t mesos-XXXXXX)
   atexit rm -rf "${MESOS_RUNTIME_DIR}"
 
   ${AGENT} \
