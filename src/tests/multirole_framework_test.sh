@@ -7,7 +7,7 @@ set -o pipefail
 
 function random_port {
   # Generate a random port number.
-  echo $(($RANDOM + 2000))
+  echo $((RANDOM + 2000))
 }
 
 function setup_env {
@@ -99,9 +99,10 @@ function start_agent {
 }
 
 function run_framework {
+  ROLES=$1
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
-    --roles='["roleA", "roleB"]' \
+    --roles="$ROLES" \
     --max_unsuccessful_offer_cycles=3 \
     --tasks='
       {
@@ -109,7 +110,7 @@ function run_framework {
           {
             "role": "roleA",
             "task": {
-              "command": { "value": "sleep 2" },
+              "command": { "value": "sleep 1" },
               "name": "task1",
               "task_id": { "value": "task1" },
               "resources": [
@@ -174,7 +175,7 @@ function test_1 {
   echo "${NORMAL}"
   start_master
   start_agent "cpus:1;mem:96;disk:50"
-  run_framework
+  run_framework '["roleA", "roleB"]'
 }
 
 function test_2 {
@@ -217,20 +218,20 @@ function test_2 {
   echo "${BOLD}"
   echo The framework will not get any resources to run tasks with 'roleB'.
   echo "${NORMAL}"
-  [ ! $(run_framework) ]
+  [ ! $(run_framework '["roleA", "roleB"]') ]
 
   echo "${BOLD}"
   echo If we make more resources available, the framework will also be offered resources for 'roleB'.
   echo "${NORMAL}"
   start_agent "cpus:1;mem:96;disk:50"
 
-  run_framework
+  run_framework '["roleA", "roleB"]'
 }
 
 function test_reserved_resources {
   echo "${BOLD}"
   echo "********************************************************************************************"
-  echo "* Reserved resources                                                                       *"
+  echo "* Reserved resources.                                                                      *"
   echo "********************************************************************************************"
   echo "${NORMAL}"
   start_master
@@ -240,9 +241,33 @@ function test_reserved_resources {
   echo Starting agent with reserved resources: $RESOURCES.
   start_agent "${RESOURCES}"
   echo "${NORMAL}"
-  run_framework
+  run_framework '["roleA", "roleB"]'
+}
+
+function test_fair_share {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Fair share.                                                                              *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+  start_master
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+
+  echo "${BOLD}"
+  echo Starting a framework in two roles which will consume the bulk on the resources.
+  echo "${NORMAL}"
+  run_framework '["roleA", "roleB"]' &
+
+  echo "${BOLD}"
+  echo Starting a framework in just one role which will be offered not enough
+  echo resources since the earlier will be below fair share in that role.
+  echo "${NORMAL}"
+  [ ! $(run_framework '["roleA"]') ]
 }
 
 # test_1
 # test_2
-test_reserved_resources
+# test_reserved_resources
+test_fair_share
