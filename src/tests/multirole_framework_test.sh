@@ -36,6 +36,7 @@ function start_master {
   ${MASTER} \
     --ip=127.0.0.1 \
     --port="$MASTER_PORT" \
+    --acls='{"permissive": true}' \
     --work_dir="${MESOS_WORK_DIR}" &> "${MESOS_WORK_DIR}.log" &
   MASTER_PID=${!}
 
@@ -99,6 +100,7 @@ function run_framework {
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles='["roleA", "roleB"]' \
+    --max_unsuccessful_offer_cycles=3 \
     --tasks='
       {
         "tasks": [
@@ -162,12 +164,60 @@ function run_framework {
 
 setup_env
 
-echo ${BOLD}
+echo "${BOLD}"
 echo "********************************************************************************************"
 echo "* A framework can be in two roles and start tasks on resources allocated for either role.  *"
 echo "********************************************************************************************"
-echo ${NORMAL}
-
+echo "${NORMAL}"
 start_master
 start_agent
+run_framework
+
+
+echo "${BOLD}"
+echo "********************************************************************************************"
+echo "* Frameworks in multiple roles can use quota.                                              *"
+echo "********************************************************************************************"
+echo "${NORMAL}"
+start_master
+start_agent
+
+echo "${BOLD}"
+echo "Quota'ing all of the agent's resources for 'roleA'."
+echo "${NORMAL}"
+QUOTA='
+{
+  "role": "roleA",
+  "force": true,
+  "guarantee": [
+    {
+      "name": "cpus",
+      "type": "SCALAR",
+      "scalar": { "value": 1}
+    },
+    {
+      "name": "mem",
+      "type": "SCALAR",
+      "scalar": { "value": 96}
+    },
+    {
+      "name": "disk",
+      "type": "SCALAR",
+      "scalar": { "value": 50}
+    }
+  ]
+}'
+
+curl --verbose -d"${QUOTA}" http://127.0.0.1:"$MASTER_PORT"/quota
+
+echo "${BOLD}"
+echo The framework will not get any resources to run tasks with 'roleB'.
+echo "${NORMAL}"
+[ ! $(run_framework) ]
+
+echo "${BOLD}"
+echo If we make more resources available, the framework will also be offered resources for 'roleB'.
+echo "${NORMAL}"
+start_agent
+
 run_framework
