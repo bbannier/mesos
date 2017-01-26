@@ -168,9 +168,9 @@ public:
       const mesos::Resources resources(offer.resources());
 
       LOG(INFO) << "With " << waitingTasks.size()
-                << " unscheduled tasks, looking for tasks to run on resources '"
-                << stringify(resources.flatten()) << "' on agent '"
-                << offer.slave_id() << "'";
+                << " unscheduled tasks, looking for tasks to run on resources "
+                   "on agent '"
+                << offer.slave_id() << "': " << stringify(resources);
 
       // Find waiting tasks matching the role this allocation was made to.
       std::vector<TaskWithRole> candidateTasks;

@@ -71,12 +71,14 @@ function start_agent {
 
   AGENT_PORT=$(random_port)
 
+  RESOURCES=$1
+
   ${AGENT} \
     --work_dir="${MESOS_WORK_DIR}" \
     --runtime_dir="${MESOS_RUNTIME_DIR}" \
     --master=127.0.0.1:"$MASTER_PORT" \
     --port="$AGENT_PORT" \
-    --resources="cpus:1;mem:96;disk:50" &> "${MESOS_WORK_DIR}.log" &
+    --resources="${RESOURCES}" &> "${MESOS_WORK_DIR}.log" &
   AGENT_PID=${!}
 
   atexit rm -rf "${MESOS_WORK_DIR}.log"
@@ -115,7 +117,7 @@ function run_framework {
                   "name": "cpus",
                   "role": "*",
                   "scalar": {
-                    "value": 0.1
+                    "value": 0.5
                   },
                   "type": "SCALAR"
                 },
@@ -123,7 +125,7 @@ function run_framework {
                   "name": "mem",
                   "role": "*",
                   "scalar": {
-                    "value": 32
+                    "value": 48
                   },
                   "type": "SCALAR"
                 }
@@ -142,7 +144,7 @@ function run_framework {
                   "name": "cpus",
                   "role": "*",
                   "scalar": {
-                    "value": 0.1
+                    "value": 0.5
                   },
                   "type": "SCALAR"
                 },
@@ -150,7 +152,7 @@ function run_framework {
                   "name": "mem",
                   "role": "*",
                   "scalar": {
-                    "value": 32
+                    "value": 48
                   },
                   "type": "SCALAR"
                 }
@@ -164,32 +166,34 @@ function run_framework {
 
 setup_env
 
-echo "${BOLD}"
-echo "********************************************************************************************"
-echo "* A framework can be in two roles and start tasks on resources allocated for either role.  *"
-echo "********************************************************************************************"
-echo "${NORMAL}"
-start_master
-start_agent
-run_framework
+function test_1 {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* A framework can be in two roles and start tasks on resources allocated for either role.  *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+  start_master
+  start_agent "cpus:1;mem:96;disk:50"
+  run_framework
+}
 
+function test_2 {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Frameworks in multiple roles can use quota.                                              *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+  start_master
+  start_agent "cpus:1;mem:96;disk:50"
 
-echo "${BOLD}"
-echo "********************************************************************************************"
-echo "* Frameworks in multiple roles can use quota.                                              *"
-echo "********************************************************************************************"
-echo "${NORMAL}"
-start_master
-start_agent
-
-echo "${BOLD}"
-echo "Quota'ing all of the agent's resources for 'roleA'."
-echo "${NORMAL}"
-QUOTA='
-{
-  "role": "roleA",
-  "force": true,
-  "guarantee": [
+  echo "${BOLD}"
+  echo "Quota'ing all of the agent's resources for 'roleA'."
+  echo "${NORMAL}"
+  QUOTA='
+  {
+    "role": "roleA",
+    "force": true,
+    "guarantee": [
     {
       "name": "cpus",
       "type": "SCALAR",
@@ -205,19 +209,40 @@ QUOTA='
       "type": "SCALAR",
       "scalar": { "value": 50}
     }
-  ]
-}'
+    ]
+  }'
 
-curl --verbose -d"${QUOTA}" http://127.0.0.1:"$MASTER_PORT"/quota
+  curl --verbose -d"${QUOTA}" http://127.0.0.1:"$MASTER_PORT"/quota
 
-echo "${BOLD}"
-echo The framework will not get any resources to run tasks with 'roleB'.
-echo "${NORMAL}"
-[ ! $(run_framework) ]
+  echo "${BOLD}"
+  echo The framework will not get any resources to run tasks with 'roleB'.
+  echo "${NORMAL}"
+  [ ! $(run_framework) ]
 
-echo "${BOLD}"
-echo If we make more resources available, the framework will also be offered resources for 'roleB'.
-echo "${NORMAL}"
-start_agent
+  echo "${BOLD}"
+  echo If we make more resources available, the framework will also be offered resources for 'roleB'.
+  echo "${NORMAL}"
+  start_agent "cpus:1;mem:96;disk:50"
 
-run_framework
+  run_framework
+}
+
+function test_reserved_resources {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Reserved resources                                                                       *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+  start_master
+
+  echo "${BOLD}"
+  RESOURCES="cpus(roleA):0.5;cpus(roleB):0.5;mem(roleA):48;mem(roleB):48;disk(roleA):25;disk(roleB):25"
+  echo Starting agent with reserved resources: $RESOURCES.
+  start_agent "${RESOURCES}"
+  echo "${NORMAL}"
+  run_framework
+}
+
+# test_1
+# test_2
+test_reserved_resources
