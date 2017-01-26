@@ -95,7 +95,7 @@ function start_agent {
   atexit kill ${AGENT_PID}
 }
 
-function start_framework {
+function run_framework {
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles='["roleA", "roleB"]' \
@@ -170,4 +170,4 @@ echo ${NORMAL}
 
 start_master
 start_agent
-start_framework
+run_framework
