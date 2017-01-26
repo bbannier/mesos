@@ -95,12 +95,8 @@ function start_agent {
   atexit kill ${AGENT_PID}
 }
 
-setup_env
-start_master
-start_agent
-
-# The main event!
-${MULTIROLE_FRAMEWORK} \
+function start_framework {
+  ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles='["roleA", "roleB"]' \
     --tasks='
@@ -162,4 +158,9 @@ ${MULTIROLE_FRAMEWORK} \
           }
         ]
       }'
-STATUS=${?}
+}
+
+setup_env
+start_master
+start_agent
+start_framework
