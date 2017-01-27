@@ -258,11 +258,73 @@ function test_fair_share {
   echo "********************************************************************************************"
   echo "* Fair share.                                                                              *"
   echo "********************************************************************************************"
+  echo "Starting a cluster with two frameworks: one framework is in two roles"
+  echo "['roleA', 'roleB'] with one task in each, the other is only ['roleA']"
+  echo "with two tasks."
+  echo "We also start three agents which fit exactly one workload of the"
+  echo "frameworks. We expect one framework to be able to launch both of its tasks immediately,"
+  echo "while the other one will have to wait."
   echo "${NORMAL}"
   start_master
   start_agent "cpus:0.5;mem:48;disk:25"
   start_agent "cpus:0.5;mem:48;disk:25"
   start_agent "cpus:0.5;mem:48;disk:25"
+
+  MESOS_TASKS='
+  {
+    "tasks": [
+    {
+      "role": "roleA",
+      "task": {
+      "command": { "value": "sleep 1" },
+      "name": "task1",
+      "task_id": { "value": "task1" },
+      "resources": [
+      {
+        "name": "cpus",
+        "scalar": {
+        "value": 0.5
+      },
+      "type": "SCALAR"
+    },
+    {
+      "name": "mem",
+      "scalar": {
+      "value": 48
+    },
+    "type": "SCALAR"
+  }
+  ],
+  "slave_id": { "value": "" }
+}
+          },
+          {
+            "role": "roleB",
+            "task": {
+            "command": { "value": "sleep 1" },
+            "name": "task2",
+            "task_id": { "value": "task2" },
+            "resources": [
+            {
+              "name": "cpus",
+              "scalar": {
+              "value": 0.5
+            },
+            "type": "SCALAR"
+          },
+          {
+            "name": "mem",
+            "scalar": {
+            "value": 48
+          },
+          "type": "SCALAR"
+        }
+        ],
+        "slave_id": { "value": "" }
+      }
+    }
+    ]
+  }'
 
   echo "${BOLD}"
   echo Starting a framework in two roles which will consume the bulk on the resources.
@@ -271,8 +333,9 @@ function test_fair_share {
 
   echo "${BOLD}"
   echo Starting a framework in just one role which will be offered not enough
-  echo resources since the earlier will be below fair share in that role.
+  echo resources since the earlier one will be below fair share in that role.
   echo "${NORMAL}"
+  MESOS_TASKS="$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g')"
   [ ! "$(run_framework '["roleA"]')" ]
 }
 
