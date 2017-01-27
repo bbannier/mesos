@@ -276,53 +276,43 @@ function test_fair_share {
     {
       "role": "roleA",
       "task": {
-      "command": { "value": "sleep 1" },
-      "name": "task1",
-      "task_id": { "value": "task1" },
-      "resources": [
-      {
-        "name": "cpus",
-        "scalar": {
-        "value": 0.5
-      },
-      "type": "SCALAR"
-    },
-    {
-      "name": "mem",
-      "scalar": {
-      "value": 48
-    },
-    "type": "SCALAR"
-  }
-  ],
-  "slave_id": { "value": "" }
-}
-          },
+        "command": { "value": "sleep 1" },
+        "name": "task1",
+        "task_id": { "value": "task1" },
+        "resources": [
           {
-            "role": "roleB",
-            "task": {
-            "command": { "value": "sleep 1" },
-            "name": "task2",
-            "task_id": { "value": "task2" },
-            "resources": [
-            {
-              "name": "cpus",
-              "scalar": {
-              "value": 0.5
-            },
+            "name": "cpus",
+            "scalar": { "value": 0.5 },
             "type": "SCALAR"
           },
           {
             "name": "mem",
-            "scalar": {
-            "value": 48
-          },
-          "type": "SCALAR"
-        }
+            "scalar": { "value": 48 },
+            "type": "SCALAR"
+          }
         ],
         "slave_id": { "value": "" }
-      }
-    }
+        }
+      }, {
+      "role": "roleB",
+      "task": {
+        "command": { "value": "sleep 1" },
+        "name": "task2",
+        "task_id": { "value": "task2" },
+        "resources": [
+          {
+            "name": "cpus",
+            "scalar": { "value": 0.5 },
+            "type": "SCALAR"
+          },
+          {
+            "name": "mem",
+            "scalar": { "value": 48 },
+            "type": "SCALAR"
+          }
+        ],
+        "slave_id": { "value": "" }
+      }}
     ]
   }'
 
@@ -332,8 +322,10 @@ function test_fair_share {
   run_framework &
 
   echo "${BOLD}"
-  echo Starting a framework in just one role which will be offered not enough
-  echo resources since the earlier one will be below fair share in that role.
+  echo "Starting a framework in just one role which will be offered not enough"
+  echo "resources initially since the earlier one will be below fair share in"
+  echo "that role ('taskX_one_role' will finish last)."
+  # TODO(bbannier): Make this more testable.
   echo "${NORMAL}"
   MESOS_TASKS="$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g')"
   [ ! "$(run_framework '["roleA"]')" ]
@@ -385,7 +377,7 @@ function test_framework_authz {
 
 # test_1
 
-test_reserved_resources
+# test_reserved_resources
 test_fair_share
-test_quota
-test_framework_authz
+# test_quota
+# test_framework_authz
