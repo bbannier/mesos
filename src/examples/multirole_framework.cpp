@@ -29,6 +29,7 @@
 #include <stout/os.hpp>
 #include <stout/protobuf.hpp>
 #include <stout/stringify.hpp>
+#include <stout/strings.hpp>
 #include <stout/try.hpp>
 
 #include <glog/logging.h>
@@ -47,15 +48,28 @@
 #include "logging/logging.hpp"
 #include "v1/parse.hpp"
 
+namespace {
+std::string oneline(const std::string& s)
+{
+  constexpr char DEL[] = ", ";
+  return strings::trim(strings::replace(s, "\n", DEL), strings::SUFFIX, DEL);
+}
+} // namespace {
+
 namespace mesos {
 std::ostream& operator<<(std::ostream& stream, const Offer& offer)
 {
-  return stream << offer.DebugString();
+  return stream << oneline(offer.DebugString());
 }
 
 std::ostream& operator<<(std::ostream& stream, const TaskStatus& status)
 {
-  return stream << status.DebugString();
+  return stream << oneline(status.DebugString());
+}
+
+std::ostream& operator<<(std::ostream& stream, const Credential& credential)
+{
+  return stream << oneline(credential.DebugString());
 }
 } // namespace mesos {
 
@@ -219,6 +233,11 @@ public:
       }
     }
 
+    if (waitingTasks.empty() && runningTasks.empty()) {
+      driver->stop();
+      return;
+    }
+
     if (!usedOffers) {
       ++numUnsuccessfulOfferCycles;
       if (flags.maxUnsuccessfulOfferCycles.isSome() &&
@@ -302,12 +321,15 @@ private:
       mesos::SchedulerDriver* driver,
       const mesos::MasterInfo& masterInfo) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::reregistered: " << stringify(masterInfo);
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::reregistered: "
+                       << stringify(masterInfo);
   }
 
   void disconnected(mesos::SchedulerDriver* driver) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::disconnected";
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::disconnected";
   }
 
   void resourceOffers(
@@ -323,7 +345,9 @@ private:
   void offerRescinded(
       mesos::SchedulerDriver* driver, const mesos::OfferID& offerId) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::offerRescinded: " << stringify(offerId);
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::offerRescinded: "
+                       << stringify(offerId);
   }
 
   void statusUpdate(
@@ -340,15 +364,18 @@ private:
       const mesos::SlaveID& slaveId,
       const std::string& data) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::frameworkMessage: "
-               << stringify(executorId) << " " << stringify(slaveId) << " "
-               << stringify(data);
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::frameworkMessage: "
+                       << stringify(executorId) << " " << stringify(slaveId)
+                       << " " << stringify(data);
   }
 
   void slaveLost(
       mesos::SchedulerDriver* driver, const mesos::SlaveID& slaveId) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::slaveLost: " << stringify(slaveId);
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::slaveLost: "
+                       << stringify(slaveId);
   }
 
   void executorLost(
@@ -357,14 +384,16 @@ private:
       const mesos::SlaveID& slaveId,
       int status) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::executorLost: " << stringify(executorId)
-               << " " << stringify(slaveId);
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::executorLost: "
+                       << stringify(executorId) << " " << stringify(slaveId);
   }
 
   void error(
       mesos::SchedulerDriver* driver, const std::string& message) override
   {
-    LOG(FATAL) << "MultiRoleScheduler::error: " << message;
+    driver->abort();
+    EXIT(EXIT_FAILURE) << "MultiRoleScheduler::error: " << message;
   }
 };
 
@@ -449,6 +478,8 @@ int main(int argc, char** argv)
     }
 
     credential.set_secret(value.get());
+
+    LOG(INFO) << "Using credential '" << stringify(credential) << "'";
 
     driver.reset(
         new mesos::MesosSchedulerDriver(

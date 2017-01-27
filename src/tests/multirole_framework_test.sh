@@ -27,6 +27,10 @@ function setup_env {
   unset MESOS_SOURCE_DIR
   unset MESOS_HELPER_DIR
   unset MESOS_VERBOSE
+
+  # Disable authenticating so we can create principals on the fly in below test.
+  unset MESOS_AUTHENTICATE
+  unset MESOS_AUTHENTICATE_FRAMEWORKS
 }
 
 function start_master {
@@ -104,11 +108,7 @@ function start_agent {
 
 function run_framework {
   ROLES=${1:-\[\"roleA\", \"roleB\"\]}
-  ${MULTIROLE_FRAMEWORK} \
-    --master=127.0.0.1:"$MASTER_PORT" \
-    --roles="$ROLES" \
-    --max_unsuccessful_offer_cycles=3 \
-    --tasks='
+  DEFAULT_TASKS='
       {
         "tasks": [
           {
@@ -167,6 +167,14 @@ function run_framework {
           }
         ]
       }'
+
+  MESOS_TASKS=${MESOS_TASKS:-$DEFAULT_TASKS}
+
+  ${MULTIROLE_FRAMEWORK} \
+    --master=127.0.0.1:"$MASTER_PORT" \
+    --roles="$ROLES" \
+    --max_unsuccessful_offer_cycles=3 \
+    --tasks="${MESOS_TASKS}"
 }
 
 setup_env
@@ -271,7 +279,53 @@ function test_fair_share {
   [ ! "$(run_framework '["roleA"]')" ]
 }
 
-test_1
-test_2
-test_reserved_resources
-test_fair_share
+function test_framework_authz {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Framework authorization.                                                                 *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+
+  ACLS='
+  {
+    "register_frameworks": [
+      {
+        "principals": { "values": ["'${DEFAULT_PRINCIPAL}'"] },
+        "roles": { "values": ["roleA"] }
+      },
+      {
+        "principals": { "values": ["OTHER_PRINCIPAL"] },
+        "roles": { "values" : ["roleB"] }
+      }
+    ]
+  }
+  '
+  start_master "${ACLS}"
+  start_agent
+
+  echo "${BOLD}"
+  echo "Attempting to register a framework in role 'roleA' with a"
+  echo "principal authorized authorized for the role succeeds. The framework"
+  echo "can run tasks."
+  echo "${NORMAL}"
+  (DEFAULT_PRINCIPAL=OTHER_PRINCIPAL MESOS_TASKS='{"tasks": []}' && run_framework '["roleB"]')
+
+  echo "${BOLD}"
+  echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a principal authorized only for 'roleB' fails."
+  echo "${NORMAL}"
+  [ ! "$(DEFAULT_PRINCIPAL=OTHER_PRINCIPAL && run_framework)" ]
+
+  echo "${BOLD}"
+  echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a"
+  echo "principal authorized authorized for both roles succeeds. The framework can"
+  echo "run tasks."
+  echo "${NORMAL}"
+  run_framework
+}
+
+# test_1
+# test_2
+# test_reserved_resources
+# test_fair_share
+
+test_framework_authz
