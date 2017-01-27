@@ -11,7 +11,9 @@ function random_port {
 }
 
 function setup_env {
+  # shellcheck source=/dev/null
   source "${MESOS_SOURCE_DIR}"/support/colors.sh
+  # shellcheck source=/dev/null
   source "${MESOS_SOURCE_DIR}"/support/atexit.sh
 
   export LD_LIBRARY_PATH=${MESOS_BUILD_DIR}/src/.libs
@@ -218,7 +220,7 @@ function test_2 {
   echo "${BOLD}"
   echo The framework will not get any resources to run tasks with 'roleB'.
   echo "${NORMAL}"
-  [ ! $(run_framework '["roleA", "roleB"]') ]
+  [ ! "$(run_framework '["roleA", "roleB"]')" ]
 
   echo "${BOLD}"
   echo If we make more resources available, the framework will also be offered resources for 'roleB'.
