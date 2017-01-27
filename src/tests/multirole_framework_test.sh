@@ -120,7 +120,6 @@ function run_framework {
               "resources": [
                 {
                   "name": "cpus",
-                  "role": "*",
                   "scalar": {
                     "value": 0.5
                   },
@@ -128,7 +127,6 @@ function run_framework {
                 },
                 {
                   "name": "mem",
-                  "role": "*",
                   "scalar": {
                     "value": 48
                   },
@@ -147,7 +145,6 @@ function run_framework {
               "resources": [
                 {
                   "name": "cpus",
-                  "role": "*",
                   "scalar": {
                     "value": 0.5
                   },
@@ -155,7 +152,6 @@ function run_framework {
                 },
                 {
                   "name": "mem",
-                  "role": "*",
                   "scalar": {
                     "value": 48
                   },
@@ -251,8 +247,8 @@ function test_reserved_resources {
   echo "${BOLD}"
   RESOURCES="cpus(roleA):0.5;cpus(roleB):0.5;mem(roleA):48;mem(roleB):48;disk(roleA):25;disk(roleB):25"
   echo Starting agent with reserved resources: $RESOURCES.
-  start_agent "${RESOURCES}"
   echo "${NORMAL}"
+  start_agent "${RESOURCES}"
   run_framework
 }
 
