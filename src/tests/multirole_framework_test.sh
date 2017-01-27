@@ -190,7 +190,7 @@ function test_1 {
   run_framework
 }
 
-function test_2 {
+function test_quota {
   echo "${BOLD}"
   echo "********************************************************************************************"
   echo "* Frameworks in multiple roles can use quota.                                              *"
@@ -324,8 +324,8 @@ function test_framework_authz {
 }
 
 # test_1
-# test_2
 
 test_reserved_resources
 test_fair_share
+test_quota
 test_framework_authz
