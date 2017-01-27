@@ -35,10 +35,12 @@ function start_master {
 
   MASTER_PORT=$(random_port)
 
+  ACLS=${1:-\{\"permissive\": true\}}
+
   ${MASTER} \
     --ip=127.0.0.1 \
     --port="$MASTER_PORT" \
-    --acls='{"permissive": true}' \
+    --acls="${ACLS}" \
     --work_dir="${MESOS_WORK_DIR}" &> "${MESOS_WORK_DIR}.log" &
   MASTER_PID=${!}
 
@@ -73,7 +75,7 @@ function start_agent {
 
   AGENT_PORT=$(random_port)
 
-  RESOURCES=$1
+  RESOURCES=${1:-cpus:1;mem:96;disk:50}
 
   ${AGENT} \
     --work_dir="${MESOS_WORK_DIR}" \
@@ -101,7 +103,7 @@ function start_agent {
 }
 
 function run_framework {
-  ROLES=$1
+  ROLES=${1:-\[\"roleA\", \"roleB\"\]}
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles="$ROLES" \
@@ -176,8 +178,8 @@ function test_1 {
   echo "********************************************************************************************"
   echo "${NORMAL}"
   start_master
-  start_agent "cpus:1;mem:96;disk:50"
-  run_framework '["roleA", "roleB"]'
+  start_agent
+  run_framework
 }
 
 function test_2 {
@@ -187,7 +189,7 @@ function test_2 {
   echo "********************************************************************************************"
   echo "${NORMAL}"
   start_master
-  start_agent "cpus:1;mem:96;disk:50"
+  start_agent
 
   echo "${BOLD}"
   echo "Quota'ing all of the agent's resources for 'roleA'."
@@ -220,14 +222,14 @@ function test_2 {
   echo "${BOLD}"
   echo The framework will not get any resources to run tasks with 'roleB'.
   echo "${NORMAL}"
-  [ ! "$(run_framework '["roleA", "roleB"]')" ]
+  [ ! "$(run_framework)" ]
 
   echo "${BOLD}"
   echo If we make more resources available, the framework will also be offered resources for 'roleB'.
   echo "${NORMAL}"
-  start_agent "cpus:1;mem:96;disk:50"
+  start_agent
 
-  run_framework '["roleA", "roleB"]'
+  run_framework
 }
 
 function test_reserved_resources {
@@ -243,7 +245,7 @@ function test_reserved_resources {
   echo Starting agent with reserved resources: $RESOURCES.
   start_agent "${RESOURCES}"
   echo "${NORMAL}"
-  run_framework '["roleA", "roleB"]'
+  run_framework
 }
 
 function test_fair_share {
@@ -260,7 +262,7 @@ function test_fair_share {
   echo "${BOLD}"
   echo Starting a framework in two roles which will consume the bulk on the resources.
   echo "${NORMAL}"
-  run_framework '["roleA", "roleB"]' &
+  run_framework &
 
   echo "${BOLD}"
   echo Starting a framework in just one role which will be offered not enough
