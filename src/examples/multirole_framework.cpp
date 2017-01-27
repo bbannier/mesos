@@ -275,6 +275,12 @@ public:
                 << "'";
     }
 
+    if (status.state() == mesos::TASK_ERROR) {
+      LOG(ERROR) << "Task '" << status.task_id()
+                 << "' had an error: " << status.message();
+      driver->abort();
+    }
+
     if (waitingTasks.empty() && runningTasks.empty()) {
       driver->stop();
     }
