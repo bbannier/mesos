@@ -204,16 +204,16 @@ public:
       } else {
         // Launch the task and transition it from waiting to running.
         TaskWithRole candidateTask = candidateTasks[0];
+        const std::string role = candidateTask.role;
 
         mesos::TaskInfo task = candidateTask.taskInfo;
         task.mutable_slave_id()->CopyFrom(offer.slave_id());
 
         {
-          const std::string role = candidateTask.role;
           // Calculate resources to use.
           // TODO(bbannier): pick a task that actually fits on the offer
-          // instead of just sending a potentially too big or too small task on a
-          // big offer.
+          // instead of just sending a potentially too big or too small task on
+          // a big offer.
           mesos::Resources taskResources = task.resources();
           taskResources.allocate(role);
           mesos::Resources remaining = offer.resources();
@@ -228,8 +228,8 @@ public:
         }
 
         driver->launchTasks(offer.id(), {task});
-        LOG(INFO) << "Launched task '" << task.task_id()
-                  << "' to run on resources allocated for role '"
+        LOG(INFO) << "Launched task '" << task.task_id() << "' with role '"
+                  << role << "' to run on resources allocated for role '"
                   << resourcesRole << "'";
 
         CHECK(
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
     }
   }
 
-  LOG(INFO) << "Scheduling tasks: " << stringify(flags.tasks_);
+  LOG(INFO) << "Scheduling tasks: " << flags.tasks_;
 
   MultiRoleScheduler scheduler(flags, framework);
 
