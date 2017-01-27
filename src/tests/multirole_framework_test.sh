@@ -266,10 +266,10 @@ function test_fair_share {
   echo Starting a framework in just one role which will be offered not enough
   echo resources since the earlier will be below fair share in that role.
   echo "${NORMAL}"
-  [ ! $(run_framework '["roleA"]') ]
+  [ ! "$(run_framework '["roleA"]')" ]
 }
 
-# test_1
-# test_2
-# test_reserved_resources
+test_1
+test_2
+test_reserved_resources
 test_fair_share
