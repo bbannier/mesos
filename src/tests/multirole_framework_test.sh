@@ -247,7 +247,7 @@ function test_reserved_resources {
   echo "${BOLD}"
   RESOURCES="cpus(roleA):0.5;cpus(roleB):0.5;mem(roleA):48;mem(roleB):48;disk(roleA):25;disk(roleB):25"
   echo Starting agent with reserved resources: $RESOURCES.
-  echo We expect a framework in both roles to be able to launch tasks on both resources from either role.
+  echo We expect a framework in both roles to be able to launch tasks on resources from either role.
   echo "${NORMAL}"
   start_agent "${RESOURCES}"
   run_framework
@@ -377,7 +377,7 @@ function test_framework_authz {
 
 # test_1
 
-# test_reserved_resources
+test_reserved_resources
 test_fair_share
-# test_quota
-# test_framework_authz
+test_quota
+test_framework_authz
