@@ -325,7 +325,7 @@ function test_framework_authz {
 
 # test_1
 # test_2
-# test_reserved_resources
-# test_fair_share
 
+test_reserved_resources
+test_fair_share
 test_framework_authz
