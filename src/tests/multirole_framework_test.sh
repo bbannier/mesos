@@ -27,10 +27,6 @@ function setup_env {
   unset MESOS_SOURCE_DIR
   unset MESOS_HELPER_DIR
   unset MESOS_VERBOSE
-
-  # Disable authenticating so we can create principals on the fly in below test.
-  unset MESOS_AUTHENTICATE
-  unset MESOS_AUTHENTICATE_FRAMEWORKS
 }
 
 function start_master {
@@ -221,7 +217,7 @@ function test_quota {
     ]
   }'
 
-  curl --verbose -d"${QUOTA}" http://127.0.0.1:"$MASTER_PORT"/quota
+  curl --silent -d"${QUOTA}" http://127.0.0.1:"$MASTER_PORT"/quota
 
   echo "${BOLD}"
   echo The framework will not get any resources to run tasks with 'roleB'.
@@ -266,9 +262,6 @@ function test_fair_share {
   echo "while the other one will have to wait."
   echo "${NORMAL}"
   start_master
-  start_agent "cpus:0.5;mem:48;disk:25"
-  start_agent "cpus:0.5;mem:48;disk:25"
-  start_agent "cpus:0.5;mem:48;disk:25"
 
   MESOS_TASKS='
   {
@@ -321,14 +314,19 @@ function test_fair_share {
   echo "${NORMAL}"
   run_framework &
 
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+
   echo "${BOLD}"
   echo "Starting a framework in just one role which will be offered not enough"
   echo "resources initially since the earlier one will be below fair share in"
   echo "that role ('taskX_one_role' will finish last)."
-  # TODO(bbannier): Make this more testable.
   echo "${NORMAL}"
-  MESOS_TASKS="$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g')"
-  [ ! "$(run_framework '["roleA"]')" ]
+
+  # TODO(bbannier): Make this more testable. We expect this second framework to
+  # finish last.
+  [ ! "$(MESOS_TASKS="$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g')" run_framework '["roleA"]')" ]
 }
 
 function test_framework_authz {
@@ -340,36 +338,56 @@ function test_framework_authz {
 
   ACLS='
   {
+    "permissive": false,
     "register_frameworks": [
       {
         "principals": { "values": ["'${DEFAULT_PRINCIPAL}'"] },
         "roles": { "values": ["roleA"] }
       },
       {
-        "principals": { "values": ["OTHER_PRINCIPAL"] },
+        "principals": { "values": ["OTHER_PRINCIPAL", "'${DEFAULT_PRINCIPAL}'"] },
         "roles": { "values" : ["roleB"] }
       }
     ]
   }
   '
+
+  CREDENTIALS='
+  {
+    "credentials": [
+    {
+      "principal": "'$DEFAULT_PRINCIPAL'",
+      "secret": "'$DEFAULT_SECRET'"
+    },
+    {
+      "principal": "OTHER_PRINCIPAL",
+      "secret": "secret"
+    }
+    ]
+  }'
+
+  echo $CREDENTIALS > credentials.json
+  cat credentials.json
+  MESOS_CREDENTIALS=file://$(realpath credentials.json)
+
   start_master "${ACLS}"
   start_agent
 
   echo "${BOLD}"
   echo "Attempting to register a framework in role 'roleA' with a"
-  echo "principal authorized authorized for the role succeeds. The framework"
+  echo "principal authorized for the role succeeds. The framework"
   echo "can run tasks."
   echo "${NORMAL}"
-  (DEFAULT_PRINCIPAL=OTHER_PRINCIPAL MESOS_TASKS='{"tasks": []}' && run_framework '["roleB"]')
+  (DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 
   echo "${BOLD}"
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a principal authorized only for 'roleB' fails."
   echo "${NORMAL}"
-  [ ! "$(DEFAULT_PRINCIPAL=OTHER_PRINCIPAL && run_framework)" ]
+  [ ! $(DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework) ]
 
   echo "${BOLD}"
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a"
-  echo "principal authorized authorized for both roles succeeds. The framework can"
+  echo "principal authorized for both roles succeeds. The framework can"
   echo "run tasks."
   echo "${NORMAL}"
   run_framework
@@ -380,4 +398,6 @@ function test_framework_authz {
 test_reserved_resources
 test_fair_share
 test_quota
-test_framework_authz
+
+# FIXME(bbannier): Enable this once we have a fix for MESOS-7022.
+# test_framework_authz
