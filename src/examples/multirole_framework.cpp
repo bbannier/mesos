@@ -62,10 +62,12 @@ std::ostream& operator<<(std::ostream& stream, const Offer& offer)
   return stream << oneline(offer.DebugString());
 }
 
+
 std::ostream& operator<<(std::ostream& stream, const TaskStatus& status)
 {
   return stream << oneline(status.DebugString());
 }
+
 
 std::ostream& operator<<(std::ostream& stream, const Credential& credential)
 {
@@ -73,15 +75,18 @@ std::ostream& operator<<(std::ostream& stream, const Credential& credential)
 }
 } // namespace mesos {
 
-struct TaskWithRole {
+struct TaskWithRole
+{
   mesos::TaskInfo taskInfo;
   std::string role;
 };
+
 
 bool operator==(const TaskWithRole& lhs, const TaskWithRole& rhs)
 {
   return std::tie(lhs.taskInfo, lhs.role) == std::tie(rhs.taskInfo, rhs.role);
 }
+
 
 struct Flags : public virtual flags::FlagsBase
 {
@@ -143,6 +148,7 @@ struct Flags : public virtual flags::FlagsBase
 
   Option<size_t> maxUnsuccessfulOfferCycles;
 };
+
 
 class MultiRoleSchedulerProcess
     : public process::Process<MultiRoleSchedulerProcess>
@@ -314,6 +320,7 @@ private:
   size_t numUnsuccessfulOfferCycles = 0;
 };
 
+
 class MultiRoleScheduler : public mesos::Scheduler
 {
 public:
@@ -420,6 +427,7 @@ private:
     EXIT(EXIT_FAILURE) << "MultiRoleScheduler::error: " << message;
   }
 };
+
 
 int main(int argc, char** argv)
 {
