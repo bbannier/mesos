@@ -164,7 +164,7 @@ public:
   {
     bool usedOffers = false;
 
-    for (auto&& offer : offers) {
+    for (const mesos::Offer& offer : offers) {
       if (waitingTasks.empty()) {
         driver->declineOffer(offer.id());
         continue;
@@ -172,7 +172,7 @@ public:
 
       // Determine the role the offer was made for.
       Option<std::string> resourcesRole_ = None();
-      for (auto&& resource : offer.resources()) {
+      for (const mesos::Resource& resource : offer.resources()) {
         CHECK(resource.has_allocation_info());
         CHECK(resource.allocation_info().has_role());
 
@@ -447,7 +447,7 @@ int main(int argc, char** argv)
   auto tasks = flags.tasks_.at<JSON::Array>("tasks");
   CHECK_SOME(tasks) << "Could not extract tasks";
 
-  for (auto&& value : tasks->values) {
+  for (const JSON::Value& value : tasks->values) {
     CHECK(value.is<JSON::Object>()) << "Task is not a JSON object";
     auto value_ = value.as<JSON::Object>();
 
@@ -475,7 +475,7 @@ int main(int argc, char** argv)
   if (flags.roles.isSome()) {
     LOG(INFO) << "Running framework with roles "
               << stringify(flags.roles->values);
-    for (auto&& value : flags.roles->values) {
+    for (const JSON::Value& value : flags.roles->values) {
       CHECK(value.is<JSON::String>());
       framework.add_roles(value.as<JSON::String>().value);
     }
