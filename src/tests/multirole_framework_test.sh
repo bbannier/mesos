@@ -326,7 +326,7 @@ function test_fair_share {
 
   # TODO(bbannier): Make this more testable. We expect this second framework to
   # finish last.
-  [ ! "$(MESOS_TASKS="$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g')" run_framework '["roleA"]')" ]
+  [ ! $(MESOS_TASKS=$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g') run_framework '["roleA"]') ]
 }
 
 function test_framework_authz {
@@ -342,11 +342,17 @@ function test_framework_authz {
     "register_frameworks": [
       {
         "principals": { "values": ["'${DEFAULT_PRINCIPAL}'"] },
-        "roles": { "values": ["roleA"] }
+        "roles": { "values": ["roleA", "roleB"] }
       },
       {
         "principals": { "values": ["OTHER_PRINCIPAL", "'${DEFAULT_PRINCIPAL}'"] },
         "roles": { "values" : ["roleB"] }
+      }
+    ],
+    "run_tasks": [
+      {
+        "principals" : { "values": ["'${DEFAULT_PRINCIPAL}'"] },
+        "users": { "type": "ANY" }
       }
     ]
   }
@@ -366,17 +372,21 @@ function test_framework_authz {
     ]
   }'
 
-  echo $CREDENTIALS > credentials.json
-  cat credentials.json
+  echo "${CREDENTIALS}" > credentials.json
   MESOS_CREDENTIALS=file://$(realpath credentials.json)
+  export MESOS_CREDENTIALS
+
+  echo "${BOLD}"
+  echo "Using the following ACLs:"
+  echo "${ACLS}" | python -m json.tool
+  echo "${NORMAL}"
 
   start_master "${ACLS}"
   start_agent
 
   echo "${BOLD}"
-  echo "Attempting to register a framework in role 'roleA' with a"
-  echo "principal authorized for the role succeeds. The framework"
-  echo "can run tasks."
+  echo "Attempting to register a framework in role 'roleB' with a"
+  echo "principal authorized for the role succeeds."
   echo "${NORMAL}"
   (DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 
@@ -398,6 +408,4 @@ function test_framework_authz {
 test_reserved_resources
 test_fair_share
 test_quota
-
-# FIXME(bbannier): Enable this once we have a fix for MESOS-7022.
-# test_framework_authz
+test_framework_authz
