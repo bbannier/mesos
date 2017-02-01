@@ -345,7 +345,7 @@ function test_framework_authz {
         "roles": { "values": ["roleA", "roleB"] }
       },
       {
-        "principals": { "values": ["OTHER_PRINCIPAL", "'${DEFAULT_PRINCIPAL}'"] },
+        "principals": { "values": ["OTHER_PRINCIPAL"] },
         "roles": { "values" : ["roleB"] }
       }
     ],
