@@ -23,23 +23,4 @@ SRCDIR=/tmp/SRC
 
 ./prepare.sh "${SRCDIR}"
 
-# TODO(bbannier): Use a less restrictive `grep` pattern and `header-filter`
-# once MESOS-6115 is fixed.
-cat compile_commands.json \
-  | jq '.[].file' \
-  | sed 's/"//g' \
-  | sed 's/^\ //g' \
-  | grep "^${SRCDIR}/.*\.cpp$" \
-  | parallel -j $(nproc) clang-tidy -p "${PWD}" \
-      -extra-arg=-Wno-unknown-warning-option \
-      -extra-arg=-Wno-unused-command-line-argument \
-      -header-filter="^${SRCDIR}/.*\.hpp$" -checks="${CHECKS}" \
-  1> clang-tidy.log 2> /dev/null
-
-# Propagate any errors.
-if test -s clang-tidy.log; then
-  cat clang-tidy.log
-  exit 1
-else
-  echo "No mesos-tidy violations found."
-fi
+/opt/share/clang/clang-tidy-diff.py -p1

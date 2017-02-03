@@ -66,5 +66,5 @@ RUN apt-get install -qy \
 
 # Wire up the script which performs the actual work.
 WORKDIR /BUILD
-ADD ["entrypoint.sh", "entrypoint.sh"]
+ADD ["entrypoint.sh", "prepare.sh", "diff.sh", "./"]
 CMD exec ./entrypoint.sh

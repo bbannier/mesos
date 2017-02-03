@@ -19,27 +19,24 @@
 set -e
 set -o pipefail
 
-SRCDIR=/tmp/SRC
+MESOS_DIR=$(git rev-parse --show-toplevel)
 
-./prepare.sh "${SRCDIR}"
+# Configure how checks are run. These variables can be overridden by setting the
+# respective environment variables before invoking this script.
+# TODO(bbannier): Enable more upstream checks by default, e.g., from the Google set.
+CHECKS=${CHECKS:-'mesos-*'}
 
-# TODO(bbannier): Use a less restrictive `grep` pattern and `header-filter`
-# once MESOS-6115 is fixed.
-cat compile_commands.json \
-  | jq '.[].file' \
-  | sed 's/"//g' \
-  | sed 's/^\ //g' \
-  | grep "^${SRCDIR}/.*\.cpp$" \
-  | parallel -j $(nproc) clang-tidy -p "${PWD}" \
-      -extra-arg=-Wno-unknown-warning-option \
-      -extra-arg=-Wno-unused-command-line-argument \
-      -header-filter="^${SRCDIR}/.*\.hpp$" -checks="${CHECKS}" \
-  1> clang-tidy.log 2> /dev/null
-
-# Propagate any errors.
-if test -s clang-tidy.log; then
-  cat clang-tidy.log
+# Check for unstaged or uncommitted changes.
+if ! git diff-index --quiet HEAD --; then
+  echo 'Please commit or stash any changes before running 'mesos-tidy'.'
   exit 1
-else
-  echo "No mesos-tidy violations found."
 fi
+
+# Execute the container.
+(cd "${MESOS_DIR}" && git diff -U0 \ "${1}") | \
+docker run \
+  --rm \
+  -v "${MESOS_DIR}":/SRC:Z \
+  -e CHECKS="${CHECKS}" \
+  -e CMAKE_ARGS="${CMAKE_ARGS}" \
+  mesos/mesos-tidy ./diff.sh
