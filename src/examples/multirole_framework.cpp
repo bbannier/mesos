@@ -99,8 +99,8 @@ struct Flags : public virtual flags::FlagsBase
         "Array of roles the framework should subscribe as");
     add(&Flags::tasks_,
         "tasks",
-        "Tasks to run. Each tasks needs to have an associated role. A tasks\n"
-        "`slave_id` field" "can be left empty.\n"
+        "Tasks to run. Each tasks needs to have an associated role. A task's\n"
+        "`slave_id` field can be left empty.\n"
         "\n"
         "Example:\n"
         "{\n"
