@@ -89,6 +89,31 @@ bool operator==(const TaskWithRole& lhs, const TaskWithRole& rhs)
 }
 
 
+std::deque<TaskWithRole> extractTaskWithRole(const JSON::Array& array)
+{
+  std::deque<TaskWithRole> tasks;
+
+  foreach (const JSON::Value& value, array.values) {
+    CHECK(value.is<JSON::Object>()) << "Task is not a JSON object";
+    auto value_ = value.as<JSON::Object>();
+
+    Result<JSON::String> role = value_.at<JSON::String>("role");
+    CHECK_SOME(role) << "Could not find 'role'";
+
+    Result<JSON::Object> task = value_.at<JSON::Object>("task");
+    CHECK_SOME(task) << "Could not find 'task'";
+    auto task_ = protobuf::parse<mesos::TaskInfo>(task.get());
+    if (task_.isError()) {
+      EXIT(EXIT_FAILURE) << "Invalid task definition: " << task.error();
+    }
+
+    tasks.push_back({task_.get(), role->value});
+  }
+
+  return tasks;
+}
+
+
 struct Flags : public virtual flags::FlagsBase
 {
   Flags()
@@ -448,22 +473,7 @@ int main(int argc, char** argv)
   auto tasks = flags.tasks_.at<JSON::Array>("tasks");
   CHECK_SOME(tasks) << "Could not extract tasks";
 
-  foreach (const JSON::Value& value, tasks->values) {
-    CHECK(value.is<JSON::Object>()) << "Task is not a JSON object";
-    auto value_ = value.as<JSON::Object>();
-
-    Result<JSON::String> role = value_.at<JSON::String>("role");
-    CHECK_SOME(role) << "Could not find role";
-
-    Result<JSON::Object> task = value_.at<JSON::Object>("task");
-    CHECK_SOME(task) << "Could not find task";
-    auto task_ =  protobuf::parse<mesos::TaskInfo>(task.get());
-    if (task_.isError()) {
-      EXIT(EXIT_FAILURE) << "Invalid task definition: " << task_.error();
-    }
-
-    flags.tasks.push_back({task_.get(), role->value});
-  }
+  flags.tasks = extractTaskWithRole(tasks.get());
 
   mesos::FrameworkInfo framework;
   framework.set_user(""); // Have Mesos fill the current user.
@@ -477,7 +487,8 @@ int main(int argc, char** argv)
     LOG(INFO) << "Running framework with roles "
               << stringify(flags.roles->values);
     foreach (const JSON::Value& value, flags.roles->values) {
-      CHECK(value.is<JSON::String>());
+      CHECK(value.is<JSON::String>()) << "Could not parse roles value '"
+                                      << stringify(value) << "' as string";
       framework.add_roles(value.as<JSON::String>().value);
     }
   }
