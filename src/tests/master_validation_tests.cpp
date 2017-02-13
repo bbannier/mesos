@@ -405,7 +405,7 @@ TEST_F(ReserveOperationValidationTest, NonMatchingPrincipal)
           error->message,
           "A reserve operation was attempted by principal 'principal1', but "
           "there is a reserved resource in the request with principal "
-          "'principal2' set in `ReservationInfo`"));
+          "'principal2' set in 'ReservationInfo'"));
 }
 
 
@@ -433,7 +433,7 @@ TEST_F(ReserveOperationValidationTest, ReservationInfoMissingPrincipal)
           error->message,
           "A reserve operation was attempted by principal 'principal', but "
           "there is a reserved resource in the request with no principal set "
-          "in `ReservationInfo`"));
+          "in 'ReservationInfo'"));
 }
 
 

@@ -1631,7 +1631,7 @@ Option<Error> validate(
         return Error(
             "A reserve operation was attempted by principal '" +
             principal.get() + "', but there is a reserved resource in the"
-            " request with no principal set in `ReservationInfo`");
+            " request with no principal set in 'ReservationInfo'");
       }
 
       if (resource.reservation().principal() != principal.get()) {
@@ -1639,7 +1639,7 @@ Option<Error> validate(
             "A reserve operation was attempted by principal '" +
             principal.get() + "', but there is a reserved resource in the"
             " request with principal '" + resource.reservation().principal() +
-            "' set in `ReservationInfo`");
+            "' set in 'ReservationInfo'");
       }
     }
 
