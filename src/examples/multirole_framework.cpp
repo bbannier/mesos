@@ -43,6 +43,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include "common/parse.hpp"
 #include "common/protobuf_utils.hpp"
@@ -54,6 +55,27 @@ std::string oneline(const std::string& s)
 {
   constexpr char DEL[] = ", ";
   return strings::trim(strings::replace(s, "\n", DEL), strings::SUFFIX, DEL);
+}
+
+constexpr char STATE_FILE[] = "framework_id";
+
+Try<mesos::FrameworkID> recoverFrameworkId()
+{
+  std::ifstream file(STATE_FILE);
+
+  std::string value;
+  if (!std::getline(file, value)) {
+    return Error("Could not recover FrameworkID");
+  }
+
+  return flags::parse<mesos::FrameworkID>(value);
+}
+
+void stashFrameworkId(const mesos::FrameworkID& frameworkId)
+{
+  std::ofstream file(STATE_FILE);
+  CHECK(file.is_open());
+  file << stringify(frameworkId);
 }
 } // namespace {
 
@@ -284,6 +306,7 @@ public:
         // leak it here, and e.g., recover it in reconciliation.
         if (candidateTask.await) {
           runningTasks.push_back(candidateTask);
+          failover = true;
         }
 
         waitingTasks.erase(
@@ -297,11 +320,6 @@ public:
         usedOffers = true;
         numUnsuccessfulOfferCycles = 0;
       }
-    }
-
-    if (waitingTasks.empty() && runningTasks.empty()) {
-      driver->stop();
-      return;
     }
 
     if (!usedOffers) {
@@ -352,7 +370,7 @@ public:
     }
 
     if (waitingTasks.empty() && runningTasks.empty()) {
-      driver->stop();
+      driver->stop(failover);
     }
   }
 
@@ -364,6 +382,8 @@ private:
   std::deque<TaskWithRole> runningTasks;
 
   size_t numUnsuccessfulOfferCycles = 0;
+
+  bool failover = false;
 };
 
 
@@ -392,6 +412,7 @@ private:
       const mesos::MasterInfo&) override
   {
     LOG(INFO) << "Registered with framework ID: " << frameworkId;
+    stashFrameworkId(frameworkId);
   }
 
   void reregistered(
@@ -511,6 +532,11 @@ int main(int argc, char** argv)
                                       << stringify(value) << "' as string";
       framework.add_roles(value.as<JSON::String>().value);
     }
+  }
+
+  Try<mesos::FrameworkID> frameworkId = recoverFrameworkId();
+  if (frameworkId.isSome()) {
+    framework.mutable_id()->CopyFrom(frameworkId.get());
   }
 
   LOG(INFO) << "Scheduling tasks: " << flags.tasks_;
