@@ -22,6 +22,7 @@
 #include <process/process.hpp>
 
 #include <stout/check.hpp>
+#include <stout/duration.hpp>
 #include <stout/exit.hpp>
 #include <stout/flags.hpp>
 #include <stout/foreach.hpp>
@@ -218,6 +219,16 @@ public:
     : flags(_flags), frameworkInfo(_frameworkInfo), waitingTasks(_flags.tasks)
   {}
 
+  void registered(
+      mesos::SchedulerDriver* driver,
+      const mesos::FrameworkID& frameworkId,
+      const mesos::MasterInfo& masterInfo)
+  {
+    stashFrameworkId(frameworkId);
+
+    driver->reconcileTasks({});
+  }
+
   void resourceOffers(
       mesos::SchedulerDriver* driver, const std::vector<mesos::Offer>& offers)
   {
@@ -299,14 +310,15 @@ public:
 
         CHECK(
             std::find(
-                runningTasks.begin(), runningTasks.end(), candidateTask) ==
-            runningTasks.end());
+                runningTasks.begin(),
+                runningTasks.end(),
+                candidateTask.taskInfo.task_id()) == runningTasks.end());
 
         // Remember this task if we want to wait for it. Otherwise
         // leak it here, and e.g., recover it in reconciliation.
         if (candidateTask.await) {
-          runningTasks.push_back(candidateTask);
-          failover = true;
+          runningTasks.push_back(candidateTask.taskInfo.task_id());
+        } else {
         }
 
         waitingTasks.erase(
@@ -320,6 +332,11 @@ public:
         usedOffers = true;
         numUnsuccessfulOfferCycles = 0;
       }
+    }
+
+    if (waitingTasks.empty() && runningTasks.empty()) {
+      driver->stop(true);
+      return;
     }
 
     if (!usedOffers) {
@@ -338,39 +355,37 @@ public:
   void statusUpdate(
       mesos::SchedulerDriver* driver, const mesos::TaskStatus& status)
   {
-    auto it = std::find_if(
-        runningTasks.begin(),
-        runningTasks.end(),
-        [&status](const TaskWithRole& task) {
-          return task.taskInfo.task_id() == status.task_id();
-        });
+    auto it =
+      std::find(runningTasks.begin(), runningTasks.end(), status.task_id());
 
     // If we receive a status update for an unknown task, assume we
     // are dealing with a task we plan to leak and recover when
     // restarting the framework later on.
     if (it == runningTasks.end()) {
+      if (status.message() == "Reconciliation: Latest task state") {
+        LOG(INFO) << "Learned about running task"
+                     " '" + stringify(status.task_id()) + "'";
+        runningTasks.push_back(status.task_id());
+      }
+
       return;
-    }
-
-    if (mesos::internal::protobuf::isTerminalState(status.state())) {
-      LOG(INFO) << "Task '" << status.task_id()
-                << "' has reached terminal state '" << stringify(status.state())
-                << "'";
-      runningTasks.erase(it);
     } else {
-      LOG(INFO) << "Task '" << status.task_id()
-                << "' has transitioned to state '" << stringify(status.state())
-                << "'";
-    }
+      if (mesos::internal::protobuf::isTerminalState(status.state())) {
+        LOG(INFO) << "Task '" << status.task_id()
+                  << "' has reached terminal state '"
+                  << stringify(status.state()) << "'";
+        runningTasks.erase(it);
+      } else {
+        LOG(INFO) << "Task '" << status.task_id()
+                  << "' has transitioned to state '"
+                  << stringify(status.state()) << "'";
+      }
 
-    if (status.state() == mesos::TASK_ERROR) {
-      LOG(ERROR) << "Task '" << status.task_id()
-                 << "' had an error: " << status.message();
-      driver->abort();
-    }
-
-    if (waitingTasks.empty() && runningTasks.empty()) {
-      driver->stop(failover);
+      if (status.state() == mesos::TASK_ERROR) {
+        LOG(ERROR) << "Task '" << status.task_id()
+                   << "' had an error: " << status.message();
+        driver->abort();
+      }
     }
   }
 
@@ -379,11 +394,9 @@ private:
   const mesos::FrameworkInfo frameworkInfo;
 
   std::deque<TaskWithRole> waitingTasks;
-  std::deque<TaskWithRole> runningTasks;
+  std::deque<mesos::TaskID> runningTasks;
 
   size_t numUnsuccessfulOfferCycles = 0;
-
-  bool failover = false;
 };
 
 
@@ -407,12 +420,17 @@ private:
   MultiRoleSchedulerProcess process;
 
   void registered(
-      mesos::SchedulerDriver*,
+      mesos::SchedulerDriver* driver,
       const mesos::FrameworkID& frameworkId,
-      const mesos::MasterInfo&) override
+      const mesos::MasterInfo& masterInfo) override
   {
     LOG(INFO) << "Registered with framework ID: " << frameworkId;
-    stashFrameworkId(frameworkId);
+    process::dispatch(
+        process,
+        &MultiRoleSchedulerProcess::registered,
+        driver,
+        frameworkId,
+        masterInfo);
   }
 
   void reregistered(
@@ -538,6 +556,7 @@ int main(int argc, char** argv)
   if (frameworkId.isSome()) {
     framework.mutable_id()->CopyFrom(frameworkId.get());
   }
+  framework.set_failover_timeout(Days(10).secs());
 
   LOG(INFO) << "Scheduling tasks: " << flags.tasks_;
 
