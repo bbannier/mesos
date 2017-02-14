@@ -80,12 +80,14 @@ struct TaskWithRole
 {
   mesos::TaskInfo taskInfo;
   std::string role;
+  bool await = true;
 };
 
 
 bool operator==(const TaskWithRole& lhs, const TaskWithRole& rhs)
 {
-  return std::tie(lhs.taskInfo, lhs.role) == std::tie(rhs.taskInfo, rhs.role);
+  return std::tie(lhs.taskInfo, lhs.role, lhs.await) ==
+         std::tie(rhs.taskInfo, rhs.role, rhs.await);
 }
 
 
@@ -94,11 +96,14 @@ std::deque<TaskWithRole> extractTaskWithRole(const JSON::Array& array)
   std::deque<TaskWithRole> tasks;
 
   foreach (const JSON::Value& value, array.values) {
+    TaskWithRole taskWithRole;
+
     CHECK(value.is<JSON::Object>()) << "Task is not a JSON object";
     auto value_ = value.as<JSON::Object>();
 
     Result<JSON::String> role = value_.at<JSON::String>("role");
     CHECK_SOME(role) << "Could not find 'role'";
+    taskWithRole.role = role->value;
 
     Result<JSON::Object> task = value_.at<JSON::Object>("task");
     CHECK_SOME(task) << "Could not find 'task'";
@@ -106,8 +111,14 @@ std::deque<TaskWithRole> extractTaskWithRole(const JSON::Array& array)
     if (task_.isError()) {
       EXIT(EXIT_FAILURE) << "Invalid task definition: " << task.error();
     }
+    taskWithRole.taskInfo = task_.get();
 
-    tasks.push_back({task_.get(), role->value});
+    Result<JSON::Boolean> await = value_.at<JSON::Boolean>("await");
+    if (await.isSome()) {
+      taskWithRole.await = await->value;
+    }
+
+    tasks.push_back(taskWithRole);
   }
 
   return tasks;
@@ -268,7 +279,12 @@ public:
             std::find(
                 runningTasks.begin(), runningTasks.end(), candidateTask) ==
             runningTasks.end());
-        runningTasks.push_back(candidateTask);
+
+        // Remember this task if we want to wait for it. Otherwise
+        // leak it here, and e.g., recover it in reconciliation.
+        if (candidateTask.await) {
+          runningTasks.push_back(candidateTask);
+        }
 
         waitingTasks.erase(
             std::remove_if(
@@ -311,8 +327,12 @@ public:
           return task.taskInfo.task_id() == status.task_id();
         });
 
-    CHECK(it != runningTasks.end())
-      << "Received status update for unknown task";
+    // If we receive a status update for an unknown task, assume we
+    // are dealing with a task we plan to leak and recover when
+    // restarting the framework later on.
+    if (it == runningTasks.end()) {
+      return;
+    }
 
     if (mesos::internal::protobuf::isTerminalState(status.state())) {
       LOG(INFO) << "Task '" << status.task_id()
