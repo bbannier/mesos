@@ -403,9 +403,75 @@ function test_framework_authz {
   run_framework
 }
 
-# test_1
+function test_failover {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* A framework changing its roles can learn about its previous tasks.                       *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+  start_master
+  start_agent
 
-test_reserved_resources
-test_fair_share
-test_quota
-test_framework_authz
+  TASKS='
+  {
+    "tasks": [
+    {
+      "role": "roleA",
+      "await": false,
+      "task": {
+        "command": { "value": "sleep 2" },
+        "name": "task1",
+        "task_id": { "value": "task1" },
+        "resources": [
+          {
+            "name": "cpus",
+            "scalar": { "value": 0.5 },
+            "type": "SCALAR"
+          },
+          {
+            "name": "mem",
+            "scalar": { "value": 48 },
+            "type": "SCALAR"
+          }
+        ],
+        "slave_id": { "value": "" }
+        }
+      }, {
+      "role": "roleB",
+      "await": false,
+      "task": {
+        "command": { "value": "sleep 2" },
+        "name": "task2",
+        "task_id": { "value": "task2" },
+        "resources": [
+          {
+            "name": "cpus",
+            "scalar": { "value": 0.5 },
+            "type": "SCALAR"
+          },
+          {
+            "name": "mem",
+            "scalar": { "value": 48 },
+            "type": "SCALAR"
+          }
+        ],
+        "slave_id": { "value": "" }
+      }}
+    ]
+  }'
+
+  (MESOS_TASKS="${TASKS}" run_framework '["roleA", "roleB"]')
+
+  echo "${BOLD}"
+  echo "Restarting framework dropping 'roleA'. We can reconcile tasks started with dropped roles."
+  echo "${NORMAL}"
+  (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
+}
+
+# test_1
+test_failover
+
+# test_reserved_resources
+# test_fair_share
+# test_quota
+# test_framework_authz
