@@ -366,6 +366,7 @@ public:
         LOG(INFO) << "Learned about running task"
                      " '" + stringify(status.task_id()) + "'";
         runningTasks.push_back(status.task_id());
+        driver->killTask(status.task_id());
       }
 
       return;
