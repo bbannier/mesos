@@ -29,6 +29,10 @@ function setup_env {
   unset MESOS_VERBOSE
 }
 
+function cleanup {
+  rm -f framework_id
+}
+
 function start_master {
   MESOS_WORK_DIR=$(mktemp -d -t mesos-master-XXXXXX)
   atexit rm -rf "${MESOS_WORK_DIR}"
@@ -326,6 +330,7 @@ function test_fair_share {
 
   # TODO(bbannier): Make this more testable. We expect this second framework to
   # finish last.
+  cleanup
   [ ! $(MESOS_TASKS=$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g') run_framework '["roleA"]') ]
 }
 
@@ -393,12 +398,14 @@ function test_framework_authz {
   echo "${BOLD}"
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a principal authorized only for 'roleB' fails."
   echo "${NORMAL}"
+  cleanup
   [ ! $(DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework) ]
 
   echo "${BOLD}"
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a"
   echo "principal authorized for both roles succeeds. The framework can"
   echo "run tasks."
+  cleanup
   echo "${NORMAL}"
   run_framework
 }
@@ -468,10 +475,20 @@ function test_failover {
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
-# test_1
-test_failover
+test_1
+cleanup
 
-# test_reserved_resources
-# test_fair_share
-# test_quota
-# test_framework_authz
+# test_failover
+# cleanup
+
+test_reserved_resources
+cleanup
+
+test_fair_share
+cleanup
+
+test_quota
+cleanup
+
+test_framework_authz
+cleanup
