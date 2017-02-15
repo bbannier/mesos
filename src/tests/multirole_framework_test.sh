@@ -167,6 +167,10 @@ function run_framework {
 
   MESOS_TASKS=${MESOS_TASKS:-$DEFAULT_TASKS}
 
+  echo "Tasks"
+  echo "-----"
+  echo "${MESOS_TASKS}"
+
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles="$ROLES" \
@@ -474,6 +478,7 @@ function test_failover {
   echo "${BOLD}"
   echo "Restarting framework dropping 'roleA'. We can reconcile tasks started with dropped roles."
   echo "${NORMAL}"
+  cleanup
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
