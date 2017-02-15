@@ -169,7 +169,7 @@ function run_framework {
 
   echo "Tasks"
   echo "-----"
-  echo "${MESOS_TASKS}"
+  echo "${MESOS_TASKS}" | jq
 
   ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
@@ -482,16 +482,10 @@ function test_failover {
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
-test_1
-cleanup
-
-# test_failover
+# test_1
 # cleanup
 
 test_reserved_resources
-cleanup
-
-test_fair_share
 cleanup
 
 test_quota
@@ -499,3 +493,11 @@ cleanup
 
 test_framework_authz
 cleanup
+
+
+
+# test_failover
+# cleanup
+
+# test_fair_share
+# cleanup
