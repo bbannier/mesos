@@ -228,12 +228,7 @@ function test_quota {
   echo The framework will not get any resources to run tasks with 'roleB'.
   echo "${NORMAL}"
 
-  set +e
-  run_framework
-  if [ ! $? ]; then
-    exit
-  fi
-  set -e
+  ! run_framework
 
   echo "${BOLD}"
   echo If we make more resources available, the framework will also be offered resources for 'roleB'.
@@ -338,12 +333,7 @@ function test_fair_share {
   # TODO(bbannier): Make this more testable. We expect this second framework to
   # finish last.
   cleanup
-  set +e
   (MESOS_TASKS=$(echo ${MESOS_TASKS} | sed 's/roleB/roleA/g' | sed 's/task1/task1_one_role/g' | sed 's/task2/task2_one_role/g') run_framework '["roleA"]')
-  if [ ! $? ]; then
-    exit
-  fi
-  set -e
 }
 
 function test_framework_authz {
@@ -411,12 +401,7 @@ function test_framework_authz {
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a principal authorized only for 'roleB' fails."
   echo "${NORMAL}"
   cleanup
-  set +e
-  (DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework)
-  if [ ! $? ]; then
-    exit
-  fi
-  set -e
+  ! (DEFAULT_PRINCIPAL='OTHER_PRINCIPAL' DEFAULT_SECRET='secret' MESOS_TASKS='{"tasks": []}' run_framework)
 
   echo "${BOLD}"
   echo "Attempting to register a framework in roles ['roleA', 'roleB'] with a"
