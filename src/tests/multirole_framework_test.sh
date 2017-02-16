@@ -180,7 +180,7 @@ function run_framework {
 
 setup_env
 
-function test_1 {
+function test_multirole_framework_registration {
   echo "${BOLD}"
   echo "********************************************************************************************"
   echo "* A framework can be in two roles and start tasks on resources allocated for either role.  *"
@@ -482,8 +482,14 @@ function test_failover {
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
-# test_1
-# cleanup
+# Multirole-phase I demos
+# -----------------------
+
+test_multirole_framework_registration
+cleanup
+
+test_fair_share
+cleanup
 
 test_reserved_resources
 cleanup
@@ -494,8 +500,9 @@ cleanup
 test_framework_authz
 cleanup
 
-
-
+# Multirole-phase II demos
+# ------------------------
+#
 # test_failover
 # cleanup
 
