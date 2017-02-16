@@ -57,7 +57,7 @@ Option<Error> checkInfo(const CheckInfo& checkInfo)
         common::validation::validateCommandInfo(command);
       if (error.isSome()) {
         return Error(
-            "Check's `CommandInfo` is invalid: " + error->message);
+            "Check's 'CommandInfo' is invalid: " + error->message);
       }
 
       // TODO(alexr): Make sure irrelevant fields, e.g., `uris` are not set.

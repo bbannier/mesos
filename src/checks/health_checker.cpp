@@ -687,7 +687,7 @@ Option<Error> healthCheck(const HealthCheck& check)
         common::validation::validateCommandInfo(command);
       if (error.isSome()) {
         return Error(
-            "Health check's `CommandInfo` is invalid: " + error->message);
+            "Health check's 'CommandInfo' is invalid: " + error->message);
       }
 
       break;
