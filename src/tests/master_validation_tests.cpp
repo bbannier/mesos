@@ -1057,7 +1057,7 @@ TEST_F(TaskValidationTest, ExecutorEnvironmentVariableWithoutValue)
   AWAIT_READY(status);
   EXPECT_EQ(TASK_ERROR, status.get().state());
   EXPECT_EQ(
-      "Executor's `CommandInfo` is invalid: "
+      "Executor's 'CommandInfo' is invalid: "
       "Environment variable 'ENV_VAR_KEY' must have a value set",
       status->message());
 
@@ -2066,7 +2066,7 @@ TEST_F(TaskValidationTest, TaskEnvironmentVariableWithoutValue)
   AWAIT_READY(status);
   EXPECT_EQ(TASK_ERROR, status.get().state());
   EXPECT_EQ(
-      "Task's `CommandInfo` is invalid: "
+      "Task's 'CommandInfo' is invalid: "
       "Environment variable 'ENV_VAR_KEY' must have a value set",
       status->message());
 
@@ -2830,7 +2830,7 @@ TEST_F(TaskGroupValidationTest, TaskUsesDifferentExecutor)
   EXPECT_EQ(TASK_ERROR, task1Status->state());
   EXPECT_EQ(TaskStatus::REASON_TASK_GROUP_INVALID, task1Status->reason());
   EXPECT_EQ(
-      "The `ExecutorInfo` of task '1' is different from executor 'default'",
+      "The 'ExecutorInfo' of task '1' is different from executor 'default'",
       task1Status->message());
 
   AWAIT_READY(task2Status);
@@ -2919,7 +2919,7 @@ TEST_F(TaskGroupValidationTest, ExecutorEnvironmentVariableWithoutValue)
   EXPECT_EQ(TASK_ERROR, task1Status->state());
   EXPECT_EQ(TaskStatus::REASON_TASK_GROUP_INVALID, task1Status->reason());
   EXPECT_EQ(
-      "Executor's `CommandInfo` is invalid: "
+      "Executor's 'CommandInfo' is invalid: "
       "Environment variable 'ENV_VAR_KEY' must have a value set",
       task1Status->message());
 
@@ -2927,7 +2927,7 @@ TEST_F(TaskGroupValidationTest, ExecutorEnvironmentVariableWithoutValue)
   EXPECT_EQ(TASK_ERROR, task2Status->state());
   EXPECT_EQ(TaskStatus::REASON_TASK_GROUP_INVALID, task2Status->reason());
   EXPECT_EQ(
-      "Executor's `CommandInfo` is invalid: "
+      "Executor's 'CommandInfo' is invalid: "
       "Environment variable 'ENV_VAR_KEY' must have a value set",
       task2Status->message());
 
@@ -3024,7 +3024,7 @@ TEST_F(TaskGroupValidationTest, TaskEnvironmentVariableWithoutValue)
   EXPECT_EQ(TASK_ERROR, task1Status->state());
   EXPECT_EQ(TaskStatus::REASON_TASK_GROUP_INVALID, task1Status->reason());
   EXPECT_EQ(
-      "Task '1' is invalid: Task's `CommandInfo` is invalid: Environment "
+      "Task '1' is invalid: Task's 'CommandInfo' is invalid: Environment "
       "variable 'ENV_VAR_KEY' must have a value set",
       task1Status->message());
 
@@ -3032,7 +3032,7 @@ TEST_F(TaskGroupValidationTest, TaskEnvironmentVariableWithoutValue)
   EXPECT_EQ(TASK_ERROR, task2Status->state());
   EXPECT_EQ(TaskStatus::REASON_TASK_GROUP_INVALID, task2Status->reason());
   EXPECT_EQ(
-      "Task '1' is invalid: Task's `CommandInfo` is invalid: Environment "
+      "Task '1' is invalid: Task's 'CommandInfo' is invalid: Environment "
       "variable 'ENV_VAR_KEY' must have a value set",
       task2Status->message());
 

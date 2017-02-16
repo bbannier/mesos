@@ -336,7 +336,7 @@ Option<Error> validate(
       return Error(
           "Authenticated principal '" + principal.get() + "' does not "
           "match principal '" + frameworkInfo.principal() + "' set in "
-          "`FrameworkInfo`");
+          "'FrameworkInfo'");
     }
 
     return None();
@@ -767,7 +767,7 @@ Option<Error> validateCommandInfo(const ExecutorInfo& executor)
     Option<Error> error =
       common::validation::validateCommandInfo(executor.command());
     if (error.isSome()) {
-      return Error("Executor's `CommandInfo` is invalid: " + error->message);
+      return Error("Executor's 'CommandInfo' is invalid: " + error->message);
     }
   }
 
@@ -958,7 +958,7 @@ Option<Error> validateCommandInfo(const TaskInfo& task)
     Option<Error> error =
       common::validation::validateCommandInfo(task.command());
     if (error.isSome()) {
-      return Error("Task's `CommandInfo` is invalid: " + error->message);
+      return Error("Task's 'CommandInfo' is invalid: " + error->message);
     }
   }
 
@@ -1236,7 +1236,7 @@ Option<Error> validateExecutor(
   foreach (const TaskInfo& task, taskGroup.tasks()) {
     if (task.has_executor() && task.executor() != executor) {
       return Error(
-          "The `ExecutorInfo` of "
+          "The 'ExecutorInfo' of "
           "task '" + stringify(task.task_id()) + "' is different from "
           "executor '" + stringify(executor.executor_id()) + "'");
     }
