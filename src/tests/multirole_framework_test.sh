@@ -491,23 +491,30 @@ function test_failover {
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
+function test_hrole_registration {
+  start_master
+  start_agent
+  (MESOS_TASKS='{"tasks": []}' run_framework '["eng/role"]')
+  sleep 10
+}
+
 # Multirole-phase I demos
 # -----------------------
 
-test_multirole_framework_registration
-cleanup
+# test_multirole_framework_registration
+# cleanup
 
-test_fair_share
-cleanup
+# test_fair_share
+# cleanup
 
-test_reserved_resources
-cleanup
+# test_reserved_resources
+# cleanup
 
-test_quota
-cleanup
+# test_quota
+# cleanup
 
-test_framework_authz
-cleanup
+# test_framework_authz
+# cleanup
 
 # Multirole-phase II demos
 # ------------------------
@@ -515,5 +522,9 @@ cleanup
 # test_failover
 # cleanup
 
-# test_fair_share
-# cleanup
+
+# Hierarchical roles demos
+# ------------------------
+
+test_hrole_registration
+cleanup
