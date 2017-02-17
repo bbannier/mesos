@@ -176,7 +176,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
 
   if (networkInfo.isError()) {
     return PluginError(
-        "Unable to parse `NetworkInfo`: " + networkInfo.error(),
+        "Unable to parse 'NetworkInfo': " + networkInfo.error(),
         ERROR_BAD_ARGS);
   }
 

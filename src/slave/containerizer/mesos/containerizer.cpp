@@ -1834,7 +1834,7 @@ Future<bool> MesosContainerizerProcess::launch(
       LOG(WARNING) << "Failed to chown sandbox directory '" << directory
                    << "'. This may be due to attempting to run the container "
                    << "as a nonexistent user on the agent; see the description"
-                   << " for the `--switch_user` flag for more information: "
+                   << " for the '--switch_user' flag for more information: "
                    << chown.error();
     }
   }

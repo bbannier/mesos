@@ -47,14 +47,14 @@
 //
 // The downside of this is that it makes POSIX interop really hard. Hence, we
 // refuse to compile if such a symbol is passed in during compilation.
-#error "Mesos doesn't currently support the `_UNICODE` Windows header constant"
+#error "Mesos doesn't currently support the '_UNICODE' Windows header constant"
 #endif // _UNICODE
 
 // An RAII `HANDLE`.
 class SharedHandle : public std::shared_ptr<void>
 {
   static_assert(std::is_same<HANDLE, void*>::value,
-                "Expected `HANDLE` to be of type `void*`.");
+                "Expected 'HANDLE' to be of type 'void*'.");
 
 public:
   // We delete the default constructor so that the callsite is forced to make

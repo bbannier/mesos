@@ -569,8 +569,8 @@ void Master::initialize()
     // framework authentication is enabled.
     if (flags.http_framework_authenticators.isNone()) {
       EXIT(EXIT_FAILURE)
-        << "Missing `--http_framework_authenticators` flag. This must be used "
-        << "in conjunction with `--authenticate_http_frameworks`";
+        << "Missing '--http_framework_authenticators' flag. This must be used "
+        << "in conjunction with '--authenticate_http_frameworks'";
     }
 
     Try<Nothing> result = initializeHttpAuthenticators(
@@ -5365,10 +5365,10 @@ void Master::registerSlave(
       machines[machineId].info.mode() == MachineInfo::DOWN) {
     LOG(WARNING) << "Refusing registration of agent at " << from
                  << " because the machine '" << machineId << "' that it is "
-                 << "running on is `DOWN`";
+                 << "running on is 'DOWN'";
 
     ShutdownMessage message;
-    message.set_message("Machine is `DOWN`");
+    message.set_message("Machine is 'DOWN'");
     send(from, message);
     return;
   }
@@ -5555,10 +5555,10 @@ void Master::reregisterSlave(
       machines[machineId].info.mode() == MachineInfo::DOWN) {
     LOG(WARNING) << "Refusing re-registration of agent at " << from
                  << " because the machine '" << machineId << "' that it is "
-                 << "running on is `DOWN`";
+                 << "running on is 'DOWN'";
 
     ShutdownMessage message;
-    message.set_message("Machine is `DOWN`");
+    message.set_message("Machine is 'DOWN'");
     send(from, message);
     return;
   }

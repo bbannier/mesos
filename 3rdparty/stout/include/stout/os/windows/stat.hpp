@@ -24,7 +24,7 @@
 #include <stout/internal/windows/symlink.hpp>
 
 #ifdef _USE_32BIT_TIME_T
-#error "Implementation of `os::stat::mtime` assumes 64-bit `time_t`."
+#error "Implementation of 'os::stat::mtime' assumes 64-bit 'time_t'."
 #endif // _USE_32BIT_TIME_T
 
 
@@ -132,7 +132,7 @@ inline Try<long> mtime(const std::string& path)
   // information loss.
   static_assert(
       std::is_same<__int64, __time64_t>::value,
-      "Mesos assumes `__time64_t` is represented as `__int64`");
+      "Mesos assumes '__time64_t' is represented as '__int64'");
   return static_cast<long>(s.st_mtime);
 }
 

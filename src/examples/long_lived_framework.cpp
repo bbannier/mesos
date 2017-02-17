@@ -489,7 +489,7 @@ public:
     add(&Flags::executor_command,
         "executor_command",
         "The command that should be used to start the executor.\n"
-        "This will override the value set by `--build_dir`.");
+        "This will override the value set by '--build_dir'.");
 
     add(&Flags::checkpoint,
         "checkpoint",

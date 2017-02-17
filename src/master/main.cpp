@@ -136,7 +136,7 @@ public:
     add(&Flags::ip,
         "ip",
         "IP address to listen on. This cannot be used in conjunction\n"
-        "with `--ip_discovery_command`.");
+        "with '--ip_discovery_command'.");
 
     add(&Flags::port, "port", "Port to listen on.", MasterInfo().port());
 
@@ -149,8 +149,8 @@ public:
     add(&Flags::advertise_port,
         "advertise_port",
         "Port advertised to reach Mesos master (along with\n"
-        "`advertise_ip`). The master does not bind to this port.\n"
-        "However, this port (along with `advertise_ip`) may be used to\n"
+        "'advertise_ip'). The master does not bind to this port.\n"
+        "However, this port (along with 'advertise_ip') may be used to\n"
         "access this master.");
 
     add(&Flags::zk,
@@ -166,7 +166,7 @@ public:
         "ip_discovery_command",
         "Optional IP discovery binary: if set, it is expected to emit\n"
         "the IP address which the master will try to bind to.\n"
-        "Cannot be used in conjunction with `--ip`.");
+        "Cannot be used in conjunction with '--ip'.");
     }
 
     // The following flags are executable specific (e.g., since we only
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
 
   if (flags.ip_discovery_command.isSome() && flags.ip.isSome()) {
     EXIT(EXIT_FAILURE) << flags.usage(
-        "Only one of `--ip` or `--ip_discovery_command` should be specified");
+        "Only one of '--ip' or '--ip_discovery_command' should be specified");
   }
 
   if (flags.ip_discovery_command.isSome()) {
@@ -294,8 +294,8 @@ int main(int argc, char** argv)
           "master",
           READWRITE_HTTP_AUTHENTICATION_REALM,
           READONLY_HTTP_AUTHENTICATION_REALM)) {
-    EXIT(EXIT_FAILURE) << "The call to `process::initialize()` in the master's "
-                       << "`main()` was not the function's first invocation";
+    EXIT(EXIT_FAILURE) << "The call to 'process::initialize()' in the master's "
+                       << "'main()' was not the function's first invocation";
   }
 
   logging::initialize(argv[0], flags, true); // Catch signals.

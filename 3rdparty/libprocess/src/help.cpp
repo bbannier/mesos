@@ -118,7 +118,7 @@ void Help::add(
       usage += USAGE(path) + "\n";
       helps[id][name] = usage + help.get();
     } else {
-      helps[id][name] = "## No help page for `" + path + "`\n";
+      helps[id][name] = "## No help page for '" + path + "'\n";
     }
 
     route("/" + id, "Help for " + id, &Help::help);
@@ -236,7 +236,7 @@ Future<http::Response> Help::help(const http::Request& request)
           "No help available for '/" + id.get() + "'.\n");
     }
 
-    document += "## `/" + id.get() + "` ##\n";
+    document += "## '/" + id.get() + "' ##\n";
     foreachkey (const string& name, helps[id.get()]) {
       const string path = getUsagePath(id.get(), name);
       document += "> [/" +  path + "][" + path + "]\n";

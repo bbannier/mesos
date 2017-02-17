@@ -27,9 +27,9 @@ mesos::internal::logging::Flags::Flags()
   add(&Flags::logging_level,
       "logging_level",
       "Log message at or above this level.\n"
-      "Possible values: `INFO`, `WARNING`, `ERROR`.\n"
-      "If `--quiet` is specified, this will only affect the logs\n"
-      "written to `--log_dir`, if specified.",
+      "Possible values: 'INFO', 'WARNING', 'ERROR'.\n"
+      "If '--quiet' is specified, this will only affect the logs\n"
+      "written to '--log_dir', if specified.",
       "INFO");
 
   add(&Flags::log_dir,
@@ -62,8 +62,8 @@ mesos::internal::logging::Flags::Flags()
       "this file directly and merely exposes it in the WebUI and HTTP API.\n"
       "This is only useful when logging to stderr in combination with an\n"
       "external logging mechanism, like syslog or journald.\n\n"
-      "This option is meaningless when specified along with `--quiet`.\n\n"
-      "This option takes precedence over `--log_dir` in the WebUI.\n"
-      "However, logs will still be written to the `--log_dir` if\n"
+      "This option is meaningless when specified along with '--quiet'.\n\n"
+      "This option takes precedence over '--log_dir' in the WebUI.\n"
+      "However, logs will still be written to the '--log_dir' if\n"
       "that option is specified.");
 }

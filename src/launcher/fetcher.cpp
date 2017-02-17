@@ -554,7 +554,7 @@ int main(int argc, char* argv[])
     result = os::su(fetcherInfo.get().user());
     if (result.isError()) {
       EXIT(EXIT_FAILURE)
-        << "Fetcher could not execute `os::su()` for user '"
+        << "Fetcher could not execute 'os::su()' for user '"
         << fetcherInfo.get().user() << "'";
     }
   }

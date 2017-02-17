@@ -243,7 +243,7 @@ class Socket
 public:
   static_assert(
       std::is_convertible<AddressType, network::Address>::value,
-      "Requires type convertible to `network::Address`");
+      "Requires type convertible to 'network::Address'");
 
   /**
    * Returns an instance of a `Socket` using the specified kind of

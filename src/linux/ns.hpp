@@ -495,7 +495,7 @@ inline Try<pid_t> clone(
         if (errno == EINTR) {
           continue;
         } else {
-          return ErrnoError("Failed to `waitpid` on child");
+          return ErrnoError("Failed to 'waitpid' on child");
         }
       } else if (WIFSTOPPED(status)) {
         continue;

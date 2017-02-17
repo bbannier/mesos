@@ -117,7 +117,7 @@ void JNIMesos::connected()
     env->ExceptionDescribe();
     env->ExceptionClear();
     jvm->DetachCurrentThread();
-    ABORT("Exception thrown during `connected` call");
+    ABORT("Exception thrown during 'connected' call");
   }
 
   jvm->DetachCurrentThread();
@@ -151,7 +151,7 @@ void JNIMesos::disconnected()
     env->ExceptionDescribe();
     env->ExceptionClear();
     jvm->DetachCurrentThread();
-    ABORT("Exception thrown during `disconnected` call");
+    ABORT("Exception thrown during 'disconnected' call");
   }
 
   jvm->DetachCurrentThread();
@@ -188,7 +188,7 @@ void JNIMesos::received(const Event& event)
     env->ExceptionDescribe();
     env->ExceptionClear();
     jvm->DetachCurrentThread();
-    ABORT("Exception thrown during `received` call");
+    ABORT("Exception thrown during 'received' call");
   }
 
   jvm->DetachCurrentThread();

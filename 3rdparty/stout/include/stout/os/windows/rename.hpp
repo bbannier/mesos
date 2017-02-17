@@ -43,7 +43,7 @@ inline Try<Nothing> rename(const std::string& from, const std::string& to)
 
   if (!result) {
     return WindowsError(
-        "`os::rename` failed to move file '" + from + "' to '" + to + "'");
+        "'os::rename' failed to move file '" + from + "' to '" + to + "'");
   }
 
   return Nothing();

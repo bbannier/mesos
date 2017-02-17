@@ -64,7 +64,7 @@ public:
   Try<Nothing> close()
   {
     if (handle_ == nullptr) {
-      return Error("Could not close library; handle was already `nullptr`");
+      return Error("Could not close library; handle was already 'nullptr'");
     }
 
     if (dlclose(handle_) != 0) {
@@ -83,7 +83,7 @@ public:
   {
     if (handle_ == nullptr) {
       return Error(
-          "Could not get symbol '" + name + "'; library handle was `nullptr`");
+          "Could not get symbol '" + name + "'; library handle was 'nullptr'");
     }
 
     void* symbol = dlsym(handle_, name.c_str());

@@ -38,14 +38,14 @@ mesos::internal::master::Flags::Flags()
       "The hostname the master should advertise in ZooKeeper.\n"
       "If left unset, the hostname is resolved from the IP address\n"
       "that the master advertises; unless the user explicitly prevents\n"
-      "that, using `--no-hostname_lookup`, in which case the IP itself\n"
+      "that, using '--no-hostname_lookup', in which case the IP itself\n"
       "is used.");
 
   add(&Flags::hostname_lookup,
       "hostname_lookup",
       "Whether we should execute a lookup to find out the server's hostname,\n"
-      "if not explicitly set (via, e.g., `--hostname`).\n"
-      "True by default; if set to `false` it will cause Mesos\n"
+      "if not explicitly set (via, e.g., '--hostname').\n"
+      "True by default; if set to 'false' it will cause Mesos\n"
       "to use the IP address, unless the hostname is explicitly set.",
       true);
 
@@ -58,25 +58,25 @@ mesos::internal::master::Flags::Flags()
       "work_dir",
       "Path of the master work directory. This is where the persistent\n"
       "information of the cluster will be stored. Note that locations like\n"
-      "`/tmp` which are cleaned automatically are not suitable for the work\n"
+      "'/tmp' which are cleaned automatically are not suitable for the work\n"
       "directory when running in production, since long-running masters could\n"
-      "lose data when cleanup occurs. (Example: `/var/lib/mesos/master`)");
+      "lose data when cleanup occurs. (Example: '/var/lib/mesos/master')");
 
   // TODO(bmahler): Consider removing `in_memory` as it was only
   // used before `replicated_log` was implemented.
   add(&Flags::registry,
       "registry",
       "Persistence strategy for the registry;\n"
-      "available options are `replicated_log`, `in_memory` (for testing).",
+      "available options are 'replicated_log', 'in_memory' (for testing).",
       "replicated_log");
 
   // TODO(vinod): Instead of specifying the quorum size consider
   // specifying the number of masters or the list of masters.
   add(&Flags::quorum,
       "quorum",
-      "The size of the quorum of replicas when using `replicated_log` based\n"
+      "The size of the quorum of replicas when using 'replicated_log' based\n"
       "registry. It is imperative to set this value to be a majority of\n"
-      "masters i.e., `quorum > (number of masters)/2`.\n"
+      "masters i.e., 'quorum > (number of masters)/2'.\n"
       "NOTE: Not required if master is run in standalone mode (non-HA).");
 
   add(&Flags::zk_session_timeout,
@@ -158,10 +158,10 @@ mesos::internal::master::Flags::Flags()
   add(&Flags::agent_removal_rate_limit,
       "agent_removal_rate_limit",
       flags::DeprecatedName("slave_removal_rate_limit"),
-      "The maximum rate (e.g., `1/10mins`, `2/3hrs`, etc) at which agents\n"
+      "The maximum rate (e.g., '1/10mins', '2/3hrs', etc) at which agents\n"
       "will be removed from the master when they fail health checks.\n"
       "By default, agents will be removed as soon as they fail the health\n"
-      "checks. The value is of the form `(Number of agents)/(Duration)`.");
+      "checks. The value is of the form '(Number of agents)/(Duration)'.");
 
   add(&Flags::webui_dir,
       "webui_dir",
@@ -209,26 +209,26 @@ mesos::internal::master::Flags::Flags()
   add(&Flags::weights,
       "weights",
       "A comma-separated list of role/weight pairs of the form\n"
-      "`role=weight,role=weight`. Weights can be used to control the\n"
+      "'role=weight,role=weight'. Weights can be used to control the\n"
       "relative share of cluster resources that is offered to different\n"
       "roles. This flag is deprecated. Instead, operators should configure\n"
-      "weights dynamically using the `/weights` HTTP endpoint.");
+      "weights dynamically using the '/weights' HTTP endpoint.");
 
   // TODO(adam-mesos): Deprecate --authenticate for --authenticate_frameworks.
   // See MESOS-4386 for details.
   add(&Flags::authenticate_frameworks,
       "authenticate_frameworks",
       flags::DeprecatedName("authenticate"),
-      "If `true`, only authenticated frameworks are allowed to register. If\n"
-      "`false`, unauthenticated frameworks are also allowed to register. For\n"
-      "HTTP based frameworks use the `--authenticate_http_frameworks` flag.",
+      "If 'true', only authenticated frameworks are allowed to register. If\n"
+      "'false', unauthenticated frameworks are also allowed to register. For\n"
+      "HTTP based frameworks use the '--authenticate_http_frameworks' flag.",
       false);
 
   add(&Flags::authenticate_agents,
       "authenticate_agents",
       flags::DeprecatedName("authenticate_slaves"),
-      "If `true`, only authenticated agents are allowed to register.\n"
-      "If `false`, unauthenticated agents are also allowed to register.",
+      "If 'true', only authenticated agents are allowed to register.\n"
+      "If 'false', unauthenticated agents are also allowed to register.",
       false);
 
   // TODO(zhitao): Remove deprecated `--authenticate_http` flag name after
@@ -236,22 +236,22 @@ mesos::internal::master::Flags::Flags()
   add(&Flags::authenticate_http_readwrite,
       "authenticate_http_readwrite",
       flags::DeprecatedName("authenticate_http"),
-      "If `true`, only authenticated requests for read-write HTTP endpoints\n"
-      "supporting authentication are allowed. If `false`, unauthenticated\n"
+      "If 'true', only authenticated requests for read-write HTTP endpoints\n"
+      "supporting authentication are allowed. If 'false', unauthenticated\n"
       "requests to such HTTP endpoints are also allowed.",
       false);
 
   add(&Flags::authenticate_http_readonly,
       "authenticate_http_readonly",
-      "If `true`, only authenticated requests for read-only HTTP endpoints\n"
-      "supporting authentication are allowed. If `false`, unauthenticated\n"
+      "If 'true', only authenticated requests for read-only HTTP endpoints\n"
+      "supporting authentication are allowed. If 'false', unauthenticated\n"
       "requests to such HTTP endpoints are also allowed.",
       false);
 
   add(&Flags::authenticate_http_frameworks,
       "authenticate_http_frameworks",
-      "If `true`, only authenticated HTTP frameworks are allowed to register.\n"
-      "If `false`, HTTP frameworks are not authenticated.",
+      "If 'true', only authenticated HTTP frameworks are allowed to register.\n"
+      "If 'false', HTTP frameworks are not authenticated.",
       false);
 
   add(&Flags::credentials,
@@ -274,10 +274,10 @@ mesos::internal::master::Flags::Flags()
       "The value could be a JSON-formatted string of ACLs\n"
       "or a file path containing the JSON-formatted ACLs used\n"
       "for authorization. Path could be of the form `file:///path/to/file`\n"
-      "or `/path/to/file`.\n"
+      "or '/path/to/file'.\n"
       "\n"
-      "Note that if the flag `--authorizers` is provided with a value\n"
-      "different than `" + string(DEFAULT_AUTHORIZER) + "`, the ACLs contents\n"
+      "Note that if the flag '--authorizers' is provided with a value\n"
+      "different than '" + string(DEFAULT_AUTHORIZER) + "', the ACLs contents\n"
       "will be ignored.\n"
       "\n"
       "See the ACLs protobuf in acls.proto for the expected format.\n"
@@ -321,9 +321,9 @@ mesos::internal::master::Flags::Flags()
       "The value could be a JSON-formatted string of rules or a\n"
       "file path containing the JSON-formatted rules used in the endpoints\n"
       "firewall. Path must be of the form `file:///path/to/file`\n"
-      "or `/path/to/file`.\n"
+      "or '/path/to/file'.\n"
       "\n"
-      "See the `Firewall` message in `flags.proto` for the expected format.\n"
+      "See the 'Firewall' message in 'flags.proto' for the expected format.\n"
       "\n"
       "Example:\n"
       "{\n"
@@ -341,7 +341,7 @@ mesos::internal::master::Flags::Flags()
       "or a file path containing the JSON-formatted rate limits used\n"
       "for framework rate limiting.\n"
       "Path could be of the form `file:///path/to/file`\n"
-      "or `/path/to/file`.\n"
+      "or '/path/to/file'.\n"
       "\n"
       "See the RateLimits protobuf in mesos.proto for the expected format.\n"
       "\n"
@@ -388,11 +388,11 @@ mesos::internal::master::Flags::Flags()
       "List of modules to be loaded and be available to the internal\n"
       "subsystems.\n"
       "\n"
-      "Use `--modules=filepath` to specify the list of modules via a\n"
-      "file containing a JSON-formatted string. `filepath` can be\n"
-      "of the form `file:///path/to/file` or `/path/to/file`.\n"
+      "Use '--modules=filepath' to specify the list of modules via a\n"
+      "file containing a JSON-formatted string. 'filepath' can be\n"
+      "of the form 'file:///path/to/file' or '/path/to/file'.\n"
       "\n"
-      "Use `--modules=\"{...}\"` to specify the list of modules inline.\n"
+      "Use '--modules=\"{...}\"' to specify the list of modules inline.\n"
       "\n"
       "Example:\n"
       "{\n"
@@ -439,15 +439,15 @@ mesos::internal::master::Flags::Flags()
   add(&Flags::authenticators,
       "authenticators",
       "Authenticator implementation to use when authenticating frameworks\n"
-      "and/or agents. Use the default `" + string(DEFAULT_AUTHENTICATOR) + "`\n"
-      "or load an alternate authenticator module using `--modules`.",
+      "and/or agents. Use the default '" + string(DEFAULT_AUTHENTICATOR) + "'\n"
+      "or load an alternate authenticator module using '--modules'.",
       DEFAULT_AUTHENTICATOR);
 
   add(&Flags::allocator,
       "allocator",
       "Allocator to use for resource allocation to frameworks.\n"
-      "Use the default `" + string(DEFAULT_ALLOCATOR) + "` allocator, or\n"
-      "load an alternate allocator module using `--modules`.",
+      "Use the default '" + string(DEFAULT_ALLOCATOR) + "' allocator, or\n"
+      "load an alternate allocator module using '--modules'.",
       DEFAULT_ALLOCATOR);
 
   add(&Flags::fair_sharing_excluded_resource_names,
@@ -471,13 +471,13 @@ mesos::internal::master::Flags::Flags()
       "The timeout within which an agent is expected to respond to a\n"
       "ping from the master. Agents that do not respond within\n"
       "max_agent_ping_timeouts ping retries will be asked to shutdown.\n"
-      "NOTE: The total ping timeout (`agent_ping_timeout` multiplied by\n"
-      "`max_agent_ping_timeouts`) should be greater than the ZooKeeper\n"
+      "NOTE: The total ping timeout ('agent_ping_timeout' multiplied by\n"
+      "'max_agent_ping_timeouts') should be greater than the ZooKeeper\n"
       "session timeout to prevent useless re-registration attempts.\n",
       DEFAULT_AGENT_PING_TIMEOUT,
       [](const Duration& value) -> Option<Error> {
         if (value < Seconds(1) || value > Minutes(15)) {
-          return Error("Expected `--agent_ping_timeout` to be between " +
+          return Error("Expected '--agent_ping_timeout' to be between " +
                        stringify(Seconds(1)) + " and " +
                        stringify(Minutes(15)));
         }
@@ -489,11 +489,11 @@ mesos::internal::master::Flags::Flags()
       flags::DeprecatedName("max_slave_ping_timeouts"),
       "The number of times an agent can fail to respond to a\n"
       "ping from the master. Agents that do not respond within\n"
-      "`max_agent_ping_timeouts` ping retries will be asked to shutdown.\n",
+      "'max_agent_ping_timeouts' ping retries will be asked to shutdown.\n",
       DEFAULT_MAX_AGENT_PING_TIMEOUTS,
       [](size_t value) -> Option<Error> {
         if (value < 1) {
-          return Error("Expected `--max_agent_ping_timeouts` to be at least 1");
+          return Error("Expected '--max_agent_ping_timeouts' to be at least 1");
         }
         return None();
       });
@@ -502,12 +502,12 @@ mesos::internal::master::Flags::Flags()
       "authorizers",
       "Authorizer implementation to use when authorizing actions that\n"
       "require it.\n"
-      "Use the default `" + string(DEFAULT_AUTHORIZER) + "`, or\n"
-      "load an alternate authorizer module using `--modules`.\n"
+      "Use the default '" + string(DEFAULT_AUTHORIZER) + "', or\n"
+      "load an alternate authorizer module using '--modules'.\n"
       "\n"
-      "Note that if the flag `--authorizers` is provided with a value\n"
-      "different than the default `" + string(DEFAULT_AUTHORIZER) + "`, the\n"
-      "ACLs passed through the `--acls` flag will be ignored.\n"
+      "Note that if the flag '--authorizers' is provided with a value\n"
+      "different than the default '" + string(DEFAULT_AUTHORIZER) + "', the\n"
+      "ACLs passed through the '--acls' flag will be ignored.\n"
       "\n"
       "Currently there's no support for multiple authorizers.",
       DEFAULT_AUTHORIZER);
@@ -516,8 +516,8 @@ mesos::internal::master::Flags::Flags()
       "http_authenticators",
       "HTTP authenticator implementation to use when handling requests to\n"
       "authenticated endpoints. Use the default\n"
-      "`" + string(DEFAULT_HTTP_AUTHENTICATOR) + "`, or load an alternate\n"
-      "HTTP authenticator module using `--modules`.\n"
+      "'" + string(DEFAULT_HTTP_AUTHENTICATOR) + "', or load an alternate\n"
+      "HTTP authenticator module using '--modules'.\n"
       "\n"
       "Currently there is no support for multiple HTTP authenticators.",
       DEFAULT_HTTP_AUTHENTICATOR);
@@ -526,9 +526,9 @@ mesos::internal::master::Flags::Flags()
       "http_framework_authenticators",
       "HTTP authenticator implementation to use when authenticating HTTP\n"
       "frameworks. Use the \n"
-      "`" + string(DEFAULT_HTTP_AUTHENTICATOR) + "` authenticator or load an\n"
-      "alternate authenticator module using `--modules`.\n"
-      "Must be used in conjunction with `--http_authenticate_frameworks`.\n"
+      "'" + string(DEFAULT_HTTP_AUTHENTICATOR) + "' authenticator or load an\n"
+      "alternate authenticator module using '--modules'.\n"
+      "Must be used in conjunction with '--http_authenticate_frameworks'.\n"
       "\n"
       "Currently there is no support for multiple HTTP framework\n"
       "authenticators.");
@@ -579,7 +579,7 @@ mesos::internal::master::Flags::Flags()
       "information allows frameworks to determine the status of unreachable\n"
       "and removed agents. Note that the registry always stores information\n"
       "on all connected agents. If there are more than\n"
-      "`registry_max_agent_count` partitioned or removed agents, agent\n"
+      "'registry_max_agent_count' partitioned or removed agents, agent\n"
       "information may be discarded from the registry sooner than indicated\n"
       "by this parameter.",
       DEFAULT_REGISTRY_MAX_AGENT_AGE);
@@ -590,6 +590,6 @@ mesos::internal::master::Flags::Flags()
       "This informtion allows frameworks to determine the status of\n"
       "disconnected agents. Note that the registry always stores\n"
       "information about all connected agents. See also the\n"
-      "`registry_max_agent_age` flag.",
+      "'registry_max_agent_age' flag.",
       DEFAULT_REGISTRY_MAX_AGENT_COUNT);
 }

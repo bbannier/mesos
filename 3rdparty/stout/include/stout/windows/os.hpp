@@ -58,7 +58,7 @@ inline Try<OSVERSIONINFOEX> os_version()
   // MESOS-6817.
   if (!::GetVersionEx(reinterpret_cast<LPOSVERSIONINFO>(&os_version))) {
     return WindowsError(
-        "os::internal::os_version: Call to `GetVersionEx` failed");
+        "os::internal::os_version: Call to 'GetVersionEx' failed");
   }
 #pragma warning(pop)
 
@@ -74,14 +74,14 @@ inline Try<std::string> nodename()
   if (!::GetComputerNameEx(ComputerNameDnsHostname, nullptr, &size) &&
       ::GetLastError() != ERROR_MORE_DATA) {
     return WindowsError(
-        "os::internal::nodename: Call to `GetComputerNameEx` failed");
+        "os::internal::nodename: Call to 'GetComputerNameEx' failed");
   }
 
   std::unique_ptr<char[]> name(new char[size + 1]);
 
   if (!::GetComputerNameEx(ComputerNameDnsHostname, name.get(), &size)) {
     return WindowsError(
-        "os::internal::nodename: Call to `GetComputerNameEx` failed");
+        "os::internal::nodename: Call to 'GetComputerNameEx' failed");
   }
 
   return std::string(name.get());
@@ -171,7 +171,7 @@ inline Try<std::set<pid_t>> pids(Option<pid_t> group, Option<pid_t> session)
         &bytes_returned);
 
     if (!result) {
-      return WindowsError("os::pids: Call to `EnumProcesses` failed");
+      return WindowsError("os::pids: Call to 'EnumProcesses' failed");
     }
 
     max_items *= 2;
@@ -271,7 +271,7 @@ inline Result<pid_t> waitpid(long pid, int* status, int options)
     // no flags other than `WNOHANG` are supported.
     errno = ENOSYS;
     return ErrnoError(
-        "os::waitpid: Only flag `WNOHANG` is implemented on Windows");
+        "os::waitpid: Only flag 'WNOHANG' is implemented on Windows");
   }
 
   // TODO(hausdorff): Check that `pid` is one of the child processes. If not,
@@ -305,7 +305,7 @@ inline Result<pid_t> waitpid(long pid, int* status, int options)
     errno = ECHILD;
     return WindowsError(
         "os::waitpid: Failed to wait for pid '" + stringify(pid) +
-        "'. `::WaitForSingleObject` should have waited for child process to " +
+        "'. '::WaitForSingleObject' should have waited for child process to " +
         "exit, but returned code '" + stringify(wait_results) +
         "' instead");
   } else if (wait_for_child && !state_signaled &&
@@ -316,8 +316,8 @@ inline Result<pid_t> waitpid(long pid, int* status, int options)
     errno = ECHILD;
     return WindowsError(
         "os::waitpid: Failed to wait for pid '" + stringify(pid) +
-        "'. `ENOHANG` flag was passed in, so `::WaitForSingleObject` should " +
-        "have either returned `WAIT_OBJECT_0` or `WAIT_TIMEOUT` (the " +
+        "'. 'ENOHANG' flag was passed in, so '::WaitForSingleObject' should " +
+        "have either returned 'WAIT_OBJECT_0' or 'WAIT_TIMEOUT' (the " +
         "timeout was set to 0, because we are not waiting for the child), " +
         "but instead returned code '" + stringify(wait_results) + "'");
   }
@@ -377,7 +377,7 @@ inline std::string hstrerror(int err)
   if (format_error == 0) {
     // If call to `FormatMessage` fails, then we choose to output the error
     // code rather than call `FormatMessage` again.
-    return "os::hstrerror: Call to `FormatMessage` failed with error code" +
+    return "os::hstrerror: Call to 'FormatMessage' failed with error code" +
       std::to_string(GetLastError());
   } else {
     return buffer;
@@ -449,7 +449,7 @@ inline Try<Memory> memory()
   MEMORYSTATUSEX memory_status;
   memory_status.dwLength = sizeof(MEMORYSTATUSEX);
   if (!::GlobalMemoryStatusEx(&memory_status)) {
-    return WindowsError("os::memory: Call to `GlobalMemoryStatusEx` failed");
+    return WindowsError("os::memory: Call to 'GlobalMemoryStatusEx' failed");
   }
 
   memory.total = Bytes(memory_status.ullTotalPhys);
@@ -471,7 +471,7 @@ inline Try<Version> release()
   // `GetVersionEx`, because Mesos currently does not support Unicode. See
   // MESOS-6817.
   if (!::GetVersionEx(reinterpret_cast<LPOSVERSIONINFO>(&os_version))) {
-    return WindowsError("os::release: Call to `GetVersionEx` failed");
+    return WindowsError("os::release: Call to 'GetVersionEx' failed");
   }
 #pragma warning(pop)
 
@@ -520,7 +520,7 @@ inline Result<PROCESSENTRY32> process_entry(pid_t pid)
   HANDLE snapshot_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
   if (snapshot_handle == INVALID_HANDLE_VALUE) {
     return WindowsError(
-        "os::process_entry: Call to `CreateToolhelp32Snapshot` failed");
+        "os::process_entry: Call to 'CreateToolhelp32Snapshot' failed");
   }
 
   SharedHandle safe_snapshot_handle(snapshot_handle, ::CloseHandle);
@@ -540,9 +540,9 @@ inline Result<PROCESSENTRY32> process_entry(pid_t pid)
     // we elect to return `Error` because something terrible has probably
     // happened.
     if (GetLastError() != ERROR_SUCCESS) {
-      return WindowsError("os::process_entry: Call to `Process32First` failed");
+      return WindowsError("os::process_entry: Call to 'Process32First' failed");
     } else {
-      return Error("os::process_entry: Call to `Process32First` failed");
+      return Error("os::process_entry: Call to 'Process32First' failed");
     }
   }
 
@@ -558,7 +558,7 @@ inline Result<PROCESSENTRY32> process_entry(pid_t pid)
       DWORD last_error = GetLastError();
       if (last_error != ERROR_NO_MORE_FILES && last_error != ERROR_SUCCESS) {
         return WindowsError(
-            "os::process_entry: Call to `Process32Next` failed");
+            "os::process_entry: Call to 'Process32Next' failed");
       }
     }
   }
@@ -587,7 +587,7 @@ inline Result<Process> process(pid_t pid)
       pid);
 
   if (process_handle == INVALID_HANDLE_VALUE) {
-    return WindowsError("os::process: Call to `OpenProcess` failed");
+    return WindowsError("os::process: Call to 'OpenProcess' failed");
   }
 
   SharedHandle safe_process_handle(process_handle, ::CloseHandle);
@@ -600,7 +600,7 @@ inline Result<Process> process(pid_t pid)
       sizeof(proc_mem_counters));
 
   if (!get_process_memory_info) {
-    return WindowsError("os::process: Call to `GetProcessMemoryInfo` failed");
+    return WindowsError("os::process: Call to 'GetProcessMemoryInfo' failed");
   }
 
   // Get session Id.
@@ -608,7 +608,7 @@ inline Result<Process> process(pid_t pid)
   BOOL process_id_to_session_id = ::ProcessIdToSessionId(pid, &session_id);
 
   if (!process_id_to_session_id) {
-    return WindowsError("os::process: Call to `ProcessIdToSessionId` failed");
+    return WindowsError("os::process: Call to 'ProcessIdToSessionId' failed");
   }
 
   // Get Process CPU time.
@@ -621,7 +621,7 @@ inline Result<Process> process(pid_t pid)
       &user_filetime);
 
   if (!get_process_times) {
-    return WindowsError("os::process: Call to `GetProcessTimes` failed");
+    return WindowsError("os::process: Call to 'GetProcessTimes' failed");
   }
 
   // Get utime and stime.
@@ -671,7 +671,7 @@ inline Try<HANDLE> create_job(pid_t pid)
       pid);
 
   if (process_handle == INVALID_HANDLE_VALUE) {
-    return WindowsError("os::create_job: Call to `OpenProcess` failed");
+    return WindowsError("os::create_job: Call to 'OpenProcess' failed");
   }
 
   SharedHandle safe_process_handle(process_handle, ::CloseHandle);
@@ -679,7 +679,7 @@ inline Try<HANDLE> create_job(pid_t pid)
   HANDLE job_handle = ::CreateJobObject(nullptr, alpha_pid.get().c_str());
 
   if (job_handle == nullptr) {
-    return WindowsError("os::create_job: Call to `CreateJobObject` failed");
+    return WindowsError("os::create_job: Call to 'CreateJobObject' failed");
   }
 
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { { 0 }, 0 };
@@ -698,7 +698,7 @@ inline Try<HANDLE> create_job(pid_t pid)
           job_handle,
           safe_process_handle.get_handle()) == 0) {
     return WindowsError(
-        "os::create_job: Call to `AssignProcessToJobObject` failed");
+        "os::create_job: Call to 'AssignProcessToJobObject' failed");
   };
 
   return job_handle;
@@ -723,7 +723,7 @@ inline Try<Nothing> kill_job(pid_t pid)
       alpha_pid.get().c_str());
 
   if (job_handle == nullptr) {
-    return WindowsError("os::kill_job: Call to `OpenJobObject` failed");
+    return WindowsError("os::kill_job: Call to 'OpenJobObject' failed");
   }
 
   SharedHandle safe_job_handle(job_handle, ::CloseHandle);
@@ -746,13 +746,13 @@ inline Try<std::string> var()
     // The expected behavior here is for the function to "fail"
     // and return `false`, and `size` receives necessary buffer size.
     return WindowsError(
-        "os::var: `GetAllUsersProfileDirectory` succeeded unexpectedly");
+        "os::var: 'GetAllUsersProfileDirectory' succeeded unexpectedly");
   }
 
   std::vector<wchar_t> var_folder(size);
   if (!::GetAllUsersProfileDirectoryW(&var_folder[0], &size)) {
     return WindowsError(
-        "os::var: `GetAllUsersProfileDirectory` failed");
+        "os::var: 'GetAllUsersProfileDirectory' failed");
   }
 
   // Convert UTF-16 `wchar[]` to UTF-8 `string`.

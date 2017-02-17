@@ -51,7 +51,7 @@ inline Try<std::string> mkdtemp(
 
   if (!strings::endsWith(path, postfixTemplate)) {
     return Error(
-        "Invalid template passed to `os::mkdtemp`: template '" + path +
+        "Invalid template passed to 'os::mkdtemp': template '" + path +
         "' should end with 6 'X' characters");
   }
 

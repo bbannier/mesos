@@ -81,7 +81,7 @@ private:
     // of converting to `timespec`.
     static_assert(
         sizeof(FILETIME) == sizeof(__int64),
-        "stopwatch: We currently require `FILETIME` to be 64 bits in size");
+        "stopwatch: We currently require 'FILETIME' to be 64 bits in size");
     __int64 filetime_in_ticks;
 
     GetSystemTimeAsFileTime(reinterpret_cast<FILETIME*>(&filetime_in_ticks));

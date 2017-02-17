@@ -47,7 +47,7 @@ inline Try<Nothing> rm(const std::string& path)
                                             : ::DeleteFile(path.c_str());
 
   if (!result) {
-    return WindowsError("`os::rm` could not remove '" + path + "'");
+    return WindowsError("'os::rm' could not remove '" + path + "'");
   }
 
   return Nothing();

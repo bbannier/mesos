@@ -70,7 +70,7 @@ static Try<HANDLE> getHandleFromFileDescriptor(int_fd fd)
   // Extract handle from file descriptor.
   const HANDLE handle = fd;
   if (handle == INVALID_HANDLE_VALUE) {
-    return WindowsError("Failed to get `HANDLE` for file descriptor");
+    return WindowsError("Failed to get 'HANDLE' for file descriptor");
   }
 
   return handle;

@@ -1846,7 +1846,7 @@ int NetworkCniIsolatorSetup::execute()
       nullptr);
 
   if (mount.isError()) {
-    cerr << "Failed to mark `/` as a SLAVE mount: " << mount.error() << endl;
+    cerr << "Failed to mark '/' as a SLAVE mount: " << mount.error() << endl;
     return EXIT_FAILURE;
   }
 

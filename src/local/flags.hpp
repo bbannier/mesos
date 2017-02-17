@@ -44,11 +44,11 @@ public:
         "work_dir",
         "Path of the master/agent work directory. This is where the\n"
         "persistent information of the cluster will be stored.\n"
-        "Note that locations like `/tmp` which are cleaned\n"
+        "Note that locations like '/tmp' which are cleaned\n"
         "automatically are not suitable for the work directory\n"
         "when running in production, since long-running masters\n"
         "and agents could lose data when cleanup occurs.\n"
-        "(Example: `/var/lib/mesos`)",
+        "(Example: '/var/lib/mesos')",
         path::join(os::temp(), "mesos", "work"));
 
     add(&Flags::runtime_dir,
@@ -57,7 +57,7 @@ public:
         "data is stored by an agent that it needs to persist across\n"
         "crashes (but not across reboots). This directory will be\n"
         "cleared on reboot.\n"
-        "(Example: `/var/run/mesos`)",
+        "(Example: '/var/run/mesos')",
         path::join(os::temp(), "mesos", "runtime"));
 
     add(&Flags::num_slaves,

@@ -2731,7 +2731,7 @@ Try<uint32_t> classid(
 {
   Try<string> read = cgroups::read(hierarchy, cgroup, "net_cls.classid");
   if (read.isError()) {
-    return Error("Unable to read the `net_cls.classid`: " + read.error());
+    return Error("Unable to read the 'net_cls.classid': " + read.error());
   }
 
   Try<uint32_t> handle = numify<uint32_t>(strings::trim(read.get()));

@@ -146,7 +146,7 @@ static Try<Resources> enumerateGpuResources(const Flags& flags)
   // Don't allow the `--nvidia-gpu_devices` flag without the GPU isolator.
   if (flags.nvidia_gpu_devices.isSome() && isolators.count("gpu/nvidia") == 0) {
     return Error("'--nvidia_gpus_devices' can only be specified if the"
-                 " `--isolation` flag contains 'gpu/nvidia'");
+                 " '--isolation' flag contains 'gpu/nvidia'");
   }
 
   // Pull out just the GPU resources from --resources.
@@ -201,8 +201,8 @@ static Try<Resources> enumerateGpuResources(const Flags& flags)
   }
 
   if (resources.gpus().isSome() && !flags.nvidia_gpu_devices.isSome()) {
-    return Error("The `gpus` resource cannot be set without also"
-                 " setting `--nvidia_gpu_devices`");
+    return Error("The 'gpus' resource cannot be set without also"
+                 " setting '--nvidia_gpu_devices'");
   }
 
   if (resources.gpus().isSome()) {

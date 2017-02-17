@@ -105,9 +105,9 @@ protected:
     killpg(0, SIGKILL);
 #else
     LOG(WARNING) << "Shutting down process group. Windows does not support "
-                    "`killpg`, so we simply call `exit` on the assumption "
+                    "'killpg', so we simply call 'exit' on the assumption "
                     "that the process was generated with the "
-                    "`WindowsContainerizer`, which uses the 'close on exit' "
+                    "'WindowsContainerizer', which uses the 'close on exit' "
                     "feature of job objects to make sure all child processes "
                     "are killed when a parent process exits";
     exit(0);

@@ -146,7 +146,7 @@ inline Result<pid_t> waitpid(pid_t pid, int* status, int options)
   if (child_pid == 0) {
     return None();
   } else if (child_pid < 0) {
-    return ErrnoError("os::waitpid: Call to `waitpid` failed");
+    return ErrnoError("os::waitpid: Call to 'waitpid' failed");
   } else {
     return child_pid;
   }

@@ -45,14 +45,14 @@ mesos::internal::slave::Flags::Flags()
       "The hostname the agent should report.\n"
       "If left unset, the hostname is resolved from the IP address\n"
       "that the agent advertises; unless the user explicitly prevents\n"
-      "that, using `--no-hostname_lookup`, in which case the IP itself\n"
+      "that, using '--no-hostname_lookup', in which case the IP itself\n"
       "is used.");
 
   add(&Flags::hostname_lookup,
       "hostname_lookup",
       "Whether we should execute a lookup to find out the server's hostname,\n"
-      "if not explicitly set (via, e.g., `--hostname`).\n"
-      "True by default; if set to `false` it will cause Mesos\n"
+      "if not explicitly set (via, e.g., '--hostname').\n"
+      "True by default; if set to 'false' it will cause Mesos\n"
       "to use the IP address, unless the hostname is explicitly set.",
       true);
 
@@ -69,12 +69,12 @@ mesos::internal::slave::Flags::Flags()
       "optionally specified.\n"
       "\n"
       "As a key:value list:\n"
-      "`name(role):value;name:value...`\n"
+      "'name(role):value;name:value...'\n"
       "\n"
       "To use JSON, pass a JSON-formatted string or use\n"
-      "`--resources=filepath` to specify the resources via a file containing\n"
-      "a JSON-formatted string. `filepath` can be of the form\n"
-      "`file:///path/to/file` or `/path/to/file`.\n"
+      "'--resources=filepath' to specify the resources via a file containing\n"
+      "a JSON-formatted string. 'filepath' can be of the form\n"
+      "'file:///path/to/file' or '/path/to/file'.\n"
       "\n"
       "Example JSON:\n"
       "[\n"
@@ -96,12 +96,12 @@ mesos::internal::slave::Flags::Flags()
 
   add(&Flags::isolation,
       "isolation",
-      "Isolation mechanisms to use, e.g., `posix/cpu,posix/mem` (or \n"
-      "`windows/cpu` if you are on Windows), or\n"
-      "`cgroups/cpu,cgroups/mem`, or network/port_mapping\n"
-      "(configure with flag: `--with-network-isolator` to enable),\n"
-      "or `gpu/nvidia` for nvidia specific gpu isolation,\n"
-      "or load an alternate isolator module using the `--modules`\n"
+      "Isolation mechanisms to use, e.g., 'posix/cpu,posix/mem' (or \n"
+      "'windows/cpu' if you are on Windows), or\n"
+      "'cgroups/cpu,cgroups/mem', or 'network/port_mapping'\n"
+      "(configure with flag: '--with-network-isolator' to enable),\n"
+      "or 'gpu/nvidia' for nvidia specific gpu isolation,\n"
+      "or load an alternate isolator module using the '--modules'\n"
       "flag. Note that this flag is only relevant for the Mesos\n"
       "Containerizer.",
 #ifndef __WINDOWS__
@@ -114,7 +114,7 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::launcher,
       "launcher",
       "The launcher to be used for Mesos containerizer. It could either be\n"
-      "`linux` or `posix`. The Linux launcher is required for cgroups\n"
+      "'linux' or 'posix'. The Linux launcher is required for cgroups\n"
       "isolation and for any isolators that require Linux namespaces such as\n"
       "network, pid, etc. If unspecified, the agent will choose the Linux\n"
       "launcher if it's running as root on Linux.",
@@ -130,12 +130,12 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::image_providers,
       "image_providers",
       "Comma-separated list of supported image providers,\n"
-      "e.g., `APPC,DOCKER`.");
+      "e.g., 'APPC,DOCKER'.");
 
   add(&Flags::image_provisioner_backend,
       "image_provisioner_backend",
       "Strategy for provisioning container rootfs from images,\n"
-      "e.g., `aufs`, `bind`, `copy`, `overlay`.");
+      "e.g., 'aufs', 'bind', 'copy', 'overlay'.");
 
   add(&Flags::appc_simple_discovery_uri_prefix,
       "appc_simple_discovery_uri_prefix",
@@ -152,8 +152,8 @@ mesos::internal::slave::Flags::Flags()
       "docker_registry",
       "The default url for pulling Docker images. It could either be a Docker\n"
       "registry server url (i.e: `https://registry.docker.io`), or a local\n"
-      "path (i.e: `/tmp/docker/images`) in which Docker image archives\n"
-      "(result of `docker save`) are stored.",
+      "path (i.e: '/tmp/docker/images') in which Docker image archives\n"
+      "(result of 'docker save') are stored.",
       "https://registry-1.docker.io");
 
   add(&Flags::docker_store_dir,
@@ -169,9 +169,9 @@ mesos::internal::slave::Flags::Flags()
 
   add(&Flags::default_role,
       "default_role",
-      "Any resources in the `--resources` flag that\n"
+      "Any resources in the '--resources' flag that\n"
       "omit a role, as well as any resources that\n"
-      "are not present in `--resources` but that are\n"
+      "are not present in '--resources' but that are\n"
       "automatically detected, will be assigned to\n"
       "this role.",
       "*");
@@ -179,7 +179,7 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::attributes,
       "attributes",
       "Attributes of the agent machine, in the form:\n"
-      "`rack:2` or `rack:2;u:1`");
+      "'rack:2' or 'rack:2;u:1'");
 
   add(&Flags::fetcher_cache_size,
       "fetcher_cache_size",
@@ -204,17 +204,17 @@ mesos::internal::slave::Flags::Flags()
       "work_dir",
       "Path of the agent work directory. This is where executor sandboxes\n"
       "will be placed, as well as the agent's checkpointed state in case of\n"
-      "failover. Note that locations like `/tmp` which are cleaned\n"
+      "failover. Note that locations like '/tmp' which are cleaned\n"
       "automatically are not suitable for the work directory when running in\n"
       "production, since long-running agents could lose data when cleanup\n"
-      "occurs. (Example: `/var/lib/mesos/agent`)");
+      "occurs. (Example: '/var/lib/mesos/agent')");
 
   add(&Flags::runtime_dir,
       "runtime_dir",
       "Path of the agent runtime directory. This is where runtime data\n"
       "is stored by an agent that it needs to persist across crashes (but\n"
       "not across reboots). This directory will be cleared on reboot.\n"
-      "(Example: `/var/run/mesos`)",
+      "(Example: '/var/run/mesos')",
       []() -> string {
         Try<std::string> var = os::var();
         if (var.isSome()) {
@@ -251,19 +251,19 @@ mesos::internal::slave::Flags::Flags()
       "hadoop_home",
       "Path to find Hadoop installed (for\n"
       "fetching framework executors from HDFS)\n"
-      "(no default, look for `HADOOP_HOME` in\n"
-      "environment or find hadoop on `PATH`)",
+      "(no default, look for 'HADOOP_HOME' in\n"
+      "environment or find hadoop on 'PATH')",
       "");
 
 #ifndef __WINDOWS__
   add(&Flags::switch_user,
       "switch_user",
-      "If set to `true`, the agent will attempt to run tasks as\n"
-      "the `user` who submitted them (as defined in `FrameworkInfo`)\n"
-      "(this requires `setuid` permission and that the given `user`\n"
+      "If set to 'true', the agent will attempt to run tasks as\n"
+      "the 'user' who submitted them (as defined in 'FrameworkInfo')\n"
+      "(this requires 'setuid' permission and that the given 'user'\n"
       "exists on the agent).\n"
       "If the user does not exist, an error occurs and the task will fail.\n"
-      "If set to `false`, tasks will be run as the same user as the Mesos\n"
+      "If set to 'false', tasks will be run as the same user as the Mesos\n"
       "agent process.\n"
       "NOTE: This feature is not yet supported on Windows agent, and\n"
       "therefore the flag currently does not exist on that platform.",
@@ -284,8 +284,8 @@ mesos::internal::slave::Flags::Flags()
 
   add(&Flags::registration_backoff_factor,
       "registration_backoff_factor",
-      "Agent initially picks a random amount of time between `[0, b]`, where\n"
-      "`b = registration_backoff_factor`, to (re-)register with a new master.\n"
+      "Agent initially picks a random amount of time between '[0, b]', where\n"
+      "'b = registration_backoff_factor', to (re-)register with a new master.\n"
       "Subsequent retries are exponentially backed off based on this\n"
       "interval (e.g., 1st retry uses a random value between `[0, b * 2^1]`,\n"
       "2nd retry between `[0, b * 2^2]`, 3rd retry between `[0, b * 2^3]`,\n"
@@ -295,11 +295,11 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::authentication_backoff_factor,
       "authentication_backoff_factor",
       "After a failed authentication the agent picks a random amount of time\n"
-      "between `[0, b]`, where `b = authentication_backoff_factor`, to\n"
+      "between '[0, b]', where 'b = authentication_backoff_factor', to\n"
       "authenticate with a new master. Subsequent retries are exponentially\n"
       "backed off based on this interval (e.g., 1st retry uses a random\n"
-      "value between `[0, b * 2^1]`, 2nd retry between `[0, b * 2^2]`, 3rd\n"
-      "retry between `[0, b * 2^3]`, etc up to a maximum of " +
+      "value between '[0, b * 2^1]', 2nd retry between '[0, b * 2^2]', 3rd\n"
+      "retry between '[0, b * 2^3]', etc up to a maximum of " +
           stringify(AUTHENTICATION_RETRY_INTERVAL_MAX),
       DEFAULT_AUTHENTICATION_BACKOFF_FACTOR);
 
@@ -317,7 +317,7 @@ mesos::internal::slave::Flags::Flags()
         if (object.isSome()) {
           foreachvalue (const JSON::Value& value, object.get().values) {
             if (!value.is<JSON::String>()) {
-              return Error("`executor_environment_variables` must "
+              return Error("'executor_environment_variables' must "
                            "only contain string values");
             }
           }
@@ -355,7 +355,7 @@ mesos::internal::slave::Flags::Flags()
       "Adjust disk headroom used to calculate maximum executor\n"
       "directory age. Age is calculated by:\n"
       "`gc_delay * max(0.0, (1.0 - gc_disk_headroom - disk usage))`\n"
-      "every `--disk_watch_interval` duration. `gc_disk_headroom` must\n"
+      "every '--disk_watch_interval' duration. 'gc_disk_headroom' must\n"
       "be a value between 0.0 and 1.0",
       GC_DISK_HEADROOM);
 
@@ -371,13 +371,13 @@ mesos::internal::slave::Flags::Flags()
       "container_logger",
       "The name of the container logger to use for logging container\n"
       "(i.e., executor and task) stdout and stderr. The default\n"
-      "container logger writes to `stdout` and `stderr` files\n"
+      "container logger writes to 'stdout' and 'stderr' files\n"
       "in the sandbox directory.");
 
   add(&Flags::recover,
       "recover",
       "Whether to recover status updates and reconnect with old executors.\n"
-      "Valid values for `recover` are\n"
+      "Valid values for 'recover' are\n"
       "reconnect: Reconnect with any old live executors.\n"
       "cleanup  : Kill any old live executors and exit.\n"
       "           Use this option when doing an incompatible agent\n"
@@ -393,8 +393,8 @@ mesos::internal::slave::Flags::Flags()
 
   add(&Flags::strict,
       "strict",
-      "If `strict=true`, any and all recovery errors are considered fatal.\n"
-      "If `strict=false`, any expected errors (e.g., agent cannot recover\n"
+      "If 'strict=true', any and all recovery errors are considered fatal.\n"
+      "If 'strict=false', any expected errors (e.g., agent cannot recover\n"
       "information about an executor, because the agent died right before\n"
       "the executor registered.) during recovery are ignored and as much\n"
       "state as possible is recovered.\n",
@@ -437,7 +437,7 @@ mesos::internal::slave::Flags::Flags()
 
   add(&Flags::cgroups_net_cls_primary_handle,
       "cgroups_net_cls_primary_handle",
-      "A non-zero, 16-bit handle of the form `0xAAAA`. This will be \n"
+      "A non-zero, 16-bit handle of the form '0xAAAA'. This will be \n"
       "used as the primary handle for the net_cls cgroup.");
 
   add(&Flags::cgroups_net_cls_secondary_handles,
@@ -450,43 +450,43 @@ mesos::internal::slave::Flags::Flags()
       "agent_subsystems",
       flags::DeprecatedName("slave_subsystems"),
       "List of comma-separated cgroup subsystems to run the agent binary\n"
-      "in, e.g., `memory,cpuacct`. The default is none.\n"
+      "in, e.g., 'memory,cpuacct'. The default is none.\n"
       "Present functionality is intended for resource monitoring and\n"
       "no cgroup limits are set, they are inherited from the root mesos\n"
       "cgroup.");
 
   add(&Flags::nvidia_gpu_devices,
       "nvidia_gpu_devices",
-      "A comma-separated list of Nvidia GPU devices. When `gpus` is\n"
-      "specified in the `--resources` flag, this flag determines which GPU\n"
+      "A comma-separated list of Nvidia GPU devices. When 'gpus' is\n"
+      "specified in the '--resources' flag, this flag determines which GPU\n"
       "devices will be made available. The devices should be listed as\n"
       "numbers that correspond to Nvidia's NVML device enumeration (as\n"
-      "seen by running the command `nvidia-smi` on an Nvidia GPU\n"
+      "seen by running the command 'nvidia-smi' on an Nvidia GPU\n"
       "equipped system).  The GPUs listed will only be isolated if the\n"
-      "`--isolation` flag contains the string `gpu/nvidia`.");
+      "'--isolation' flag contains the string `gpu/nvidia`.");
 
   add(&Flags::perf_events,
       "perf_events",
       "List of command-separated perf events to sample for each container\n"
       "when using the perf_event isolator. Default is none.\n"
-      "Run command `perf list` to see all events. Event names are\n"
+      "Run command 'perf list' to see all events. Event names are\n"
       "sanitized by downcasing and replacing hyphens with underscores\n"
-      "when reported in the PerfStatistics protobuf, e.g., `cpu-cycles`\n"
-      "becomes `cpu_cycles`; see the PerfStatistics protobuf for all names.");
+      "when reported in the PerfStatistics protobuf, e.g., 'cpu-cycles'\n"
+      "becomes 'cpu_cycles'; see the PerfStatistics protobuf for all names.");
 
   add(&Flags::perf_interval,
       "perf_interval",
       "Interval between the start of perf stat samples. Perf samples are\n"
-      "obtained periodically according to `perf_interval` and the most\n"
+      "obtained periodically according to 'perf_interval' and the most\n"
       "recently obtained sample is returned rather than sampling on\n"
-      "demand. For this reason, `perf_interval` is independent of the\n"
+      "demand. For this reason, 'perf_interval' is independent of the\n"
       "resource monitoring interval",
       Seconds(60));
 
   add(&Flags::perf_duration,
       "perf_duration",
       "Duration of a perf stat sample. The duration must be less\n"
-      "than the `perf_interval`.",
+      "than the 'perf_interval'.",
       Seconds(10));
 
   add(&Flags::revocable_cpu_low_priority,
@@ -523,10 +523,10 @@ mesos::internal::slave::Flags::Flags()
       "         U = permitted capabilities for the agent process.\n"
       "         A = allowed capabilities specified by this flag.\n"
       "\n"
-      "To set capabilities the agent should have the `SETPCAP` capability.\n"
+      "To set capabilities the agent should have the 'SETPCAP' capability.\n"
       "\n"
-      "This flag is effective iff `capabilities` isolation is enabled.\n"
-      "When `capabilities` isolation is enabled, the absence of this flag\n"
+      "This flag is effective iff 'capabilities' isolation is enabled.\n"
+      "When 'capabilities' isolation is enabled, the absence of this flag\n"
       "would imply that the operator would allow ALL capabilities.\n"
       "\n"
       "Example:\n"
@@ -543,9 +543,9 @@ mesos::internal::slave::Flags::Flags()
       "The value could be a JSON-formatted string of rules or a\n"
       "file path containing the JSON-formatted rules used in the endpoints\n"
       "firewall. Path must be of the form `file:///path/to/file`\n"
-      "or `/path/to/file`.\n"
+      "or '/path/to/file'.\n"
       "\n"
-      "See the `Firewall` message in `flags.proto` for the expected format.\n"
+      "See the 'Firewall' message in 'flags.proto' for the expected format.\n"
       "\n"
       "Example:\n"
       "{\n"
@@ -574,10 +574,10 @@ mesos::internal::slave::Flags::Flags()
       "The value could be a JSON-formatted string of ACLs\n"
       "or a file path containing the JSON-formatted ACLs used\n"
       "for authorization. Path could be of the form `file:///path/to/file`\n"
-      "or `/path/to/file`.\n"
+      "or '/path/to/file'.\n"
       "\n"
-      "Note that if the `--authorizer` flag is provided with a value\n"
-      "other than `" + string(DEFAULT_AUTHORIZER) + "`, the ACLs contents\n"
+      "Note that if the '--authorizer' flag is provided with a value\n"
+      "other than '" + string(DEFAULT_AUTHORIZER) + "', the ACLs contents\n"
       "will be ignored.\n"
       "\n"
       "See the ACLs protobuf in acls.proto for the expected format.\n"
@@ -596,7 +596,7 @@ mesos::internal::slave::Flags::Flags()
       "containerizers",
       "Comma-separated list of containerizer implementations\n"
       "to compose in order to provide containerization.\n"
-      "Available options are `mesos` and `docker` (on Linux).\n"
+      "Available options are 'mesos' and 'docker' (on Linux).\n"
       "The order the containerizers are specified is the order\n"
       "they are tried.\n",
       "mesos");
@@ -611,7 +611,7 @@ mesos::internal::slave::Flags::Flags()
   add(&Flags::docker_remove_delay,
       "docker_remove_delay",
       "The amount of time to wait before removing docker containers\n"
-      "(e.g., `3days`, `2weeks`, etc).\n",
+      "(e.g., '3days', '2weeks', etc).\n",
       DOCKER_REMOVE_DELAY);
 
   add(&Flags::docker_kill_orphans,
@@ -645,7 +645,7 @@ mesos::internal::slave::Flags::Flags()
       "absolute path pointing to the agent local docker config file, or as a\n"
       "JSON-formatted string. The format of the docker config file should be\n"
       "identical to docker's default one (e.g., either\n"
-      "`$HOME/.docker/config.json` or `$HOME/.dockercfg`).\n"
+      "'$HOME/.docker/config.json' or `$HOME/.dockercfg`).\n"
       "Example JSON (`$HOME/.docker/config.json`):\n"
       "{\n"
       "  \"auths\": {\n"

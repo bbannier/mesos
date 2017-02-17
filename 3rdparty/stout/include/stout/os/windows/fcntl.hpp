@@ -27,7 +27,7 @@ namespace os {
 // NOTE: This is not supported on Windows.
 inline Try<Nothing> cloexec(const WindowsFD& fd)
 {
-  LOG(WARNING) << "`os::cloexec` has been called, but is a no-op on Windows";
+  LOG(WARNING) << "'os::cloexec' has been called, but is a no-op on Windows";
   return Nothing();
 }
 
@@ -35,7 +35,7 @@ inline Try<Nothing> cloexec(const WindowsFD& fd)
 // NOTE: This is not supported on Windows.
 inline Try<Nothing> unsetCloexec(const WindowsFD& fd)
 {
-  LOG(WARNING) << "`os::unsetCloexec` has been called, "
+  LOG(WARNING) << "'os::unsetCloexec' has been called, "
                << "but is a no-op on Windows";
 
   return Nothing();
@@ -44,7 +44,7 @@ inline Try<Nothing> unsetCloexec(const WindowsFD& fd)
 
 inline Try<bool> isCloexec(const WindowsFD& fd)
 {
-  LOG(WARNING) << "`os::isCloexec` has been called, but is a stub on Windows";
+  LOG(WARNING) << "'os::isCloexec' has been called, but is a stub on Windows";
   return true;
 }
 
@@ -75,7 +75,7 @@ inline Try<Nothing> nonblock(const WindowsFD& fd)
 // NOTE: This is not supported on Windows.
 inline Try<bool> isNonblock(const WindowsFD& fd)
 {
-  LOG(WARNING) << "`os::isNonblock` has been called, but is a stub on Windows";
+  LOG(WARNING) << "'os::isNonblock' has been called, but is a stub on Windows";
   return true;
 }
 

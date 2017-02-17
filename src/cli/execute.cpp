@@ -102,12 +102,12 @@ public:
 
     add(&Flags::task,
         "task",
-        "The value could be a JSON-formatted string of `TaskInfo` or a\n"
-        "file path containing the JSON-formatted `TaskInfo`. Path must\n"
-        "be of the form `file:///path/to/file` or `/path/to/file`."
+        "The value could be a JSON-formatted string of 'TaskInfo' or a\n"
+        "file path containing the JSON-formatted 'TaskInfo'. Path must\n"
+        "be of the form 'file:///path/to/file' or '/path/to/file'."
         "\n"
-        "See the `TaskInfo` message in `mesos.proto` for the expected\n"
-        "format. NOTE: `agent_id` need not to be set.\n"
+        "See the 'TaskInfo' message in 'mesos.proto' for the expected\n"
+        "format. NOTE: 'agent_id' need not to be set.\n"
         "\n"
         "Example:\n"
         "{\n"
@@ -139,12 +139,12 @@ public:
 
     add(&Flags::task_group,
         "task_group",
-        "The value could be a JSON-formatted string of `TaskGroupInfo` or a\n"
-        "file path containing the JSON-formatted `TaskGroupInfo`. Path must\n"
-        "be of the form `file:///path/to/file` or `/path/to/file`."
+        "The value could be a JSON-formatted string of 'TaskGroupInfo' or a\n"
+        "file path containing the JSON-formatted 'TaskGroupInfo'. Path must\n"
+        "be of the form 'file:///path/to/file' or '/path/to/file'."
         "\n"
-        "See the `TaskGroupInfo` message in `mesos.proto` for the expected\n"
-        "format. NOTE: `agent_id` need not to be set.\n"
+        "See the 'TaskGroupInfo' message in 'mesos.proto' for the expected\n"
+        "format. NOTE: 'agent_id' need not to be set.\n"
         "\n"
         "Example:\n"
         "{\n"
@@ -295,7 +295,7 @@ public:
     add(&Flags::networks,
         "networks",
         "Comma-separated list of networks that the container will join,\n"
-        "e.g., `net1,net2`.");
+        "e.g., 'net1,net2'.");
 
     add(&Flags::principal,
         "principal",
@@ -311,7 +311,7 @@ public:
         "file path containing the JSON-formatted volumes. Path must\n"
         "be of the form `file:///path/to/file` or `/path/to/file`.\n"
         "\n"
-        "See the `Volume` message in `mesos.proto` for the expected format.\n"
+        "See the 'Volume' message in 'mesos.proto' for the expected format.\n"
         "\n"
         "Example:\n"
         "[\n"

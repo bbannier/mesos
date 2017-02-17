@@ -276,7 +276,6 @@ string RegistrarProcess::registryHelp()
       DESCRIPTION(
           "Example:",
           "",
-          "```",
           "{",
           "  \"master\":",
           "  {",
@@ -317,8 +316,7 @@ string RegistrarProcess::registryHelp()
           "      }",
           "    ]",
           "  }",
-          "}",
-          "```"),
+          "}"),
       AUTHENTICATION(true));
 }
 

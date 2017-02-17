@@ -34,7 +34,7 @@ public:
         "connection_delay_max",
         "The maximum amount of time to wait before trying to initiate a "
         "connection with the master. The library waits for a random amount of "
-        "time between [0, b], where `b = connection_delay_max` before "
+        "time between [0, b], where 'b = connection_delay_max' before "
         "initiating a (re-)connection attempt with the master",
         DEFAULT_CONNECTION_DELAY_MAX);
   }

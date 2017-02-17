@@ -35,7 +35,7 @@ inline std::string WSTRINGIFY(int status)
   // On Windows the exit codes are not standardized. The behaviour should
   // be defined to improve the diagnostic based on logs.
   // TODO(dpravat): MESOS-5417 tracks this improvement.
-  LOG(WARNING) << "`WSTRINGIFY` has been called, but it is not implemented.";
+  LOG(WARNING) << "'WSTRINGIFY' has been called, but it is not implemented.";
 
   return "";
 #else

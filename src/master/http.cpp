@@ -871,7 +871,7 @@ Future<Response> Master::Http::scheduler(
     return BadRequest(
         "Authenticated principal '" + principal.get() + "' does not "
         "match principal '" + framework->info.principal() + "' set in "
-        "`FrameworkInfo`");
+        "'FrameworkInfo'");
   }
 
   if (!framework->connected()) {
@@ -2482,7 +2482,6 @@ string Master::Http::STATE_HELP()
         "",
         "Example (**Note**: this is not exhaustive):",
         "",
-        "```",
         "{",
         "    \"version\" : \"0.28.0\",",
         "    \"git_sha\" : \"9d5889b5a265849886a533965f4aefefd1fbd103\",",
@@ -2547,8 +2546,7 @@ string Master::Http::STATE_HELP()
         "    \"completed_frameworks\" : [],",
         "    \"orphan_tasks\" : [],",
         "    \"unregistered_frameworks\" : []",
-        "}",
-        "```"),
+        "}"),
     AUTHENTICATION(true),
     AUTHORIZATION(
         "This endpoint might be filtered based on the user accessing it.",

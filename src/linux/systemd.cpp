@@ -235,7 +235,7 @@ bool exists()
       return false;
     }
 
-    LOG(INFO) << "systemd version `" << version.get() << "` detected";
+    LOG(INFO) << "systemd version '" << version.get() << "' detected";
 
     // We log a warning if the version is below 218. This is because the
     // `Delegate` flag was introduced in version 218. Some systems, like RHEL 7,
@@ -244,8 +244,8 @@ bool exists()
     // MESOS-3352.
     if (version.get() < DELEGATE_MINIMUM_VERSION) {
       LOG(WARNING)
-        << "Required functionality `Delegate` was introduced in Version `"
-        << DELEGATE_MINIMUM_VERSION << "`. Your system may not function"
+        << "Required functionality 'Delegate' was introduced in Version '"
+        << DELEGATE_MINIMUM_VERSION << "'. Your system may not function"
         << " properly; however since some distributions have patched systemd"
         << " packages, your system may still be functional. This is why we keep"
         << " running. See MESOS-3352 for more information";
@@ -298,15 +298,15 @@ Try<Nothing> create(const Path& path, const string& data)
 {
   Try<Nothing> write = os::write(path, data);
   if (write.isError()) {
-    return Error("Failed to write systemd slice `" + path.string() + "`: " +
+    return Error("Failed to write systemd slice '" + path.string() + "': " +
                  write.error());
   }
 
-  LOG(INFO) << "Created systemd slice: `" << path << "`";
+  LOG(INFO) << "Created systemd slice: '" << path << "'";
 
   Try<Nothing> reload = daemonReload();
   if (reload.isError()) {
-    return Error("Failed to create systemd slice `" + path.string() + "`: " +
+    return Error("Failed to create systemd slice '" + path.string() + "': " +
                  reload.error());
   }
 
@@ -320,10 +320,10 @@ Try<Nothing> start(const string& name)
 
   if (start.isError()) {
     return Error(
-        "Failed to start systemd slice `" + name + "`: " + start.error());
+        "Failed to start systemd slice '" + name + "': " + start.error());
   }
 
-  LOG(INFO) << "Started systemd slice `" << name << "`";
+  LOG(INFO) << "Started systemd slice '" << name << "'";
 
   return Nothing();
 }

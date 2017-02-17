@@ -69,7 +69,7 @@ inline Try<Nothing> recursive_remove_directory(
 
   if (search_handle.get() == INVALID_HANDLE_VALUE) {
     return WindowsError(
-        "`os::internal::recursive_remove_directory` failed when searching "
+        "'os::internal::recursive_remove_directory' failed when searching "
         "for files with pattern '" + search_pattern + "'");
   }
 
@@ -129,12 +129,12 @@ inline Try<Nothing> recursive_remove_directory(
       if (::remove(current_absolute_path.c_str()) != 0) {
         if (continueOnError) {
           LOG(WARNING)
-              << "`os::internal::recursive_remove_directory`"
+              << "'os::internal::recursive_remove_directory'"
               << " attempted to delete file '"
               << current_absolute_path << "', but failed";
         } else {
           return WindowsError(
-              "`os::internal::recursive_remove_directory` attempted to delete "
+              "'os::internal::recursive_remove_directory' attempted to delete "
               "file '" + current_absolute_path + "', but failed");
         }
       }
@@ -144,13 +144,13 @@ inline Try<Nothing> recursive_remove_directory(
   // Finally, remove current directory unless `removeRoot` is disabled.
   if (removeRoot && ::_rmdir(current_path.c_str()) == -1) {
     if (continueOnError) {
-      LOG(WARNING) << "`os::internal::recursive_remove_directory`"
+      LOG(WARNING) << "'os::internal::recursive_remove_directory'"
                    << " attempted to delete directory '"
                    << current_path << "', but failed";
       return ErrnoError("rmdir failed in 'continueOnError' mode");
     } else {
       return ErrnoError(
-          "`os::internal::recursive_remove_directory` attempted to delete "
+          "'os::internal::recursive_remove_directory' attempted to delete "
           "directory '" + current_path + "', but failed");
     }
   }
@@ -184,7 +184,7 @@ inline Try<Nothing> rmdir(
     return Error(root.error());
   } else if (root.isNone()) {
     return Error(
-        "Argument to `os::rmdir` is not a valid directory or file: '" +
+        "Argument to 'os::rmdir' is not a valid directory or file: '" +
         directory + "'");
   }
 

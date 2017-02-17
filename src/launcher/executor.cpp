@@ -873,7 +873,7 @@ public:
 
     add(&Flags::task_environment,
         "task_environment",
-        "If specified, this is a JSON-ified `Environment` protobuf that\n"
+        "If specified, this is a JSON-ified 'Environment' protobuf that\n"
         "should be added to the executor's environment before launching\n"
         "the task.");
 
