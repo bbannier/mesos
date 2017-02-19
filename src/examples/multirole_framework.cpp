@@ -237,6 +237,9 @@ public:
     foreach (const mesos::Offer& offer, offers) {
       if (waitingTasks.empty()) {
         driver->declineOffer(offer.id());
+
+        usedOffers = true;
+
         continue;
       }
 
@@ -318,7 +321,6 @@ public:
         // leak it here, and e.g., recover it in reconciliation.
         if (candidateTask.await) {
           runningTasks.push_back(candidateTask.taskInfo.task_id());
-        } else {
         }
 
         waitingTasks.erase(
