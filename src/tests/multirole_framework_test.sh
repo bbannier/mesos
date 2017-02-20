@@ -10,6 +10,24 @@ function random_port {
   echo $((RANDOM + 2000))
 }
 
+function timeout_ {
+  TIME=30 # seconds
+  if hash timeout 2>/dev/null; then
+    timeout "${TIME}" "$@"
+  else
+    gtimeout "${TIME}" "$@"
+  fi
+}
+
+function mkdtemp_ {
+  if [ -z "${1// }" ]; then
+    echo "Argument required"
+    exit
+  fi
+
+  mktemp -d "${PWD:-/tmp}"/"${1}".XXXXXX
+}
+
 function setup_env {
   # shellcheck source=/dev/null
   source "${MESOS_SOURCE_DIR}"/support/colors.sh
@@ -27,15 +45,6 @@ function setup_env {
   unset MESOS_SOURCE_DIR
   unset MESOS_HELPER_DIR
   unset MESOS_VERBOSE
-}
-
-function mkdtemp_ {
-  if [ -z "${1// }" ]; then
-    echo "Argument required"
-    exit
-  fi
-
-  mktemp -d "${PWD:-/tmp}"/"${1}".XXXXXX
 }
 
 function cleanup {
@@ -180,7 +189,7 @@ function run_framework {
   echo "-----"
   echo "${MESOS_TASKS}" | jq
 
-  ${MULTIROLE_FRAMEWORK} \
+  timeout_ ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
     --roles="$ROLES" \
     --max_unsuccessful_offer_cycles=3 \
@@ -527,7 +536,7 @@ function test_hrole_registration {
   }
   '
 
-  MESOS_TASKS='{
+  TASKS='{
     "tasks": [
       {
         "role": "ops/a",
@@ -549,7 +558,7 @@ function test_hrole_registration {
   }'
 
   cleanup
-  run_framework '["ops/a", "ops/b", "dev", "biz"]'
+  MESOS_TASKS="${TASKS}" run_framework '["ops/a", "ops/b", "dev", "biz"]'
 
   echo "${BOLD}"
   echo "The task in role 'ops/b' ('task2') will have been run last."
@@ -561,7 +570,7 @@ function test_hrole_registration {
 function test_hrole_quota_sum_rule {
   echo "${BOLD}"
   echo "********************************************************************************************"
-  echo "* Quotas on parent roles provide a limit on the sum over leaf role quotas                  *"
+  echo "* Quotas on parent roles provide a limit on the sum over leaf role quotas.                 *"
   echo "********************************************************************************************"
   echo "${NORMAL}"
 
@@ -608,6 +617,85 @@ function test_hrole_quota_sum_rule {
   ! (echo ${QUOTA//ROLE/dev\/b} | http -h :"${MASTER_PORT}"/quota | grep -q 'HTTP/1.1 200 OK')
 }
 
+function test_hrole_quota_from_parent_role {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Quotas on parent roles can be used in sub-roles.                                         *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+
+  echo "${BOLD}"
+  echo "Quoting all resources to a parent role."
+  echo "Frameworks in subroles still received offers (from the parent role's quota)."
+  echo "${NORMAL}"
+
+  start_master
+  start_agent
+
+  QUOTA='
+  {
+      "guarantee": [
+          {
+              "name": "cpus",
+              "scalar": {
+                  "value": 1
+              },
+              "type": "SCALAR"
+          }
+      ],
+      "role": "dev"
+  }'
+  echo "${BOLD}"
+  echo "Quota'ing all of the available CPU to role 'dev'."
+  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
+  http :"${MASTER_PORT}"/quota
+  echo "${NORMAL}"
+  echo "${BOLD}"
+  echo "Quota'ing all of the available CPU to role 'dev'."
+  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
+  http :"${MASTER_PORT}"/quota
+  echo "${NORMAL}"
+
+  echo "${BOLD}"
+  echo "Quota'ing all of the available CPU to role 'dev'."
+  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
+  http :"${MASTER_PORT}"/quota
+  echo "${NORMAL}"
+
+  TASKS='
+  {
+    "tasks": [{
+      "role": "dev/a",
+      "task": {
+        "command": { "value": "echo OK" },
+        "name": "task",
+        "task_id": { "value": "task" },
+        "resources": [
+        {
+          "name": "cpus",
+          "scalar": { "value": 0.5 },
+          "type": "SCALAR"
+        },
+        {
+          "name": "mem",
+          "scalar": { "value": 48 },
+          "type": "SCALAR"
+        }
+        ],
+        "slave_id": { "value": "" }
+      }
+    }]
+  }'
+
+  cleanup
+  echo "$TASKS"
+  MESOS_TASKS="${TASKS}" run_framework '["dev/a"]'
+
+  echo "${BOLD}"
+  echo "A framework in role 'dev/a' still received offers."
+  echo "${NORMAL}"
+}
+
 # Multirole-phase I demos
 # -----------------------
 
@@ -639,5 +727,8 @@ function test_hrole_quota_sum_rule {
 # test_hrole_registration
 # cleanup
 
-test_hrole_quota_sum_rule
+# test_hrole_quota_sum_rule
+# cleanup
+
+test_hrole_quota_from_parent_role
 cleanup
