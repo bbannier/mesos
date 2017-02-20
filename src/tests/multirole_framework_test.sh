@@ -492,10 +492,70 @@ function test_failover {
 }
 
 function test_hrole_registration {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Hierarchical roles lead to expected fair share semantics                                 *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+
+  echo "${BOLD}"
+  echo "When working with hierarchical roles, fair share is determined at each level of the tree."
+  echo "We start three tasks running in roles 'ops/a', 'ops/b', 'dev', and 'biz'. Since tasks under 'ops/' share resources we expect the task in 'ops/b' to run last."
+  echo "${NORMAL}"
+
   start_master
   start_agent
-  (MESOS_TASKS='{"tasks": []}' run_framework '["eng/role"]')
-  sleep 10
+
+  TASK1='
+  {
+    "command": { "value": "touch task1" },
+    "name": "task1",
+    "task_id": { "value": "task1" },
+    "resources": [
+      {
+        "name": "cpus",
+        "scalar": { "value": 0.5 },
+        "type": "SCALAR"
+      },
+      {
+        "name": "mem",
+        "scalar": { "value": 48 },
+        "type": "SCALAR"
+      }
+    ],
+    "slave_id": { "value": "" }
+  }
+  '
+
+  MESOS_TASKS='{
+    "tasks": [
+      {
+        "role": "ops/a",
+        "task": '${TASK1}'
+      },
+      {
+        "role": "ops/b",
+        "task": '${TASK1//task1/task2}'
+      },
+      {
+        "role": "dev",
+        "task": '${TASK1//task1/task3}'
+      },
+      {
+        "role": "biz",
+        "task": '${TASK1//task1/task4}'
+      }
+    ]
+  }'
+
+  cleanup
+  run_framework '["ops/a", "ops/b", "dev", "biz"]'
+
+  echo "${BOLD}"
+  echo "The task in role 'ops/b' ('task2') will have been run last."
+  echo "${NORMAL}"
+  LAST_TASK=$(basename $(ls -t $(find "${MESOS_WORK_DIR}" -name 'task?' -type f) | head -1))
+  [ "${LAST_TASK}" = 'task2' ]
 }
 
 # Multirole-phase I demos
