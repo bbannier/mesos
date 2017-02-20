@@ -29,12 +29,21 @@ function setup_env {
   unset MESOS_VERBOSE
 }
 
+function mkdtemp_ {
+  if [ -z "${1// }" ]; then
+    echo "Argument required"
+    exit
+  fi
+
+  mktemp -d "${PWD:-/tmp}"/"${1}".XXXXXX
+}
+
 function cleanup {
   rm -f framework_id
 }
 
 function start_master {
-  MESOS_WORK_DIR=$(mktemp -d -t mesos-master-XXXXXX)
+  MESOS_WORK_DIR=$(mkdtemp_ mesos-master)
   atexit rm -rf "${MESOS_WORK_DIR}"
 
   MASTER_PORT=$(random_port)
@@ -71,10 +80,10 @@ function start_agent {
   # does not exist on non-Linux builds.
   export MESOS_SYSTEMD_ENABLE_SUPPORT=false
 
-  MESOS_WORK_DIR=$(mktemp -d -t mesos-agent-XXXXXX)
+  MESOS_WORK_DIR=$(mkdtemp_ mesos-agent)
   atexit rm -rf "${MESOS_WORK_DIR}"
 
-  MESOS_RUNTIME_DIR=$(mktemp -d -t mesos-agent-runtime-XXXXXX)
+  MESOS_RUNTIME_DIR=$(mkdtemp_ mesos-agent-runtime)
   atexit rm -rf "${MESOS_RUNTIME_DIR}"
 
   AGENT_PORT=$(random_port)
