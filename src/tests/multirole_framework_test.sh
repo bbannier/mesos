@@ -558,6 +558,56 @@ function test_hrole_registration {
   [ "${LAST_TASK}" = 'task2' ]
 }
 
+function test_hrole_quota_sum_rule {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* Quotas on parent roles provide a limit on the sum over leaf role quotas                  *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+
+  echo "${BOLD}"
+  echo "A quota on a parent role provides a limit on the sum its leaf roles can have."
+  echo "This test sets up a quota on a parent role, and the same quota on one of its leaf roles, thereby consuming the whole available quota in the hierarchy. Setting a quota on another leaf role fails."
+  echo "${NORMAL}"
+
+  start_master
+  start_agent
+
+  http :"${MASTER_PORT}"/state | jq '.slaves'
+
+  QUOTA='
+  {
+      "guarantee": [
+          {
+              "name": "cpus",
+              "scalar": {
+                  "value": 0.1
+              },
+              "type": "SCALAR"
+          }
+      ],
+      "role": "ROLE"
+  }'
+
+  echo "${BOLD}"
+  echo "Setting quota for 'dev/' parent role"
+  echo ${QUOTA//ROLE/dev} | jq .
+  echo "${NORMAL}"
+  echo ${QUOTA//ROLE/dev} | http -h :"${MASTER_PORT}"/quota | grep -q 'HTTP/1.1 200 OK'
+
+  echo "${BOLD}"
+  echo "Setting quota for 'dev/a' leave role"
+  echo ${QUOTA//ROLE/dev\/a} | jq .
+  echo "${NORMAL}"
+  echo ${QUOTA//ROLE/dev\/a} | http -h :"${MASTER_PORT}"/quota | grep -q 'HTTP/1.1 200 OK'
+
+  echo "${BOLD}"
+  echo "Attemting to set quota for 'dev/b' leave role. This fails since the quota set by the parent role is already exhausted."
+  echo ${QUOTA//ROLE/dev\/b} | jq .
+  echo "${NORMAL}"
+  ! (echo ${QUOTA//ROLE/dev\/b} | http -h :"${MASTER_PORT}"/quota | grep -q 'HTTP/1.1 200 OK')
+}
+
 # Multirole-phase I demos
 # -----------------------
 
@@ -586,5 +636,8 @@ function test_hrole_registration {
 # Hierarchical roles demos
 # ------------------------
 
-test_hrole_registration
+# test_hrole_registration
+# cleanup
+
+test_hrole_quota_sum_rule
 cleanup
