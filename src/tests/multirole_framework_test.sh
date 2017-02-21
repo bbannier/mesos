@@ -696,6 +696,12 @@ function test_hrole_quota_from_parent_role {
   echo "${NORMAL}"
 }
 
+function test_hrole_reservation_from_parent_role {
+  echo 'FIXME(bbannier)'
+  start_master
+  start_agent
+}
+
 # Multirole-phase I demos
 # -----------------------
 
@@ -730,5 +736,8 @@ function test_hrole_quota_from_parent_role {
 # test_hrole_quota_sum_rule
 # cleanup
 
-test_hrole_quota_from_parent_role
+# test_hrole_quota_from_parent_role
+# cleanup
+
+test_hrole_reservation_from_parent_role
 cleanup
