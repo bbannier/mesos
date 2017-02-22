@@ -683,33 +683,29 @@ function test_hrole_quota_from_parent_role {
   echo "${NORMAL}"
 }
 
-function test_hrole_reservation_from_parent_role {
-  echo 'FIXME(bbannier)'
-  start_master
-  start_agent
-}
-
 # Multirole-phase I demos
 # -----------------------
 
-# test_multirole_framework_registration
-# cleanup
+test_multirole_framework_registration
+cleanup
 
-# test_fair_share
-# cleanup
+test_fair_share
+cleanup
 
-# test_reserved_resources
-# cleanup
+test_reserved_resources
+cleanup
 
-# test_quota
-# cleanup
+test_quota
+cleanup
 
-# test_framework_authz
-# cleanup
+test_framework_authz
+cleanup
+
 
 # Multirole-phase II demos
 # ------------------------
-#
+
+# # FIXME(bbannier): missing impl in Mesos.
 # test_failover
 # cleanup
 
@@ -717,14 +713,13 @@ function test_hrole_reservation_from_parent_role {
 # Hierarchical roles demos
 # ------------------------
 
-# test_hrole_registration
-# cleanup
+test_hrole_registration
+cleanup
 
+# # # FIXME(bbannier): missing impl in Mesos.
 # test_hrole_quota_sum_rule
 # cleanup
 
+# # FIXME(bbannier): missing impl in Mesos.
 # test_hrole_quota_from_parent_role
 # cleanup
-
-test_hrole_reservation_from_parent_role
-cleanup
