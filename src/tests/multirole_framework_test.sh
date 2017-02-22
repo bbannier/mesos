@@ -697,7 +697,32 @@ function test_hrole_updates {
   cleanup
   MESOS_TASKS='{"tasks": []}' run_framework '["a/b"]'
   cleanup
-  MESOS_TASKS='{"tasks": []}' run_framework '["a/b/c"]'
+
+  TASKS='
+  {
+    "tasks": [{
+      "role": "a/b/c",
+      "task": {
+        "command": { "value": "echo OK" },
+        "name": "task",
+        "task_id": { "value": "task" },
+        "resources": [
+        {
+          "name": "cpus",
+          "scalar": { "value": 0.5 },
+          "type": "SCALAR"
+        },
+        {
+          "name": "mem",
+          "scalar": { "value": 48 },
+          "type": "SCALAR"
+        }
+        ],
+        "slave_id": { "value": "" }
+      }
+    }]
+  }'
+  MESOS_TASKS="${TASKS}" run_framework '["a/b/c"]'
 }
 
 # Multirole-phase I demos
