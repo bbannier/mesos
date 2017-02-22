@@ -496,7 +496,6 @@ function test_failover {
   echo "${BOLD}"
   echo "Restarting framework dropping 'roleA'. We can reconcile tasks started with dropped roles."
   echo "${NORMAL}"
-  cleanup
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
