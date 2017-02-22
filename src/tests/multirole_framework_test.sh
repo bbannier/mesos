@@ -649,17 +649,6 @@ function test_hrole_quota_from_parent_role {
   echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
   http :"${MASTER_PORT}"/quota
   echo "${NORMAL}"
-  echo "${BOLD}"
-  echo "Quota'ing all of the available CPU to role 'dev'."
-  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
-  http :"${MASTER_PORT}"/quota
-  echo "${NORMAL}"
-
-  echo "${BOLD}"
-  echo "Quota'ing all of the available CPU to role 'dev'."
-  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
-  http :"${MASTER_PORT}"/quota
-  echo "${NORMAL}"
 
   TASKS='
   {
@@ -687,7 +676,6 @@ function test_hrole_quota_from_parent_role {
   }'
 
   cleanup
-  echo "$TASKS"
   MESOS_TASKS="${TASKS}" run_framework '["dev/a"]'
 
   echo "${BOLD}"
