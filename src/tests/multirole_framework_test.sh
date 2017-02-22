@@ -499,7 +499,7 @@ function test_failover {
   (MESOS_TASKS='{"tasks": []}' run_framework '["roleB"]')
 }
 
-function test_hrole_registration {
+function test_hrole_fairness {
   echo "${BOLD}"
   echo "********************************************************************************************"
   echo "* Hierarchical roles lead to expected fair share semantics                                 *"
@@ -683,6 +683,23 @@ function test_hrole_quota_from_parent_role {
   echo "${NORMAL}"
 }
 
+function test_hrole_updates {
+  echo "${BOLD}"
+  echo "********************************************************************************************"
+  echo "* New subroles can be created.                                                             *"
+  echo "********************************************************************************************"
+  echo "${NORMAL}"
+
+  start_master
+  start_agent
+  cleanup
+  MESOS_TASKS='{"tasks": []}' run_framework '["a"]'
+  cleanup
+  MESOS_TASKS='{"tasks": []}' run_framework '["a/b"]'
+  cleanup
+  MESOS_TASKS='{"tasks": []}' run_framework '["a/b/c"]'
+}
+
 # Multirole-phase I demos
 # -----------------------
 
@@ -713,7 +730,10 @@ cleanup
 # Hierarchical roles demos
 # ------------------------
 
-test_hrole_registration
+test_hrole_updates
+cleanup
+
+test_hrole_fairness
 cleanup
 
 # # # FIXME(bbannier): missing impl in Mesos.
