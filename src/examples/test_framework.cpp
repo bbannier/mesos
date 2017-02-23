@@ -65,21 +65,23 @@ public:
       tasksFinished(0),
       totalTasks(5) {}
 
-  virtual ~TestScheduler() {}
+  ~TestScheduler() override {}
 
-  virtual void registered(SchedulerDriver*,
-                          const FrameworkID&,
-                          const MasterInfo&)
+  void registered(
+      SchedulerDriver*,
+      const FrameworkID&,
+      const MasterInfo&) override
   {
     cout << "Registered!" << endl;
   }
 
-  virtual void reregistered(SchedulerDriver*, const MasterInfo& masterInfo) {}
+  void reregistered(SchedulerDriver*, const MasterInfo& masterInfo) override {}
 
-  virtual void disconnected(SchedulerDriver* driver) {}
+  void disconnected(SchedulerDriver* driver) override {}
 
-  virtual void resourceOffers(SchedulerDriver* driver,
-                              const vector<Offer>& offers)
+  void resourceOffers(
+      SchedulerDriver* driver,
+      const vector<Offer>& offers) override
   {
     foreach (const Offer& offer, offers) {
       cout << "Received offer " << offer.id() << " with " << offer.resources()
@@ -122,10 +124,11 @@ public:
     }
   }
 
-  virtual void offerRescinded(SchedulerDriver* driver,
-                              const OfferID& offerId) {}
+  void offerRescinded(
+      SchedulerDriver* driver,
+      const OfferID& offerId) override {}
 
-  virtual void statusUpdate(SchedulerDriver* driver, const TaskStatus& status)
+  void statusUpdate(SchedulerDriver* driver, const TaskStatus& status) override
   {
     int taskId = lexical_cast<int>(status.task_id().value());
 
@@ -156,19 +159,21 @@ public:
     }
   }
 
-  virtual void frameworkMessage(SchedulerDriver* driver,
-                                const ExecutorID& executorId,
-                                const SlaveID& slaveId,
-                                const string& data) {}
+  void frameworkMessage(
+      SchedulerDriver* driver,
+      const ExecutorID& executorId,
+      const SlaveID& slaveId,
+      const string& data) override {}
 
-  virtual void slaveLost(SchedulerDriver* driver, const SlaveID& sid) {}
+  void slaveLost(SchedulerDriver* driver, const SlaveID& sid) override {}
 
-  virtual void executorLost(SchedulerDriver* driver,
-                            const ExecutorID& executorID,
-                            const SlaveID& slaveID,
-                            int status) {}
+  void executorLost(
+      SchedulerDriver* driver,
+      const ExecutorID& executorID,
+      const SlaveID& slaveID,
+      int status) override {}
 
-  virtual void error(SchedulerDriver* driver, const string& message)
+  void error(SchedulerDriver* driver, const string& message) override
   {
     cout << message << endl;
   }

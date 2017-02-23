@@ -205,7 +205,7 @@ public:
     }
   }
 
-  virtual ~MesosProcess()
+  ~MesosProcess() override
   {
     disconnect();
 
@@ -305,7 +305,7 @@ public:
   }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     // Start detecting masters.
     detection = detector->detect()

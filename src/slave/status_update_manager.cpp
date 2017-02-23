@@ -69,7 +69,7 @@ class StatusUpdateManagerProcess
 {
 public:
   StatusUpdateManagerProcess(const Flags& flags);
-  virtual ~StatusUpdateManagerProcess();
+  ~StatusUpdateManagerProcess() override;
 
   // Explicitly use 'initialize' since we're overloading below.
   using process::ProcessBase::initialize;

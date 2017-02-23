@@ -89,7 +89,7 @@ namespace tests {
 class MasterQuotaTest : public MesosTest
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     MesosTest::SetUp();
     // We reuse default agent resources and expect them to be sufficient.
@@ -99,7 +99,7 @@ protected:
   }
 
   // Returns master flags configured with a short allocation interval.
-  virtual master::Flags CreateMasterFlags()
+  master::Flags CreateMasterFlags() override
   {
     master::Flags flags = MesosTest::CreateMasterFlags();
     flags.allocation_interval = Milliseconds(50);

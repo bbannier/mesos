@@ -61,7 +61,7 @@ public:
     buffer = new char[length];
   }
 
-  virtual ~LogrotateLoggerProcess()
+  ~LogrotateLoggerProcess() override
   {
     if (buffer != nullptr) {
       delete[] buffer;

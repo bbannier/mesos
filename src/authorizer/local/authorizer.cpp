@@ -202,7 +202,7 @@ public:
       action_(action),
       permissive_(permissive) {}
 
-  virtual Try<bool> approved(
+  Try<bool> approved(
       const Option<ObjectApprover::Object>& object) const noexcept override
   {
     // Construct subject.
@@ -567,7 +567,7 @@ public:
   // under an executor running under a given OS user and, if a command
   // is available, the principal is also allowed to run the command as
   // the given OS user.
-  virtual Try<bool> approved(
+  Try<bool> approved(
       const Option<ObjectApprover::Object>& object) const noexcept override
   {
     if (object.isNone() || object->command_info == nullptr) {
@@ -608,7 +608,7 @@ public:
   LocalAuthorizerProcess(const ACLs& _acls)
     : ProcessBase(process::ID::generate("local-authorizer")), acls(_acls) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     // TODO(zhitao): Remove the following log warning at the end of the
     // deprecation cycle which started with 1.0.
@@ -725,7 +725,7 @@ public:
     class RejectingObjectApprover : public ObjectApprover
     {
     public:
-      virtual Try<bool> approved(
+      Try<bool> approved(
           const Option<ObjectApprover::Object>& object) const noexcept override
       {
         return false;

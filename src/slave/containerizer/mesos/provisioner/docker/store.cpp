@@ -65,7 +65,7 @@ public:
       metadataManager(_metadataManager),
       puller(_puller) {}
 
-  ~StoreProcess() {}
+  ~StoreProcess() override {}
 
   Future<Nothing> recover();
 

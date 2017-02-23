@@ -147,7 +147,7 @@ public:
     return false;
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     Try<Owned<Docker>> docker = Docker::create(
         tests::flags.docker,

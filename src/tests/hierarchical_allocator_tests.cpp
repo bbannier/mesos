@@ -131,7 +131,7 @@ protected:
       nextSlaveId(1),
       nextFrameworkId(1) {}
 
-  ~HierarchicalAllocatorTestBase()
+  ~HierarchicalAllocatorTestBase() override
   {
     delete allocator;
   }

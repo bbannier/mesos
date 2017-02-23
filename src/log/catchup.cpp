@@ -55,12 +55,12 @@ public:
       position(_position),
       proposal(_proposal) {}
 
-  virtual ~CatchUpProcess() {}
+  ~CatchUpProcess() override {}
 
   Future<uint64_t> future() { return promise.future(); }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     // Stop when no one cares.
     promise.future().onDiscard(lambda::bind(
@@ -69,7 +69,7 @@ protected:
     check();
   }
 
-  virtual void finalize()
+  void finalize() override
   {
     checking.discard();
     filling.discard();
@@ -187,12 +187,12 @@ public:
       timeout(_timeout),
       proposal(_proposal) {}
 
-  virtual ~BulkCatchUpProcess() {}
+  ~BulkCatchUpProcess() override {}
 
   Future<Nothing> future() { return promise.future(); }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     // Stop when no one cares.
     promise.future().onDiscard(lambda::bind(
@@ -204,7 +204,7 @@ protected:
     catchup();
   }
 
-  virtual void finalize()
+  void finalize() override
   {
     catching.discard();
 

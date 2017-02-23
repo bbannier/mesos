@@ -118,7 +118,7 @@ public:
       .WillRepeatedly(Return(mesos::slave::ContainerLogger::SubprocessInfo()));
   }
 
-  virtual ~MockContainerLogger() {}
+  ~MockContainerLogger() override {}
 
   MOCK_METHOD0(initialize, Try<Nothing>(void));
 

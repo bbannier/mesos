@@ -70,7 +70,7 @@ protected:
         Owned<authentication::Authenticator>(authenticator.get())));
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     foreach (const std::string& realm, realms) {
       // We need to wait in order to ensure that the operation completes before

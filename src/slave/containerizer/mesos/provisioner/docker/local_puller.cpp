@@ -56,7 +56,7 @@ public:
       storeDir(_storeDir),
       archivesDir(_archivesDir) {}
 
-  ~LocalPullerProcess() {}
+  ~LocalPullerProcess() override {}
 
   Future<vector<string>> pull(
       const spec::ImageReference& reference,

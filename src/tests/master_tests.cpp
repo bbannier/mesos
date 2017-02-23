@@ -1210,7 +1210,7 @@ protected:
     : path("whitelist.txt")
   {}
 
-  virtual ~WhitelistTest()
+  ~WhitelistTest() override
   {
     os::rm(path);
   }

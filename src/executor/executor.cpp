@@ -101,7 +101,7 @@ public:
       gracePeriod(_gracePeriod) {}
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     VLOG(1) << "Scheduling shutdown of the executor in " << gracePeriod;
 
@@ -329,13 +329,13 @@ public:
                          lambda::_1));
   }
 
-  ~MesosProcess()
+  ~MesosProcess() override
   {
     disconnect();
   }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     connect();
   }

@@ -54,7 +54,7 @@ public:
       callbacks {connected, disconnected, received},
       subscribeCall(false) {}
 
-  virtual ~V0ToV1AdapterProcess() = default;
+  ~V0ToV1AdapterProcess() override = default;
 
   void registered(
       const mesos::ExecutorInfo& _executorInfo,

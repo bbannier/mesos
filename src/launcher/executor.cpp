@@ -150,7 +150,7 @@ public:
 #endif
   }
 
-  virtual ~CommandExecutor()
+  ~CommandExecutor() override
   {
 #ifdef __WINDOWS__
     if (processHandle != INVALID_HANDLE_VALUE) {
@@ -249,7 +249,7 @@ public:
   }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     Option<string> value = os::getenv("MESOS_HTTP_COMMAND_EXECUTOR");
 

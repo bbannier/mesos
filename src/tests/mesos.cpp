@@ -488,7 +488,7 @@ MockAuthorizer::MockAuthorizer()
   class ObjectApproverAll : public ObjectApprover
   {
   public:
-    virtual Try<bool> approved(
+    Try<bool> approved(
         const Option<ObjectApprover::Object>& object) const noexcept override
     {
       return true;

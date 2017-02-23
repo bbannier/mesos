@@ -170,7 +170,7 @@ public:
   }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     ping();
   }

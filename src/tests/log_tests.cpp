@@ -1520,7 +1520,7 @@ public:
   explicit MockReplica(const string& path) :
     Replica(path) {}
 
-  virtual ~MockReplica() {}
+  ~MockReplica() override {}
 
   MOCK_METHOD1(update, Future<bool>(const Metadata::Status& status));
 

@@ -92,14 +92,14 @@ public:
       state(_state),
       authenticationRealm(_authenticationRealm) {}
 
-  virtual ~RegistrarProcess() {}
+  ~RegistrarProcess() override {}
 
   // Registrar implementation.
   Future<Registry> recover(const MasterInfo& info);
   Future<bool> apply(Owned<Operation> operation);
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     if (authenticationRealm.isSome()) {
       route(
@@ -130,7 +130,7 @@ private:
     explicit Recover(const MasterInfo& _info) : info(_info) {}
 
   protected:
-    virtual Try<bool> perform(Registry* registry, hashset<SlaveID>* slaveIDs)
+    Try<bool> perform(Registry* registry, hashset<SlaveID>* slaveIDs) override
     {
       registry->mutable_master()->mutable_info()->CopyFrom(info);
       return true; // Mutation.

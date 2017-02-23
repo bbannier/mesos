@@ -335,13 +335,13 @@ public:
       state(nullptr) {}
 
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     storage = new mesos::state::InMemoryStorage();
     state = new State(storage);
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     delete state;
     delete storage;
@@ -402,7 +402,7 @@ public:
       state(nullptr) {}
 
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     TemporaryDirectoryTest::SetUp();
 
@@ -413,7 +413,7 @@ protected:
     state = new State(storage);
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     delete state;
     delete storage;
@@ -481,7 +481,7 @@ public:
       log(nullptr) {}
 
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     TemporaryDirectoryTest::SetUp();
 
@@ -509,7 +509,7 @@ protected:
     state = new State(storage);
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     delete state;
     delete storage;

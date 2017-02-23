@@ -93,7 +93,7 @@ class PersistentVolumeTest
     public WithParamInterface<PersistentVolumeSourceType>
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     MesosTest::SetUp();
 
@@ -120,7 +120,7 @@ protected:
     }
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
 #ifdef __linux__
     if (GetParam() == MOUNT) {

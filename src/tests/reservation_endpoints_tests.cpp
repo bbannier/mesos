@@ -76,7 +76,7 @@ class ReservationEndpointsTest : public MesosTest
 public:
   // Set up the master flags such that it allows registration of the framework
   // created with 'createFrameworkInfo'.
-  virtual master::Flags CreateMasterFlags()
+  master::Flags CreateMasterFlags() override
   {
     master::Flags flags = MesosTest::CreateMasterFlags();
     flags.allocation_interval = Milliseconds(50);

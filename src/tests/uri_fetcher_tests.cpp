@@ -74,14 +74,14 @@ public:
 class CurlFetcherPluginTest : public TemporaryDirectoryTest
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     TemporaryDirectoryTest::SetUp();
 
     spawn(server);
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     terminate(server);
     wait(server);
@@ -152,7 +152,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(CurlFetcherPluginTest, CURL_InvokeFetchByName)
 class HadoopFetcherPluginTest : public TemporaryDirectoryTest
 {
 public:
-  virtual void SetUp()
+  void SetUp() override
   {
     TemporaryDirectoryTest::SetUp();
 

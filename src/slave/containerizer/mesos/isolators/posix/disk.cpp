@@ -429,7 +429,7 @@ public:
   DiskUsageCollectorProcess(const Duration& _interval)
     : ProcessBase(process::ID::generate("posix-disk-usage-collector")),
       interval(_interval) {}
-  virtual ~DiskUsageCollectorProcess() {}
+  ~DiskUsageCollectorProcess() override {}
 
   Future<Bytes> usage(
       const string& path,
@@ -455,12 +455,12 @@ public:
   }
 
 protected:
-  void initialize()
+  void initialize() override
   {
     schedule();
   }
 
-  void finalize()
+  void finalize() override
   {
     foreach (const Owned<Entry>& entry, entries) {
       if (entry->du.isSome() && entry->du.get().status().isPending()) {

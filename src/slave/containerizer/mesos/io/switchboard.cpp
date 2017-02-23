@@ -913,7 +913,7 @@ public:
       bool waitForConnection,
       Option<Duration> heartbeatInterval);
 
-  virtual void finalize();
+  void finalize() override;
 
   Future<Nothing> run();
 

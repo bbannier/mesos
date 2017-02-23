@@ -94,7 +94,7 @@ public:
   Future<RecoverResponse> future() { return promise.future(); }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     // Register a callback to handle user initiated discard.
     promise.future().onDiscard(defer(self(), &Self::discard));
@@ -446,7 +446,7 @@ public:
   Future<Owned<Replica>> future() { return promise.future(); }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     LOG(INFO) << "Starting replica recovery";
 
@@ -461,7 +461,7 @@ protected:
       .onAny(defer(self(), &Self::finished, lambda::_1));
   }
 
-  virtual void finalize()
+  void finalize() override
   {
     VLOG(1) << "Recover process terminated";
   }

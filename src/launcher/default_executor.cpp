@@ -121,7 +121,7 @@ public:
       sandboxDirectory(_sandboxDirectory),
       launcherDirectory(_launcherDirectory) {}
 
-  virtual ~DefaultExecutor() = default;
+  ~DefaultExecutor() override = default;
 
   void connected()
   {
@@ -223,7 +223,7 @@ public:
   }
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     mesos.reset(new Mesos(
         contentType,

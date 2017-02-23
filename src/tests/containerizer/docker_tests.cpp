@@ -53,7 +53,7 @@ static const string NAME_PREFIX="mesos-docker";
 
 class DockerTest : public MesosTest
 {
-  virtual void TearDown()
+  void TearDown() override
   {
     Try<Owned<Docker>> docker = Docker::create(
         tests::flags.docker,
