@@ -256,7 +256,7 @@ class HttpProxy : public Process<HttpProxy>
 {
 public:
   explicit HttpProxy(const Socket& _socket);
-  virtual ~HttpProxy() {};
+  ~HttpProxy() override {};
 
   // Enqueues the response to be sent once all previously enqueued
   // responses have been processed (e.g., waited for and sent).
@@ -336,7 +336,7 @@ private:
         handler(_handler) {}
 
   protected:
-    virtual void initialize()
+    void initialize() override
     {
       route("/", help, &RouteProcess::handle);
     }
@@ -3108,22 +3108,22 @@ void ProcessManager::resume(ProcessBase* process)
           {
             explicit FilterVisitor(bool* _filter) : filter(_filter) {}
 
-            virtual void visit(const MessageEvent& event)
+            void visit(const MessageEvent& event) override
             {
               *filter = filterer->filter(event);
             }
 
-            virtual void visit(const DispatchEvent& event)
+            void visit(const DispatchEvent& event) override
             {
               *filter = filterer->filter(event);
             }
 
-            virtual void visit(const HttpEvent& event)
+            void visit(const HttpEvent& event) override
             {
               *filter = filterer->filter(event);
             }
 
-            virtual void visit(const ExitedEvent& event)
+            void visit(const ExitedEvent& event) override
             {
               *filter = filterer->filter(event);
             }
@@ -3530,7 +3530,7 @@ Future<Response> ProcessManager::__processes__(const Request&)
       {
         explicit JSONVisitor(JSON::Array* _events) : events(_events) {}
 
-        virtual void visit(const MessageEvent& event)
+        void visit(const MessageEvent& event) override
         {
           JSON::Object object;
           object.values["type"] = "MESSAGE";
@@ -3545,7 +3545,7 @@ Future<Response> ProcessManager::__processes__(const Request&)
           events->values.push_back(object);
         }
 
-        virtual void visit(const HttpEvent& event)
+        void visit(const HttpEvent& event) override
         {
           JSON::Object object;
           object.values["type"] = "HTTP";
@@ -3558,21 +3558,21 @@ Future<Response> ProcessManager::__processes__(const Request&)
           events->values.push_back(object);
         }
 
-        virtual void visit(const DispatchEvent& event)
+        void visit(const DispatchEvent& event) override
         {
           JSON::Object object;
           object.values["type"] = "DISPATCH";
           events->values.push_back(object);
         }
 
-        virtual void visit(const ExitedEvent& event)
+        void visit(const ExitedEvent& event) override
         {
           JSON::Object object;
           object.values["type"] = "EXITED";
           events->values.push_back(object);
         }
 
-        virtual void visit(const TerminateEvent& event)
+        void visit(const TerminateEvent& event) override
         {
           JSON::Object object;
           object.values["type"] = "TERMINATE";
@@ -3985,7 +3985,7 @@ public:
       duration(_duration),
       waited(_waited) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     VLOG(3) << "Running waiter process for " << pid;
     link(pid);
@@ -3993,7 +3993,7 @@ public:
   }
 
 private:
-  virtual void exited(const UPID&)
+  void exited(const UPID&) override
   {
     VLOG(3) << "Waiter process waited for " << pid;
     *waited = true;

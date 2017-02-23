@@ -693,17 +693,12 @@ TEST_TEMP_DISABLED_ON_WINDOWS(ProcessTest, Donate)
 class ExitedProcess : public Process<ExitedProcess>
 {
 public:
-  explicit ExitedProcess(const UPID& _pid) : pid(_pid) {}
-
-  virtual void initialize()
+  explicit ExitedProcess(const UPID& pid)
   {
     link(pid);
   }
 
   MOCK_METHOD1(exited, void(const UPID&));
-
-private:
-  const UPID pid;
 };
 
 
@@ -761,7 +756,7 @@ public:
 class ProcessRemoteLinkTest : public ::testing::Test
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     // Spawn a process to coordinate with the subprocess (test-linkee).
     // The `test-linkee` will send us a message when it has finished
@@ -810,7 +805,7 @@ protected:
     }
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     if (linkee.isSome()) {
       os::killtree(linkee->pid(), SIGKILL);
@@ -1146,7 +1141,7 @@ class SettleProcess : public Process<SettleProcess>
 public:
   SettleProcess() : calledDispatch(false) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     os::sleep(Milliseconds(10));
     delay(Seconds(0), self(), &SettleProcess::afterDelay);
@@ -1531,7 +1526,7 @@ public:
   explicit FileServer(const string& _path)
     : path(_path) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     provide("", path);
   }
@@ -1730,7 +1725,7 @@ public:
   PercentEncodedIDProcess()
     : ProcessBase("id(42)") {}
 
-  virtual void initialize()
+  void initialize() override
   {
     install("handler1", &Self::handler1);
     route("/handler2", None(), &Self::handler2);
@@ -1802,7 +1797,7 @@ public:
   explicit HTTPEndpointProcess(const string& id)
     : ProcessBase(id) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     route(
         "/handler1",

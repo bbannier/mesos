@@ -117,7 +117,7 @@ public:
       Future<http::Response>(const http::Request&, const Option<string>&));
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     route("/body", None(), &HttpProcess::body);
     route("/pipe", None(), &HttpProcess::pipe);
@@ -163,7 +163,7 @@ class HTTPTest : public SSLTemporaryDirectoryTest,
 // These are only needed if libprocess is compiled with SSL support.
 #ifdef USE_SSL_SOCKET
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     // We must run the parent's `SetUp` first so that we `chdir` into the test
     // directory before SSL helpers like `key_path()` are called.
@@ -1734,7 +1734,13 @@ public:
       authenticate,
       Future<AuthenticationResult>(const http::Request&));
 
-  virtual string scheme() const { return "Basic"; }
+  MOCK_CONST_METHOD0(scheme, string());
+
+  MockAuthenticator()
+  {
+    ON_CALL(*this, scheme())
+      .WillByDefault(Return("Basic"));
+  }
 };
 
 
@@ -1750,7 +1756,7 @@ protected:
     return authentication::setAuthenticator(realm, authenticator);
   }
 
-  virtual void TearDown()
+  void TearDown() override
   {
     foreach (const string& realm, realms) {
       // We need to wait in order to ensure that the operation

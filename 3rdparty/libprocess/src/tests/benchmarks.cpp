@@ -81,10 +81,10 @@ public:
       totalRequests(0),
       concurrency(0) {}
 
-  virtual ~ClientProcess() {}
+  ~ClientProcess() override {}
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     install("pong", &ClientProcess::pong);
 
@@ -194,10 +194,10 @@ private:
 class ServerProcess : public Process<ServerProcess>
 {
 public:
-  virtual ~ServerProcess() {}
+  ~ServerProcess() override {}
 
 protected:
-  virtual void initialize()
+  void initialize() override
   {
     install("ping", &ServerProcess::ping);
   }
@@ -293,7 +293,7 @@ class LinkerProcess : public Process<LinkerProcess>
 public:
   LinkerProcess(const UPID& _to) : to(_to) {}
 
-  virtual void initialize()
+  void initialize() override
   {
     link(to);
   }
