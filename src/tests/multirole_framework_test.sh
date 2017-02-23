@@ -762,9 +762,8 @@ cleanup
 test_hrole_fairness
 cleanup
 
-# # # FIXME(bbannier): missing impl in Mesos.
-# test_hrole_quota_sum_rule
-# cleanup
+test_hrole_quota_sum_rule
+cleanup
 
 # # FIXME(bbannier): missing impl in Mesos.
 # test_hrole_quota_from_parent_role
