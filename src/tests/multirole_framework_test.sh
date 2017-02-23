@@ -187,7 +187,7 @@ function run_framework {
 
   echo "Tasks"
   echo "-----"
-  echo "${MESOS_TASKS}" | jq
+  echo "${MESOS_TASKS}" | jq .
 
   timeout_ ${MULTIROLE_FRAMEWORK} \
     --master=127.0.0.1:"$MASTER_PORT" \
@@ -337,14 +337,15 @@ function test_fair_share {
     ]
   }'
 
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+  start_agent "cpus:0.5;mem:48;disk:25"
+
+
   echo "${BOLD}"
   echo Starting a framework in two roles which will consume the bulk on the resources.
   echo "${NORMAL}"
   run_framework &
-
-  start_agent "cpus:0.5;mem:48;disk:25"
-  start_agent "cpus:0.5;mem:48;disk:25"
-  start_agent "cpus:0.5;mem:48;disk:25"
 
   echo "${BOLD}"
   echo "Starting a framework in just one role which will be offered not enough"
