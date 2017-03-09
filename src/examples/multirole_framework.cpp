@@ -155,10 +155,10 @@ struct Flags : public virtual flags::FlagsBase
     add(&Flags::master, "master", "Master to connect to");
     add(&Flags::roles,
         "roles",
-        "Array of roles the framework should subscribe as");
+        "Array of roles the framework should register with");
     add(&Flags::tasks_,
         "tasks",
-        "Tasks to run. Each tasks needs to have an associated role. A task's\n"
+        "Tasks to run. Each task needs to have an associated role. A task's\n"
         "`slave_id` field can be left empty.\n"
         "\n"
         "Example:\n"
@@ -537,6 +537,7 @@ int main(int argc, char** argv)
 
   flags.tasks = extractTaskWithRole(tasks.get());
 
+  // Configure Mesos-facing side of the framework.
   mesos::FrameworkInfo framework;
   framework.set_user(""); // Have Mesos fill the current user.
   framework.set_name("Multi-role framework (C++)");
@@ -555,10 +556,16 @@ int main(int argc, char** argv)
     }
   }
 
+  // If we find a persisted framework id reuse it. This allows tests
+  // of reregistration behavior.
   Try<mesos::FrameworkID> frameworkId = recoverFrameworkId();
   if (frameworkId.isSome()) {
     framework.mutable_id()->CopyFrom(frameworkId.get());
   }
+
+  // Prevent the framework from being immediately garbage collected on
+  // disconnect in order to allow framework failovers (e.g., to test
+  // reregistation behavior).
   framework.set_failover_timeout(Days(10).secs());
 
   LOG(INFO) << "Scheduling tasks: " << flags.tasks_;
@@ -567,6 +574,7 @@ int main(int argc, char** argv)
 
   std::unique_ptr<mesos::MesosSchedulerDriver> driver;
 
+  // Set up authentication if used.
   // TODO(hartem): Refactor these into a common set of flags.
   Option<std::string> value = os::getenv("MESOS_AUTHENTICATE_FRAMEWORKS");
   if (value.isSome()) {
@@ -603,6 +611,7 @@ int main(int argc, char** argv)
         new mesos::MesosSchedulerDriver(&scheduler, framework, flags.master));
   }
 
+  // Run the framework and report its status to the caller.
   int status = driver->run() != mesos::DRIVER_STOPPED;
 
   return status;
