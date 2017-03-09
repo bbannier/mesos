@@ -617,73 +617,6 @@ function test_hrole_quota_sum_rule {
   ! (echo ${QUOTA//ROLE/dev\/b} | http -h :"${MASTER_PORT}"/quota | grep -q 'HTTP/1.1 200 OK')
 }
 
-function test_hrole_quota_from_parent_role {
-  echo "${BOLD}"
-  echo "********************************************************************************************"
-  echo "* Quotas on parent roles can be used in sub-roles.                                         *"
-  echo "********************************************************************************************"
-  echo "${NORMAL}"
-
-  echo "${BOLD}"
-  echo "Quoting all resources to a parent role."
-  echo "Frameworks in subroles still received offers (from the parent role's quota)."
-  echo "${NORMAL}"
-
-  start_master
-  start_agent
-
-  QUOTA='
-  {
-      "guarantee": [
-          {
-              "name": "cpus",
-              "scalar": {
-                  "value": 1
-              },
-              "type": "SCALAR"
-          }
-      ],
-      "role": "dev"
-  }'
-  echo "${BOLD}"
-  echo "Quota'ing all of the available CPU to role 'dev'."
-  echo "${QUOTA}" | http :"${MASTER_PORT}"/quota
-  http :"${MASTER_PORT}"/quota
-  echo "${NORMAL}"
-
-  TASKS='
-  {
-    "tasks": [{
-      "role": "dev/a",
-      "task": {
-        "command": { "value": "echo OK" },
-        "name": "task",
-        "task_id": { "value": "task" },
-        "resources": [
-        {
-          "name": "cpus",
-          "scalar": { "value": 0.5 },
-          "type": "SCALAR"
-        },
-        {
-          "name": "mem",
-          "scalar": { "value": 48 },
-          "type": "SCALAR"
-        }
-        ],
-        "slave_id": { "value": "" }
-      }
-    }]
-  }'
-
-  cleanup
-  MESOS_TASKS="${TASKS}" run_framework '["dev/a"]'
-
-  echo "${BOLD}"
-  echo "A framework in role 'dev/a' still received offers."
-  echo "${NORMAL}"
-}
-
 function test_hrole_updates {
   echo "${BOLD}"
   echo "********************************************************************************************"
@@ -762,7 +695,3 @@ cleanup
 
 test_hrole_quota_sum_rule
 cleanup
-
-# # FIXME(bbannier): missing impl in Mesos.
-# test_hrole_quota_from_parent_role
-# cleanup
