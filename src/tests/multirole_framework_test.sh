@@ -748,10 +748,8 @@ cleanup
 # Multirole-phase II demos
 # ------------------------
 
-# # FIXME(bbannier): missing impl in Mesos.
-# test_failover
-# cleanup
-
+test_failover
+cleanup
 
 # Hierarchical roles demos
 # ------------------------
