@@ -3971,6 +3971,26 @@ void Master::accept(
         break;
       }
 
+      case Offer::Operation::CREATE_VOLUME: {
+        // TODO(nfnt): Implement authorization for 'CREATE_VOLUME'.
+        break;
+      }
+
+      case Offer::Operation::DESTROY_VOLUME: {
+        // TODO(nfnt): Implement authorization for 'DESTROY_VOLUME'.
+        break;
+      }
+
+      case Offer::Operation::CREATE_BLOCK: {
+        // TODO(nfnt): Implement authorization for 'CREATE_BLOCK'.
+        break;
+      }
+
+      case Offer::Operation::DESTROY_BLOCK: {
+        // TODO(nfnt): Implement authorization for 'DESTROY_BLOCK'.
+        break;
+      }
+
       case Offer::Operation::UNKNOWN: {
         // TODO(vinod): Send an error event to the scheduler?
         LOG(WARNING) << "Ignoring unknown offer operation";
@@ -4735,6 +4755,30 @@ void Master::_accept(
                   << " on agent " << *slave;
 
         send(slave->pid, message);
+        break;
+      }
+
+      case Offer::Operation::CREATE_VOLUME: {
+        // TODO(nfnt): Provide an implementation for 'CREATE_VOLUME'.
+        drop(framework, operation, "Unimplemented");
+        break;
+      }
+
+      case Offer::Operation::DESTROY_VOLUME: {
+        // TODO(nfnt): Provide an implementation for 'DESTROY_VOLUME'.
+        drop(framework, operation, "Unimplemented");
+        break;
+      }
+
+      case Offer::Operation::CREATE_BLOCK: {
+        // TODO(nfnt): Provide an implementation for 'CREATE_BLOCK'.
+        drop(framework, operation, "Unimplemented");
+        break;
+      }
+
+      case Offer::Operation::DESTROY_BLOCK: {
+        // TODO(nfnt): Provide an implementation for 'DESTROY_BLOCK'.
+        drop(framework, operation, "Unimplemented");
         break;
       }
 

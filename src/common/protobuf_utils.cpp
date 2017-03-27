@@ -432,20 +432,30 @@ Label createLabel(const string& key, const Option<string>& value)
 }
 
 
+static void inject(
+    Resource& resource,
+    const Resource::AllocationInfo& allocationInfo)
+{
+  if (!resource.has_allocation_info()) {
+    resource.mutable_allocation_info()->CopyFrom(allocationInfo);
+  }
+}
+
+
+static void inject(
+    RepeatedPtrField<Resource>* resources,
+    const Resource::AllocationInfo& allocationInfo)
+{
+  foreach (Resource& resource, *resources) {
+    inject(resource, allocationInfo);
+  }
+}
+
+
 void injectAllocationInfo(
     Offer::Operation* operation,
     const Resource::AllocationInfo& allocationInfo)
 {
-  auto inject = [](
-      RepeatedPtrField<Resource>* resources,
-      const Resource::AllocationInfo& allocationInfo) {
-    foreach (Resource& resource, *resources) {
-      if (!resource.has_allocation_info()) {
-        resource.mutable_allocation_info()->CopyFrom(allocationInfo);
-      }
-    }
-  };
-
   switch (operation->type()) {
     case Offer::Operation::LAUNCH: {
       Offer::Operation::Launch* launch = operation->mutable_launch();
@@ -518,22 +528,62 @@ void injectAllocationInfo(
       break;
     }
 
+    case Offer::Operation::CREATE_VOLUME: {
+      inject(
+          *operation->mutable_create_volume()->mutable_source(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_VOLUME: {
+      inject(
+          *operation->mutable_destroy_volume()->mutable_volume(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_BLOCK: {
+      inject(
+          *operation->mutable_create_block()->mutable_source(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_BLOCK: {
+      inject(
+          *operation->mutable_destroy_block()->mutable_block(),
+          allocationInfo);
+
+      break;
+    }
+
     case Offer::Operation::UNKNOWN:
       break; // No-op.
   }
 }
 
 
+static void strip(Resource& resource)
+{
+  if (resource.has_allocation_info()) {
+    resource.clear_allocation_info();
+  }
+}
+
+
+static void strip(RepeatedPtrField<Resource>* resources)
+{
+  foreach (Resource& resource, *resources) {
+    strip(resource);
+  }
+}
+
+
 void stripAllocationInfo(Offer::Operation* operation)
 {
-  auto strip = [](RepeatedPtrField<Resource>* resources) {
-    foreach (Resource& resource, *resources) {
-      if (resource.has_allocation_info()) {
-        resource.clear_allocation_info();
-      }
-    }
-  };
-
   switch (operation->type()) {
     case Offer::Operation::LAUNCH: {
       Offer::Operation::Launch* launch = operation->mutable_launch();
@@ -588,6 +638,30 @@ void stripAllocationInfo(Offer::Operation* operation)
 
     case Offer::Operation::DESTROY: {
       strip(operation->mutable_destroy()->mutable_volumes());
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_VOLUME: {
+      strip(*operation->mutable_create_volume()->mutable_source());
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_VOLUME: {
+      strip(*operation->mutable_destroy_volume()->mutable_volume());
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_BLOCK: {
+      strip(*operation->mutable_create_block()->mutable_source());
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_BLOCK: {
+      strip(*operation->mutable_destroy_block()->mutable_block());
 
       break;
     }
