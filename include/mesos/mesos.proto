@@ -1454,6 +1454,10 @@ message Offer {
       UNRESERVE = 3;
       CREATE = 4;
       DESTROY = 5;
+      CREATE_VOLUMES = 7;
+      DESTROY_VOLUMES = 8;
+      CREATE_BLOCKS = 9;
+      DESTROY_BLOCKS = 10;
     }
 
     // TODO(vinod): Deprecate this in favor of `LaunchGroup` below.
@@ -1490,6 +1494,23 @@ message Offer {
       repeated Resource volumes = 1;
     }
 
+    message CreateVolumes {
+      repeated Resource sources = 1;
+      required Resource.DiskInfo.Source.Type target_type = 2;
+    }
+
+    message DestroyVolumes {
+      repeated Resource volumes = 1;
+    }
+
+    message CreateBlocks {
+      repeated Resource sources = 1;
+    }
+
+    message DestroyBlocks {
+      repeated Resource blocks = 1;
+    }
+
     optional Type type = 1;
     optional Launch launch = 2;
     optional LaunchGroup launch_group = 7;
@@ -1497,6 +1518,10 @@ message Offer {
     optional Unreserve unreserve = 4;
     optional Create create = 5;
     optional Destroy destroy = 6;
+    optional CreateVolumes create_volumes = 8;
+    optional DestroyVolumes destroy_volumes = 9;
+    optional CreateBlocks create_blocks = 10;
+    optional DestroyBlocks destroy_blocks = 11;
   }
 }
 

@@ -518,6 +518,38 @@ void injectAllocationInfo(
       break;
     }
 
+    case Offer::Operation::CREATE_VOLUMES: {
+      inject(
+          operation->mutable_create_volumes()->mutable_sources(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_VOLUMES: {
+      inject(
+          operation->mutable_destroy_volumes()->mutable_volumes(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_BLOCKS: {
+      inject(
+          operation->mutable_create_blocks()->mutable_sources(),
+          allocationInfo);
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_BLOCKS: {
+      inject(
+          operation->mutable_destroy_blocks()->mutable_blocks(),
+          allocationInfo);
+
+      break;
+    }
+
     case Offer::Operation::UNKNOWN:
       break; // No-op.
   }
@@ -588,6 +620,30 @@ void stripAllocationInfo(Offer::Operation* operation)
 
     case Offer::Operation::DESTROY: {
       strip(operation->mutable_destroy()->mutable_volumes());
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_VOLUMES: {
+      strip(operation->mutable_create_volumes()->mutable_sources());
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_VOLUMES: {
+      strip(operation->mutable_destroy_volumes()->mutable_volumes());
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_BLOCKS: {
+      strip(operation->mutable_create_blocks()->mutable_sources());
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_BLOCKS: {
+      strip(operation->mutable_destroy_blocks()->mutable_blocks());
 
       break;
     }
