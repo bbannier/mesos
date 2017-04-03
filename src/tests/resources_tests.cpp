@@ -2563,6 +2563,80 @@ TEST(ResourcesOperationTest, CreateSharedPersistentVolume)
 }
 
 
+TEST(ResourcesOperationTest, CreateVolume)
+{
+  Resource source = createDiskResource(
+      "1000",
+      "role",
+      None(),
+      "path",
+      createDiskSourceRaw());
+
+  Offer::Operation create_volume;
+  create_volume.set_type(Offer::Operation::CREATE_VOLUMES);
+  create_volume.mutable_create_volumes()->add_sources()->CopyFrom(source);
+  create_volume.mutable_create_volumes()->set_target_type(
+      Resource::DiskInfo::Source::PATH);
+
+  Resources other = Resources::parse("cpus:1;mem:512").get();
+
+  Resource volume = createDiskResource(
+      "1000",
+      "role",
+      None(),
+      "path",
+      createDiskSourcePath());
+
+  EXPECT_SOME_EQ(
+      (other + volume),
+      (other + source).apply(create_volume));
+
+  Offer::Operation destroy_volume;
+  destroy_volume.set_type(Offer::Operation::DESTROY_VOLUMES);
+  destroy_volume.mutable_destroy_volumes()->add_volumes()->CopyFrom(volume);
+
+  EXPECT_SOME_EQ(
+      (other + source),
+      (other + source).apply(create_volume)->apply(destroy_volume));
+}
+
+
+TEST(ResourcesOperationTest, CreateBlock)
+{
+  Resource source = createDiskResource(
+      "1000",
+      "role",
+      None(),
+      "path",
+      createDiskSourceRaw());
+
+  Offer::Operation create_block;
+  create_block.set_type(Offer::Operation::CREATE_BLOCKS);
+  create_block.mutable_create_blocks()->add_sources()->CopyFrom(source);
+
+  Resources other = Resources::parse("cpus:1;mem:512").get();
+
+  Resource block = createDiskResource(
+      "1000",
+      "role",
+      None(),
+      "path",
+      createDiskSourceBlock());
+
+  EXPECT_SOME_EQ(
+      (other + block),
+      (other + source).apply(create_block));
+
+  Offer::Operation destroy_block;
+  destroy_block.set_type(Offer::Operation::DESTROY_BLOCKS);
+  destroy_block.mutable_destroy_blocks()->add_blocks()->CopyFrom(block);
+
+  EXPECT_SOME_EQ(
+      (other + source),
+      (other + source).apply(create_block)->apply(destroy_block));
+}
+
+
 TEST(ResourcesOperationTest, FlattenResources)
 {
   Resources unreservedCpus = Resources::parse("cpus:1").get();

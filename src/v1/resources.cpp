@@ -1427,21 +1427,145 @@ Try<Resources> Resources::apply(const Offer::Operation& operation) const
       break;
     }
 
-    case Offer::Operation::CREATE_VOLUMES:
-      // TODO(nfnt): Implement this.
-      break;
+    case Offer::Operation::CREATE_VOLUMES: {
+      Option<Error> error = validate(operation.create_volumes().sources());
+      if (error.isSome()) {
+        return Error("Invalid CREATE_VOLUMES Operation: " + error->message);
+      }
 
-    case Offer::Operation::DESTROY_VOLUMES:
-      // TODO(nfnt): Implement this.
-      break;
+      foreach (const Resource& source, operation.create_volumes().sources()) {
+        if (!source.has_disk()) {
+          return Error("Invalid CREATE_VOLUMES Operation: Missing 'disk'");
+        }
 
-    case Offer::Operation::CREATE_BLOCKS:
-      // TODO(nfnt): Implement this.
-      break;
+        if (!source.disk().has_source()) {
+          return Error("Invalid CREATE_VOLUMES Operation: Missing 'source'");
+        }
 
-    case Offer::Operation::DESTROY_BLOCKS:
-      // TODO(nfnt): Implement this.
+        // Create the target volume from the RAW resource.
+        Resource volume = source;
+
+        volume.mutable_disk()->mutable_source()->set_type(
+            operation.create_volumes().target_type());
+
+        if (!result.contains(source)) {
+          return Error(
+              "Invalid CREATE_VOLUMES Operation: Volume '" +
+              stringify(source) +
+              "' does not exist");
+        }
+
+        result.subtract(source);
+        result.add(volume);
+      }
+
       break;
+    }
+
+    case Offer::Operation::DESTROY_VOLUMES: {
+      Option<Error> error = validate(operation.destroy_volumes().volumes());
+      if (error.isSome()) {
+        return Error("Invalid DESTROY_VOLUMES Operation: " + error->message);
+      }
+
+      foreach (const Resource& volume, operation.destroy_volumes().volumes()) {
+        if (!volume.has_disk()) {
+          return Error("Invalid DESTROY_VOLUMES Operation: Missing 'disk'");
+        }
+
+        if (!volume.disk().has_source()) {
+          return Error("Invalid DESTROY_VOLUMES Operation: Missing 'source'");
+        }
+
+        // Create the source resource from the volume.
+        Resource source = volume;
+
+        source.mutable_disk()->mutable_source()->set_type(
+            Resource::DiskInfo::Source::RAW);
+
+        if (!result.contains(volume)) {
+          return Error(
+              "Invalid DESTROY_VOLUMES Operation: Volume '" +
+              stringify(volume) +
+              "' does not exist");
+        }
+
+        result.subtract(volume);
+        result.add(source);
+      }
+
+      break;
+    }
+
+    case Offer::Operation::CREATE_BLOCKS: {
+      Option<Error> error = validate(operation.create_blocks().sources());
+      if (error.isSome()) {
+        return Error("Invalid CREATE_BLOCKS Operation: " + error->message);
+      }
+
+      foreach (const Resource& source, operation.create_blocks().sources()) {
+        if (!source.has_disk()) {
+          return Error("Invalid CREATE_BLOCKS Operation: Missing 'disk'");
+        }
+
+        if (!source.disk().has_source()) {
+          return Error("Invalid CREATE_BLOCKS Operation: Missing 'source'");
+        }
+
+        // Create the block resource from the source.
+        Resource block = source;
+
+        block.mutable_disk()->mutable_source()->set_type(
+            Resource::DiskInfo::Source::BLOCK);
+
+        if (!result.contains(source)) {
+          return Error(
+              "Invalid CREATE_BLOCKS Operation: Volume '" +
+              stringify(source) +
+              "' does not exist");
+        }
+
+        result.subtract(source);
+        result.add(block);
+      }
+
+      break;
+    }
+
+    case Offer::Operation::DESTROY_BLOCKS: {
+      Option<Error> error = validate(operation.destroy_blocks().blocks());
+      if (error.isSome()) {
+        return Error("Invalid DESTROY_BLOCKS Operation: " + error->message);
+      }
+
+      foreach (const Resource& block, operation.destroy_blocks().blocks()) {
+        if (!block.has_disk()) {
+          return Error("Invalid DESTROY_BLOCKS Operation: Missing 'disk'");
+        }
+
+        if (!block.disk().has_source()) {
+          return Error("Invalid DESTROY_BLOCKS Operation: Missing 'source'");
+        }
+
+        // Create the block resource from the source.
+        Resource source = block;
+
+        source.mutable_disk()->mutable_source()->set_type(
+            Resource::DiskInfo::Source::RAW);
+
+        if (!result.contains(block)) {
+          return Error(
+              "Invalid DESTROY_BLOCKS Operation: Volume '" +
+              stringify(block) +
+              "' does not exist");
+        }
+
+        result.subtract(block);
+        result.add(source);
+      }
+
+      break;
+    }
 
     case Offer::Operation::UNKNOWN:
       return Error("Unknown offer operation");
