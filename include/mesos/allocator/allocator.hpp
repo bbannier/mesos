@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <tuple> // FIXME(bbannier): for tie, move with operator== below.
 
 // ONLY USEFUL AFTER RUNNING PROTOC.
 #include <mesos/allocator/allocator.pb.h>
@@ -27,6 +28,7 @@
 
 #include <mesos/quota/quota.hpp>
 
+#include <mesos/attributes.hpp> // FIXME(bbannier): move with operator== below.
 #include <mesos/resources.hpp>
 
 #include <process/future.hpp>
@@ -39,6 +41,30 @@
 #include <stout/try.hpp>
 
 namespace mesos {
+
+// FIXME(bbannier): move proper implementations of these operators to
+// e.g., `mesos/type_utils.hpp`.
+inline bool operator==(
+    const SlaveInfo::Capability& left,
+    const SlaveInfo::Capability& right)
+{
+  return left.type() == right.type();
+}
+
+inline bool operator==(
+    const ResourceProviderInfo& left,
+    const ResourceProviderInfo& right)
+{
+  return std::make_tuple(
+             left.id(),
+             Attributes(left.attributes()),
+             left.resources()) ==
+         std::make_tuple(
+             right.id(),
+             Attributes(right.attributes()),
+             right.resources());
+}
+
 namespace allocator {
 
 class SourceID
@@ -49,6 +75,18 @@ public:
     : value(resourceProviderId.value()) {}
 
   std::string value;
+
+  friend bool operator==(const SourceID& left, const SourceID& right)
+  {
+    return left.value == right.value;
+  }
+
+  friend std::ostream& operator<<(
+      std::ostream& stream,
+      const SourceID& sourceId)
+  {
+    return stream << sourceId.value;
+  }
 };
 
 
@@ -83,6 +121,19 @@ public:
   std::vector<SlaveInfo::Capability> agentCapabilities;
 
   Option<ResourceProviderInfo> resourceProviderInfo = None();
+
+  friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
+    return std::tie(
+               left.id,
+               left.agentInfo,
+               left.agentCapabilities,
+               left.resourceProviderInfo) ==
+           std::tie(
+               right.id,
+               right.agentInfo,
+               right.agentCapabilities,
+               right.resourceProviderInfo);
+  }
 };
 
 } // namespace allocator {
