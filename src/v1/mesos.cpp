@@ -367,6 +367,34 @@ bool operator==(
 }
 
 
+bool operator==(
+    const ResourceProviderInfo& left,
+    const ResourceProviderInfo& right)
+{
+  if (left.id() != right.id()) {
+    return false;
+  }
+
+  if (Attributes(left.attributes()) != Attributes(right.attributes())) {
+    return false;
+  }
+
+  if (Resources(left.resources()) != Resources(right.resources())) {
+    return false;
+  }
+
+  return true;
+}
+
+
+bool operator!=(
+    const ResourceProviderInfo& left,
+    const ResourceProviderInfo& right)
+{
+  return !(left == right);
+}
+
+
 bool operator==(const AgentInfo& left, const AgentInfo& right)
 {
   return left.hostname() == right.hostname() &&

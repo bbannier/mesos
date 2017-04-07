@@ -55,6 +55,10 @@ bool operator==(const Labels& left, const Labels& right);
 bool operator==(const MasterInfo& left, const MasterInfo& right);
 
 bool operator==(
+    const ResourceProviderInfo& left,
+    const ResourceProviderInfo& right);
+
+bool operator==(
     const ResourceStatistics& left,
     const ResourceStatistics& right);
 
@@ -67,6 +71,11 @@ bool operator==(
     const AgentInfo::Capability& right);
 
 bool operator!=(const Labels& left, const Labels& right);
+
+bool operator!=(
+    const ResourceProviderInfo& left,
+    const ResourceProviderInfo& right);
+
 bool operator!=(const TaskStatus& left, const TaskStatus& right);
 bool operator!=(
     const AgentInfo::Capability& left,

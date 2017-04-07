@@ -105,6 +105,19 @@ message ResourceProviderID {
 
 
 /**
+ * Describes a resource provider. Note that the 'id' field is only available
+ * after a resource provider is registered with the master, and is made
+ * available here to facilitate re-registration.
+ */
+message ResourceProviderInfo {
+  optional ResourceProviderID id = 1;
+  repeated Attribute attributes = 2;
+  repeated Resource resources = 3;
+  optional SlaveInfo agent_info = 4;
+}
+
+
+/**
  * Represents time since the epoch, in nanoseconds.
  */
 message TimeInfo {
