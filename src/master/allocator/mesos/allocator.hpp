@@ -40,6 +40,68 @@ class MesosAllocatorProcess;
 template <typename AllocatorProcess>
 class MesosAllocator : public mesos::allocator::Allocator
 {
+  void initialize(
+      const Duration& allocationInterval,
+      const lambda::function<
+          void(const FrameworkID&,
+               const hashmap<std::string, hashmap<mesos::allocator::SourceID, Resources>>&)>&
+                   offerCallback,
+      const lambda::function<
+          void(const FrameworkID&,
+               const hashmap<mesos::allocator::SourceID, UnavailableResources>&)>&
+        inverseOfferCallback,
+      const Option<std::set<std::string>>&
+        fairnessExcludeResourceNames = None()) { /* FIXME(bbannier) */ }
+
+  void addFramework(
+      const FrameworkID& frameworkId,
+      const FrameworkInfo& frameworkInfo,
+      const hashmap<mesos::allocator::SourceID, Resources>& used,
+      bool active) { /* FIXME(bbannier) */ }
+
+  void addSource(
+      const mesos::allocator::SourceInfo& sourceId,
+      const Option<Unavailability>& unavailability,
+      const Resources& total,
+      const hashmap<FrameworkID, Resources>& used) { /* FIXME(bbannier) */ }
+
+  void removeSource(const mesos::allocator::SourceID &sourceID) { /* FIXME(bbannier) */ }
+
+  void updateSourceTotal(
+      const mesos::allocator::SourceID& sourceId,
+      const Option<Resources>& resources) { /* FIXME(bbannier) */ }
+
+  void activateSource(const mesos::allocator::SourceID& sourceId) { /* FIXME(bbannier) */ }
+
+  void deactivateSource(const mesos::allocator::SourceID& sourceId) { /* FIXME(bbannier) */ }
+
+  void updateAllocation(
+      const FrameworkID& frameworkId,
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& offeredResources,
+      const std::vector<Offer::Operation>& operations) { /* FIXME(bbannier) */ }
+
+  process::Future<Nothing> updateAvailable(
+      const mesos::allocator::SourceID& sourceId,
+      const std::vector<Offer::Operation>& operations) { /* FIXME(bbannier) */ return {}; }
+
+  void updateUnavailability(
+      const mesos::allocator::SourceID& sourceId,
+      const Option<Unavailability>& unavailability) { /* FIXME(bbannier) */ }
+
+  void updateInverseOffer(
+      const mesos::allocator::SourceID& sourceId,
+      const FrameworkID& frameworkId,
+      const Option<UnavailableResources>& unavailableResources,
+      const Option<mesos::allocator::InverseOfferStatus>& status,
+      const Option<Filters>& filters = None()) { /* FIXME(bbannier) */ }
+
+  void recoverResources(
+      const FrameworkID& frameworkId,
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& resources,
+      const Option<Filters>& filters) { /* FIXME(bbannier) */ }
+
 public:
   // Factory to allow for typed tests.
   static Try<mesos::allocator::Allocator*> create();

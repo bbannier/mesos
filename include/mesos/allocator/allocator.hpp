@@ -158,6 +158,18 @@ public:
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None()) = 0;
+  virtual void initialize(
+      const Duration& allocationInterval,
+      const lambda::function<
+          void(const FrameworkID&,
+               const hashmap<std::string, hashmap<SourceID, Resources>>&)>&
+                   offerCallback,
+      const lambda::function<
+          void(const FrameworkID&,
+               const hashmap<SourceID, UnavailableResources>&)>&
+        inverseOfferCallback,
+      const Option<std::set<std::string>>&
+        fairnessExcludeResourceNames = None()) = 0;
 
   /**
    * Informs the allocator of the recovered state from the master.
@@ -192,6 +204,11 @@ public:
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
       const hashmap<SlaveID, Resources>& used,
+      bool active) = 0;
+  virtual void addFramework(
+      const FrameworkID& frameworkId,
+      const FrameworkInfo& frameworkInfo,
+      const hashmap<SourceID, Resources>& used,
       bool active) = 0;
 
   /**
@@ -252,6 +269,11 @@ public:
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
+  virtual void addSource(
+      const SourceInfo& sourceId,
+      const Option<Unavailability>& unavailability,
+      const Resources& total,
+      const hashmap<FrameworkID, Resources>& used) = 0;
 
   /**
    * Removes an agent from the Mesos cluster. All resources belonging to this
@@ -259,6 +281,8 @@ public:
    */
   virtual void removeSlave(
       const SlaveID& slaveId) = 0;
+  virtual void removeSource(
+      const SourceID& sourceID) = 0;
 
   /**
    * Updates an agent.
@@ -279,12 +303,19 @@ public:
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
 
+  // FIXME(bbannier): Ok if we only implement this for `ResourceProvider`.
+  virtual void updateSourceTotal(
+      const SourceID& sourceId,
+      const Option<Resources>& resources) = 0;
+
   /**
    * Activates an agent. This is invoked when an agent reregisters. Offers
    * are only sent for activated agents.
    */
   virtual void activateSlave(
       const SlaveID& slaveId) = 0;
+  virtual void activateSource(
+      const SourceID& sourceId) = 0;
 
   /**
    * Deactivates an agent.
@@ -296,6 +327,8 @@ public:
    */
   virtual void deactivateSlave(
       const SlaveID& slaveId) = 0;
+  virtual void deactivateSource(
+      const SourceID& sourceId) = 0;
 
   /**
    * Updates the list of trusted agents.
@@ -334,6 +367,11 @@ public:
       const SlaveID& slaveId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
+  virtual void updateAllocation(
+      const FrameworkID& frameworkId,
+      const SourceID& sourceId,
+      const Resources& offeredResources,
+      const std::vector<Offer::Operation>& operations) = 0;
 
   /**
    * Updates available resources on an agent based on a sequence of offer
@@ -344,6 +382,9 @@ public:
    */
   virtual process::Future<Nothing> updateAvailable(
       const SlaveID& slaveId,
+      const std::vector<Offer::Operation>& operations) = 0;
+  virtual process::Future<Nothing> updateAvailable(
+      const SourceID& sourceId,
       const std::vector<Offer::Operation>& operations) = 0;
 
   /**
@@ -356,6 +397,9 @@ public:
    */
   virtual void updateUnavailability(
       const SlaveID& slaveId,
+      const Option<Unavailability>& unavailability) = 0;
+  virtual void updateUnavailability(
+      const SourceID& sourceId,
       const Option<Unavailability>& unavailability) = 0;
 
   /**
@@ -378,6 +422,12 @@ public:
    */
   virtual void updateInverseOffer(
       const SlaveID& slaveId,
+      const FrameworkID& frameworkId,
+      const Option<UnavailableResources>& unavailableResources,
+      const Option<InverseOfferStatus>& status,
+      const Option<Filters>& filters = None()) = 0;
+  virtual void updateInverseOffer(
+      const SourceID& sourceId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
@@ -407,6 +457,11 @@ public:
   virtual void recoverResources(
       const FrameworkID& frameworkId,
       const SlaveID& slaveId,
+      const Resources& resources,
+      const Option<Filters>& filters) = 0;
+  virtual void recoverResources(
+      const FrameworkID& frameworkId,
+      const SourceID& sourceId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
 
