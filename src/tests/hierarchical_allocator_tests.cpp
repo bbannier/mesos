@@ -62,6 +62,7 @@ using mesos::internal::protobuf::createLabel;
 using mesos::internal::slave::AGENT_CAPABILITIES;
 
 using mesos::allocator::Allocator;
+using mesos::allocator::SourceID;
 
 using process::Clock;
 using process::Future;
@@ -126,6 +127,52 @@ struct Deallocation
 };
 
 
+struct Allocation2
+{
+  Allocation2() = default;
+
+  Allocation2(
+      const FrameworkID& frameworkId_,
+      const hashmap<string, hashmap<SourceID, Resources>>& resources_)
+    : frameworkId(frameworkId_),
+      resources(resources_)
+  {
+    // Ensure the resources have the allocation info set.
+    foreachkey (const string& role, resources) {
+      foreachvalue (Resources& r, resources.at(role)) {
+        r.allocate(role);
+      }
+    }
+  }
+
+  FrameworkID frameworkId;
+  hashmap<string, hashmap<SourceID, Resources>> resources;
+};
+
+
+bool operator==(const Allocation2& left, const Allocation2& right)
+{
+  return left.frameworkId == right.frameworkId &&
+      left.resources == right.resources;
+}
+
+
+ostream& operator<<(ostream& stream, const Allocation2& allocation)
+{
+  return stream
+    << "FrameworkID: " << allocation.frameworkId
+    << " Resource Allocation2: " << stringify(allocation.resources);
+}
+
+
+struct Deallocation2
+{
+  FrameworkID frameworkId;
+  hashmap<SourceID, UnavailableResources> resources;
+};
+
+
+
 class HierarchicalAllocatorTestBase : public ::testing::Test
 {
 protected:
@@ -182,6 +229,52 @@ protected:
         inverseOfferCallback.get(),
         flags.fair_sharing_excluded_resource_names);
   }
+
+  void initialize2(
+      const master::Flags& _flags = master::Flags(),
+      Option<lambda::function<
+          void(const FrameworkID&,
+               const hashmap<string, hashmap<SourceID, Resources>>&)>>
+                 offerCallback = None(),
+      Option<lambda::function<
+          void(const FrameworkID&,
+               const hashmap<SourceID, UnavailableResources>&)>>
+                 inverseOfferCallback = None())
+  {
+    flags = _flags;
+
+    if (offerCallback.isNone()) {
+      offerCallback = [this](
+          const FrameworkID& frameworkId,
+          const hashmap<string, hashmap<SourceID, Resources>>&
+            resources) {
+        Allocation2 allocation;
+        allocation.frameworkId = frameworkId;
+        allocation.resources = resources;
+
+        allocations2.put(allocation);
+      };
+    }
+
+    if (inverseOfferCallback.isNone()) {
+      inverseOfferCallback =
+        [this](const FrameworkID& frameworkId,
+               const hashmap<SourceID, UnavailableResources>& resources) {
+          Deallocation2 deallocation;
+          deallocation.frameworkId = frameworkId;
+          deallocation.resources = resources;
+
+          deallocations2.put(deallocation);
+        };
+    }
+
+    allocator->initialize2(
+        flags.allocation_interval,
+        offerCallback.get(),
+        inverseOfferCallback.get(),
+        flags.fair_sharing_excluded_resource_names);
+  }
+
 
   SlaveInfo createSlaveInfo(const Resources& resources)
   {
@@ -271,6 +364,9 @@ protected:
 
   process::Queue<Allocation> allocations;
   process::Queue<Deallocation> deallocations;
+
+  process::Queue<Allocation2> allocations2;
+  process::Queue<Deallocation2> deallocations2;
 
 private:
   int nextSlaveId;
@@ -4408,6 +4504,33 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
           create.create().volumes()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
+}
+
+
+// FIXME(bbannier): document me.
+TEST_F(HierarchicalAllocatorTest, AddSource)
+{
+  Clock::pause();
+
+  initialize2();
+
+  FrameworkInfo framework = createFrameworkInfo({"role"});
+  allocator->addFramework2(framework.id(), framework, {}, true);
+
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->set_value("RESOURCE_PROVIDER_ID");
+
+  Resources resources = Resources::parse("cpus:2;mem:1024").get();
+  resourceProviderInfo.mutable_resources()->CopyFrom(resources);
+
+  allocator->addSource(resourceProviderInfo, None(), {});
+
+  Allocation2 expected(
+      framework.id(),
+      {{"role",
+        {{resourceProviderInfo.id(), resourceProviderInfo.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations2.get());
 }
 
 
