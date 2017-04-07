@@ -41,6 +41,70 @@
 namespace mesos {
 namespace allocator {
 
+class SourceID
+{
+public:
+  SourceID(const SlaveID& agentId) : value(agentId.value()) {}
+  SourceID(const ResourceProviderID& resourceProviderId)
+    : value(resourceProviderId.value()) {}
+
+  std::string value;
+};
+
+
+class SourceInfo {
+public:
+  SourceInfo(
+      const SlaveID& agentId,
+      const SlaveInfo& agentInfo_,
+      const std::vector<SlaveInfo::Capability>& agentCapabilities_)
+    : type(Type::AGENT),
+      id(agentId),
+      agentInfo(agentInfo_),
+      agentCapabilities(agentCapabilities_) {}
+
+  SourceInfo(
+      const ResourceProviderID& resourceProviderId,
+      const ResourceProviderInfo& resourceProviderInfo_)
+    : type(Type::RESOURCE_PROVIDER),
+      id(resourceProviderId),
+      resourceProviderInfo(resourceProviderInfo_) {}
+
+  enum class Type
+  {
+    UNKNOWN,
+    AGENT,
+    RESOURCE_PROVIDER
+  };
+
+  Type type = Type::UNKNOWN;
+
+  SourceID id;
+
+  Option<SlaveInfo> agentInfo = None();
+  std::vector<SlaveInfo::Capability> agentCapabilities;
+
+  Option<ResourceProviderInfo> resourceProviderInfo = None();
+};
+
+} // namespace allocator {
+} // namespace mesos {
+
+namespace std {
+template <>
+struct hash<mesos::allocator::SourceID>
+{
+  std::size_t operator()(const mesos::allocator::SourceID& sourceId) const
+  {
+    return std::hash<std::string>()(sourceId.value);
+  }
+};
+}
+
+
+namespace mesos {
+namespace allocator {
+
 /**
  * Basic model of an allocator: resources are allocated to a framework
  * in the form of offers. A framework can refuse some resources in
