@@ -2185,6 +2185,133 @@ TEST(DiskResourcesTest, DiskSourceEquals)
 }
 
 
+TEST(DiskResourcesTest, IdEquals)
+{
+  const Resource::DiskInfo diskInfo = createDiskInfo("1", "path");
+  const Resource disk = Resources::parse("disk", "10", "*").get();
+
+  Resource disk1 = disk;
+  Resources r1 = disk1;
+
+  Resource disk2 = disk;
+  disk2.mutable_disk();
+  Resources r2 = disk2;
+
+  Resource disk3 = disk;
+  {
+    Label* label = disk3.mutable_disk()->mutable_id()->add_labels();
+    label->set_key("key3");
+    label->set_value("value3");
+  }
+  Resources r3 = disk3;
+
+  Resource disk4 = disk;
+  {
+    Label* label = disk4.mutable_disk()->mutable_id()->add_labels();
+    label->set_key("key4");
+    label->set_value("value4");
+  }
+  Resources r4 = disk4;
+
+  EXPECT_NE(r1, r2);
+  EXPECT_EQ(r2, r2);
+
+  EXPECT_NE(r1, r3);
+  EXPECT_NE(r2, r3);
+  EXPECT_EQ(r3, r3);
+
+  EXPECT_NE(r3, r4);
+}
+
+
+TEST(DiskResourceTest, IdAddition)
+{
+  const Resource::DiskInfo diskInfo = createDiskInfo("1", "path");
+  const Resource disk = Resources::parse("disk", "1", "*").get();
+
+  Resource disk1 = disk;
+  Resources r1 = disk1;
+
+  Resource disk2 = disk;
+  disk2.mutable_disk();
+  Resources r2 = disk2;
+
+  Resource disk3 = disk;
+  {
+    Label* label = disk3.mutable_disk()->mutable_id()->add_labels();
+    label->set_key("key3");
+    label->set_value("value3");
+  }
+  Resources r3 = disk3;
+
+  Resource disk4 = disk;
+  {
+    Label* label = disk4.mutable_disk()->mutable_id()->add_labels();
+    label->set_key("key4");
+    label->set_value("value4");
+  }
+  Resources r4 = disk4;
+
+  EXPECT_EQ(2u, (r1 + r2).size());
+  EXPECT_EQ(2, (r1 + r2).get<Value::Scalar>("disk")->value());
+
+  EXPECT_EQ(1u, (r2 + r2).size());
+  EXPECT_EQ(2, (r2 + r2).get<Value::Scalar>("disk")->value());
+
+  EXPECT_EQ(2u, (r2 + r3).size());
+  EXPECT_EQ(2, (r2 + r3).get<Value::Scalar>("disk")->value());
+
+  EXPECT_EQ(1u, (r3 + r3).size());
+  EXPECT_EQ(2, (r3 + r3).get<Value::Scalar>("disk")->value());
+
+  EXPECT_EQ(2u, (r3 + r4).size());
+  EXPECT_EQ(2, (r3 + r4).get<Value::Scalar>("disk")->value());
+}
+
+
+TEST(DiskResourceTest, IdSubtraction)
+{
+  const Resource::DiskInfo diskInfo = createDiskInfo("1", "path");
+  const Resource disk = Resources::parse("disk", "1", "*").get();
+
+  Resource disk1 = disk;
+  Resources r1 = disk1;
+
+  Resource disk2 = disk;
+  disk2.mutable_disk();
+  Resources r2 = disk2;
+
+  Resource disk3 = disk;
+  {
+    Label* label = disk3.mutable_disk()->mutable_id()->add_labels();
+    label->set_key("key3");
+    label->set_value("value3");
+  }
+  Resources r3 = disk3;
+
+  EXPECT_FALSE(r1.contains(r2));
+  EXPECT_FALSE(r2.contains(r1));
+
+  EXPECT_TRUE(r2.contains(r2));
+
+  EXPECT_FALSE(r2.contains(r3));
+  EXPECT_FALSE(r3.contains(r2));
+
+  EXPECT_TRUE(r3.contains(r3));
+
+  EXPECT_TRUE((r1 - r1).empty());
+  EXPECT_TRUE((r2 - r2).empty());
+  EXPECT_TRUE((r3 - r3).empty());
+
+  EXPECT_EQ(r1, r1 + r1 - r1);
+  EXPECT_EQ(r2, r2 + r2 - r2);
+  EXPECT_EQ(r3, r3 + r3 - r3);
+
+  EXPECT_EQ(r2, r1 + r2 - r1);
+  EXPECT_EQ(r3, r2 + r3 - r2);
+}
+
+
 TEST(DiskResourcesTest, Addition)
 {
   Resources r1 = createDiskResource("10", "role", None(), "path");
