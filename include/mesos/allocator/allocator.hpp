@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <tuple>
 
 // ONLY USEFUL AFTER RUNNING PROTOC.
 #include <mesos/allocator/allocator.pb.h>
@@ -37,6 +38,101 @@
 #include <stout/lambda.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
+
+namespace mesos {
+
+enum class SourceType
+{
+  UNKNOWN,
+  AGENT,
+  RESOURCE_PROVIDER
+};
+
+namespace allocator {
+
+class SourceID
+{
+public:
+  SourceID(const SlaveID& agentId)
+    : value(agentId.value()),
+      type(SourceType::AGENT) {}
+
+  SourceID(const ResourceProviderID& resourceProviderId)
+    : value(resourceProviderId.value()),
+      type(SourceType::RESOURCE_PROVIDER) {}
+
+  std::string value;
+  SourceType type = SourceType::UNKNOWN;
+
+  friend bool operator==(const SourceID& left, const SourceID& right)
+  {
+    return std::tie(left.value, left.type) == std::tie(right.value, right.type);
+  }
+
+  friend std::ostream& operator<<(
+      std::ostream& stream,
+      const SourceID& sourceId)
+  {
+    return stream << sourceId.value;
+  }
+};
+
+
+class SourceInfo {
+public:
+  SourceInfo(
+      const SlaveInfo& agentInfo_,
+      const std::vector<SlaveInfo::Capability>& agentCapabilities_)
+    : type(SourceType::AGENT),
+      id(agentInfo_.id()),
+      agentInfo(agentInfo_),
+      agentCapabilities(agentCapabilities_) {}
+
+  SourceInfo(
+      const ResourceProviderInfo& resourceProviderInfo_)
+    : type(SourceType::RESOURCE_PROVIDER),
+      id(resourceProviderInfo_.id()),
+      resourceProviderInfo(resourceProviderInfo_) {}
+
+  SourceType type = SourceType::UNKNOWN;
+
+  SourceID id;
+
+  Option<SlaveInfo> agentInfo = None();
+  std::vector<SlaveInfo::Capability> agentCapabilities;
+
+  Option<ResourceProviderInfo> resourceProviderInfo = None();
+
+  friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
+    return std::tie(
+               left.type,
+               left.id,
+               left.agentInfo,
+               left.agentCapabilities,
+               left.resourceProviderInfo) ==
+           std::tie(
+               right.type,
+               right.id,
+               right.agentInfo,
+               right.agentCapabilities,
+               right.resourceProviderInfo);
+  }
+};
+
+} // namespace allocator {
+} // namespace mesos {
+
+namespace std {
+template <>
+struct hash<mesos::allocator::SourceID>
+{
+  std::size_t operator()(const mesos::allocator::SourceID& sourceId) const
+  {
+    return std::hash<std::string>()(sourceId.value);
+  }
+};
+}
+
 
 namespace mesos {
 namespace allocator {
