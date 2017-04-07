@@ -49,6 +49,12 @@ ACTION_P(InvokeInitialize, allocator)
 }
 
 
+ACTION_P(InvokeInitialize2, allocator)
+{
+  allocator->real->initialize2(arg0, arg1, arg2, arg3);
+}
+
+
 ACTION_P(InvokeRecover, allocator)
 {
   allocator->real->recover(arg0, arg1);
@@ -91,9 +97,21 @@ ACTION_P(InvokeAddSlave, allocator)
 }
 
 
+ACTION_P(InvokeAddSource, allocator)
+{
+  allocator->real->addSource(arg0, arg1, arg2);
+}
+
+
 ACTION_P(InvokeRemoveSlave, allocator)
 {
   allocator->real->removeSlave(arg0);
+}
+
+
+ACTION_P(InvokeRemoveSource, allocator)
+{
+  allocator->real->removeSource(arg0);
 }
 
 
@@ -233,6 +251,10 @@ public:
       .WillByDefault(InvokeInitialize(this));
     EXPECT_CALL(*this, initialize(_, _, _, _))
       .WillRepeatedly(DoDefault());
+    ON_CALL(*this, initialize2(_, _, _, _))
+      .WillByDefault(InvokeInitialize2(this));
+    EXPECT_CALL(*this, initialize2(_, _, _, _))
+      .WillRepeatedly(DoDefault());
 
     ON_CALL(*this, recover(_, _))
       .WillByDefault(InvokeRecover(this));
@@ -269,9 +291,19 @@ public:
     EXPECT_CALL(*this, addSlave(_, _, _, _, _, _))
       .WillRepeatedly(DoDefault());
 
+    ON_CALL(*this, addSource(_, _, _))
+      .WillByDefault(InvokeAddSource(this));
+    EXPECT_CALL(*this, addSource(_, _, _))
+      .WillRepeatedly(DoDefault());
+
     ON_CALL(*this, removeSlave(_))
       .WillByDefault(InvokeRemoveSlave(this));
     EXPECT_CALL(*this, removeSlave(_))
+      .WillRepeatedly(DoDefault());
+
+    ON_CALL(*this, removeSource(_))
+      .WillByDefault(InvokeRemoveSource(this));
+    EXPECT_CALL(*this, removeSource(_))
       .WillRepeatedly(DoDefault());
 
     ON_CALL(*this, updateSlave(_, _, _))
