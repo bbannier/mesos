@@ -759,6 +759,7 @@ void Master::initialize()
   }
 
   // Initialize the allocator.
+  // Need to disambiguate for the compiler.
   allocator->initialize(
       flags.allocation_interval,
       defer(self(), &Master::offer, lambda::_1, lambda::_2),

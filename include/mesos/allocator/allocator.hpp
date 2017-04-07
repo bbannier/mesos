@@ -158,7 +158,7 @@ public:
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None()) = 0;
-  virtual void initialize(
+  virtual void initialize2(
       const Duration& allocationInterval,
       const lambda::function<
           void(const FrameworkID&,
@@ -205,7 +205,7 @@ public:
       const FrameworkInfo& frameworkInfo,
       const hashmap<SlaveID, Resources>& used,
       bool active) = 0;
-  virtual void addFramework(
+  virtual void addFramework2(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
       const hashmap<SourceID, Resources>& used,
@@ -270,7 +270,7 @@ public:
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
   virtual void addSource(
-      const SourceInfo& sourceId,
+      const SourceInfo& sourceInfo,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
@@ -305,7 +305,7 @@ public:
 
   // FIXME(bbannier): Ok if we only implement this for `ResourceProvider`.
   virtual void updateSourceTotal(
-      const SourceID& sourceId,
+      const mesos::allocator::SourceID& sourceId,
       const Option<Resources>& resources) = 0;
 
   /**
@@ -315,7 +315,7 @@ public:
   virtual void activateSlave(
       const SlaveID& slaveId) = 0;
   virtual void activateSource(
-      const SourceID& sourceId) = 0;
+      const mesos::allocator::SourceID& sourceId) = 0;
 
   /**
    * Deactivates an agent.
@@ -328,7 +328,7 @@ public:
   virtual void deactivateSlave(
       const SlaveID& slaveId) = 0;
   virtual void deactivateSource(
-      const SourceID& sourceId) = 0;
+      const mesos::allocator::SourceID& sourceId) = 0;
 
   /**
    * Updates the list of trusted agents.
@@ -367,9 +367,9 @@ public:
       const SlaveID& slaveId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
-  virtual void updateAllocation(
+  virtual void updateAllocation2(
       const FrameworkID& frameworkId,
-      const SourceID& sourceId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
 
@@ -383,8 +383,8 @@ public:
   virtual process::Future<Nothing> updateAvailable(
       const SlaveID& slaveId,
       const std::vector<Offer::Operation>& operations) = 0;
-  virtual process::Future<Nothing> updateAvailable(
-      const SourceID& sourceId,
+  virtual process::Future<Nothing> updateAvailable2(
+      const mesos::allocator::SourceID& sourceId,
       const std::vector<Offer::Operation>& operations) = 0;
 
   /**
@@ -398,8 +398,8 @@ public:
   virtual void updateUnavailability(
       const SlaveID& slaveId,
       const Option<Unavailability>& unavailability) = 0;
-  virtual void updateUnavailability(
-      const SourceID& sourceId,
+  virtual void updateUnavailability2(
+      const mesos::allocator::SourceID& sourceId,
       const Option<Unavailability>& unavailability) = 0;
 
   /**
@@ -426,8 +426,8 @@ public:
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
       const Option<Filters>& filters = None()) = 0;
-  virtual void updateInverseOffer(
-      const SourceID& sourceId,
+  virtual void updateInverseOffer2(
+      const mesos::allocator::SourceID& sourceId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
@@ -459,9 +459,9 @@ public:
       const SlaveID& slaveId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
-  virtual void recoverResources(
+  virtual void recoverResources2(
       const FrameworkID& frameworkId,
-      const SourceID& sourceId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
 

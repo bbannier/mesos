@@ -40,7 +40,7 @@ class MesosAllocatorProcess;
 template <typename AllocatorProcess>
 class MesosAllocator : public mesos::allocator::Allocator
 {
-  void initialize(
+  void initialize2(
       const Duration& allocationInterval,
       const lambda::function<
           void(const FrameworkID&,
@@ -53,7 +53,7 @@ class MesosAllocator : public mesos::allocator::Allocator
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None()) { /* FIXME(bbannier) */ }
 
-  void addFramework(
+  void addFramework2(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
       const hashmap<mesos::allocator::SourceID, Resources>& used,
@@ -75,28 +75,28 @@ class MesosAllocator : public mesos::allocator::Allocator
 
   void deactivateSource(const mesos::allocator::SourceID& sourceId) { /* FIXME(bbannier) */ }
 
-  void updateAllocation(
+  void updateAllocation2(
       const FrameworkID& frameworkId,
       const mesos::allocator::SourceID& sourceId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) { /* FIXME(bbannier) */ }
 
-  process::Future<Nothing> updateAvailable(
+  process::Future<Nothing> updateAvailable2(
       const mesos::allocator::SourceID& sourceId,
       const std::vector<Offer::Operation>& operations) { /* FIXME(bbannier) */ return {}; }
 
-  void updateUnavailability(
+  void updateUnavailability2(
       const mesos::allocator::SourceID& sourceId,
       const Option<Unavailability>& unavailability) { /* FIXME(bbannier) */ }
 
-  void updateInverseOffer(
+  void updateInverseOffer2(
       const mesos::allocator::SourceID& sourceId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<mesos::allocator::InverseOfferStatus>& status,
       const Option<Filters>& filters = None()) { /* FIXME(bbannier) */ }
 
-  void recoverResources(
+  void recoverResources2(
       const FrameworkID& frameworkId,
       const mesos::allocator::SourceID& sourceId,
       const Resources& resources,
