@@ -55,19 +55,17 @@ public:
 class SourceInfo {
 public:
   SourceInfo(
-      const SlaveID& agentId,
       const SlaveInfo& agentInfo_,
       const std::vector<SlaveInfo::Capability>& agentCapabilities_)
     : type(Type::AGENT),
-      id(agentId),
+      id(agentInfo_.id()),
       agentInfo(agentInfo_),
       agentCapabilities(agentCapabilities_) {}
 
   SourceInfo(
-      const ResourceProviderID& resourceProviderId,
       const ResourceProviderInfo& resourceProviderInfo_)
     : type(Type::RESOURCE_PROVIDER),
-      id(resourceProviderId),
+      id(resourceProviderInfo_.id()),
       resourceProviderInfo(resourceProviderInfo_) {}
 
   enum class Type
