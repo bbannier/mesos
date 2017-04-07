@@ -104,6 +104,14 @@ message ResourceProviderID {
 }
 
 
+// FIXME(bbannier): document me.
+message ResourceProviderInfo {
+  optional ResourceProviderID id = 1;
+  repeated Attribute attributes = 2;
+  repeated Resource resources = 3;
+}
+
+
 /**
  * Represents time since the epoch, in nanoseconds.
  */
