@@ -412,10 +412,9 @@ public:
       const Option<Unavailability>&,
       const Resources&,
       const hashmap<FrameworkID, Resources>&));
-  MOCK_METHOD4(addSource, void(
+  MOCK_METHOD3(addSource, void(
       const mesos::allocator::SourceInfo&,
       const Option<Unavailability>&,
-      const Resources&,
       const hashmap<FrameworkID, Resources>&));
 
   MOCK_METHOD1(removeSlave, void(

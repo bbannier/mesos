@@ -321,7 +321,6 @@ public:
   virtual void addSource(
       const SourceInfo& sourceInfo,
       const Option<Unavailability>& unavailability,
-      const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
 
   /**

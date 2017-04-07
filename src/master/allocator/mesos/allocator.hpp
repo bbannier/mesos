@@ -62,7 +62,6 @@ class MesosAllocator : public mesos::allocator::Allocator
   void addSource(
       const mesos::allocator::SourceInfo& sourceId,
       const Option<Unavailability>& unavailability,
-      const Resources& total,
       const hashmap<FrameworkID, Resources>& used) { /* FIXME(bbannier) */ }
 
   void removeSource(const mesos::allocator::SourceID &sourceID) { /* FIXME(bbannier) */ }
