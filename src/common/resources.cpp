@@ -194,6 +194,14 @@ bool operator==(const Resource::DiskInfo& left, const Resource::DiskInfo& right)
     return false;
   }
 
+  if (left.has_id() != right.has_id()) {
+    return false;
+  }
+
+  if (left.has_id() && left.id() != right.id()) {
+    return false;
+  }
+
   // NOTE: We ignore 'volume' inside DiskInfo when doing comparison
   // because it describes how this resource will be used which has
   // nothing to do with the Resource object itself. A framework can

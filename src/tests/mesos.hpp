@@ -759,14 +759,15 @@ inline TResource createReservedResource(
 // NOTE: We only set the volume in DiskInfo if 'containerPath' is set.
 // If volume mode is not specified, Volume::RW will be used (assuming
 // 'containerPath' is set).
-template <typename TResource, typename TVolume>
+template <typename TResource, typename TVolume, typename TLabels>
 inline typename TResource::DiskInfo createDiskInfo(
     const Option<std::string>& persistenceId,
     const Option<std::string>& containerPath,
     const Option<typename TVolume::Mode>& mode = None(),
     const Option<std::string>& hostPath = None(),
     const Option<typename TResource::DiskInfo::Source>& source = None(),
-    const Option<std::string>& principal = None())
+    const Option<std::string>& principal = None(),
+    const Option<TLabels>& id = None())
 {
   typename TResource::DiskInfo info;
 
@@ -792,6 +793,10 @@ inline typename TResource::DiskInfo createDiskInfo(
 
   if (source.isSome()) {
     info.mutable_source()->CopyFrom(source.get());
+  }
+
+  if (id.isSome()) {
+    info.mutable_id()->CopyFrom(id.get());
   }
 
   return info;
@@ -827,25 +832,31 @@ inline typename TResource::DiskInfo::Source createDiskSourceMount(
 
 
 // Helper for creating a disk resource.
-template <typename TResource, typename TResources, typename TVolume>
+template <typename TResource,
+          typename TResources,
+          typename TVolume,
+          typename TLabels>
 inline TResource createDiskResource(
     const std::string& value,
     const std::string& role,
     const Option<std::string>& persistenceID,
     const Option<std::string>& containerPath,
     const Option<typename TResource::DiskInfo::Source>& source = None(),
-    bool isShared = false)
+    bool isShared = false,
+    const Option<TLabels>& id = None())
 {
   TResource resource = TResources::parse("disk", value, role).get();
 
   if (persistenceID.isSome() || containerPath.isSome() || source.isSome()) {
     resource.mutable_disk()->CopyFrom(
-        createDiskInfo<TResource, TVolume>(
+        createDiskInfo<TResource, TVolume, TLabels>(
             persistenceID,
             containerPath,
             None(),
             None(),
-            source));
+            source,
+            None(),
+            id));
 
     if (isShared) {
       resource.mutable_shared();
@@ -858,7 +869,10 @@ inline TResource createDiskResource(
 
 // Note that `reservationPrincipal` should be specified if and only if
 // the volume uses dynamically reserved resources.
-template <typename TResource, typename TResources, typename TVolume>
+template <typename TResource,
+          typename TResources,
+          typename TVolume,
+          typename TLabels>
 inline TResource createPersistentVolume(
     const Bytes& size,
     const std::string& role,
@@ -875,7 +889,7 @@ inline TResource createPersistentVolume(
       role).get();
 
   volume.mutable_disk()->CopyFrom(
-      createDiskInfo<TResource, TVolume>(
+      createDiskInfo<TResource, TVolume, TLabels>(
           persistenceId,
           containerPath,
           None(),
@@ -897,7 +911,10 @@ inline TResource createPersistentVolume(
 
 // Note that `reservationPrincipal` should be specified if and only if
 // the volume uses dynamically reserved resources.
-template <typename TResource, typename TResources, typename TVolume>
+template <typename TResource,
+          typename TResources,
+          typename TVolume,
+          typename TLabels>
 inline TResource createPersistentVolume(
     TResource volume,
     const std::string& persistenceId,
@@ -912,7 +929,7 @@ inline TResource createPersistentVolume(
   }
 
   volume.mutable_disk()->CopyFrom(
-      createDiskInfo<TResource, TVolume>(
+      createDiskInfo<TResource, TVolume, TLabels>(
           persistenceId,
           containerPath,
           None(),
@@ -1156,7 +1173,8 @@ inline Resource createReservedResource(Args&&... args)
 template <typename... Args>
 inline Resource::DiskInfo createDiskInfo(Args&&... args)
 {
-  return common::createDiskInfo<Resource, Volume>(std::forward<Args>(args)...);
+  return common::createDiskInfo<Resource, Volume, Labels>(
+      std::forward<Args>(args)...);
 }
 
 
@@ -1177,7 +1195,7 @@ inline Resource::DiskInfo::Source createDiskSourceMount(Args&&... args)
 template <typename... Args>
 inline Resource createDiskResource(Args&&... args)
 {
-  return common::createDiskResource<Resource, Resources, Volume>(
+  return common::createDiskResource<Resource, Resources, Volume, Labels>(
       std::forward<Args>(args)...);
 }
 
@@ -1185,7 +1203,7 @@ inline Resource createDiskResource(Args&&... args)
 template <typename... Args>
 inline Resource createPersistentVolume(Args&&... args)
 {
-  return common::createPersistentVolume<Resource, Resources, Volume>(
+  return common::createPersistentVolume<Resource, Resources, Volume, Labels>(
       std::forward<Args>(args)...);
 }
 
@@ -1364,8 +1382,10 @@ inline mesos::v1::Resource createReservedResource(Args&&... args)
 template <typename... Args>
 inline mesos::v1::Resource::DiskInfo createDiskInfo(Args&&... args)
 {
-  return common::createDiskInfo<mesos::v1::Resource, mesos::v1::Volume>(
-      std::forward<Args>(args)...);
+  return common::createDiskInfo<
+      mesos::v1::Resource,
+      mesos::v1::Volume,
+      mesos::v1::Labels>(std::forward<Args>(args)...);
 }
 
 
@@ -1393,7 +1413,8 @@ inline mesos::v1::Resource createDiskResource(Args&&... args)
   return common::createDiskResource<
       mesos::v1::Resource,
       mesos::v1::Resources,
-      mesos::v1::Volume>(std::forward<Args>(args)...);
+      mesos::v1::Volume,
+      mesos::v1::Labels>(std::forward<Args>(args)...);
 }
 
 
@@ -1403,7 +1424,8 @@ inline mesos::v1::Resource createPersistentVolume(Args&&... args)
   return common::createPersistentVolume<
       mesos::v1::Resource,
       mesos::v1::Resources,
-      mesos::v1::Volume>(std::forward<Args>(args)...);
+      mesos::v1::Volume,
+      mesos::v1::Labels>(std::forward<Args>(args)...);
 }
 
 
