@@ -42,16 +42,17 @@ class MesosAllocator : public mesos::allocator::Allocator
 {
   void initialize2(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<mesos::allocator::SourceID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<mesos::allocator::SourceID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<
+              std::string,
+              hashmap<mesos::allocator::SourceID, Resources>>&)>& offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<mesos::allocator::SourceID, UnavailableResources>&)>&
         inverseOfferCallback,
-      const Option<std::set<std::string>>&
-        fairnessExcludeResourceNames = None()) { /* FIXME(bbannier) */ }
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None());
 
   void addFramework2(
       const FrameworkID& frameworkId,
@@ -255,6 +256,20 @@ public:
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None()) = 0;
+  virtual void initialize2(
+      const Duration& allocationInterval,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<
+              std::string,
+              hashmap<mesos::allocator::SourceID, Resources>>&)>& offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<mesos::allocator::SourceID, UnavailableResources>&)>&
+        inverseOfferCallback,
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None()) = 0;
+
 
   virtual void recover(
       const int expectedAgentCount,
@@ -403,6 +418,30 @@ inline void MesosAllocator<AllocatorProcess>::initialize(
   process::dispatch(
       process,
       &MesosAllocatorProcess::initialize,
+      allocationInterval,
+      offerCallback,
+      inverseOfferCallback,
+      fairnessExcludeResourceNames);
+}
+
+
+template <typename AllocatorProcess>
+inline void MesosAllocator<AllocatorProcess>::initialize2(
+    const Duration& allocationInterval,
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<
+            std::string,
+            hashmap<mesos::allocator::SourceID, Resources>>&)>& offerCallback,
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<mesos::allocator::SourceID, UnavailableResources>&)>&
+      inverseOfferCallback,
+    const Option<std::set<std::string>>& fairnessExcludeResourceNames)
+{
+  process::dispatch(
+      process,
+      &MesosAllocatorProcess::initialize2,
       allocationInterval,
       offerCallback,
       inverseOfferCallback,
