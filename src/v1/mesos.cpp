@@ -137,6 +137,22 @@ bool operator==(const URL& left, const URL& right)
 
 
 bool operator==(
+    const AgentInfo::Capability& left,
+    const AgentInfo::Capability& right)
+{
+  return left.type() == right.type();
+}
+
+
+bool operator!=(
+    const AgentInfo::Capability& left,
+    const AgentInfo::Capability& right)
+{
+  return !(left == right);
+}
+
+
+bool operator==(
     const ContainerInfo::DockerInfo::PortMapping& left,
     const ContainerInfo::DockerInfo::PortMapping& right)
 {
