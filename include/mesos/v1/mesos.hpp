@@ -62,9 +62,15 @@ bool operator==(const AgentInfo& left, const AgentInfo& right);
 bool operator==(const TaskStatus& left, const TaskStatus& right);
 bool operator==(const URL& left, const URL& right);
 bool operator==(const Volume& left, const Volume& right);
+bool operator==(
+    const AgentInfo::Capability& left,
+    const AgentInfo::Capability& right);
 
 bool operator!=(const Labels& left, const Labels& right);
 bool operator!=(const TaskStatus& left, const TaskStatus& right);
+bool operator!=(
+    const AgentInfo::Capability& left,
+    const AgentInfo::Capability& right);
 
 
 inline bool operator==(const ContainerID& left, const ContainerID& right)

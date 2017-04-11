@@ -462,6 +462,22 @@ bool operator!=(const CheckStatusInfo& left, const CheckStatusInfo& right)
 }
 
 
+bool operator==(
+    const SlaveInfo::Capability& left,
+    const SlaveInfo::Capability& right)
+{
+  return left.type() == right.type();
+}
+
+
+bool operator!=(
+    const SlaveInfo::Capability& left,
+    const SlaveInfo::Capability& right)
+{
+  return !(left == right);
+}
+
+
 ostream& operator<<(ostream& stream, const CapabilityInfo& capabilityInfo)
 {
   return stream << JSON::protobuf(capabilityInfo);
