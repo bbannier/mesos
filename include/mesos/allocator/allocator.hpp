@@ -32,6 +32,7 @@
 
 #include <process/future.hpp>
 
+#include <stout/check.hpp>
 #include <stout/duration.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
@@ -74,6 +75,16 @@ public:
       const SourceID& sourceId)
   {
     return stream << sourceId.value;
+  }
+
+  // FIXME(bbannier): This is a transient helper function. Remove it
+  // once the users it have been update.
+  /*implicit*/ operator SlaveID() const
+  {
+    CHECK(type == SourceType::AGENT);
+    SlaveID slaveId;
+    slaveId.set_value(value);
+    return slaveId;
   }
 };
 
