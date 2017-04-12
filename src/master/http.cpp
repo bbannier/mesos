@@ -86,6 +86,8 @@
 
 using google::protobuf::RepeatedPtrField;
 
+using mesos::allocator::SourceID;
+
 using process::AUTHENTICATION;
 using process::AUTHORIZATION;
 using process::Clock;
@@ -4617,7 +4619,7 @@ Future<mesos::maintenance::ClusterStatus>
     .then(defer(
         master->self(),
         [=](hashmap<
-            SlaveID,
+            SourceID,
             hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>> result)
           -> Future<mesos::maintenance::ClusterStatus> {
     // Unwrap the master's machine information into two arrays of machines.

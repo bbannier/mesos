@@ -43,6 +43,7 @@ using std::string;
 using std::vector;
 
 using mesos::allocator::InverseOfferStatus;
+using mesos::allocator::SourceID;
 
 using process::Failure;
 using process::Future;
@@ -135,11 +136,11 @@ void HierarchicalAllocatorProcess::initialize(
     const Duration& _allocationInterval,
     const lambda::function<
         void(const FrameworkID&,
-             const hashmap<string, hashmap<SlaveID, Resources>>&)>&
+             const hashmap<string, hashmap<SourceID, Resources>>&)>&
       _offerCallback,
     const lambda::function<
         void(const FrameworkID&,
-             const hashmap<SlaveID, UnavailableResources>&)>&
+             const hashmap<SourceID, UnavailableResources>&)>&
       _inverseOfferCallback,
     const Option<set<string>>& _fairnessExcludeResourceNames)
 {
@@ -229,7 +230,7 @@ void HierarchicalAllocatorProcess::recover(
 void HierarchicalAllocatorProcess::addFramework(
     const FrameworkID& frameworkId,
     const FrameworkInfo& frameworkInfo,
-    const hashmap<SlaveID, Resources>& used,
+    const hashmap<SourceID, Resources>& used,
     bool active)
 {
   CHECK(initialized);
@@ -247,23 +248,23 @@ void HierarchicalAllocatorProcess::addFramework(
   // framework's role.
 
   // Update the allocation for this framework.
-  foreachpair (const SlaveID& slaveId, const Resources& resources, used) {
-    if (!slaves.contains(slaveId)) {
+  foreachpair (const SourceID& sourceId, const Resources& resources, used) {
+    if (!slaves.contains(sourceId)) {
       continue;
     }
 
     hashmap<string, Resources> allocations = resources.allocations();
 
     foreachpair (const string& role, const Resources& allocation, allocations) {
-      roleSorter->allocated(role, slaveId, allocation);
-      frameworkSorters.at(role)->add(slaveId, allocation);
+      roleSorter->allocated(role, sourceId, allocation);
+      frameworkSorters.at(role)->add(sourceId, allocation);
       frameworkSorters.at(role)->allocated(
-          frameworkId.value(), slaveId, allocation);
+          frameworkId.value(), sourceId, allocation);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration
         // regarding non-revocable.
-        quotaRoleSorter->allocated(role, slaveId, allocation.nonRevocable());
+        quotaRoleSorter->allocated(role, sourceId, allocation.nonRevocable());
       }
     }
   }
@@ -533,8 +534,10 @@ void HierarchicalAllocatorProcess::addSlave(
 
 
 void HierarchicalAllocatorProcess::removeSlave(
-    const SlaveID& slaveId)
+    const SourceID& sourceId)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(slaves.contains(slaveId));
 
@@ -562,10 +565,12 @@ void HierarchicalAllocatorProcess::removeSlave(
 
 
 void HierarchicalAllocatorProcess::updateSlave(
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const Option<Resources>& oversubscribed,
     const Option<vector<SlaveInfo::Capability>>& capabilities)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(slaves.contains(slaveId));
 
@@ -633,20 +638,22 @@ void HierarchicalAllocatorProcess::updateSlave(
 
 
 void HierarchicalAllocatorProcess::activateSlave(
-    const SlaveID& slaveId)
+    const SourceID& sourceId)
 {
   CHECK(initialized);
-  CHECK(slaves.contains(slaveId));
+  CHECK(slaves.contains(sourceId));
 
-  slaves.at(slaveId).activated = true;
+  slaves.at(sourceId).activated = true;
 
-  LOG(INFO) << "Agent " << slaveId << " reactivated";
+  LOG(INFO) << "Resource provider " << sourceId << " reactivated";
 }
 
 
 void HierarchicalAllocatorProcess::deactivateSlave(
-    const SlaveID& slaveId)
+    const SourceID& sourceId)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(slaves.contains(slaveId));
 
@@ -687,10 +694,12 @@ void HierarchicalAllocatorProcess::requestResources(
 
 void HierarchicalAllocatorProcess::updateAllocation(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const Resources& offeredResources,
     const vector<Offer::Operation>& operations)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(slaves.contains(slaveId));
   CHECK(frameworks.contains(frameworkId));
@@ -857,9 +866,11 @@ void HierarchicalAllocatorProcess::updateAllocation(
 
 
 Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const vector<Offer::Operation>& operations)
 {
+  const SlaveID& slaveId = sourceId;
+
   // Note that the operations may contain allocated resources,
   // however such operations can be applied to unallocated
   // resources unambiguously, so we don't have a strict CHECK
@@ -899,9 +910,11 @@ Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
 
 
 void HierarchicalAllocatorProcess::updateUnavailability(
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const Option<Unavailability>& unavailability)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(slaves.contains(slaveId));
 
@@ -932,12 +945,14 @@ void HierarchicalAllocatorProcess::updateUnavailability(
 
 
 void HierarchicalAllocatorProcess::updateInverseOffer(
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const FrameworkID& frameworkId,
     const Option<UnavailableResources>& unavailableResources,
     const Option<InverseOfferStatus>& status,
     const Option<Filters>& filters)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
@@ -1028,12 +1043,12 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
 }
 
 
-Future<hashmap<SlaveID, hashmap<FrameworkID, InverseOfferStatus>>>
+Future<hashmap<SourceID, hashmap<FrameworkID, InverseOfferStatus>>>
 HierarchicalAllocatorProcess::getInverseOfferStatuses()
 {
   CHECK(initialized);
 
-  hashmap<SlaveID, hashmap<FrameworkID, InverseOfferStatus>> result;
+  hashmap<SourceID, hashmap<FrameworkID, InverseOfferStatus>> result;
 
   // Make a copy of the most recent statuses.
   foreachpair (const SlaveID& id, const Slave& slave, slaves) {
@@ -1048,10 +1063,12 @@ HierarchicalAllocatorProcess::getInverseOfferStatuses()
 
 void HierarchicalAllocatorProcess::recoverResources(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const Resources& resources,
     const Option<Filters>& filters)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
 
   if (resources.empty()) {
@@ -1461,7 +1478,7 @@ void HierarchicalAllocatorProcess::__allocate()
   //       framework having the corresponding role.
   //   (2) For unreserved resources on the slave, allocate these
   //       to a framework of any role.
-  hashmap<FrameworkID, hashmap<string, hashmap<SlaveID, Resources>>> offerable;
+  hashmap<FrameworkID, hashmap<string, hashmap<SourceID, Resources>>> offerable;
 
   // NOTE: This function can operate on a small subset of
   // `allocationCandidates`, we have to make sure that we don't
@@ -1879,7 +1896,7 @@ void HierarchicalAllocatorProcess::deallocate()
 
   // In this case, `offerable` is actually the slaves and/or resources that we
   // want the master to create `InverseOffer`s from.
-  hashmap<FrameworkID, hashmap<SlaveID, UnavailableResources>> offerable;
+  hashmap<FrameworkID, hashmap<SourceID, UnavailableResources>> offerable;
 
   // For maintenance, we use the framework sorters to determine which frameworks
   // have (1) reserved and / or (2) unreserved resource on the specified

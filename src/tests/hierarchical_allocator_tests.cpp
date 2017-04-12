@@ -62,6 +62,7 @@ using mesos::internal::protobuf::createLabel;
 using mesos::internal::slave::AGENT_CAPABILITIES;
 
 using mesos::allocator::Allocator;
+using mesos::allocator::SourceID;
 
 using process::Clock;
 using process::Future;
@@ -87,7 +88,7 @@ struct Allocation
 
   Allocation(
       const FrameworkID& frameworkId_,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<SourceID, Resources>>& resources_)
     : frameworkId(frameworkId_),
       resources(resources_)
   {
@@ -100,7 +101,7 @@ struct Allocation
   }
 
   FrameworkID frameworkId;
-  hashmap<string, hashmap<SlaveID, Resources>> resources;
+  hashmap<string, hashmap<SourceID, Resources>> resources;
 };
 
 
@@ -122,7 +123,7 @@ ostream& operator<<(ostream& stream, const Allocation& allocation)
 struct Deallocation
 {
   FrameworkID frameworkId;
-  hashmap<SlaveID, UnavailableResources> resources;
+  hashmap<SourceID, UnavailableResources> resources;
 };
 
 
@@ -143,11 +144,11 @@ protected:
       const master::Flags& _flags = master::Flags(),
       Option<lambda::function<
           void(const FrameworkID&,
-               const hashmap<string, hashmap<SlaveID, Resources>>&)>>
+               const hashmap<string, hashmap<SourceID, Resources>>&)>>
                  offerCallback = None(),
       Option<lambda::function<
           void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>>
+               const hashmap<SourceID, UnavailableResources>&)>>
                  inverseOfferCallback = None())
   {
     flags = _flags;
@@ -155,7 +156,7 @@ protected:
     if (offerCallback.isNone()) {
       offerCallback =
         [this](const FrameworkID& frameworkId,
-               const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
+               const hashmap<string, hashmap<SourceID, Resources>>& resources) {
           Allocation allocation;
           allocation.frameworkId = frameworkId;
           allocation.resources = resources;
@@ -167,7 +168,7 @@ protected:
     if (inverseOfferCallback.isNone()) {
       inverseOfferCallback =
         [this](const FrameworkID& frameworkId,
-               const hashmap<SlaveID, UnavailableResources>& resources) {
+               const hashmap<SourceID, UnavailableResources>& resources) {
           Deallocation deallocation;
           deallocation.frameworkId = frameworkId;
           deallocation.resources = resources;
@@ -1465,8 +1466,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
   FrameworkInfo framework = createFrameworkInfo(
       {"role1"},
       {FrameworkInfo::Capability::SHARED_RESOURCES});
-  allocator->addFramework(
-      framework.id(), framework, hashmap<SlaveID, Resources>(), true);
+  allocator->addFramework(framework.id(), framework, {}, true);
 
   Allocation expected = Allocation(
       framework.id(),
@@ -2020,9 +2020,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, NoDoubleAccounting)
   hashmap<FrameworkID, Resources> agent2Allocation =
     {{framework2.id(), allocatedResources(agent2.resources(), ROLE2)}};
 
-  hashmap<SlaveID, Resources> framework1Allocation =
+  hashmap<SourceID, Resources> framework1Allocation =
     {{agent1.id(), allocatedResources(agent1.resources(), ROLE1)}};
-  hashmap<SlaveID, Resources> framework2Allocation =
+  hashmap<SourceID, Resources> framework2Allocation =
     {{agent2.id(), allocatedResources(agent2.resources(), ROLE2)}};
 
   // Call `addFramework()` and `addSlave()` in different order for
@@ -4462,7 +4462,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AddAndUpdateSlave)
 
   auto offerCallback = [&offerCallbacks](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
+      const hashmap<string, hashmap<SourceID, Resources>>& resources) {
     offerCallbacks++;
   };
 
@@ -4563,7 +4563,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
       foreachpair (const SlaveID& slaveId,
@@ -4717,7 +4717,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
       foreachpair (const SlaveID& slaveId,
@@ -4891,7 +4891,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
       foreachpair (const SlaveID& slaveId,

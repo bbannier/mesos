@@ -55,6 +55,8 @@
 using google::protobuf::RepeatedPtrField;
 
 using mesos::allocator::Allocator;
+using mesos::allocator::SourceID;
+
 using mesos::internal::master::allocator::HierarchicalDRFAllocator;
 
 using mesos::internal::master::Master;
@@ -362,13 +364,13 @@ TYPED_TEST(MasterAllocatorTest, OutOfOrderDispatch)
   // properly be executed and later we want to _inject_ a
   // recoverResources to simulate the code in Master::offer after a
   // framework has terminated or is inactive.
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   Future<Resources> savedResources;
   EXPECT_CALL(allocator, recoverResources(_, _, _, _))
     // "Catches" the recoverResources call from the master, so
     // that it doesn't get processed until we redispatch it after
     // the removeFramework trigger.
-    .WillOnce(DoAll(FutureArg<1>(&slaveId),
+    .WillOnce(DoAll(FutureArg<1>(&sourceId),
                     FutureArg<2>(&savedResources)));
 
   EXPECT_CALL(allocator, deactivateFramework(_));
@@ -382,7 +384,7 @@ TYPED_TEST(MasterAllocatorTest, OutOfOrderDispatch)
   driver1.join();
 
   AWAIT_READY(removeFramework);
-  AWAIT_READY(slaveId);
+  AWAIT_READY(sourceId);
   AWAIT_READY(savedResources);
 
   EXPECT_CALL(allocator, recoverResources(_, _, _, _))
@@ -393,7 +395,7 @@ TYPED_TEST(MasterAllocatorTest, OutOfOrderDispatch)
   // that recovering resources from a removed framework works.
   allocator.recoverResources(
       frameworkId1.get(),
-      slaveId.get(),
+      sourceId.get(),
       savedResources.get(),
       None());
 

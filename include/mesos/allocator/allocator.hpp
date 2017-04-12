@@ -191,16 +191,15 @@ public:
    */
   virtual void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<SourceID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&, const hashmap<SourceID, UnavailableResources>&)>&
         inverseOfferCallback,
-      const Option<std::set<std::string>>&
-        fairnessExcludeResourceNames = None()) = 0;
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None()) = 0;
 
   /**
    * Informs the allocator of the recovered state from the master.
@@ -227,14 +226,14 @@ public:
    * @param used Resources used by this framework. The allocator should
    *     account for these resources when updating the allocation of this
    *     framework. The allocator should avoid double accounting when yet
-   *     unknown agents are added later in `addSlave()`.
+   *     unknown resource providers are added later in `addSlave()`.
    *
    * @param active Whether the framework is initially activated.
    */
   virtual void addFramework(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
-      const hashmap<SlaveID, Resources>& used,
+      const hashmap<SourceID, Resources>& used,
       bool active) = 0;
 
   /**
@@ -277,10 +276,8 @@ public:
    * Adds or re-adds an agent to the Mesos cluster. It is invoked when a
    * new agent joins the cluster or in case of agent recovery.
    *
-   * @param slaveId ID of the agent to be added or re-added.
-   * @param slaveInfo Detailed info of the agent. The slaveInfo resources
-   *     correspond directly to the static --resources flag value on the agent.
-   * @param capabilities Capabilities of the agent.
+   * @param sourceID ID of the source to be added or re-added.
+   * @param sourceInfo information on the source being added or re-added.
    * @param total The `total` resources are passed explicitly because it
    *     includes resources that are dynamically "checkpointed" on the agent
    *     (e.g. persistent volumes, dynamic reservations, etc).
@@ -288,6 +285,7 @@ public:
    *     allocator should avoid double accounting when yet unknown frameworks
    *     are added later in `addFramework()`.
    */
+  // FIXME(bbannier): Rename to `addSource`.
   virtual void addSlave(
       const SlaveID& slaveId,
       const SlaveInfo& slaveInfo,
@@ -297,37 +295,45 @@ public:
       const hashmap<FrameworkID, Resources>& used) = 0;
 
   /**
-   * Removes an agent from the Mesos cluster. All resources belonging to this
-   * agent should be released by the allocator.
+   * Removes a resource provider from the Mesos cluster. All resources belonging
+   * to this provider should be released by the allocator.
    */
+  // FIXME(bbannier): Rename to `removeSource`.
   virtual void removeSlave(
-      const SlaveID& slaveId) = 0;
+      const SourceID& sourceID) = 0;
 
   /**
-   * Updates an agent.
+   * Updates a resource provider.
    *
-   * Updates the latest oversubscribed resources or capabilities for an agent.
+   * Updates the latest oversubscribed resources or capabilities for a
+   * resource provider.
    * TODO(vinod): Instead of just oversubscribed resources have this
    * method take total resources. We can then reuse this method to
-   * update Agent's total resources in the future.
+   * update resource providers's total resources in the future.
    *
    * @param oversubscribed The new oversubscribed resources estimate from
-   *     the agent. The oversubscribed resources include the total amount
-   *     of oversubscribed resources that are allocated and available.
-   * @param capabilities The new capabilities of the agent.
+   *     the resource provider. The oversubscribed resources include the total
+   *     amount of oversubscribed resources that are allocated and available.
+   * @param capabilities The new capabilities of an agent. This is
+   *     only expected to be set when an agent is added.
    */
+  // FIXME(bbannier): Rename to `updateSource`.
+  // FIXME(bbannier): just take an info here.
   virtual void updateSlave(
-      const SlaveID& slave,
+      const SourceID& sourceId,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
+  // FIXME(bbannier): provide semantics of updateSourceTotal, either
+  // here or in another function, at least for RPs.
 
   /**
    * Activates an agent. This is invoked when an agent reregisters. Offers
    * are only sent for activated agents.
    */
+  // FIXME(bbannier): Rename to `activateSource`.
   virtual void activateSlave(
-      const SlaveID& slaveId) = 0;
+      const SourceID& sourceId) = 0;
 
   /**
    * Deactivates an agent.
@@ -337,8 +343,8 @@ public:
    * is no separate call to the allocator to handle this). Resources aren't
    * "recovered" when an agent deactivates because the resources are lost.
    */
-  virtual void deactivateSlave(
-      const SlaveID& slaveId) = 0;
+  // FIXME(bbannier): Rename to `deactivateSource`.
+  virtual void deactivateSlave(const SourceID& sourceId) = 0;
 
   /**
    * Updates the list of trusted agents.
@@ -374,31 +380,33 @@ public:
    */
   virtual void updateAllocation(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const SourceID& sourceId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
 
   /**
-   * Updates available resources on an agent based on a sequence of offer
-   * operations. Operations may include reserve, unreserve, create or destroy.
+   * Updates available resources on a resource provider based on a
+   * sequence of offer operations. Operations may include e.g., reserve,
+   * unreserve, create or destroy.
    *
-   * @param slaveId ID of the agent.
-   * @param operations The offer operations to apply to this agent's resources.
+   * @param sourceID ID of the resource provider.
+   * @param operations The offer operations to apply to this
+   *     providers's resources.
    */
   virtual process::Future<Nothing> updateAvailable(
-      const SlaveID& slaveId,
+      const SourceID& sourceId,
       const std::vector<Offer::Operation>& operations) = 0;
 
   /**
-   * Updates unavailability for an agent.
+   * Updates unavailability for a a resource provider.
    *
    * We currently support storing the next unavailability, if there is one,
-   * per agent. If `unavailability` is not set then there is no known upcoming
-   * unavailability. This might require the implementation of the function to
-   * remove any inverse offers that are outstanding.
+   * per resource provider. If `unavailability` is not set then there is no
+   * known upcoming unavailability. This might require the implementation of the
+   * function to remove any inverse offers that are outstanding.
    */
   virtual void updateUnavailability(
-      const SlaveID& slaveId,
+      const SourceID& sourceId,
       const Option<Unavailability>& unavailability) = 0;
 
   /**
@@ -420,7 +428,7 @@ public:
    *     existing mechanism for re-offering Offers to frameworks.
    */
   virtual void updateInverseOffer(
-      const SlaveID& slaveId,
+      const SourceID& sourceId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
@@ -429,19 +437,19 @@ public:
   /**
    * Retrieves the status of all inverse offers maintained by the allocator.
    */
-  virtual process::Future<
-      hashmap<SlaveID,
-              hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
-    getInverseOfferStatuses() = 0;
+  virtual process::Future<hashmap<
+      SourceID,
+      hashmap<FrameworkID, InverseOfferStatus>>>
+  getInverseOfferStatuses() = 0;
 
   /**
    * Recovers resources.
    *
-   * Used to update the set of available resources for a specific agent. This
-   * method is invoked to inform the allocator about allocated resources that
-   * have been refused or are no longer in use. Allocated resources will have
-   * an `allocation_info.role` assigned and callers are expected to only call
-   * this with resources allocated to a single role.
+   * Used to update the set of available resources for a specific resource
+   * provider. This method is invoked to inform the allocator about allocated
+   * resources that have been refused or are no longer in use. Allocated
+   * resources will have an `allocation_info.role` assigned and callers are
+   * expected to only call this with resources allocated to a single role.
    *
    * TODO(bmahler): We could allow resources allocated to multiple roles
    * within a single call here, but filtering them in the same way does
@@ -449,7 +457,7 @@ public:
    */
   virtual void recoverResources(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const SourceID& sourceId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
 

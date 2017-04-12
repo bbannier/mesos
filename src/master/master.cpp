@@ -128,6 +128,7 @@ namespace internal {
 namespace master {
 
 using mesos::allocator::Allocator;
+using mesos::allocator::SourceID;
 
 using mesos::authorization::createSubject;
 
@@ -6979,7 +6980,7 @@ void Master::frameworkFailoverTimeout(const FrameworkID& frameworkId,
 
 void Master::offer(
     const FrameworkID& frameworkId,
-    const hashmap<string, hashmap<SlaveID, Resources>>& resources)
+    const hashmap<string, hashmap<SourceID, Resources>>& resources)
 {
   if (!frameworks.registered.contains(frameworkId) ||
       !frameworks.registered[frameworkId]->active()) {
@@ -7137,7 +7138,7 @@ void Master::offer(
 
 void Master::inverseOffer(
     const FrameworkID& frameworkId,
-    const hashmap<SlaveID, UnavailableResources>& resources)
+    const hashmap<SourceID, UnavailableResources>& resources)
 {
   if (!frameworks.registered.contains(frameworkId) ||
       !frameworks.registered[frameworkId]->active()) {
