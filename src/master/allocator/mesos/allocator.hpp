@@ -84,7 +84,7 @@ public:
       const FrameworkInfo& frameworkInfo);
 
   void addSlave(
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const SlaveInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
@@ -221,7 +221,7 @@ public:
       const FrameworkInfo& frameworkInfo) = 0;
 
   virtual void addSlave(
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const SlaveInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
@@ -430,7 +430,7 @@ inline void MesosAllocator<AllocatorProcess>::updateFramework(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::addSlave(
-    const SlaveID& slaveId,
+    const mesos::allocator::SourceID& sourceId,
     const SlaveInfo& slaveInfo,
     const std::vector<SlaveInfo::Capability>& capabilities,
     const Option<Unavailability>& unavailability,
@@ -440,7 +440,7 @@ inline void MesosAllocator<AllocatorProcess>::addSlave(
   process::dispatch(
       process,
       &MesosAllocatorProcess::addSlave,
-      slaveId,
+      sourceId,
       slaveInfo,
       capabilities,
       unavailability,

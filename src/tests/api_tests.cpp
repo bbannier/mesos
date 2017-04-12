@@ -63,6 +63,8 @@
 
 namespace http = process::http;
 
+using mesos::allocator::SourceID;
+
 using mesos::master::detector::MasterDetector;
 using mesos::master::detector::StandaloneMasterDetector;
 
@@ -942,10 +944,10 @@ TEST_P(MasterAPITest, ReserveResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator, flags);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -992,7 +994,7 @@ TEST_P(MasterAPITest, ReserveResources)
   v1::master::Call::ReserveResources* reserveResources =
     v1Call.mutable_reserve_resources();
 
-  reserveResources->mutable_agent_id()->CopyFrom(evolve(slaveId.get()));
+  reserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
   reserveResources->mutable_resources()->CopyFrom(evolve(dynamicallyReserved));
 
   ContentType contentType = GetParam();
@@ -1034,10 +1036,10 @@ TEST_P(MasterAPITest, UnreserveResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator, flags);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -1057,7 +1059,7 @@ TEST_P(MasterAPITest, UnreserveResources)
   v1::master::Call::ReserveResources* reserveResources =
     v1Call.mutable_reserve_resources();
 
-  reserveResources->mutable_agent_id()->CopyFrom(evolve(slaveId.get()));
+  reserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
   reserveResources->mutable_resources()->CopyFrom(evolve(dynamicallyReserved));
 
   ContentType contentType = GetParam();
@@ -1103,7 +1105,7 @@ TEST_P(MasterAPITest, UnreserveResources)
   v1::master::Call::UnreserveResources* unreserveResources =
     v1Call.mutable_unreserve_resources();
 
-  unreserveResources->mutable_agent_id()->CopyFrom(evolve(slaveId.get()));
+  unreserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
 
   unreserveResources->mutable_resources()->CopyFrom(
       evolve(dynamicallyReserved));

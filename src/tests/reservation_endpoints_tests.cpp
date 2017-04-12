@@ -44,6 +44,8 @@ using std::vector;
 
 using google::protobuf::RepeatedPtrField;
 
+using mesos::allocator::SourceID;
+
 using mesos::internal::master::Master;
 using mesos::internal::protobuf::createLabel;
 using mesos::internal::slave::Slave;
@@ -113,10 +115,10 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -133,7 +135,7 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -179,7 +181,7 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -212,10 +214,10 @@ TEST_F(ReservationEndpointsTest, ReserveOfferedResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -259,7 +261,7 @@ TEST_F(ReservationEndpointsTest, ReserveOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -287,10 +289,10 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -307,7 +309,7 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -342,7 +344,7 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -374,10 +376,10 @@ TEST_F(ReservationEndpointsTest, ReserveAvailableAndOfferedResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -485,7 +487,7 @@ TEST_F(ReservationEndpointsTest, ReserveAvailableAndOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -528,10 +530,10 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -556,7 +558,7 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), total));
+      createRequestBody(sourceId.get(), total));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -652,7 +654,7 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), total));
+      createRequestBody(sourceId.get(), total));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -696,10 +698,10 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
   Resources totalSlaveResources =
     Resources::parse(slaveFlags.resources.get()).get();
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -726,7 +728,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), labeledResources1));
+      createRequestBody(sourceId.get(), labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -734,7 +736,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), labeledResources2));
+      createRequestBody(sourceId.get(), labeledResources2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -773,7 +775,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), labeledResources1));
+      createRequestBody(sourceId.get(), labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -798,7 +800,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), labeledResources1));
+      createRequestBody(sourceId.get(), labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 
@@ -813,7 +815,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), labeledResources2));
+      createRequestBody(sourceId.get(), labeledResources2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -852,10 +854,10 @@ TEST_F(ReservationEndpointsTest, InvalidResource)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -877,7 +879,7 @@ TEST_F(ReservationEndpointsTest, InvalidResource)
   // function `createRequestBody` accepts `Resources`.
   string body = strings::format(
         "slaveId=%s&resources=[%s]",
-        slaveId->value(),
+        sourceId->value,
         JSON::protobuf(resource.get())).get();
 
   {
@@ -911,10 +913,10 @@ TEST_F(ReservationEndpointsTest, InsufficientResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -928,7 +930,7 @@ TEST_F(ReservationEndpointsTest, InsufficientResources)
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
-  string body = createRequestBody(slaveId.get(), dynamicallyReserved);
+  string body = createRequestBody(sourceId.get(), dynamicallyReserved);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "reserve", headers, body);
@@ -952,10 +954,10 @@ TEST_F(ReservationEndpointsTest, NoHeader)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -972,7 +974,7 @@ TEST_F(ReservationEndpointsTest, NoHeader)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -982,7 +984,7 @@ TEST_F(ReservationEndpointsTest, NoHeader)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1001,10 +1003,10 @@ TEST_F(ReservationEndpointsTest, BadCredentials)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -1019,7 +1021,7 @@ TEST_F(ReservationEndpointsTest, BadCredentials)
       "role", createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
   process::http::Headers headers = createBasicAuthHeaders(credential);
-  string body = createRequestBody(slaveId.get(), dynamicallyReserved);
+  string body = createRequestBody(sourceId.get(), dynamicallyReserved);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "reserve", headers, body);
@@ -1074,10 +1076,10 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1095,7 +1097,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1104,7 +1106,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
       master.get()->pid,
       "unreserve",
       headers,
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1136,10 +1138,10 @@ TEST_F(ReservationEndpointsTest, GoodReserveACLMultipleRoles)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:2;mem:1024";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1160,7 +1162,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveACLMultipleRoles)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReservedMultipleRoles));
+      createRequestBody(sourceId.get(), dynamicallyReservedMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1197,10 +1199,10 @@ TEST_F(ReservationEndpointsTest, BadReserveACL)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1218,7 +1220,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   // Expect a failed authorization.
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
@@ -1256,10 +1258,10 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1277,7 +1279,7 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1286,7 +1288,7 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
       master.get()->pid,
       "unreserve",
       headers,
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   // Expect a failed authorization.
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
@@ -1329,10 +1331,10 @@ TEST_F(ReservationEndpointsTest, BadReserveACLMultipleRoles)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:2;mem:1024";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1353,7 +1355,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACLMultipleRoles)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReservedMultipleRoles));
+      createRequestBody(sourceId.get(), dynamicallyReservedMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
 }
@@ -1402,17 +1404,17 @@ TEST_F(ReservationEndpointsTest, NoResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
-  string body = "slaveId=" + slaveId->value();
+  string body = "slaveId=" + sourceId->value;
 
   Future<Response> response =
     process::http::post(master.get()->pid, "reserve", headers, body);
@@ -1436,10 +1438,10 @@ TEST_F(ReservationEndpointsTest, NonMatchingPrincipal)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
@@ -1453,7 +1455,7 @@ TEST_F(ReservationEndpointsTest, NonMatchingPrincipal)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved));
+      createRequestBody(sourceId.get(), dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, response);
 }
@@ -1486,10 +1488,10 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512";
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1512,7 +1514,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReservedWithNoPrincipal));
+      createRequestBody(sourceId.get(), dynamicallyReservedWithNoPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1522,7 +1524,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReservedWithNoPrincipal));
+      createRequestBody(sourceId.get(), dynamicallyReservedWithNoPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1536,7 +1538,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReservedWithPrincipal));
+      createRequestBody(sourceId.get(), dynamicallyReservedWithPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1546,7 +1548,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(slaveId.get(), dynamicallyReservedWithPrincipal));
+      createRequestBody(sourceId.get(), dynamicallyReservedWithPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1564,10 +1566,10 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:2;mem:1024";
@@ -1591,7 +1593,7 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), dynamicallyReserved1));
+      createRequestBody(sourceId.get(), dynamicallyReserved1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1599,7 +1601,7 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-      createRequestBody(slaveId.get(), dynamicallyReserved2));
+      createRequestBody(sourceId.get(), dynamicallyReserved2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1645,10 +1647,10 @@ TEST_F(ReservationEndpointsTest, AgentStateEndpointResources)
   Try<Owned<cluster::Master>> master = StartMaster(&allocator);
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
+  Future<SourceID> sourceId;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+                    FutureArg<0>(&sourceId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:4;mem:2048;disk:4096";
@@ -1670,7 +1672,7 @@ TEST_F(ReservationEndpointsTest, AgentStateEndpointResources)
         master.get()->pid,
         "reserve",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-        createRequestBody(slaveId.get(), dynamicallyReserved));
+        createRequestBody(sourceId.get(), dynamicallyReserved));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }

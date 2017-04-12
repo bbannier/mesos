@@ -396,7 +396,7 @@ public:
       const FrameworkInfo&));
 
   MOCK_METHOD6(addSlave, void(
-      const SlaveID&,
+      const mesos::allocator::SourceID&,
       const SlaveInfo&,
       const std::vector<SlaveInfo::Capability>&,
       const Option<Unavailability>&,

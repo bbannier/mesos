@@ -129,7 +129,7 @@ public:
       const FrameworkInfo& frameworkInfo);
 
   void addSlave(
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const SlaveInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,

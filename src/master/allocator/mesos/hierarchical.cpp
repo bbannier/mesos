@@ -439,13 +439,15 @@ void HierarchicalAllocatorProcess::updateFramework(
 
 
 void HierarchicalAllocatorProcess::addSlave(
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const SlaveInfo& slaveInfo,
     const vector<SlaveInfo::Capability>& capabilities,
     const Option<Unavailability>& unavailability,
     const Resources& total,
     const hashmap<FrameworkID, Resources>& used)
 {
+  const SlaveID& slaveId = sourceId;
+
   CHECK(initialized);
   CHECK(!slaves.contains(slaveId));
   CHECK(!paused || expectedAgentCount.isSome());
