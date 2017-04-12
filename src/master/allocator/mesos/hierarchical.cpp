@@ -44,6 +44,7 @@ using std::vector;
 
 using mesos::allocator::InverseOfferStatus;
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceInfo;
 
 using process::Failure;
 using process::Future;
@@ -440,13 +441,18 @@ void HierarchicalAllocatorProcess::updateFramework(
 
 void HierarchicalAllocatorProcess::addSlave(
     const SourceID& sourceId,
-    const SlaveInfo& slaveInfo,
-    const vector<SlaveInfo::Capability>& capabilities,
+    const SourceInfo& sourceInfo,
     const Option<Unavailability>& unavailability,
     const Resources& total,
     const hashmap<FrameworkID, Resources>& used)
 {
   const SlaveID& slaveId = sourceId;
+
+  CHECK_SOME(sourceInfo.agentInfo);
+  const SlaveInfo& slaveInfo = sourceInfo.agentInfo.get();
+
+  const vector<SlaveInfo::Capability>& capabilities =
+    sourceInfo.agentCapabilities;
 
   CHECK(initialized);
   CHECK(!slaves.contains(slaveId));

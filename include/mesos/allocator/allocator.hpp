@@ -288,8 +288,7 @@ public:
   // FIXME(bbannier): Rename to `addSource`.
   virtual void addSlave(
       const SourceID& sourceId,
-      const SlaveInfo& slaveInfo,
-      const std::vector<SlaveInfo::Capability>& capabilities,
+      const SourceInfo& sourceInfo,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;

@@ -309,8 +309,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   SlaveInfo slave1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       slave1.id(),
-      slave1,
-      AGENT_CAPABILITIES(),
+      {slave1, AGENT_CAPABILITIES()},
       None(),
       slave1.resources(),
       {});
@@ -340,8 +339,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   SlaveInfo slave2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       slave2.id(),
-      slave2,
-      AGENT_CAPABILITIES(),
+      {slave2, AGENT_CAPABILITIES()},
       None(),
       slave2.resources(),
       {});
@@ -367,8 +365,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   SlaveInfo slave3 = createSlaveInfo("cpus:3;mem:2048;disk:0");
   allocator->addSlave(
       slave3.id(),
-      slave3,
-      AGENT_CAPABILITIES(),
+      {slave3, AGENT_CAPABILITIES()},
       None(),
       slave3.resources(),
       {});
@@ -398,8 +395,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   SlaveInfo slave4 = createSlaveInfo("cpus:4;mem:4096;disk:0");
   allocator->addSlave(
       slave4.id(),
-      slave4,
-      AGENT_CAPABILITIES(),
+      {slave4, AGENT_CAPABILITIES()},
       None(),
       slave4.resources(),
       {});
@@ -432,8 +428,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   SlaveInfo slave5 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       slave5.id(),
-      slave5,
-      AGENT_CAPABILITIES(),
+      {slave5, AGENT_CAPABILITIES()},
       None(),
       slave5.resources(),
       {});
@@ -463,8 +458,7 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
       "cpus(role1):100;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
       slave1.id(),
-      slave1,
-      AGENT_CAPABILITIES(),
+      {slave1, AGENT_CAPABILITIES()},
       None(),
       slave1.resources(),
       {});
@@ -486,8 +480,7 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
   SlaveInfo slave2 = createSlaveInfo("cpus:2;mem:512;disk:0");
   allocator->addSlave(
       slave2.id(),
-      slave2,
-      AGENT_CAPABILITIES(),
+      {slave2, AGENT_CAPABILITIES()},
       None(),
       slave2.resources(),
       {});
@@ -503,8 +496,7 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
   SlaveInfo slave3 = createSlaveInfo("cpus:2;mem:512;disk:0");
   allocator->addSlave(
       slave3.id(),
-      slave3,
-      AGENT_CAPABILITIES(),
+      {slave3, AGENT_CAPABILITIES()},
       None(),
       slave3.resources(),
       {});
@@ -526,8 +518,7 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
       "cpus(role1):2;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
       slave4.id(),
-      slave4,
-      AGENT_CAPABILITIES(),
+      {slave4, AGENT_CAPABILITIES()},
       None(),
       slave4.resources(),
       {});
@@ -564,8 +555,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:1024;disk:0;gpus:1");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -597,8 +587,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -624,8 +613,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   SlaveInfo agent3 = createSlaveInfo("cpus:3;mem:2048;disk:0");
   allocator->addSlave(
       agent3.id(),
-      agent3,
-      AGENT_CAPABILITIES(),
+      {agent3, AGENT_CAPABILITIES()},
       None(),
       agent3.resources(),
       {});
@@ -655,8 +643,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   SlaveInfo agent4 = createSlaveInfo("cpus:4;mem:4096;disk:0");
   allocator->addSlave(
       agent4.id(),
-      agent4,
-      AGENT_CAPABILITIES(),
+      {agent4, AGENT_CAPABILITIES()},
       None(),
       agent4.resources(),
       {});
@@ -689,8 +676,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   SlaveInfo agent5 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent5.id(),
-      agent5,
-      AGENT_CAPABILITIES(),
+      {agent5, AGENT_CAPABILITIES()},
       None(),
       agent5.resources(),
       {});
@@ -726,8 +712,7 @@ TEST_F(HierarchicalAllocatorTest, OfferFilter)
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -822,8 +807,7 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), ROLE)}});
@@ -842,8 +826,7 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -958,8 +941,7 @@ TEST_F(HierarchicalAllocatorTest, MaintenanceInverseOffers)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -1017,8 +999,7 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
   SlaveInfo slave1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       slave1.id(),
-      slave1,
-      AGENT_CAPABILITIES(),
+      {slave1, AGENT_CAPABILITIES()},
       None(),
       slave1.resources(),
       {});
@@ -1026,8 +1007,7 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
   SlaveInfo slave2 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       slave2.id(),
-      slave2,
-      AGENT_CAPABILITIES(),
+      {slave2, AGENT_CAPABILITIES()},
       None(),
       slave2.resources(),
       {});
@@ -1114,8 +1094,7 @@ TEST_F(HierarchicalAllocatorTest, SameShareFairness)
   SlaveInfo slave = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1162,8 +1141,7 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
       "cpus(role1):2;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
       slave1.id(),
-      slave1,
-      AGENT_CAPABILITIES(),
+      {slave1, AGENT_CAPABILITIES()},
       None(),
       slave1.resources(),
       {});
@@ -1172,8 +1150,7 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
       "cpus(role2):2;mem(role2):1024;cpus:1;mem:1024;disk:0");
   allocator->addSlave(
       slave2.id(),
-      slave2,
-      AGENT_CAPABILITIES(),
+      {slave2, AGENT_CAPABILITIES()},
       None(),
       slave2.resources(),
       {});
@@ -1184,8 +1161,7 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
       "cpus(role3):1;mem(role3):1024;disk(role3):0");
   allocator->addSlave(
       slave3.id(),
-      slave3,
-      AGENT_CAPABILITIES(),
+      {slave3, AGENT_CAPABILITIES()},
       None(),
       slave3.resources(),
       {});
@@ -1230,8 +1206,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
       "cpus:1;mem:200;disk:0");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1305,8 +1280,7 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "disk:128");
   allocator->addSlave(
       slave1.id(),
-      slave1,
-      AGENT_CAPABILITIES(),
+      {slave1, AGENT_CAPABILITIES()},
       None(),
       slave1.resources(),
       {});
@@ -1318,8 +1292,7 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "disk:128");
   allocator->addSlave(
       slave2.id(),
-      slave2,
-      AGENT_CAPABILITIES(),
+      {slave2, AGENT_CAPABILITIES()},
       None(),
       slave2.resources(),
       {});
@@ -1337,8 +1310,7 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "disk:128");
   allocator->addSlave(
       slave3.id(),
-      slave3,
-      AGENT_CAPABILITIES(),
+      {slave3, AGENT_CAPABILITIES()},
       None(),
       slave3.resources(),
       {});
@@ -1359,8 +1331,7 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "disk:128");
   allocator->addSlave(
       slave4.id(),
-      slave4,
-      AGENT_CAPABILITIES(),
+      {slave4, AGENT_CAPABILITIES()},
       None(),
       slave4.resources(),
       {});
@@ -1384,8 +1355,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1456,8 +1426,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk(role1):100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1559,8 +1528,7 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk(role1):100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1651,8 +1619,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableSuccess)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1694,8 +1661,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableFail)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1734,8 +1700,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveOversubscribedResources)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1800,8 +1765,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:1;disk:1");
   allocator->addSlave(
       agent.id(),
-      agent,
-      {},
+      {agent, {}},
       None(),
       agent.resources(),
       {});
@@ -1847,8 +1811,7 @@ TEST_F(HierarchicalAllocatorTest, OversubscribedNotAllocated)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1889,8 +1852,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverOversubscribedResources)
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -1955,8 +1917,7 @@ TEST_F(HierarchicalAllocatorTest, Whitelist)
   SlaveInfo slave = createSlaveInfo("cpus:2;mem:1024");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -2032,16 +1993,14 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, NoDoubleAccounting)
 
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       agent1Allocation);
 
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       agent2Allocation);
@@ -2124,8 +2083,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -2147,8 +2105,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -2245,8 +2202,7 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE)}});
@@ -2254,8 +2210,7 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {{framework1.id(), allocatedResources(agent2.resources(), QUOTA_ROLE)}});
@@ -2352,8 +2307,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -2379,8 +2333,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   SlaveInfo agent2 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -2404,8 +2357,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   SlaveInfo agent3 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent3.id(),
-      agent3,
-      AGENT_CAPABILITIES(),
+      {agent3, AGENT_CAPABILITIES()},
       None(),
       agent3.resources(),
       {});
@@ -2490,8 +2442,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAllocationGranularity)
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -2562,8 +2513,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(),
@@ -2620,8 +2570,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -2669,8 +2618,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE)}});
@@ -2684,8 +2632,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -2803,8 +2750,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAbsentFramework)
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -2812,8 +2758,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAbsentFramework)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -2867,8 +2812,7 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaAbsentFrameworks)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:2048;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -2935,8 +2879,7 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaWithFrameworks)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE1)}});
@@ -2944,8 +2887,7 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaWithFrameworks)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:1024;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {{framework2.id(), allocatedResources(agent2.resources(), QUOTA_ROLE2)}});
@@ -2965,8 +2907,7 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaWithFrameworks)
   SlaveInfo agent3 = createSlaveInfo("cpus:2;mem:2048");
   allocator->addSlave(
       agent3.id(),
-      agent3,
-      AGENT_CAPABILITIES(),
+      {agent3, AGENT_CAPABILITIES()},
       None(),
       agent3.resources(),
       {});
@@ -3021,8 +2962,7 @@ TEST_F(HierarchicalAllocatorTest, ReservationWithinQuota)
   SlaveInfo agent1 = createSlaveInfo("cpus:8;mem(" + QUOTA_ROLE + "):256");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {{framework1.id(),
@@ -3045,8 +2985,7 @@ TEST_F(HierarchicalAllocatorTest, ReservationWithinQuota)
   SlaveInfo agent2 = createSlaveInfo("cpus:4");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -3079,8 +3018,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   SlaveInfo agent1 = createSlaveInfo("cpus:4;mem:512;disk:0");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -3088,8 +3026,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   SlaveInfo agent2 = createSlaveInfo("cpus:4;mem:512;disk:0");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -3191,8 +3128,7 @@ TEST_F(HierarchicalAllocatorTest, DeactivateAndReactivateFramework)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3255,8 +3191,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffers)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3325,8 +3260,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, ResourceMetrics)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3436,8 +3370,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, AllocationRunsMetric)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3506,8 +3439,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3567,8 +3499,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -3673,8 +3604,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DominantShareMetrics)
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -3732,8 +3662,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DominantShareMetrics)
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:1024");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -3790,8 +3719,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024;gpus:1");
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -3821,8 +3749,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   SlaveInfo agent2 = createSlaveInfo("cpus:3;mem:3072");
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -3898,8 +3825,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateWeight)
     agents.push_back(agent);
     allocator->addSlave(
         agent.id(),
-        agent,
-        AGENT_CAPABILITIES(),
+        {agent, AGENT_CAPABILITIES()},
         None(),
         agent.resources(),
         {});
@@ -4080,8 +4006,7 @@ TEST_F(HierarchicalAllocatorTest, ReviveOffers)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -4144,8 +4069,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffersWithMultiRole)
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
       agent.id(),
-      agent,
-      AGENT_CAPABILITIES(),
+      {agent, AGENT_CAPABILITIES()},
       None(),
       agent.resources(),
       {});
@@ -4202,7 +4126,12 @@ TEST_F(HierarchicalAllocatorTest, DontOfferOldAgentToMultiRoleFramework)
 
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
-  allocator->addSlave(agent.id(), agent, {}, None(), agent.resources(), {});
+  allocator->addSlave(
+      agent.id(),
+      {agent, {}},
+      None(),
+      agent.resources(),
+      {});
 
   // Advance the clock to trigger a batch allocation.
   Clock::advance(flags.allocation_interval);
@@ -4262,8 +4191,7 @@ TEST_F(HierarchicalAllocatorTest, DisproportionateQuotaVsAllocation)
   SlaveInfo agent1 = createSlaveInfo(agentResources);
   allocator->addSlave(
       agent1.id(),
-      agent1,
-      AGENT_CAPABILITIES(),
+      {agent1, AGENT_CAPABILITIES()},
       None(),
       agent1.resources(),
       {});
@@ -4284,8 +4212,7 @@ TEST_F(HierarchicalAllocatorTest, DisproportionateQuotaVsAllocation)
   SlaveInfo agent2 = createSlaveInfo(agentResources);
   allocator->addSlave(
       agent2.id(),
-      agent2,
-      AGENT_CAPABILITIES(),
+      {agent2, AGENT_CAPABILITIES()},
       None(),
       agent2.resources(),
       {});
@@ -4341,8 +4268,7 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
   SlaveInfo slave = createSlaveInfo("cpus:4;mem:1024;disk(role1):2048");
   allocator->addSlave(
       slave.id(),
-      slave,
-      AGENT_CAPABILITIES(),
+      {slave, AGENT_CAPABILITIES()},
       None(),
       slave.resources(),
       {});
@@ -4502,8 +4428,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AddAndUpdateSlave)
 
     allocator->addSlave(
         slaves[i].id(),
-        slaves[i],
-        AGENT_CAPABILITIES(),
+        {slaves[i], AGENT_CAPABILITIES()},
         None(),
         slaves[i].resources(),
         used);
@@ -4627,8 +4552,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
     used[frameworks[i % frameworkCount].id()] = allocation;
     allocator->addSlave(
         slaves[i].id(),
-        slaves[i],
-        AGENT_CAPABILITIES(),
+        {slaves[i], AGENT_CAPABILITIES()},
         None(),
         slaves[i].resources(),
         used);
@@ -4818,8 +4742,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
     used[frameworks[i % frameworkCount].id()] = _allocation;
     allocator->addSlave(
         slaves[i].id(),
-        slaves[i],
-        AGENT_CAPABILITIES(),
+        {slaves[i], AGENT_CAPABILITIES()},
         None(),
         slaves[i].resources(),
         used);
@@ -4954,8 +4877,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
 
     allocator->addSlave(
         agents[i].id(),
-        agents[i],
-        AGENT_CAPABILITIES(),
+        {agents[i], AGENT_CAPABILITIES()},
         None(),
         agents[i].resources(),
         used);
@@ -5079,8 +5001,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, Metrics)
     SlaveInfo slave = createSlaveInfo(agentResources);
     allocator->addSlave(
         slave.id(),
-        slave,
-        AGENT_CAPABILITIES(),
+        {slave, AGENT_CAPABILITIES()},
         None(),
         slave.resources(),
         {});
@@ -5168,8 +5089,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AllocatorBacklog)
   for (size_t i = 0; i < agentCount; i++) {
     allocator->addSlave(
         agents.at(i).id(),
-        agents.at(i),
-        AGENT_CAPABILITIES(),
+        {agents.at(i), AGENT_CAPABILITIES()},
         None(),
         agents.at(i).resources(),
         {});

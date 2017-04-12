@@ -8140,8 +8140,8 @@ void Master::addSlave(
 
   allocator->addSlave(
       slave->id,
-      slave->info,
-      google::protobuf::convert(slave->capabilities.toRepeatedPtrField()),
+      {slave->info,
+       google::protobuf::convert(slave->capabilities.toRepeatedPtrField())},
       unavailability,
       slave->totalResources,
       slave->usedResources);

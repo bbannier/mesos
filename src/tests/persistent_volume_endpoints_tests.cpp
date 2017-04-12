@@ -124,7 +124,7 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -220,7 +220,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -342,7 +342,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -424,7 +424,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -489,7 +489,7 @@ TEST_F(PersistentVolumeEndpointsTest, InvalidVolume)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -557,7 +557,7 @@ TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -599,7 +599,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -715,7 +715,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -771,7 +771,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCredentials)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -852,7 +852,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
@@ -977,7 +977,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
     AUTHORIZED_ROLE_2 + "):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
@@ -1060,7 +1060,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1191,7 +1191,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
     UNAUTHORIZED_ROLE + "):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
@@ -1279,7 +1279,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1387,7 +1387,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
   slaveFlags.resources = "cpus:1;mem:512;disk(" + TEST_ROLE + "):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&sourceId)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
@@ -1444,7 +1444,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
   slaveFlags.resources = "disk(role1):1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1500,7 +1500,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1557,7 +1557,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1717,7 +1717,7 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1841,7 +1841,7 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
   Owned<MasterDetector> detector = master.get()->createDetector();
 
   Future<SourceID> slave1Id;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&slave1Id)));
 
@@ -1853,7 +1853,7 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
   AWAIT_READY(slave1Id);
 
   Future<SourceID> slave2Id;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&slave2Id)));
 
@@ -1974,7 +1974,7 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 

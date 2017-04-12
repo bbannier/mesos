@@ -130,8 +130,7 @@ public:
 
   void addSlave(
       const mesos::allocator::SourceID& sourceId,
-      const SlaveInfo& slaveInfo,
-      const std::vector<SlaveInfo::Capability>& capabilities,
+      const mesos::allocator::SourceInfo& sourceInfo,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used);

@@ -174,7 +174,7 @@ TYPED_TEST(MasterAllocatorTest, SingleFramework)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:2;mem:1024;disk:0");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = this->StartSlave(detector.get(), flags);
@@ -223,7 +223,7 @@ TYPED_TEST(MasterAllocatorTest, ResourcesUnused)
   slave::Flags flags1 = this->CreateSlaveFlags();
   flags1.resources = Some("cpus:2;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -327,7 +327,7 @@ TYPED_TEST(MasterAllocatorTest, OutOfOrderDispatch)
   slave::Flags flags1 = this->CreateSlaveFlags();
   flags1.resources = Some("cpus:2;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -458,7 +458,7 @@ TYPED_TEST(MasterAllocatorTest, SchedulerFailover)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:3;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -594,7 +594,7 @@ TYPED_TEST(MasterAllocatorTest, FrameworkExited)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:3;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -734,7 +734,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveLost)
   flags1.executor_shutdown_grace_period = Milliseconds(50);
   flags1.resources = Some("cpus:2;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -805,7 +805,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveLost)
   flags2.resources = string("cpus:3;gpus:0;mem:256;"
                             "disk:1024;ports:[31000-32000]");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   // Eventually after slave2 is launched, we should get
   // an offer that contains all of slave2's resources
@@ -856,7 +856,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveAdded)
   slave::Flags flags1 = this->CreateSlaveFlags();
   flags1.resources = Some("cpus:3;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -908,7 +908,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveAdded)
   slave::Flags flags2 = this->CreateSlaveFlags();
   flags2.resources = Some("cpus:4;mem:2048");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   // After slave2 launches, all of its resources are combined with the
   // resources on slave1 that the task isn't using.
@@ -953,7 +953,7 @@ TYPED_TEST(MasterAllocatorTest, TaskFinished)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:3;mem:1024");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -1058,7 +1058,7 @@ TYPED_TEST(MasterAllocatorTest, CpusOnlyOfferedAndTaskLaunched)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:2;mem:0");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -1139,7 +1139,7 @@ TYPED_TEST(MasterAllocatorTest, MemoryOnlyOfferedAndTaskLaunched)
   slave::Flags flags = this->CreateSlaveFlags();
   flags.resources = Some("cpus:0;mem:200");
 
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
@@ -1358,7 +1358,7 @@ TYPED_TEST(MasterAllocatorTest, FrameworkReregistersFirst)
     slaveDetector.appoint(master.get()->pid);
     schedulerDetector.appoint(master.get()->pid);
 
-    EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+    EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
     slave::Flags flags = this->CreateSlaveFlags();
     flags.resources = Some("cpus:2;mem:1024");
@@ -1426,7 +1426,7 @@ TYPED_TEST(MasterAllocatorTest, FrameworkReregistersFirst)
 
     AWAIT_READY(addFramework);
 
-    EXPECT_CALL(allocator2, addSlave(_, _, _, _, _, _));
+    EXPECT_CALL(allocator2, addSlave(_, _, _, _, _));
 
     Future<vector<Offer>> resourceOffers2;
     EXPECT_CALL(sched, resourceOffers(&driver, _))
@@ -1482,7 +1482,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveReregistersFirst)
     slaveDetector.appoint(master.get()->pid);
     schedulerDetector.appoint(master.get()->pid);
 
-    EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _));
+    EXPECT_CALL(allocator, addSlave(_, _, _, _, _));
 
     slave::Flags flags = this->CreateSlaveFlags();
     flags.resources = Some("cpus:2;mem:1024");
@@ -1533,7 +1533,7 @@ TYPED_TEST(MasterAllocatorTest, SlaveReregistersFirst)
     EXPECT_CALL(allocator2, initialize(_, _, _, _));
 
     Future<Nothing> addSlave;
-    EXPECT_CALL(allocator2, addSlave(_, _, _, _, _, _))
+    EXPECT_CALL(allocator2, addSlave(_, _, _, _, _))
       .WillOnce(DoAll(InvokeAddSlave(&allocator2),
                       FutureSatisfy(&addSlave)));
 
@@ -1614,7 +1614,7 @@ TYPED_TEST(MasterAllocatorTest, RebalancedForUpdatedWeights)
 
   for (int i = 0; i < 3; i++) {
     Future<Nothing> addSlave;
-    EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+    EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
       .WillOnce(DoAll(InvokeAddSlave(&allocator),
                       FutureSatisfy(&addSlave)));
 

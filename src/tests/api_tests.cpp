@@ -945,7 +945,7 @@ TEST_P(MasterAPITest, ReserveResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1037,7 +1037,7 @@ TEST_P(MasterAPITest, UnreserveResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 

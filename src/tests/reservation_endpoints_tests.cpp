@@ -116,7 +116,7 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -215,7 +215,7 @@ TEST_F(ReservationEndpointsTest, ReserveOfferedResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -290,7 +290,7 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -377,7 +377,7 @@ TEST_F(ReservationEndpointsTest, ReserveAvailableAndOfferedResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -531,7 +531,7 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -699,7 +699,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
     Resources::parse(slaveFlags.resources.get()).get();
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -855,7 +855,7 @@ TEST_F(ReservationEndpointsTest, InvalidResource)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -914,7 +914,7 @@ TEST_F(ReservationEndpointsTest, InsufficientResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -955,7 +955,7 @@ TEST_F(ReservationEndpointsTest, NoHeader)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1004,7 +1004,7 @@ TEST_F(ReservationEndpointsTest, BadCredentials)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1077,7 +1077,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
   slaveFlags.resources = "cpus:1;mem:512";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1139,7 +1139,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveACLMultipleRoles)
   slaveFlags.resources = "cpus:2;mem:1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1200,7 +1200,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACL)
   slaveFlags.resources = "cpus:1;mem:512";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1259,7 +1259,7 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
   slaveFlags.resources = "cpus:1;mem:512";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1332,7 +1332,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACLMultipleRoles)
   slaveFlags.resources = "cpus:2;mem:1024";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1405,7 +1405,7 @@ TEST_F(ReservationEndpointsTest, NoResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1439,7 +1439,7 @@ TEST_F(ReservationEndpointsTest, NonMatchingPrincipal)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1489,7 +1489,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
   slaveFlags.resources = "cpus:1;mem:512";
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1567,7 +1567,7 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
@@ -1648,7 +1648,7 @@ TEST_F(ReservationEndpointsTest, AgentStateEndpointResources)
   ASSERT_SOME(master);
 
   Future<SourceID> sourceId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
                     FutureArg<0>(&sourceId)));
 
