@@ -221,12 +221,13 @@ protected:
   // Allocate any allocatable resources from all known agents.
   process::Future<Nothing> allocate();
 
-  // Allocate resources from the specified agent.
-  process::Future<Nothing> allocate(const SlaveID& slaveId);
+  // Allocate resources from the specified resource provider.
+  process::Future<Nothing> allocate(const mesos::allocator::SourceID& sourceId);
 
-  // Allocate resources from the specified agents. The allocation
-  // is deferred and batched with other allocation requests.
-  process::Future<Nothing> allocate(const hashset<SlaveID>& slaveIds);
+  // Allocate resources from the specified resource provider. The allocation is
+  // deferred and batched with other allocation requests.
+  process::Future<Nothing> allocate(
+      const hashset<mesos::allocator::SourceID>& sourceIds);
 
   // Method that performs allocation work.
   Nothing _allocate();
@@ -417,12 +418,12 @@ protected:
     Option<Maintenance> maintenance;
   };
 
-  hashmap<SlaveID, Slave> slaves;
+  hashmap<mesos::allocator::SourceID, Slave> sources;
 
-  // A set of agents that are kept as allocation candidates. Events
-  // may add or remove candidates to the set. When an allocation is
-  // processed, the set of candidates is cleared.
-  hashset<SlaveID> allocationCandidates;
+  // A set of resource providers that are kept as allocation candidates. Events
+  // may add or remove candidates to the set. When an allocation is processed,
+  // the set of candidates is cleared.
+  hashset<mesos::allocator::SourceID> allocationCandidates;
 
   // Future for the dispatched allocation that becomes
   // ready after the allocation run is complete.
@@ -531,7 +532,9 @@ private:
   // Helper to update the agent's total resources maintained in the allocator
   // and the role and quota sorters (whose total resources match the agent's
   // total resources).
-  void updateSlaveTotal(const SlaveID& slaveId, const Resources& total);
+  void updateSlaveTotal(
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& total);
 };
 
 
