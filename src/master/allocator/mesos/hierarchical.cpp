@@ -531,9 +531,11 @@ void HierarchicalAllocatorProcess::addSlave(
     resume();
   }
 
-  LOG(INFO) << "Added agent " << sourceId << " (" << source.hostname << ")"
-            << " with " << source.total
-            << " (allocated: " << source.allocated << ")";
+  LOG(INFO) << "Added agent " << sourceId
+            << (source.hostname.isSome() ? " (" + source.hostname.get() + ")"
+                                         : "")
+            << " with " << source.total << " (allocated: " << source.allocated
+            << ")";
 
   allocate(sourceId);
 }
@@ -590,7 +592,10 @@ void HierarchicalAllocatorProcess::updateSlave(
     if (newCapabilities != oldCapabilities) {
       updated = true;
 
-      LOG(INFO) << "Agent " << sourceId << " (" << source.hostname << ")"
+      LOG(INFO) << "Agent " << sourceId
+                << (source.hostname.isSome()
+                      ? " (" + source.hostname.get() + ")"
+                      : "")
                 << " updated with capabilities " << source.capabilities;
     }
   }
@@ -626,7 +631,10 @@ void HierarchicalAllocatorProcess::updateSlave(
       // function only changes the revocable resources on the slave, but
       // the quota role sorter only manages non-revocable resources.
 
-      LOG(INFO) << "Agent " << sourceId << " (" << source.hostname << ")"
+      LOG(INFO) << "Agent " << sourceId
+                << (source.hostname.isSome()
+                      ? " (" + source.hostname.get() + ")"
+                      : "")
                 << " updated with oversubscribed resources "
                 << oversubscribed.get() << " (total: " << source.total
                 << ", allocated: " << source.allocated << ")";
@@ -2067,7 +2075,8 @@ bool HierarchicalAllocatorProcess::isWhitelisted(const SourceID& sourceId) const
 
   const Source& source = sources.at(sourceId);
 
-  return whitelist.isNone() || whitelist->contains(source.hostname);
+  return whitelist.isNone() || (source.hostname.isSome() &&
+                                whitelist->contains(source.hostname.get()));
 }
 
 

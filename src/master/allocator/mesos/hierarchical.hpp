@@ -382,7 +382,7 @@ protected:
 
     bool activated;  // Whether to offer resources.
 
-    std::string hostname;
+    Option<std::string> hostname;
 
     protobuf::slave::Capabilities capabilities;
 
