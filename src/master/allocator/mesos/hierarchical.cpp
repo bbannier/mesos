@@ -1474,23 +1474,23 @@ void HierarchicalAllocatorProcess::__allocate()
   // `allocationCandidates`, we have to make sure that we don't
   // assume cluster knowledge when summing resources from that set.
 
-  vector<SlaveID> slaveIds;
-  slaveIds.reserve(allocationCandidates.size());
+  vector<SourceID> sourceIds;
+  sourceIds.reserve(allocationCandidates.size());
 
   // Filter out non-whitelisted, removed, and deactivated slaves
   // in order not to send offers for them.
-  foreach (const SlaveID& slaveId, allocationCandidates) {
-    if (isWhitelisted(slaveId) &&
-        sources.contains(slaveId) &&
-        sources.at(slaveId).activated) {
-      slaveIds.push_back(slaveId);
+  foreach (const SourceID& sourceId, allocationCandidates) {
+    if (isWhitelisted(sourceId) &&
+        sources.contains(sourceId) &&
+        sources.at(sourceId).activated) {
+      sourceIds.push_back(sourceId);
     }
   }
 
   // Randomize the order in which slaves' resources are allocated.
   //
   // TODO(vinod): Implement a smarter sorting algorithm.
-  std::random_shuffle(slaveIds.begin(), slaveIds.end());
+  std::random_shuffle(sourceIds.begin(), sourceIds.end());
 
   // Returns the __quantity__ of resources allocated to a quota role. Since we
   // account for reservations and persistent volumes toward quota, we strip
@@ -1518,12 +1518,12 @@ void HierarchicalAllocatorProcess::__allocate()
   // shared resource is only allocated once in one offer cycle. We use
   // `offeredSharedResources` to keep track of shared resources already
   // allocated in the current cycle.
-  hashmap<SlaveID, Resources> offeredSharedResources;
+  hashmap<SourceID, Resources> offeredSharedResources;
 
   // Quota comes first and fair share second. Here we process only those
   // roles for which quota is set (quota'ed roles). Such roles form a
   // special allocation group with a dedicated sorter.
-  foreach (const SlaveID& slaveId, slaveIds) {
+  foreach (const SourceID& sourceId, sourceIds) {
     foreach (const string& role, quotaRoleSorter->sort()) {
       CHECK(quotas.contains(role));
 
@@ -1575,11 +1575,11 @@ void HierarchicalAllocatorProcess::__allocate()
         FrameworkID frameworkId;
         frameworkId.set_value(frameworkId_);
 
-        CHECK(sources.contains(slaveId));
+        CHECK(sources.contains(sourceId));
         CHECK(frameworks.contains(frameworkId));
 
         const Framework& framework = frameworks.at(frameworkId);
-        Slave& slave = sources.at(slaveId);
+        Slave& slave = sources.at(sourceId);
 
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
@@ -1601,8 +1601,8 @@ void HierarchicalAllocatorProcess::__allocate()
         // this offer cycle to a framework.
         if (framework.capabilities.sharedResources) {
           available += slave.total.shared();
-          if (offeredSharedResources.contains(slaveId)) {
-            available -= offeredSharedResources[slaveId];
+          if (offeredSharedResources.contains(sourceId)) {
+            available -= offeredSharedResources[sourceId];
           }
         }
 
@@ -1637,11 +1637,11 @@ void HierarchicalAllocatorProcess::__allocate()
 
         // If the framework filters these resources, ignore. The unallocated
         // part of the quota will not be allocated to other roles.
-        if (isFiltered(frameworkId, role, slaveId, resources)) {
+        if (isFiltered(frameworkId, role, sourceId, resources)) {
           continue;
         }
 
-        VLOG(2) << "Allocating " << resources << " on agent " << slaveId
+        VLOG(2) << "Allocating " << resources << " on agent " << sourceId
                 << " to role " << role << " of framework " << frameworkId
                 << " as part of its role quota";
 
@@ -1650,8 +1650,8 @@ void HierarchicalAllocatorProcess::__allocate()
         // NOTE: We perform "coarse-grained" allocation for quota'ed
         // resources, which may lead to overcommitment of resources beyond
         // quota. This is fine since quota currently represents a guarantee.
-        offerable[frameworkId][role][slaveId] += resources;
-        offeredSharedResources[slaveId] += resources.shared();
+        offerable[frameworkId][role][sourceId] += resources;
+        offeredSharedResources[sourceId] += resources.shared();
 
         slave.allocated += resources;
 
@@ -1659,10 +1659,10 @@ void HierarchicalAllocatorProcess::__allocate()
         // role's and the framework's fair share.
         //
         // NOTE: Revocable resources have already been excluded.
-        frameworkSorter->add(slaveId, resources);
-        frameworkSorter->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
-        quotaRoleSorter->allocated(role, slaveId, resources);
+        frameworkSorter->add(sourceId, resources);
+        frameworkSorter->allocated(frameworkId_, sourceId, resources);
+        roleSorter->allocated(role, sourceId, resources);
+        quotaRoleSorter->allocated(role, sourceId, resources);
       }
     }
   }
@@ -1725,7 +1725,7 @@ void HierarchicalAllocatorProcess::__allocate()
 
   // At this point resources for quotas are allocated or accounted for.
   // Proceed with allocating the remaining free pool.
-  foreach (const SlaveID& slaveId, slaveIds) {
+  foreach (const SourceID& sourceId, sourceIds) {
     // If there are no resources available for the second stage, stop.
     if (!allocatable(remainingClusterResources - allocatedStage2)) {
       break;
@@ -1740,11 +1740,11 @@ void HierarchicalAllocatorProcess::__allocate()
         FrameworkID frameworkId;
         frameworkId.set_value(frameworkId_);
 
-        CHECK(sources.contains(slaveId));
+        CHECK(sources.contains(sourceId));
         CHECK(frameworks.contains(frameworkId));
 
         const Framework& framework = frameworks.at(frameworkId);
-        Slave& slave = sources.at(slaveId);
+        Slave& slave = sources.at(sourceId);
 
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
@@ -1766,8 +1766,8 @@ void HierarchicalAllocatorProcess::__allocate()
         // this offer cycle to a framework.
         if (framework.capabilities.sharedResources) {
           available += slave.total.shared();
-          if (offeredSharedResources.contains(slaveId)) {
-            available -= offeredSharedResources[slaveId];
+          if (offeredSharedResources.contains(sourceId)) {
+            available -= offeredSharedResources[sourceId];
           }
         }
 
@@ -1817,7 +1817,7 @@ void HierarchicalAllocatorProcess::__allocate()
         }
 
         // If the framework filters these resources, ignore.
-        if (isFiltered(frameworkId, role, slaveId, resources)) {
+        if (isFiltered(frameworkId, role, sourceId, resources)) {
           continue;
         }
 
@@ -1836,7 +1836,7 @@ void HierarchicalAllocatorProcess::__allocate()
           continue;
         }
 
-        VLOG(2) << "Allocating " << resources << " on agent " << slaveId
+        VLOG(2) << "Allocating " << resources << " on agent " << sourceId
                 << " to role " << role << " of framework " << frameworkId;
 
         resources.allocate(role);
@@ -1846,20 +1846,20 @@ void HierarchicalAllocatorProcess::__allocate()
         //
         // NOTE: We may have already allocated some resources on the current
         // agent as part of quota.
-        offerable[frameworkId][role][slaveId] += resources;
-        offeredSharedResources[slaveId] += resources.shared();
+        offerable[frameworkId][role][sourceId] += resources;
+        offeredSharedResources[sourceId] += resources.shared();
         allocatedStage2 += scalarQuantity;
 
         slave.allocated += resources;
 
-        frameworkSorter->add(slaveId, resources);
-        frameworkSorter->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
+        frameworkSorter->add(sourceId, resources);
+        frameworkSorter->allocated(frameworkId_, sourceId, resources);
+        roleSorter->allocated(role, sourceId, resources);
 
         if (quotas.contains(role)) {
           // See comment at `quotaRoleSorter` declaration regarding
           // non-revocable.
-          quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
+          quotaRoleSorter->allocated(role, sourceId, resources.nonRevocable());
         }
       }
     }
@@ -1900,10 +1900,10 @@ void HierarchicalAllocatorProcess::deallocate()
   // responded yet.
 
   foreachvalue (const Owned<Sorter>& frameworkSorter, frameworkSorters) {
-    foreach (const SlaveID& slaveId, allocationCandidates) {
-      CHECK(sources.contains(slaveId));
+    foreach (const SourceID& sourceId, allocationCandidates) {
+      CHECK(sources.contains(sourceId));
 
-      Slave& slave = sources.at(slaveId);
+      Slave& slave = sources.at(sourceId);
 
       if (slave.maintenance.isSome()) {
         // We use a reference by alias because we intend to modify the
@@ -1911,7 +1911,7 @@ void HierarchicalAllocatorProcess::deallocate()
         Slave::Maintenance& maintenance = slave.maintenance.get();
 
         hashmap<string, Resources> allocation =
-          frameworkSorter->allocation(slaveId);
+          frameworkSorter->allocation(sourceId);
 
         foreachkey (const string& frameworkId_, allocation) {
           FrameworkID frameworkId;
@@ -1919,7 +1919,7 @@ void HierarchicalAllocatorProcess::deallocate()
 
           // If this framework doesn't already have inverse offers for the
           // specified slave.
-          if (!offerable[frameworkId].contains(slaveId)) {
+          if (!offerable[frameworkId].contains(sourceId)) {
             // If there isn't already an outstanding inverse offer to this
             // framework for the specified slave.
             if (!maintenance.offersOutstanding.contains(frameworkId)) {
@@ -1930,7 +1930,7 @@ void HierarchicalAllocatorProcess::deallocate()
               // inverse offers for maintenance primitives, and those are at the
               // whole slave level, we only need to filter based on the
               // time-out.
-              if (isFiltered(frameworkId, slaveId)) {
+              if (isFiltered(frameworkId, sourceId)) {
                 continue;
               }
 
@@ -1943,7 +1943,7 @@ void HierarchicalAllocatorProcess::deallocate()
               // inverse offer represents maintenance on the machine. In the
               // future we could be more specific about the resources on the
               // host, as we have the information available.
-              offerable[frameworkId][slaveId] = unavailableResources;
+              offerable[frameworkId][sourceId] = unavailableResources;
 
               // Mark this framework as having an offer outstanding for the
               // specified slave.
