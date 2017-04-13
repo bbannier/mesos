@@ -2061,12 +2061,11 @@ double HierarchicalAllocatorProcess::roleWeight(const string& name) const
 }
 
 
-bool HierarchicalAllocatorProcess::isWhitelisted(
-    const SlaveID& slaveId) const
+bool HierarchicalAllocatorProcess::isWhitelisted(const SourceID& sourceId) const
 {
-  CHECK(sources.contains(slaveId));
+  CHECK(sources.contains(sourceId));
 
-  const Slave& slave = sources.at(slaveId);
+  const Slave& slave = sources.at(sourceId);
 
   return whitelist.isNone() || whitelist->contains(slave.hostname);
 }

@@ -260,8 +260,8 @@ protected:
   // Returns the weight of the specified role name.
   double roleWeight(const std::string& name) const;
 
-  // Checks whether the slave is whitelisted.
-  bool isWhitelisted(const SlaveID& slaveId) const;
+  // Checks whether the source is whitelisted.
+  bool isWhitelisted(const mesos::allocator::SourceID& sourceId) const;
 
   // Returns true if there is a resource offer filter for the
   // specified role of this framework on this slave.
