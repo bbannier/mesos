@@ -300,16 +300,16 @@ void HierarchicalAllocatorProcess::removeFramework(
       frameworkSorters.at(role)->allocation(frameworkId.value());
 
     // Update the allocation for this framework.
-    foreachpair (const SlaveID& slaveId,
+    foreachpair (const SourceID& sourceId,
                  const Resources& allocated,
                  allocation) {
-      roleSorter->unallocated(role, slaveId, allocated);
-      frameworkSorters.at(role)->remove(slaveId, allocated);
+      roleSorter->unallocated(role, sourceId, allocated);
+      frameworkSorters.at(role)->remove(sourceId, allocated);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration
         // regarding non-revocable.
-        quotaRoleSorter->unallocated(role, slaveId, allocated.nonRevocable());
+        quotaRoleSorter->unallocated(role, sourceId, allocated.nonRevocable());
       }
     }
 
