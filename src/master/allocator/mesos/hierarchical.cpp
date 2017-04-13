@@ -296,7 +296,7 @@ void HierarchicalAllocatorProcess::removeFramework(
       continue;
     }
 
-    hashmap<SlaveID, Resources> allocation =
+    hashmap<SourceID, Resources> allocation =
       frameworkSorters.at(role)->allocation(frameworkId.value());
 
     // Update the allocation for this framework.
@@ -1287,11 +1287,11 @@ void HierarchicalAllocatorProcess::setQuota(
 
   // Copy allocation information for the quota'ed role.
   if (roleSorter->contains(role)) {
-    hashmap<SlaveID, Resources> roleAllocation = roleSorter->allocation(role);
+    hashmap<SourceID, Resources> roleAllocation = roleSorter->allocation(role);
     foreachpair (
-        const SlaveID& slaveId, const Resources& resources, roleAllocation) {
+        const SourceID& sourceId, const Resources& resources, roleAllocation) {
       // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-      quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
+      quotaRoleSorter->allocated(role, sourceId, resources.nonRevocable());
     }
   }
 

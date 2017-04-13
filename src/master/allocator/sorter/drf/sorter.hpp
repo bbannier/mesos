@@ -90,38 +90,42 @@ public:
 
   virtual void allocated(
       const std::string& name,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& resources);
 
   virtual void update(
       const std::string& name,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& oldAllocation,
       const Resources& newAllocation);
 
   virtual void unallocated(
       const std::string& name,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& resources);
 
-  virtual const hashmap<SlaveID, Resources>& allocation(
+  virtual const hashmap<mesos::allocator::SourceID, Resources>& allocation(
       const std::string& name) const;
 
   virtual const Resources& allocationScalarQuantities(
       const std::string& name) const;
 
   virtual hashmap<std::string, Resources> allocation(
-      const SlaveID& slaveId) const;
+      const mesos::allocator::SourceID& sourceId) const;
 
   virtual Resources allocation(
       const std::string& name,
-      const SlaveID& slaveId) const;
+      const mesos::allocator::SourceID& sourceId) const;
 
   virtual const Resources& totalScalarQuantities() const;
 
-  virtual void add(const SlaveID& slaveId, const Resources& resources);
+  virtual void add(
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& resources);
 
-  virtual void remove(const SlaveID& slaveId, const Resources& resources);
+  virtual void remove(
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& resources);
 
   virtual std::vector<std::string> sort();
 
@@ -159,14 +163,14 @@ private:
     // to account for multiple copies of the same shared resources. We need to
     // ensure that we do not update the scalar quantities for shared resources
     // when the change is only in the number of copies in the sorter.
-    hashmap<SlaveID, Resources> resources;
+    hashmap<mesos::allocator::SourceID, Resources> resources;
 
-    // NOTE: Scalars can be safely aggregated across slaves. We keep
+    // NOTE: Scalars can be safely aggregated across sources. We keep
     // that to speed up the calculation of shares. See MESOS-2891 for
     // the reasons why we want to do that.
     //
     // NOTE: We omit information about dynamic reservations and persistent
-    // volumes here to enable resources to be aggregated across slaves
+    // volumes here to enable resources to be aggregated across sources
     // more effectively. See MESOS-4833 for more information.
     //
     // Sharedness info is also stripped out when resource identities are
@@ -190,9 +194,9 @@ private:
     // to a client, where the number of copies represents the number
     // of times this shared resource has been allocated to (and has
     // not been recovered from) a specific client.
-    hashmap<SlaveID, Resources> resources;
+    hashmap<mesos::allocator::SourceID, Resources> resources;
 
-    // Similarly, we aggregate scalars across slaves and omit information
+    // Similarly, we aggregate scalars across sources and omit information
     // about dynamic reservations, persistent volumes and sharedness of
     // the corresponding resource. See notes above.
     Resources scalarQuantities;

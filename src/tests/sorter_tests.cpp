@@ -20,6 +20,8 @@
 
 #include <gmock/gmock.h>
 
+#include <mesos/allocator/allocator.hpp>
+
 #include <mesos/resources.hpp>
 
 #include <stout/gtest.hpp>
@@ -28,6 +30,8 @@
 
 #include "tests/mesos.hpp"
 #include "tests/resources_utils.hpp"
+
+using mesos::allocator::SourceID;
 
 using mesos::internal::master::allocator::DRFSorter;
 
@@ -327,7 +331,7 @@ TEST(SorterTest, UpdateAllocation)
   // Update the resources for the client.
   sorter.update("a", slaveId, oldAllocation, newAllocation.get());
 
-  hashmap<SlaveID, Resources> allocation = sorter.allocation("a");
+  hashmap<SourceID, Resources> allocation = sorter.allocation("a");
   EXPECT_EQ(1u, allocation.size());
   EXPECT_EQ(newAllocation.get(), allocation[slaveId]);
   EXPECT_EQ(newAllocation.get(), sorter.allocation("a", slaveId));

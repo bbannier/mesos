@@ -24,6 +24,8 @@
 #include <mesos/resources.hpp>
 #include <mesos/type_utils.hpp>
 
+#include <mesos/allocator/allocator.hpp>
+
 #include <process/pid.hpp>
 
 namespace mesos {
@@ -78,7 +80,7 @@ public:
   // Specify that resources have been allocated to the given client.
   virtual void allocated(
       const std::string& client,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& resources) = 0;
 
   // Updates a portion of the allocation for the client, in order to
@@ -87,18 +89,18 @@ public:
   // roles, or the overall quantities of resources!
   virtual void update(
       const std::string& client,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& oldAllocation,
       const Resources& newAllocation) = 0;
 
   // Specify that resources have been unallocated from the given client.
   virtual void unallocated(
       const std::string& client,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       const Resources& resources) = 0;
 
   // Returns the resources that have been allocated to this client.
-  virtual const hashmap<SlaveID, Resources>& allocation(
+  virtual const hashmap<mesos::allocator::SourceID, Resources>& allocation(
       const std::string& client) const = 0;
 
   // Returns the total scalar resource quantities that are allocated to
@@ -107,15 +109,15 @@ public:
   virtual const Resources& allocationScalarQuantities(
       const std::string& client) const = 0;
 
-  // Returns the clients that have allocations on this slave.
+  // Returns the clients that have allocations from this source.
   virtual hashmap<std::string, Resources> allocation(
-      const SlaveID& slaveId) const = 0;
+      const mesos::allocator::SourceID& sourceId) const = 0;
 
-  // Returns the given slave's resources that have been allocated to
+  // Returns the given source's resources that have been allocated to
   // this client.
   virtual Resources allocation(
       const std::string& client,
-      const SlaveID& slaveId) const = 0;
+      const mesos::allocator::SourceID& sourceId) const = 0;
 
   // Returns the total scalar resource quantities in this sorter. This
   // omits metadata about dynamic reservations and persistent volumes; see
@@ -124,10 +126,14 @@ public:
 
   // Add resources to the total pool of resources this
   // Sorter should consider.
-  virtual void add(const SlaveID& slaveId, const Resources& resources) = 0;
+  virtual void add(
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& resources) = 0;
 
   // Remove resources from the total pool.
-  virtual void remove(const SlaveID& slaveId, const Resources& resources) = 0;
+  virtual void remove(
+      const mesos::allocator::SourceID& sourceId,
+      const Resources& resources) = 0;
 
   // Returns all of the clients in the order that they should
   // be allocated to, according to this Sorter's policy.
