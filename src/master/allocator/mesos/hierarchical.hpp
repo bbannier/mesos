@@ -345,7 +345,7 @@ protected:
 
   hashmap<FrameworkID, Framework> frameworks;
 
-  struct Slave
+  struct Source
   {
     // Total amount of regular *and* oversubscribed resources.
     Resources total;
@@ -423,7 +423,7 @@ protected:
     Option<Maintenance> maintenance;
   };
 
-  hashmap<mesos::allocator::SourceID, Slave> sources;
+  hashmap<mesos::allocator::SourceID, Source> sources;
 
   // A set of resource providers that are kept as allocation candidates. Events
   // may add or remove candidates to the set. When an allocation is processed,
