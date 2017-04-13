@@ -242,19 +242,19 @@ protected:
   void expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       OfferFilter* offerFilter);
 
   void _expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       OfferFilter* offerFilter);
 
   // Remove an inverse offer filter for the specified framework.
   void expire(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceId,
       InverseOfferFilter* inverseOfferFilter);
 
   // Returns the weight of the specified role name.
@@ -268,14 +268,14 @@ protected:
   bool isFiltered(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const mesos::allocator::SourceID& sourceID,
       const Resources& resources) const;
 
   // Returns true if there is an inverse offer filter for this framework
   // on this slave.
   bool isFiltered(
       const FrameworkID& frameworkID,
-      const SlaveID& slaveID) const;
+      const mesos::allocator::SourceID& slaveID) const;
 
   static bool allocatable(const Resources& resources);
 
@@ -316,8 +316,13 @@ protected:
     // Active offer and inverse offer filters for the framework.
     // Offer filters are tied to the role the filtered resources
     // were allocated to.
-    hashmap<std::string, hashmap<SlaveID, hashset<OfferFilter*>>> offerFilters;
-    hashmap<SlaveID, hashset<InverseOfferFilter*>> inverseOfferFilters;
+    hashmap<
+        std::string,
+        hashmap<mesos::allocator::SourceID, hashset<OfferFilter*>>>
+      offerFilters;
+
+    hashmap<mesos::allocator::SourceID, hashset<InverseOfferFilter*>>
+      inverseOfferFilters;
   };
 
   double _event_queue_dispatches()

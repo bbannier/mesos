@@ -1021,7 +1021,7 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
     // `expire()` overload.
     void (Self::*expireInverseOffer)(
              const FrameworkID&,
-             const SlaveID&,
+             const SourceID&,
              InverseOfferFilter*) = &Self::expire;
 
     delay(
@@ -1188,7 +1188,7 @@ void HierarchicalAllocatorProcess::recoverResources(
     void (Self::*expireOffer)(
         const FrameworkID&,
         const string&,
-        const SlaveID&,
+        const SourceID&,
         OfferFilter*) = &Self::expire;
 
     delay(timeout.get(),
@@ -1969,7 +1969,7 @@ void HierarchicalAllocatorProcess::deallocate()
 void HierarchicalAllocatorProcess::_expire(
     const FrameworkID& frameworkId,
     const string& role,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     OfferFilter* offerFilter)
 {
   // The filter might have already been removed (e.g., if the
@@ -1986,14 +1986,14 @@ void HierarchicalAllocatorProcess::_expire(
 
     auto roleFilters = framework.offerFilters.find(role);
     if (roleFilters != framework.offerFilters.end()) {
-      auto agentFilters = roleFilters->second.find(slaveId);
+      auto agentFilters = roleFilters->second.find(sourceId);
 
       if (agentFilters != roleFilters->second.end()) {
         // Erase the filter (may be a no-op per the comment above).
         agentFilters->second.erase(offerFilter);
 
         if (agentFilters->second.empty()) {
-          roleFilters->second.erase(slaveId);
+          roleFilters->second.erase(sourceId);
         }
       }
     }
@@ -2006,7 +2006,7 @@ void HierarchicalAllocatorProcess::_expire(
 void HierarchicalAllocatorProcess::expire(
     const FrameworkID& frameworkId,
     const string& role,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     OfferFilter* offerFilter)
 {
   dispatch(
@@ -2014,14 +2014,14 @@ void HierarchicalAllocatorProcess::expire(
       &Self::_expire,
       frameworkId,
       role,
-      slaveId,
+      sourceId,
       offerFilter);
 }
 
 
 void HierarchicalAllocatorProcess::expire(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     InverseOfferFilter* inverseOfferFilter)
 {
   // The filter might have already been removed (e.g., if the
@@ -2037,12 +2037,12 @@ void HierarchicalAllocatorProcess::expire(
   if (frameworkIterator != frameworks.end()) {
     Framework& framework = frameworkIterator->second;
 
-    auto filters = framework.inverseOfferFilters.find(slaveId);
+    auto filters = framework.inverseOfferFilters.find(sourceId);
     if (filters != framework.inverseOfferFilters.end()) {
       filters->second.erase(inverseOfferFilter);
 
       if (filters->second.empty()) {
-        framework.inverseOfferFilters.erase(slaveId);
+        framework.inverseOfferFilters.erase(sourceId);
       }
     }
   }
@@ -2075,21 +2075,21 @@ bool HierarchicalAllocatorProcess::isWhitelisted(
 bool HierarchicalAllocatorProcess::isFiltered(
     const FrameworkID& frameworkId,
     const string& role,
-    const SlaveID& slaveId,
+    const SourceID& sourceId,
     const Resources& resources) const
 {
   CHECK(frameworks.contains(frameworkId));
-  CHECK(sources.contains(slaveId));
+  CHECK(sources.contains(sourceId));
 
   const Framework& framework = frameworks.at(frameworkId);
-  const Slave& slave = sources.at(slaveId);
+  const Slave& slave = sources.at(sourceId);
 
   // Prevent offers from non-MULTI_ROLE agents to be allocated
   // to MULTI_ROLE frameworks.
   if (framework.capabilities.multiRole &&
       !slave.capabilities.multiRole) {
     LOG(WARNING)
-      << "Implicitly filtering agent " << slaveId << " from framework"
+      << "Implicitly filtering agent " << sourceId << " from framework"
       << frameworkId << " because the framework is MULTI_ROLE capable"
       << " but the agent is not";
 
@@ -2103,7 +2103,7 @@ bool HierarchicalAllocatorProcess::isFiltered(
     return false;
   }
 
-  auto agentFilters = roleFilters->second.find(slaveId);
+  auto agentFilters = roleFilters->second.find(sourceId);
   if (agentFilters == roleFilters->second.end()) {
     return false;
   }
@@ -2111,7 +2111,7 @@ bool HierarchicalAllocatorProcess::isFiltered(
   foreach (OfferFilter* offerFilter, agentFilters->second) {
     if (offerFilter->filter(resources)) {
       VLOG(1) << "Filtered offer with " << resources
-              << " on agent " << slaveId
+              << " on agent " << sourceId
               << " for role " << role
               << " of framework " << frameworkId;
 
@@ -2125,18 +2125,18 @@ bool HierarchicalAllocatorProcess::isFiltered(
 
 bool HierarchicalAllocatorProcess::isFiltered(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId) const
+    const SourceID& sourceId) const
 {
   CHECK(frameworks.contains(frameworkId));
-  CHECK(sources.contains(slaveId));
+  CHECK(sources.contains(sourceId));
 
   const Framework& framework = frameworks.at(frameworkId);
 
-  if (framework.inverseOfferFilters.contains(slaveId)) {
+  if (framework.inverseOfferFilters.contains(sourceId)) {
     foreach (InverseOfferFilter* inverseOfferFilter,
-             framework.inverseOfferFilters.at(slaveId)) {
+             framework.inverseOfferFilters.at(sourceId)) {
       if (inverseOfferFilter->filter()) {
-        VLOG(1) << "Filtered unavailability on agent " << slaveId
+        VLOG(1) << "Filtered unavailability on agent " << sourceId
                 << " for framework " << frameworkId;
 
         return true;
@@ -2210,8 +2210,8 @@ double HierarchicalAllocatorProcess::_offer_filters_active(
       continue;
     }
 
-    foreachkey (const SlaveID& slaveId, framework.offerFilters.at(role)) {
-      result += framework.offerFilters.at(role).at(slaveId).size();
+    foreachkey (const SourceID& sourceId, framework.offerFilters.at(role)) {
+      result += framework.offerFilters.at(role).at(sourceId).size();
     }
   }
 
