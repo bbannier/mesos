@@ -1415,8 +1415,7 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
   // Not enough memory or cpu to be considered allocatable.
   SlaveInfo slave1 = createSlaveInfo(
       "cpus:" + stringify(MIN_CPUS / 2u) + ";"
-      "mem:" + stringify((MIN_MEM / 2u).megabytes()) + ";"
-      "disk:128");
+      "mem:" + stringify((MIN_MEM / 2u).megabytes()));
   allocator->addSlave(
       slave1.id(),
       slave1,
