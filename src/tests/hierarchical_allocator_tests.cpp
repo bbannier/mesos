@@ -133,6 +133,7 @@ protected:
   HierarchicalAllocatorTestBase()
     : allocator(createAllocator<HierarchicalDRFAllocator>()),
       nextSlaveId(1),
+      nextResourceProviderId(1),
       nextFrameworkId(1) {}
 
   ~HierarchicalAllocatorTestBase()
@@ -201,6 +202,25 @@ protected:
   {
     const Resources agentResources = Resources::parse(resources).get();
     return createSlaveInfo(agentResources);
+  }
+
+  ResourceProviderInfo createResourceProvider(const Resources& resources)
+  {
+    ResourceProviderID resourceProviderId;
+    resourceProviderId.set_value(
+        "resource_provider" + stringify(nextResourceProviderId++));
+
+    ResourceProviderInfo resourceProvider;
+    resourceProvider.mutable_id()->CopyFrom(resourceProviderId);
+    resourceProvider.mutable_resources()->CopyFrom(resources);
+
+    return resourceProvider;
+  }
+
+  ResourceProviderInfo createResourceProvider(const string& resources)
+  {
+    const Resources resources_ = Resources::parse(resources).get();
+    return createResourceProvider(resources_);
   }
 
   FrameworkInfo createFrameworkInfo(
@@ -275,6 +295,7 @@ protected:
 
 private:
   int nextSlaveId;
+  int nextResourceProviderId;
   int nextFrameworkId;
 };
 
@@ -4220,6 +4241,36 @@ TEST_F(HierarchicalAllocatorTest, DisproportionateQuotaVsAllocation)
 
   Future<Allocation> allocation = allocations.get();
   EXPECT_TRUE(allocation.isPending());
+}
+
+
+// This test checks that resource providers can be added to the
+// allocator and offers are made towards its resources.
+TEST_F(HierarchicalAllocatorTest, ResourceProvider)
+{
+  // Pausing the clock is not necessary, but ensures that the test
+  // doesn't rely on the batch allocation in the allocator, which
+  // would slow down the test.
+  Clock::pause();
+
+  initialize();
+
+  FrameworkInfo framework = createFrameworkInfo({"role"});
+  allocator->addFramework(framework.id(), framework, {}, true);
+
+  ResourceProviderInfo resourceProvider = createResourceProvider("disk:1024");
+  allocator->addSlave(
+      resourceProvider.id(),
+      {resourceProvider},
+      None(),
+      resourceProvider.resources(),
+      {});
+
+  Allocation expected = Allocation(
+      framework.id(),
+      {{"role", {{resourceProvider.id(), resourceProvider.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
 }
 
 
