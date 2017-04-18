@@ -421,6 +421,9 @@ protected:
     // a given point in time, for an optional duration. This information is used
     // to send out `InverseOffers`.
     Option<Maintenance> maintenance;
+
+    // Full information on this source.
+    mesos::allocator::SourceInfo sourceInfo;
   };
 
   hashmap<mesos::allocator::SourceID, Source> sources;

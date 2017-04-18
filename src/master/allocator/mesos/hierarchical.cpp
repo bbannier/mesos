@@ -500,6 +500,7 @@ void HierarchicalAllocatorProcess::addSlave(
   source.total = total;
   source.allocated = Resources::sum(used);
   source.activated = true;
+  source.sourceInfo = sourceInfo;
 
   const SlaveInfo* slaveInfo = nullptr;
 
@@ -549,6 +550,7 @@ void HierarchicalAllocatorProcess::addSlave(
       }
 
       source.capabilities = protobuf::slave::Capabilities(allCapabilities);
+
       break;
     }
     case SourceType::UNKNOWN: {
@@ -570,9 +572,16 @@ void HierarchicalAllocatorProcess::addSlave(
   // capacity is back online, so that we are reasonably confident that we
   // will not over-commit too many resources to quota that we will not be
   // able to revoke.
+  const int numRegisteredAgents = std::count_if(
+      sources.begin(),
+      sources.end(),
+      [](const std::pair<SourceID, Source>& source) {
+        return source.second.sourceInfo.type == SourceType::AGENT;
+      });
+
   if (paused &&
       expectedAgentCount.isSome() &&
-      (static_cast<int>(sources.size()) >= expectedAgentCount.get())) {
+      (numRegisteredAgents >= expectedAgentCount.get())) {
     VLOG(1) << "Recovery complete: sufficient amount of agents added; "
             << sources.size() << " agents known to the allocator";
 

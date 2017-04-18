@@ -54,6 +54,8 @@ namespace allocator {
 class SourceID
 {
 public:
+  SourceID() = default;
+
   SourceID(const SlaveID& agentId)
     : value(agentId.value()),
       type(SourceType::AGENT) {}
@@ -91,6 +93,8 @@ public:
 
 class SourceInfo {
 public:
+  SourceInfo() = default;
+
   SourceInfo(
       const SlaveInfo& agentInfo_,
       const std::vector<SlaveInfo::Capability>& agentCapabilities_)
