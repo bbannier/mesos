@@ -2156,14 +2156,21 @@ bool HierarchicalAllocatorProcess::isFiltered(
 }
 
 
-bool HierarchicalAllocatorProcess::allocatable(
-    const Resources& resources)
+bool HierarchicalAllocatorProcess::allocatable(const Resources& resources)
 {
+  // TODO(bbannier): This function hardcodes certain resource kinds at
+  // makes it impossible to allocate single units of arbitrary
+  // resources (e.g., pure GPU is not allocatable). At the same time
+  // if help enforce a limit to resource fragmentation for certain kinds
+  // so they can be accumulated into larger chunks before being
+  // offered again.
   Option<double> cpus = resources.cpus();
   Option<Bytes> mem = resources.mem();
+  Option<Bytes> disk = resources.disk();
 
   return (cpus.isSome() && cpus.get() >= MIN_CPUS) ||
-         (mem.isSome() && mem.get() >= MIN_MEM);
+         (mem.isSome() && mem.get() >= MIN_MEM) ||
+         (disk.isSome() && disk.get() >= MIN_DISK);
 }
 
 

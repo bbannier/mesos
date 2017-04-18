@@ -44,6 +44,9 @@ constexpr double MIN_CPUS = 0.01;
 // Minimum amount of memory per offer.
 constexpr Bytes MIN_MEM = Megabytes(32);
 
+// Minimum amount of disk per offer.
+constexpr Bytes MIN_DISK = MIN_MEM;
+
 // Default interval the master uses to send heartbeats to an HTTP
 // scheduler.
 constexpr Duration DEFAULT_HEARTBEAT_INTERVAL = Seconds(15);
