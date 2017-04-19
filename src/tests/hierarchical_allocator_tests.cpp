@@ -63,6 +63,7 @@ using mesos::internal::slave::AGENT_CAPABILITIES;
 
 using mesos::allocator::Allocator;
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceInfo;
 
 using process::Clock;
 using process::Future;
@@ -1806,7 +1807,10 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)
   ASSERT_TRUE(allocation.isPending());
 
   // Update the agent to be MULTI_ROLE capable.
-  allocator->updateSlave(agent.id(), None(), AGENT_CAPABILITIES());
+  allocator->updateSlave(
+      agent.id(),
+      None(),
+      SourceInfo(agent, AGENT_CAPABILITIES()));
 
   Clock::settle();
 

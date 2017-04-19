@@ -631,7 +631,7 @@ void HierarchicalAllocatorProcess::removeSlave(
 void HierarchicalAllocatorProcess::updateSlave(
     const SourceID& sourceId,
     const Option<Resources>& oversubscribed,
-    const Option<vector<SlaveInfo::Capability>>& capabilities)
+    const Option<SourceInfo>& sourceInfo)
 {
   CHECK(initialized);
   CHECK(sources.contains(sourceId));
@@ -641,8 +641,13 @@ void HierarchicalAllocatorProcess::updateSlave(
   bool updated = false;
 
   // Update agent capabilities.
-  if (capabilities.isSome()) {
-    protobuf::slave::Capabilities newCapabilities(capabilities.get());
+  if (sourceInfo.isSome()) {
+    // TODO(bbannier): Currently this silently drops any updates but
+    // for changed capabilities. We should either perform a hard
+    // `CHECK` or interpret other updates as well.
+    protobuf::slave::Capabilities newCapabilities(
+        sourceInfo->agentCapabilities);
+
     protobuf::slave::Capabilities oldCapabilities(source.capabilities);
 
     source.capabilities = newCapabilities;

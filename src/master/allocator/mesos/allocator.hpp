@@ -96,7 +96,7 @@ public:
   void updateSlave(
       const mesos::allocator::SourceID& sourceId,
       const Option<Resources>& oversubscribed = None(),
-      const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
+      const Option<mesos::allocator::SourceInfo>& sourceInfo = None());
 
   void activateSlave(
       const mesos::allocator::SourceID& sourceId);
@@ -232,8 +232,7 @@ public:
   virtual void updateSlave(
       const mesos::allocator::SourceID& sourceId,
       const Option<Resources>& oversubscribed = None(),
-      const Option<std::vector<SlaveInfo::Capability>>&
-          capabilities = None()) = 0;
+      const Option<mesos::allocator::SourceInfo>& sourceInfo = None()) = 0;
 
   virtual void activateSlave(
       const mesos::allocator::SourceID& sourceId) = 0;
@@ -460,14 +459,14 @@ template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::updateSlave(
     const mesos::allocator::SourceID& sourceId,
     const Option<Resources>& oversubscribed,
-    const Option<std::vector<SlaveInfo::Capability>>& capabilities)
+    const Option<mesos::allocator::SourceInfo>& sourceInfo)
 {
   process::dispatch(
       process,
       &MesosAllocatorProcess::updateSlave,
       sourceId,
       oversubscribed,
-      capabilities);
+      sourceInfo);
 }
 
 
