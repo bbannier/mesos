@@ -1933,6 +1933,48 @@ void HierarchicalAllocatorProcess::__allocate()
     }
   }
 
+  // Pack resources from resource providers on same agent into single offers.
+  // For that we add resources from local resource providers to offered
+  // resources from its host agent.
+  //
+  // We need to define some type aliases since `foreach*` are macros whose
+  // invocations cannot contain constructs involving e.g., `<` or `,`.
+  using Offerables = hashmap<string, hashmap<SourceID, Resources>>;
+  using Offers = hashmap<SourceID, Resources>;
+
+  foreachvalue (Offerables& offerables, offerable) {
+    foreachvalue (Offers& offers, offerables) {
+      foreachpair (
+          const SourceID& sourceId,
+          const Resources& resources,
+          offers) {
+        CHECK(sources.contains(sourceId));
+        const SourceInfo& sourceInfo = sources.at(sourceId).sourceInfo;
+
+        // We are only working on resource provider sources here.
+        if (sourceInfo.type != SourceType::RESOURCE_PROVIDER) {
+          continue;
+        }
+        CHECK(sourceInfo.resourceProviderInfo.isSome());
+
+        // If the resource provider has an agent info we are dealing with a
+        // local resource provider.
+        if (sourceInfo.resourceProviderInfo->has_agent_info()) {
+          const SlaveID& agentId =
+            sourceInfo.resourceProviderInfo->agent_info().id();
+
+          // If we will make an offer for the host agent of this local
+          // resource provider merge the resource providers resources
+          // with the agent's resources.
+          if (offers.count(agentId) > 0) {
+            offers.at(agentId) += resources;
+            offers.erase(sourceId);
+          }
+        }
+      }
+    }
+  }
+
   if (offerable.empty()) {
     VLOG(1) << "No allocations performed";
   } else {

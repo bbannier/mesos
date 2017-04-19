@@ -4274,6 +4274,95 @@ TEST_F(HierarchicalAllocatorTest, ResourceProvider)
 }
 
 
+// This test confirms that a local resource provider's resources are
+// bundled with its host agent resources when offers are made.
+TEST_F(HierarchicalAllocatorTest, LocalResourceProviderBundling)
+{
+  // Pausing the clock is not necessary, but ensures that the test
+  // doesn't rely on the batch allocation in the allocator, which
+  // would slow down the test.
+  Clock::pause();
+
+  initialize();
+
+  SlaveInfo slave = createSlaveInfo("cpus:4;mem:1024;disk:2048");
+
+  allocator->addSlave(
+      slave.id(),
+      {slave, AGENT_CAPABILITIES()},
+      None(),
+      slave.resources(),
+      {});
+
+  ResourceProviderInfo localResourceProvider =
+    createResourceProvider("disk:1024");
+
+  localResourceProvider.mutable_agent_info()->CopyFrom(slave);
+
+  allocator->addSlave(
+      localResourceProvider.id(),
+      {localResourceProvider},
+      None(),
+      localResourceProvider.resources(),
+      {});
+
+  FrameworkInfo framework = createFrameworkInfo({"role"});
+  allocator->addFramework(framework.id(), framework, {}, true);
+
+  Allocation expected = Allocation(
+      framework.id(),
+      {{"role",
+        {{slave.id(),
+          slave.resources() + localResourceProvider.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
+}
+
+
+// This test confirms that an external resource provider's resources are not
+// bundled with a agent's resources when offers are made.
+TEST_F(HierarchicalAllocatorTest, ExternalResourceProviderBundling)
+{
+  // Pausing the clock is not necessary, but ensures that the test
+  // doesn't rely on the batch allocation in the allocator, which
+  // would slow down the test.
+  Clock::pause();
+
+  initialize();
+
+  SlaveInfo slave = createSlaveInfo("cpus:4;mem:1024;disk:2048");
+
+  allocator->addSlave(
+      slave.id(),
+      {slave, AGENT_CAPABILITIES()},
+      None(),
+      slave.resources(),
+      {});
+
+  ResourceProviderInfo externalResourceProvider =
+    createResourceProvider("disk:1024");
+
+  allocator->addSlave(
+      externalResourceProvider.id(),
+      {externalResourceProvider},
+      None(),
+      externalResourceProvider.resources(),
+      {});
+
+  FrameworkInfo framework = createFrameworkInfo({"role"});
+  allocator->addFramework(framework.id(), framework, {}, true);
+
+  Allocation expected = Allocation(
+      framework.id(),
+      {{"role",
+        {{externalResourceProvider.id(), externalResourceProvider.resources()},
+         {slave.id(), slave.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
+}
+
+
+
 class HierarchicalAllocatorTestWithParam
   : public HierarchicalAllocatorTestBase,
     public WithParamInterface<bool> {};
