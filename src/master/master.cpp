@@ -129,6 +129,7 @@ namespace master {
 
 using mesos::allocator::Allocator;
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceInfo;
 
 using mesos::authorization::createSubject;
 
@@ -5677,7 +5678,10 @@ void Master::reregisterSlave(
     slave->reregisteredTime = Clock::now();
     slave->capabilities = agentCapabilities;
 
-    allocator->updateSlave(slave->id, None(), agentCapabilities);
+    allocator->updateSlave(
+        slave->id,
+        None(),
+        SourceInfo(slave->info, agentCapabilities));
 
     // Reconcile tasks between master and slave, and send the
     // `SlaveReregisteredMessage`.

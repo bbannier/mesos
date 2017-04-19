@@ -141,7 +141,7 @@ public:
   void updateSlave(
       const mesos::allocator::SourceID& sourceId,
       const Option<Resources>& oversubscribed = None(),
-      const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
+      const Option<mesos::allocator::SourceInfo>& sourceInfo = None());
 
   void deactivateSlave(
       const mesos::allocator::SourceID& sourceId);

@@ -317,16 +317,14 @@ public:
    * @param oversubscribed The new oversubscribed resources estimate from
    *     the resource provider. The oversubscribed resources include the total
    *     amount of oversubscribed resources that are allocated and available.
-   * @param capabilities The new capabilities of an agent. This is
-   *     only expected to be set when an agent is added.
+   * @param sourceInfo The new SourceInfo of a resource provider. This is
+   *     only expected to be set when a resource provider agent is added.
    */
   // FIXME(bbannier): Rename to `updateSource`.
-  // FIXME(bbannier): just take an info here.
   virtual void updateSlave(
       const SourceID& sourceId,
       const Option<Resources>& oversubscribed = None(),
-      const Option<std::vector<SlaveInfo::Capability>>&
-          capabilities = None()) = 0;
+      const Option<SourceInfo>& sourceInfo = None()) = 0;
   // FIXME(bbannier): provide semantics of updateSourceTotal, either
   // here or in another function, at least for RPs.
 

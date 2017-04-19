@@ -408,7 +408,7 @@ public:
   MOCK_METHOD3(updateSlave, void(
       const mesos::allocator::SourceID&,
       const Option<Resources>&,
-      const Option<std::vector<SlaveInfo::Capability>>&));
+      const Option<mesos::allocator::SourceInfo>&));
 
   MOCK_METHOD1(activateSlave, void(
       const mesos::allocator::SourceID&));
