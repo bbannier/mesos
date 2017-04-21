@@ -113,7 +113,7 @@ message ResourceProviderInfo {
   optional ResourceProviderID id = 1;
   repeated Attribute attributes = 2;
   repeated Resource resources = 3;
-  optional SlaveInfo agent_info = 4;
+  optional SlaveID agent_id = 4;
 }
 
 
