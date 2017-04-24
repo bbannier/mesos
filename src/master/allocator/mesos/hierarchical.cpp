@@ -46,6 +46,7 @@ using std::vector;
 using mesos::allocator::InverseOfferStatus;
 using mesos::allocator::SourceID;
 using mesos::allocator::SourceInfo;
+using mesos::allocator::SourceType;
 
 using process::Failure;
 using process::Future;
