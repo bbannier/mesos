@@ -522,7 +522,7 @@ void HierarchicalAllocatorProcess::addSlave(
       sources.begin(),
       sources.end(),
       [](const std::pair<SourceID, Source>& source) {
-        return source.second.sourceInfo.type == SourceType::AGENT;
+        return source.second.sourceInfo.id.type == SourceType::AGENT;
       });
 
   if (paused &&

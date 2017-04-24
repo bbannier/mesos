@@ -98,18 +98,14 @@ public:
   SourceInfo(
       const SlaveInfo& agentInfo_,
       const std::vector<SlaveInfo::Capability>& capabilities_)
-    : type(SourceType::AGENT),
-      id(agentInfo_.id()),
-      agentInfo(agentInfo_),
+    : id(agentInfo_.id()),
       capabilities(capabilities_),
       hostname(agentInfo_.hostname()) {}
 
       SourceInfo(
           const ResourceProviderInfo& resourceProviderInfo_,
           const Option<std::string>& hostname_)
-        : type(SourceType::RESOURCE_PROVIDER),
-          id(resourceProviderInfo_.id()),
-          resourceProviderInfo(resourceProviderInfo_),
+        : id(resourceProviderInfo_.id()),
           hostname(hostname_)
       {
         // We use a switch statement here so that adding unhandled capabilities
@@ -126,29 +122,14 @@ public:
         capabilities = allCapabilities;
       }
 
-  SourceType type = SourceType::UNKNOWN; // FIXME(bbannier): remove this.
-
   SourceID id;
-
-  Option<SlaveInfo> agentInfo = None();
-  Option<ResourceProviderInfo> resourceProviderInfo = None();
 
   std::vector<SlaveInfo::Capability> capabilities;
   Option<std::string> hostname;
 
   friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
-    return std::tie(
-               left.type,
-               left.id,
-               left.agentInfo,
-               left.capabilities,
-               left.resourceProviderInfo) ==
-           std::tie(
-               right.type,
-               right.id,
-               right.agentInfo,
-               right.capabilities,
-               right.resourceProviderInfo);
+    return std::tie(left.id, left.capabilities) ==
+           std::tie(right.id, right.capabilities);
   }
 };
 
