@@ -502,26 +502,7 @@ void HierarchicalAllocatorProcess::addSlave(
   source.activated = true;
   source.sourceInfo = sourceInfo;
 
-  const SlaveInfo* slaveInfo = nullptr;
-
-  switch (sourceInfo.type) {
-    case SourceType::AGENT:
-      CHECK(sourceInfo.agentInfo.isSome());
-      slaveInfo = &sourceInfo.agentInfo.get();
-      break;
-    case SourceType::RESOURCE_PROVIDER:
-      CHECK(sourceInfo.resourceProviderInfo.isSome());
-      if (sourceInfo.resourceProviderInfo->has_agent_info()) {
-        slaveInfo = &sourceInfo.resourceProviderInfo->agent_info();
-      }
-      break;
-    case SourceType::UNKNOWN: {
-      UNREACHABLE();
-    }
-  }
-  if (slaveInfo != nullptr && slaveInfo->has_hostname()) {
-    source.hostname = slaveInfo->hostname();
-  }
+  source.hostname = sourceInfo.hostname;
 
   switch (sourceInfo.type) {
     case SourceType::AGENT: {

@@ -4265,7 +4265,7 @@ TEST_F(HierarchicalAllocatorTest, ResourceProvider)
   ResourceProviderInfo resourceProvider = createResourceProvider("disk:1024");
   allocator->addSlave(
       resourceProvider.id(),
-      {resourceProvider},
+      {resourceProvider, None()},
       None(),
       resourceProvider.resources(),
       {});

@@ -101,13 +101,16 @@ public:
     : type(SourceType::AGENT),
       id(agentInfo_.id()),
       agentInfo(agentInfo_),
-      agentCapabilities(agentCapabilities_) {}
+      agentCapabilities(agentCapabilities_),
+      hostname(agentInfo_.hostname()) {}
 
   SourceInfo(
-      const ResourceProviderInfo& resourceProviderInfo_)
+      const ResourceProviderInfo& resourceProviderInfo_,
+      const Option<std::string>& hostname_)
     : type(SourceType::RESOURCE_PROVIDER),
       id(resourceProviderInfo_.id()),
-      resourceProviderInfo(resourceProviderInfo_) {}
+      resourceProviderInfo(resourceProviderInfo_),
+      hostname(hostname_) {}
 
   SourceType type = SourceType::UNKNOWN;
 
@@ -117,6 +120,8 @@ public:
   std::vector<SlaveInfo::Capability> agentCapabilities;
 
   Option<ResourceProviderInfo> resourceProviderInfo = None();
+
+  Option<std::string> hostname;
 
   friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
     return std::tie(
