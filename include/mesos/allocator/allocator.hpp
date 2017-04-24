@@ -40,6 +40,7 @@
 #include <stout/try.hpp>
 
 namespace mesos {
+namespace allocator {
 
 enum class SourceType
 {
@@ -48,7 +49,6 @@ enum class SourceType
   RESOURCE_PROVIDER
 };
 
-namespace allocator {
 
 class SourceID
 {
