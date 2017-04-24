@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-#include <tuple>
 
 // ONLY USEFUL AFTER RUNNING PROTOC.
 #include <mesos/allocator/allocator.pb.h>
@@ -69,7 +68,15 @@ public:
 
   friend bool operator==(const SourceID& left, const SourceID& right)
   {
-    return std::tie(left.value, left.type) == std::tie(right.value, right.type);
+    if (left.value != right.value) {
+      return false;
+    }
+
+    if (left.type != right.type) {
+      return false;
+    }
+
+    return true;
   }
 
   friend std::ostream& operator<<(
@@ -128,8 +135,15 @@ public:
   Option<std::string> hostname;
 
   friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
-    return std::tie(left.id, left.capabilities) ==
-           std::tie(right.id, right.capabilities);
+    if (left.id != right.id) {
+      return false;
+    }
+
+    if (left.capabilities != right.capabilities) {
+      return false;
+    }
+
+    return true;
   }
 };
 
