@@ -17,7 +17,6 @@
 #include "master/allocator/mesos/hierarchical.hpp"
 
 #include <algorithm>
-#include <array>
 #include <set>
 #include <string>
 #include <utility>
@@ -502,42 +501,8 @@ void HierarchicalAllocatorProcess::addSlave(
   source.activated = true;
   source.sourceInfo = sourceInfo;
 
+  source.capabilities = protobuf::slave::Capabilities(sourceInfo.capabilities);
   source.hostname = sourceInfo.hostname;
-
-  switch (sourceInfo.type) {
-    case SourceType::AGENT: {
-      CHECK(sourceInfo.agentInfo.isSome());
-
-      source.capabilities =
-        protobuf::slave::Capabilities(sourceInfo.agentCapabilities);
-
-      break;
-    }
-    case SourceType::RESOURCE_PROVIDER: {
-      // Resource providers always are multirole capable.
-      //
-      // TODO(bbannier): Decide this higher up, e.g., on `SourceInfo`
-      // construction.
-
-      // We use a switch statement here so that adding unhandled capabilities
-      // triggers a warning. New values should be added as separate cases
-      // updating the value in the capabilities container with fallthrough to
-      // the next value.
-      std::array<SlaveInfo::Capability, 1> allCapabilities;
-      switch (SlaveInfo::Capability::UNKNOWN) {
-        case SlaveInfo::Capability::UNKNOWN:
-        case SlaveInfo::Capability::MULTI_ROLE:
-          allCapabilities[0].set_type(SlaveInfo::Capability::MULTI_ROLE);
-      }
-
-      source.capabilities = protobuf::slave::Capabilities(allCapabilities);
-
-      break;
-    }
-    case SourceType::UNKNOWN: {
-      UNREACHABLE();
-    }
-  }
 
   // NOTE: We currently implement maintenance in the allocator to be able to
   // leverage state and features such as the FrameworkSorter and OfferFilter.
@@ -626,8 +591,7 @@ void HierarchicalAllocatorProcess::updateSlave(
     // TODO(bbannier): Currently this silently drops any updates but
     // for changed capabilities. We should either perform a hard
     // `CHECK` or interpret other updates as well.
-    protobuf::slave::Capabilities newCapabilities(
-        sourceInfo->agentCapabilities);
+    protobuf::slave::Capabilities newCapabilities(sourceInfo->capabilities);
 
     protobuf::slave::Capabilities oldCapabilities(source.capabilities);
 

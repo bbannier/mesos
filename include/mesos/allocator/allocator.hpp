@@ -97,30 +97,43 @@ public:
 
   SourceInfo(
       const SlaveInfo& agentInfo_,
-      const std::vector<SlaveInfo::Capability>& agentCapabilities_)
+      const std::vector<SlaveInfo::Capability>& capabilities_)
     : type(SourceType::AGENT),
       id(agentInfo_.id()),
       agentInfo(agentInfo_),
-      agentCapabilities(agentCapabilities_),
+      capabilities(capabilities_),
       hostname(agentInfo_.hostname()) {}
 
-  SourceInfo(
-      const ResourceProviderInfo& resourceProviderInfo_,
-      const Option<std::string>& hostname_)
-    : type(SourceType::RESOURCE_PROVIDER),
-      id(resourceProviderInfo_.id()),
-      resourceProviderInfo(resourceProviderInfo_),
-      hostname(hostname_) {}
+      SourceInfo(
+          const ResourceProviderInfo& resourceProviderInfo_,
+          const Option<std::string>& hostname_)
+        : type(SourceType::RESOURCE_PROVIDER),
+          id(resourceProviderInfo_.id()),
+          resourceProviderInfo(resourceProviderInfo_),
+          hostname(hostname_)
+      {
+        // We use a switch statement here so that adding unhandled capabilities
+        // triggers a warning. New values should be added as separate cases
+        // updating the value in the capabilities container with fallthrough to
+        // the next value.
+        std::vector<SlaveInfo::Capability> allCapabilities(1);
+        switch (SlaveInfo::Capability::UNKNOWN) {
+          case SlaveInfo::Capability::UNKNOWN:
+          case SlaveInfo::Capability::MULTI_ROLE:
+            allCapabilities[0].set_type(SlaveInfo::Capability::MULTI_ROLE);
+        }
 
-  SourceType type = SourceType::UNKNOWN;
+        capabilities = allCapabilities;
+      }
+
+  SourceType type = SourceType::UNKNOWN; // FIXME(bbannier): remove this.
 
   SourceID id;
 
   Option<SlaveInfo> agentInfo = None();
-  std::vector<SlaveInfo::Capability> agentCapabilities;
-
   Option<ResourceProviderInfo> resourceProviderInfo = None();
 
+  std::vector<SlaveInfo::Capability> capabilities;
   Option<std::string> hostname;
 
   friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
@@ -128,13 +141,13 @@ public:
                left.type,
                left.id,
                left.agentInfo,
-               left.agentCapabilities,
+               left.capabilities,
                left.resourceProviderInfo) ==
            std::tie(
                right.type,
                right.id,
                right.agentInfo,
-               right.agentCapabilities,
+               right.capabilities,
                right.resourceProviderInfo);
   }
 };
