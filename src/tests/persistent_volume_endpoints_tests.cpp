@@ -47,6 +47,7 @@ using std::vector;
 using google::protobuf::RepeatedPtrField;
 
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceType;
 
 using mesos::internal::master::DEFAULT_ALLOCATION_INTERVAL;
 using mesos::internal::master::Master;
@@ -144,11 +145,15 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
       None(),
       DEFAULT_CREDENTIAL.principal());
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> createResponse = process::http::post(
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -187,7 +192,7 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -238,11 +243,16 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       frameworkInfo.role(),
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> response = process::http::post(
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -291,7 +301,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -316,7 +326,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -360,11 +370,16 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
       frameworkInfo.role(),
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> response = process::http::post(
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -403,7 +418,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 
@@ -442,11 +457,16 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       frameworkInfo.role(),
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> response = process::http::post(
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -463,7 +483,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -471,7 +491,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 }
@@ -567,6 +587,11 @@ TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+  
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
 
   Resources volume = createPersistentVolume(
       Megabytes(1025),
@@ -577,11 +602,12 @@ TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
       None(),
       DEFAULT_CREDENTIAL.principal());
 
+
   Future<Response> createResponse = process::http::post(
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, createResponse);
 }
@@ -619,11 +645,16 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       None(),
       DEFAULT_CREDENTIAL.principal());
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> createResponse = process::http::post(
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -641,7 +672,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", badVolumeId));
+      createRequestBody(slaveId, "volumes", badVolumeId));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -659,7 +690,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", badRole));
+      createRequestBody(slaveId, "volumes", badRole));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -677,7 +708,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", badSize));
+      createRequestBody(slaveId, "volumes", badSize));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -697,7 +728,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", differentPath));
+      createRequestBody(slaveId, "volumes", differentPath));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 }
@@ -737,11 +768,16 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
       None(),
       DEFAULT_CREDENTIAL.principal());
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+  
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Future<Response> response = process::http::post(
       master.get()->pid,
       "create-volumes",
       None(),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -751,7 +787,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
       master.get()->pid,
       "destroy-volumes",
       None(),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -782,6 +818,11 @@ TEST_F(PersistentVolumeEndpointsTest, BadCredentials)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Credential credential;
   credential.set_principal("bad-principal");
   credential.set_secret("bad-secret");
@@ -796,7 +837,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCredentials)
       DEFAULT_CREDENTIAL.principal());
 
   process::http::Headers headers = createBasicAuthHeaders(credential);
-  string body = createRequestBody(sourceId.get(), "volumes", volume);
+  string body = createRequestBody(slaveId, "volumes", volume);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "create-volumes", headers, body);
@@ -859,6 +900,11 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   // Advance clock to trigger agent registration befor we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
 
@@ -877,7 +923,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -919,7 +965,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -984,6 +1030,11 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources volume1 = createPersistentVolume(
       Megabytes(64),
       AUTHORIZED_ROLE_1,
@@ -1008,7 +1059,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volumesMultipleRoles));
+      createRequestBody(slaveId, "volumes", volumesMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1068,6 +1119,11 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   // Advance clock to trigger agent registration befor we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
 
@@ -1086,7 +1142,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
         master.get()->pid,
         "create-volumes",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-        createRequestBody(sourceId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
   }
@@ -1106,7 +1162,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
         master.get()->pid,
         "create-volumes",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-        createRequestBody(sourceId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1142,7 +1198,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, destroyResponse);
 
@@ -1198,6 +1254,11 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources volume1 = createPersistentVolume(
       Megabytes(64),
       AUTHORIZED_ROLE,
@@ -1222,7 +1283,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volumesMultipleRoles));
+      createRequestBody(slaveId, "volumes", volumesMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
 }
@@ -1287,6 +1348,11 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   // Advance clock to trigger agent registration befor we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
 
@@ -1304,7 +1370,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(failedCredential),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1315,7 +1381,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -1350,7 +1416,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(failedCredential),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1395,6 +1461,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
   ASSERT_SOME(slave);
 
   AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
+  AWAIT_READY(sourceId);
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -1411,7 +1482,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
         master.get()->pid,
         "create-volumes",
         None(),
-        createRequestBody(sourceId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1422,7 +1493,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
         master.get()->pid,
         "destroy-volumes",
         None(),
-        createRequestBody(sourceId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1452,6 +1523,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources volume = createPersistentVolume(
       Megabytes(64),
       "role1",
@@ -1477,7 +1553,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1511,6 +1587,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
   string body = "slaveId=" + sourceId->value;
 
@@ -1533,7 +1614,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1567,6 +1648,11 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1656,7 +1742,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -1683,7 +1769,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, unreserveResponse);
 
@@ -1728,6 +1814,11 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   // Make a dynamic reservation for 512MB of disk.
@@ -1740,7 +1831,7 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1758,7 +1849,7 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1840,22 +1931,26 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
-  Future<SourceID> slave1Id;
+  Future<SourceID> source1Id;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slave1Id)));
+                    FutureArg<0>(&source1Id)));
 
   slave::Flags slave1Flags = CreateSlaveFlags();
   slave1Flags.resources = "cpus:4";
   Try<Owned<cluster::Slave>> slave1 = StartSlave(detector.get(), slave1Flags);
 
   ASSERT_SOME(slave1);
-  AWAIT_READY(slave1Id);
+  
+  AWAIT_READY(source1Id);
+  ASSERT_EQ(SourceType::AGENT, source1Id->type);
 
-  Future<SourceID> slave2Id;
+  const SlaveID slave1Id = SlaveID(source1Id.get());
+
+  Future<SourceID> source2Id;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slave2Id)));
+                    FutureArg<0>(&source2Id)));
 
   // Each slave needs its own flags to ensure work_dirs are unique.
   slave::Flags slave2Flags = CreateSlaveFlags();
@@ -1863,7 +1958,11 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
   Try<Owned<cluster::Slave>> slave2 = StartSlave(detector.get(), slave2Flags);
 
   ASSERT_SOME(slave2);
-  AWAIT_READY(slave2Id);
+
+  AWAIT_READY(source2Id);
+  ASSERT_EQ(SourceType::AGENT, source2Id->type);
+
+  const SlaveID slave2Id = SlaveID(source2Id.get());
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1877,7 +1976,7 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slave1Id.get(), "resources", slave1Reserved));
+      createRequestBody(slave2Id, "resources", slave1Reserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1916,10 +2015,9 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
     const Offer& offer = offers.get()[i];
     const SourceID& offeredSlaveId = offer.slave_id();
 
-    ASSERT_TRUE(offeredSlaveId == slave1Id.get() ||
-                offeredSlaveId == slave2Id.get());
+    ASSERT_TRUE(offeredSlaveId == slave1Id || offeredSlaveId == slave2Id);
 
-    if (offeredSlaveId == slave2Id.get()) {
+    if (offeredSlaveId == slave2Id) {
       driver.acceptOffers({offer.id()}, {RESERVE(slave2Reserved)});
       break;
     }
@@ -1951,7 +2049,7 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slave1Id.get(), "resources", slave1Reserved));
+      createRequestBody(slave1Id, "resources", slave1Reserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1985,6 +2083,11 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512;disk:1024").get();
@@ -1996,7 +2099,7 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -2013,7 +2116,7 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 

@@ -45,6 +45,7 @@ using std::vector;
 using google::protobuf::RepeatedPtrField;
 
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceType;
 
 using mesos::internal::master::Master;
 using mesos::internal::protobuf::createLabel;
@@ -124,6 +125,11 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -135,7 +141,7 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -181,7 +187,7 @@ TEST_F(ReservationEndpointsTest, AvailableResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -223,6 +229,10 @@ TEST_F(ReservationEndpointsTest, ReserveOfferedResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -261,7 +271,7 @@ TEST_F(ReservationEndpointsTest, ReserveOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -298,6 +308,10 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -309,7 +323,7 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -344,7 +358,7 @@ TEST_F(ReservationEndpointsTest, UnreserveOfferedResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -385,6 +399,10 @@ TEST_F(ReservationEndpointsTest, ReserveAvailableAndOfferedResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources available = Resources::parse("cpus:1;mem:128").get();
@@ -487,7 +505,7 @@ TEST_F(ReservationEndpointsTest, ReserveAvailableAndOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -539,6 +557,10 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources available = Resources::parse("cpus:1;mem:128").get();
@@ -558,7 +580,7 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), total));
+      createRequestBody(slaveId, total));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -654,7 +676,7 @@ TEST_F(ReservationEndpointsTest, UnreserveAvailableAndOfferedResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), total));
+      createRequestBody(slaveId, total));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -707,6 +729,10 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Labels labels1;
@@ -728,7 +754,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), labeledResources1));
+      createRequestBody(slaveId, labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -736,7 +762,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), labeledResources2));
+      createRequestBody(slaveId, labeledResources2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -775,7 +801,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), labeledResources1));
+      createRequestBody(slaveId, labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -800,7 +826,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), labeledResources1));
+      createRequestBody(slaveId, labeledResources1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 
@@ -815,7 +841,7 @@ TEST_F(ReservationEndpointsTest, LabeledResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), labeledResources2));
+      createRequestBody(slaveId, labeledResources2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -922,6 +948,10 @@ TEST_F(ReservationEndpointsTest, InsufficientResources)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:4;mem:4096").get();
@@ -930,7 +960,7 @@ TEST_F(ReservationEndpointsTest, InsufficientResources)
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
-  string body = createRequestBody(sourceId.get(), dynamicallyReserved);
+  string body = createRequestBody(slaveId, dynamicallyReserved);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "reserve", headers, body);
@@ -963,6 +993,10 @@ TEST_F(ReservationEndpointsTest, NoHeader)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -974,7 +1008,7 @@ TEST_F(ReservationEndpointsTest, NoHeader)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -984,7 +1018,7 @@ TEST_F(ReservationEndpointsTest, NoHeader)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1012,6 +1046,10 @@ TEST_F(ReservationEndpointsTest, BadCredentials)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
   Credential credential;
   credential.set_principal("bad-principal");
   credential.set_secret("bad-secret");
@@ -1021,7 +1059,7 @@ TEST_F(ReservationEndpointsTest, BadCredentials)
       "role", createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
 
   process::http::Headers headers = createBasicAuthHeaders(credential);
-  string body = createRequestBody(sourceId.get(), dynamicallyReserved);
+  string body = createRequestBody(slaveId, dynamicallyReserved);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "reserve", headers, body);
@@ -1085,6 +1123,11 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -1097,7 +1140,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1106,7 +1149,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveAndUnreserveACL)
       master.get()->pid,
       "unreserve",
       headers,
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1147,6 +1190,11 @@ TEST_F(ReservationEndpointsTest, GoodReserveACLMultipleRoles)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
   Resources dynamicallyReserved1 = unreserved.flatten(
       "jedi_master",
@@ -1162,7 +1210,7 @@ TEST_F(ReservationEndpointsTest, GoodReserveACLMultipleRoles)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReservedMultipleRoles));
+      createRequestBody(slaveId, dynamicallyReservedMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1208,6 +1256,11 @@ TEST_F(ReservationEndpointsTest, BadReserveACL)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -1220,7 +1273,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   // Expect a failed authorization.
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
@@ -1267,6 +1320,11 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -1279,7 +1337,7 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
       master.get()->pid,
       "reserve",
       headers,
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1288,7 +1346,7 @@ TEST_F(ReservationEndpointsTest, BadUnreserveACL)
       master.get()->pid,
       "unreserve",
       headers,
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   // Expect a failed authorization.
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
@@ -1340,6 +1398,11 @@ TEST_F(ReservationEndpointsTest, BadReserveACLMultipleRoles)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
   Resources dynamicallyReserved1 = unreserved.flatten(
       AUTHORIZED_ROLE,
@@ -1355,7 +1418,7 @@ TEST_F(ReservationEndpointsTest, BadReserveACLMultipleRoles)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReservedMultipleRoles));
+      createRequestBody(slaveId, dynamicallyReservedMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
 }
@@ -1447,6 +1510,11 @@ TEST_F(ReservationEndpointsTest, NonMatchingPrincipal)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
   Resources dynamicallyReserved =
     unreserved.flatten("role", createReservationInfo("badPrincipal")).get();
@@ -1455,7 +1523,7 @@ TEST_F(ReservationEndpointsTest, NonMatchingPrincipal)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved));
+      createRequestBody(slaveId, dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, response);
 }
@@ -1497,6 +1565,11 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   // Advance the clock to trigger both agent registration and a batch
   // allocation.
   Clock::advance(slaveFlags.registration_backoff_factor);
@@ -1514,7 +1587,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReservedWithNoPrincipal));
+      createRequestBody(slaveId, dynamicallyReservedWithNoPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1524,7 +1597,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReservedWithNoPrincipal));
+      createRequestBody(slaveId, dynamicallyReservedWithNoPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1538,7 +1611,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "reserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReservedWithPrincipal));
+      createRequestBody(slaveId, dynamicallyReservedWithPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1548,7 +1621,7 @@ TEST_F(ReservationEndpointsTest, ReserveAndUnreserveNoAuthentication)
       master.get()->pid,
       "unreserve",
       None(),
-      createRequestBody(sourceId.get(), dynamicallyReservedWithPrincipal));
+      createRequestBody(slaveId, dynamicallyReservedWithPrincipal));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1578,6 +1651,11 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
   Resources unreserved = Resources::parse("cpus:1;mem:512").get();
@@ -1593,7 +1671,7 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(sourceId.get(), dynamicallyReserved1));
+      createRequestBody(slaveId, dynamicallyReserved1));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1601,7 +1679,7 @@ TEST_F(ReservationEndpointsTest, DifferentPrincipalsSameRole)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-      createRequestBody(sourceId.get(), dynamicallyReserved2));
+      createRequestBody(slaveId, dynamicallyReserved2));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1659,6 +1737,11 @@ TEST_F(ReservationEndpointsTest, AgentStateEndpointResources)
   Try<Owned<cluster::Slave>> agent = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(agent);
 
+  AWAIT_READY(sourceId);
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+
+  const SlaveID slaveId = SlaveID(sourceId.get());
+
   Resources unreserved = Resources::parse("cpus:1;mem:512;disk:1024").get();
   Resources dynamicallyReserved = unreserved.flatten(
       "role1",
@@ -1672,7 +1755,7 @@ TEST_F(ReservationEndpointsTest, AgentStateEndpointResources)
         master.get()->pid,
         "reserve",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-        createRequestBody(sourceId.get(), dynamicallyReserved));
+        createRequestBody(slaveId, dynamicallyReserved));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }

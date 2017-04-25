@@ -64,6 +64,7 @@ using mesos::internal::slave::AGENT_CAPABILITIES;
 using mesos::allocator::Allocator;
 using mesos::allocator::SourceID;
 using mesos::allocator::SourceInfo;
+using mesos::allocator::SourceType;
 
 using process::Clock;
 using process::Future;
@@ -3828,12 +3829,12 @@ TEST_F(HierarchicalAllocatorTest, UpdateWeight)
         // Recover the allocated resources so they can be offered
         // again next time.
         foreachkey (const string& role, allocation->resources) {
-          foreachpair (const SlaveID& slaveId,
+          foreachpair (const SourceID& sourceId,
                        const Resources& resources,
                        allocation->resources.at(role)) {
           allocator->recoverResources(
               allocation->frameworkId,
-              slaveId,
+              sourceId,
               resources,
               None());
           }
@@ -4545,10 +4546,13 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
       const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
-                   const Resources& resources,
-                   resources_.at(role)) {
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+      foreachpair (
+          const SourceID& sourceId,
+          const Resources& resources,
+          resources_.at(role)) {
+        CHECK(sourceId.type == SourceType::AGENT);
+        offers.push_back(
+            OfferedResources{frameworkId, SlaveID(sourceId), resources});
       }
     }
   };
@@ -4698,10 +4702,13 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
       const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
-                   const Resources& resources,
-                   resources_.at(role)) {
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+      foreachpair (
+          const SourceID& sourceId,
+          const Resources& resources,
+          resources_.at(role)) {
+        CHECK(sourceId.type == SourceType::AGENT);
+        offers.push_back(
+            OfferedResources{frameworkId, SlaveID(sourceId), resources});
       }
     }
   };
@@ -4871,10 +4878,13 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
       const hashmap<string, hashmap<SourceID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
-                   const Resources& resources,
-                   resources_.at(role)) {
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+      foreachpair (
+          const SourceID& sourceId,
+          const Resources& resources,
+          resources_.at(role)) {
+        CHECK(sourceId.type == SourceType::AGENT);
+        offers.push_back(
+            OfferedResources{frameworkId, SlaveID(sourceId), resources});
       }
     }
   };

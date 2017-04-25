@@ -64,6 +64,7 @@
 namespace http = process::http;
 
 using mesos::allocator::SourceID;
+using mesos::allocator::SourceType;
 
 using mesos::master::detector::MasterDetector;
 using mesos::master::detector::StandaloneMasterDetector;
@@ -994,7 +995,10 @@ TEST_P(MasterAPITest, ReserveResources)
   v1::master::Call::ReserveResources* reserveResources =
     v1Call.mutable_reserve_resources();
 
-  reserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+  reserveResources->mutable_agent_id()->CopyFrom(
+      evolve(SlaveID(sourceId.get())));
+
   reserveResources->mutable_resources()->CopyFrom(evolve(dynamicallyReserved));
 
   ContentType contentType = GetParam();
@@ -1059,7 +1063,10 @@ TEST_P(MasterAPITest, UnreserveResources)
   v1::master::Call::ReserveResources* reserveResources =
     v1Call.mutable_reserve_resources();
 
-  reserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+  reserveResources->mutable_agent_id()->CopyFrom(
+      evolve(SlaveID(sourceId.get())));
+
   reserveResources->mutable_resources()->CopyFrom(evolve(dynamicallyReserved));
 
   ContentType contentType = GetParam();
@@ -1105,7 +1112,9 @@ TEST_P(MasterAPITest, UnreserveResources)
   v1::master::Call::UnreserveResources* unreserveResources =
     v1Call.mutable_unreserve_resources();
 
-  unreserveResources->mutable_agent_id()->CopyFrom(evolve(sourceId.get()));
+  ASSERT_EQ(SourceType::AGENT, sourceId->type);
+  unreserveResources->mutable_agent_id()->CopyFrom(
+      evolve(SlaveID(sourceId.get())));
 
   unreserveResources->mutable_resources()->CopyFrom(
       evolve(dynamicallyReserved));

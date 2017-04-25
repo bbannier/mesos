@@ -130,6 +130,7 @@ namespace master {
 using mesos::allocator::Allocator;
 using mesos::allocator::SourceID;
 using mesos::allocator::SourceInfo;
+using mesos::allocator::SourceType;
 
 using mesos::authorization::createSubject;
 
@@ -6993,10 +6994,10 @@ void Master::offer(
                  << " has terminated or is inactive";
 
     foreachkey (const string& role, resources) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const SourceID& sourceId,
                    const Resources& offered,
                    resources.at(role)) {
-        allocator->recoverResources(frameworkId, slaveId, offered, None());
+        allocator->recoverResources(frameworkId, sourceId, offered, None());
       }
     }
     return;
@@ -7009,17 +7010,24 @@ void Master::offer(
   ResourceOffersMessage message;
 
   foreachkey (const string& role, resources) {
-    foreachpair (const SlaveID& slaveId,
+    foreachpair (const SourceID& sourceId,
                  const Resources& offered,
                  resources.at(role)) {
+      // FIXME(bbannier): handle offers from resource providers.
+      if (sourceId.type != SourceType::AGENT) {
+        continue;
+      }
+
+      const SlaveID slaveId = SlaveID(sourceId);
+
       Slave* slave = slaves.registered.get(slaveId);
 
       if (slave == nullptr) {
         LOG(WARNING)
           << "Master returning resources offered to framework " << *framework
-          << " because agent " << slaveId << " is not valid";
+          << " because agent " << sourceId << " is not valid";
 
-        allocator->recoverResources(frameworkId, slaveId, offered, None());
+        allocator->recoverResources(frameworkId, sourceId, offered, None());
         continue;
       }
 
@@ -7155,9 +7163,16 @@ void Master::inverseOffer(
   InverseOffersMessage message;
 
   Framework* framework = CHECK_NOTNULL(frameworks.registered[frameworkId]);
-  foreachpair (const SlaveID& slaveId,
+  foreachpair (const SourceID& sourceId,
                const UnavailableResources& unavailableResources,
                resources) {
+    // FIXME(bbannier): handle inverse offers from resource providers.
+    if (sourceId.type != SourceType::AGENT) {
+      continue;
+    }
+
+    const SlaveID slaveId = SlaveID(sourceId);
+
     Slave* slave = slaves.registered.get(slaveId);
 
     if (slave == nullptr) {

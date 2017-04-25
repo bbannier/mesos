@@ -79,6 +79,11 @@ public:
     return true;
   }
 
+  friend bool operator!=(const SourceID& left, const SourceID& right)
+  {
+    return !(left == right);
+  }
+
   friend std::ostream& operator<<(
       std::ostream& stream,
       const SourceID& sourceId)
@@ -86,14 +91,20 @@ public:
     return stream << sourceId.value;
   }
 
-  // FIXME(bbannier): This is a transient helper function. Remove it
-  // once the users it have been update.
-  /*implicit*/ operator SlaveID() const
+  explicit operator SlaveID() const
   {
     CHECK(type == SourceType::AGENT);
     SlaveID slaveId;
     slaveId.set_value(value);
     return slaveId;
+  }
+
+  explicit operator ResourceProviderID() const
+  {
+    CHECK(type == SourceType::RESOURCE_PROVIDER);
+    ResourceProviderID resourceProviderId;
+    resourceProviderId.set_value(value);
+    return resourceProviderId;
   }
 };
 
@@ -134,7 +145,8 @@ public:
   std::vector<SlaveInfo::Capability> capabilities;
   Option<std::string> hostname;
 
-  friend bool operator==(const SourceInfo& left, const SourceInfo& right) {
+  friend bool operator==(const SourceInfo& left, const SourceInfo& right)
+  {
     if (left.id != right.id) {
       return false;
     }
@@ -144,6 +156,11 @@ public:
     }
 
     return true;
+  }
+
+  friend bool operator!=(const SourceInfo& left, const SourceInfo& right)
+  {
+    return !(left == right);
   }
 };
 
