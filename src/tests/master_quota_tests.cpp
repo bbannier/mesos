@@ -580,28 +580,31 @@ TEST_F(MasterQuotaTest, InsufficientResourcesSingleAgent)
   ASSERT_SOME(master);
 
   // Start an agent and wait until its resources are available.
-  Future<Resources> agentTotalResources;
+  Future<Option<SlaveInfo>> agentInfo;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agentTotalResources)));
+                    FutureArg<3>(&agentInfo)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
-  AWAIT_READY(agentTotalResources);
-  EXPECT_EQ(defaultAgentResources, agentTotalResources.get());
+  AWAIT_READY(agentInfo);
+  ASSERT_SOME(agentInfo.get());
+  const Resources agentTotalResources = agentInfo.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agentTotalResources);
 
   // Our quota request requires more resources than available on the agent
   // (and in the cluster).
   Resources quotaResources =
-    agentTotalResources->filter(
+    agentTotalResources.filter(
         [=](const Resource& resource) {
           return (resource.name() == "cpus" || resource.name() == "mem");
         }) +
     Resources::parse("cpus:1;mem:1024").get();
 
-  EXPECT_FALSE(agentTotalResources->contains(quotaResources));
+  EXPECT_FALSE(agentTotalResources.contains(quotaResources));
 
   // Since there are not enough resources in the cluster, `capacityHeuristic`
   // check fails rendering the request unsuccessful.
@@ -642,42 +645,48 @@ TEST_F(MasterQuotaTest, InsufficientResourcesMultipleAgents)
   ASSERT_SOME(master);
 
   // Start one agent and wait until its resources are available.
-  Future<Resources> agent1TotalResources;
+  Future<Option<SlaveInfo>> agent1Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent1TotalResources)));
+                    FutureArg<3>(&agent1Info)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave1 = StartSlave(detector.get());
   ASSERT_SOME(slave1);
 
-  AWAIT_READY(agent1TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent1TotalResources.get());
+  AWAIT_READY(agent1Info);
+  ASSERT_SOME(agent1Info.get());
+  const Resources agent1TotalResources = agent1Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent1TotalResources);
 
   // Start another agent and wait until its resources are available.
-  Future<Resources> agent2TotalResources;
+  Future<Option<SlaveInfo>> agent2Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent2TotalResources)));
+                    FutureArg<3>(&agent2Info)));
 
   Try<Owned<cluster::Slave>> slave2 = StartSlave(detector.get());
   ASSERT_SOME(slave2);
 
-  AWAIT_READY(agent2TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent2TotalResources.get());
+  AWAIT_READY(agent2Info);
+  ASSERT_SOME(agent2Info.get());
+  const Resources agent2TotalResources = agent2Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent2TotalResources);
 
   // Our quota request requires more resources than available on the agent
   // (and in the cluster).
   Resources quotaResources =
-    agent1TotalResources->filter([=](const Resource& resource) {
+    agent1TotalResources.filter([=](const Resource& resource) {
       return (resource.name() == "cpus" || resource.name() == "mem");
     }) +
-    agent2TotalResources->filter([=](const Resource& resource) {
+    agent2TotalResources.filter([=](const Resource& resource) {
       return (resource.name() == "cpus" || resource.name() == "mem");
     }) +
     Resources::parse("cpus:1;mem:1024").get();
 
-  EXPECT_FALSE((agent1TotalResources.get() + agent2TotalResources.get())
+  EXPECT_FALSE((agent1TotalResources + agent2TotalResources)
     .contains(quotaResources));
 
   // Since there are not enough resources in the cluster, `capacityHeuristic`
@@ -719,21 +728,24 @@ TEST_F(MasterQuotaTest, AvailableResourcesSingleAgent)
   ASSERT_SOME(master);
 
   // Start an agent and wait until its resources are available.
-  Future<Resources> agentTotalResources;
+  Future<Option<SlaveInfo>> agentInfo;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agentTotalResources)));
+                    FutureArg<3>(&agentInfo)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
-  AWAIT_READY(agentTotalResources);
-  EXPECT_EQ(defaultAgentResources, agentTotalResources.get());
+  AWAIT_READY(agentInfo);
+  ASSERT_SOME(agentInfo.get());
+  const Resources agentTotalResources = agentInfo.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agentTotalResources);
 
   // We request quota for a portion of resources available on the agent.
   Resources quotaResources = Resources::parse("cpus:1;mem:512").get();
-  EXPECT_TRUE(agentTotalResources->contains(quotaResources));
+  EXPECT_TRUE(agentTotalResources.contains(quotaResources));
 
   // Send a quota request for the specified role.
   Future<Quota> receivedQuotaRequest;
@@ -769,37 +781,42 @@ TEST_F(MasterQuotaTest, AvailableResourcesMultipleAgents)
   ASSERT_SOME(master);
 
   // Start one agent and wait until its resources are available.
-  Future<Resources> agent1TotalResources;
+  Future<Option<SlaveInfo>> agent1Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent1TotalResources)));
+                    FutureArg<3>(&agent1Info)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave1 = StartSlave(detector.get());
   ASSERT_SOME(slave1);
 
-  AWAIT_READY(agent1TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent1TotalResources.get());
+  AWAIT_READY(agent1Info);
+  ASSERT_SOME(agent1Info.get());
+  const Resources agent1TotalResources = agent1Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent1TotalResources);
 
   // Start another agent and wait until its resources are available.
-  Future<Resources> agent2TotalResources;
+  Future<Option<SlaveInfo>> agent2Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent2TotalResources)));
+                    FutureArg<3>(&agent2Info)));
 
   Try<Owned<cluster::Slave>> slave2 = StartSlave(detector.get());
   ASSERT_SOME(slave2);
 
-  AWAIT_READY(agent2TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent2TotalResources.get());
+  AWAIT_READY(agent2Info);
+  ASSERT_SOME(agent2Info.get());
+  const Resources agent2TotalResources = agent2Info.get()->resources();
+  EXPECT_EQ(defaultAgentResources, agent2TotalResources);
 
   // We request quota for a portion of resources, which is not available
   // on a single agent.
   Resources quotaResources =
-    agent1TotalResources->filter([=](const Resource& resource) {
+    agent1TotalResources.filter([=](const Resource& resource) {
       return (resource.name() == "cpus" || resource.name() == "mem");
     }) +
-    agent2TotalResources->filter([=](const Resource& resource) {
+    agent2TotalResources.filter([=](const Resource& resource) {
       return (resource.name() == "cpus" || resource.name() == "mem");
     });
 
@@ -838,41 +855,50 @@ TEST_F(MasterQuotaTest, AvailableResourcesAfterRescinding)
   ASSERT_SOME(master);
 
   // Start one agent and wait until its resources are available.
-  Future<Resources> agent1TotalResources;
+  Future<Option<SlaveInfo>> agent1Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent1TotalResources)));
+                    FutureArg<3>(&agent1Info)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave1 = StartSlave(detector.get());
   ASSERT_SOME(slave1);
 
-  AWAIT_READY(agent1TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent1TotalResources.get());
+  AWAIT_READY(agent1Info);
+  ASSERT_SOME(agent1Info.get());
+  const Resources agent1TotalResources = agent1Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent1TotalResources);
 
   // Start another agent and wait until its resources are available.
-  Future<Resources> agent2TotalResources;
+  Future<Option<SlaveInfo>> agent2Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent2TotalResources)));
+                    FutureArg<3>(&agent2Info)));
 
   Try<Owned<cluster::Slave>> slave2 = StartSlave(detector.get());
   ASSERT_SOME(slave2);
 
-  AWAIT_READY(agent2TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent2TotalResources.get());
+  AWAIT_READY(agent2Info);
+  ASSERT_SOME(agent2Info.get());
+  const Resources agent2TotalResources = agent2Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent2TotalResources);
 
   // Start one more agent and wait until its resources are available.
-  Future<Resources> agent3TotalResources;
+  Future<Option<SlaveInfo>> agent3Info;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agent3TotalResources)));
+                    FutureArg<3>(&agent3Info)));
 
   Try<Owned<cluster::Slave>> slave3 = StartSlave(detector.get());
   ASSERT_SOME(slave3);
 
-  AWAIT_READY(agent3TotalResources);
-  EXPECT_EQ(defaultAgentResources, agent3TotalResources.get());
+  AWAIT_READY(agent3Info);
+  ASSERT_SOME(agent3Info.get());
+  const Resources agent3TotalResources = agent3Info.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agent3TotalResources);
 
   // We start with the following cluster setup.
   // Total cluster resources (3 identical agents): cpus=6, mem=3072.
@@ -1782,17 +1808,20 @@ TEST_F(MasterQuotaTest, DISABLED_ClusterCapacityWithNestedRoles)
   ASSERT_SOME(master);
 
   // Start an agent and wait until its resources are available.
-  Future<Resources> agentTotalResources;
+  Future<Option<SlaveInfo>> agentInfo;
   EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
     .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<4>(&agentTotalResources)));
+                    FutureArg<3>(&agentInfo)));
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get());
   ASSERT_SOME(slave);
 
-  AWAIT_READY(agentTotalResources);
-  EXPECT_EQ(defaultAgentResources, agentTotalResources.get());
+  AWAIT_READY(agentInfo);
+  ASSERT_SOME(agentInfo.get());
+  const Resources agentTotalResources = agentInfo.get()->resources();
+
+  EXPECT_EQ(defaultAgentResources, agentTotalResources);
 
   const string PARENT_ROLE1 = "eng";
   const string PARENT_ROLE2 = "sales";
