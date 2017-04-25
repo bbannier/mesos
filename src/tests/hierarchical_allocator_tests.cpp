@@ -81,13 +81,31 @@ namespace mesos {
 namespace internal {
 namespace tests {
 
+// FIXME(bbannier): this is transient helper function which should be removed.
+ResourceProviderID resourceProviderId(const SlaveID& slaveId)
+{
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value(slaveId.value());
+  return resourceProviderId;
+}
+
+// FIXME(bbannier): this is transient helper function which should be removed.
+ResourceProviderInfo resourceProviderInfo(const SlaveInfo& slaveInfo)
+{
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->set_value(slaveInfo.id().value());
+  resourceProviderInfo.mutable_resources()->CopyFrom(slaveInfo.resources());
+  return resourceProviderInfo;
+}
+
+
 struct Allocation
 {
   Allocation() = default;
 
   Allocation(
       const FrameworkID& frameworkId_,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>& resources_)
     : frameworkId(frameworkId_),
       resources(resources_)
   {
@@ -100,7 +118,7 @@ struct Allocation
   }
 
   FrameworkID frameworkId;
-  hashmap<string, hashmap<SlaveID, Resources>> resources;
+  hashmap<string, hashmap<ResourceProviderID, Resources>> resources;
 };
 
 
@@ -122,7 +140,7 @@ ostream& operator<<(ostream& stream, const Allocation& allocation)
 struct Deallocation
 {
   FrameworkID frameworkId;
-  hashmap<SlaveID, UnavailableResources> resources;
+  hashmap<ResourceProviderID, UnavailableResources> resources;
 };
 
 
@@ -138,7 +156,6 @@ protected:
   {
     delete allocator;
   }
-
   void initialize(
       const master::Flags& _flags = master::Flags(),
       Option<lambda::function<void(
@@ -159,30 +176,7 @@ protected:
             resources) {
         Allocation allocation;
         allocation.frameworkId = frameworkId;
-
-        // We still show agent ids to users, so transform the
-        // allocations from ResourceProviderID-based to SlaveID-based.
-        //
-        // TODO(bbannier): Remove this code once all users are
-        // ResourceProviderID-based.
-        hashmap<string, hashmap<SlaveID, Resources>> resources_;
-
-        foreachpair (const string& role, auto&& allocations, resources) {
-          hashmap<SlaveID, Resources> allocation_;
-          foreachpair (
-              const ResourceProviderID& resourceProviderId,
-              const Resources& _resources,
-              allocations) {
-            SlaveID agentId;
-            agentId.set_value(resourceProviderId.value());
-
-            allocation_[std::move(agentId)] = _resources;
-          }
-
-          resources_[role] = std::move(allocation_);
-        }
-
-        allocation.resources = resources_;
+        allocation.resources = resources;
 
         allocations.put(allocation);
       };
@@ -194,25 +188,7 @@ protected:
           const hashmap<ResourceProviderID, UnavailableResources>& resources) {
         Deallocation deallocation;
         deallocation.frameworkId = frameworkId;
-
-        // We still show agent ids to users, so transform the
-        // allocations from ResourceProviderID-based to SlaveID-based.
-        //
-        // TODO(bbannier): Remove this code once all users are
-        // ResourceProviderID-based.
-        hashmap<SlaveID, UnavailableResources> resources_;
-
-        foreachpair (
-            const ResourceProviderID& resourceProviderId,
-            const UnavailableResources& _resources,
-            resources) {
-          SlaveID agentId;
-          agentId.set_value(resourceProviderId.value());
-
-          resources_[std::move(agentId)] = _resources;
-        }
-
-        deallocation.resources = resources_;
+        deallocation.resources = resources;
 
         deallocations.put(deallocation);
       };
@@ -313,7 +289,7 @@ protected:
   // TODO(bbannier): Remove this helper and replace its uses with `{}`
   // once the transitional allocator method has completely replaced
   // the old one taking a `hasmap<SlaveID, Resources>`.
-  static hashmap<SlaveID, Resources> createEmptyUsedSet()
+  static hashmap<ResourceProviderID, Resources> createEmptyUsedSet()
   {
     return {};
   }
@@ -361,11 +337,11 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo slave1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   // framework1 will be offered all of slave1's resources since it is
@@ -379,7 +355,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
 
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {{slave1.id(), slave1.resources()}}}});
+      {{"role1", {{resourceProviderId(slave1.id()), slave1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -400,18 +376,18 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   //   framework2 share = 0
   SlaveInfo slave2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   // framework2 will be offered all of slave2's resources since role2
   // has the lowest user share, and framework2 is its only framework.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{slave2.id(), slave2.resources()}}}});
+      {{"role2", {{resourceProviderId(slave2.id()), slave2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -427,18 +403,18 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   //   framework2 share = 1
   SlaveInfo slave3 = createSlaveInfo("cpus:3;mem:2048;disk:0");
   allocator->addSlave(
-      slave3.id(),
-      slave3,
+      resourceProviderId(slave3.id()),
+      resourceProviderInfo(slave3),
       AGENT_CAPABILITIES(),
+      slave3,
       None(),
-      slave3.resources(),
       {});
 
   // framework2 will be offered all of slave3's resources since role2
   // has the lowest share.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{slave3.id(), slave3.resources()}}}});
+      {{"role2", {{resourceProviderId(slave3.id()), slave3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -462,11 +438,11 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   //   framework2 share = 1
   SlaveInfo slave4 = createSlaveInfo("cpus:4;mem:4096;disk:0");
   allocator->addSlave(
-      slave4.id(),
-      slave4,
+      resourceProviderId(slave4.id()),
+      resourceProviderInfo(slave4),
       AGENT_CAPABILITIES(),
+      slave4,
       None(),
-      slave4.resources(),
       {});
 
   // framework3 will be offered all of slave4's resources since role1
@@ -474,7 +450,7 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   // role1's frameworks.
   expected = Allocation(
       framework3.id(),
-      {{"role1", {{slave4.id(), slave4.resources()}}}});
+      {{"role1", {{resourceProviderId(slave4.id()), slave4.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -500,18 +476,18 @@ TEST_F(HierarchicalAllocatorTest, UnreservedDRF)
   //   framework2 share = 1
   SlaveInfo slave5 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      slave5.id(),
-      slave5,
+      resourceProviderId(slave5.id()),
+      resourceProviderInfo(slave5),
       AGENT_CAPABILITIES(),
+      slave5,
       None(),
-      slave5.resources(),
       {});
 
   // Even though framework4 doesn't have any resources, role2 has a
   // lower share than role1, so framework2 receives slave5's resources.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{slave5.id(), slave5.resources()}}}});
+      {{"role2", {{resourceProviderId(slave5.id()), slave5.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -531,11 +507,11 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
       "cpus:1;mem:512;disk:0;"
       "cpus(role1):100;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   // framework1 will be offered all of the resources.
@@ -548,7 +524,7 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
 
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {{slave1.id(), slave1.resources()}}}});
+      {{"role1", {{resourceProviderId(slave1.id()), slave1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -562,16 +538,16 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
   // framework2 will be allocated the new resources.
   SlaveInfo slave2 = createSlaveInfo("cpus:2;mem:512;disk:0");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{slave2.id(), slave2.resources()}}}});
+      {{"role2", {{resourceProviderId(slave2.id()), slave2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -579,16 +555,16 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
   // We expect `framework2` to receive this agent's resources.
   SlaveInfo slave3 = createSlaveInfo("cpus:2;mem:512;disk:0");
   allocator->addSlave(
-      slave3.id(),
-      slave3,
+      resourceProviderId(slave3.id()),
+      resourceProviderInfo(slave3),
       AGENT_CAPABILITIES(),
+      slave3,
       None(),
-      slave3.resources(),
       {});
 
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{slave3.id(), slave3.resources()}}}});
+      {{"role2", {{resourceProviderId(slave3.id()), slave3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -606,16 +582,16 @@ TEST_F(HierarchicalAllocatorTest, ReservedDRF)
   SlaveInfo slave4 = createSlaveInfo(
       "cpus(role1):2;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
-      slave4.id(),
-      slave4,
+      resourceProviderId(slave4.id()),
+      resourceProviderInfo(slave4),
       AGENT_CAPABILITIES(),
+      slave4,
       None(),
-      slave4.resources(),
       {});
 
   expected = Allocation(
       framework3.id(),
-      {{"role1", {{slave4.id(), slave4.resources()}}}});
+      {{"role1", {{resourceProviderId(slave4.id()), slave4.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -644,11 +620,11 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   // Total cluster resources will become cpus=2, mem=1024, gpus=1.
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:1024;disk:0;gpus:1");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   // framework1 will be offered all of agent1's resources since it is
@@ -664,7 +640,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
 
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {{agent1.id(), agent1.resources()}}}});
+      {{"role1", {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -685,18 +661,18 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   //   framework2 share = 0
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // framework2 will be offered all of agent2's resources since role2
   // has the lowest user share, and framework2 is its only framework.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{agent2.id(), agent2.resources()}}}});
+      {{"role2", {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -712,18 +688,18 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   //   framework2 share = 1
   SlaveInfo agent3 = createSlaveInfo("cpus:3;mem:2048;disk:0");
   allocator->addSlave(
-      agent3.id(),
-      agent3,
+      resourceProviderId(agent3.id()),
+      resourceProviderInfo(agent3),
       AGENT_CAPABILITIES(),
+      agent3,
       None(),
-      agent3.resources(),
       {});
 
   // framework2 will be offered all of agent3's resources since role2
   // has the lowest share.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{agent3.id(), agent3.resources()}}}});
+      {{"role2", {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -747,11 +723,11 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   //   framework2 share = 1
   SlaveInfo agent4 = createSlaveInfo("cpus:4;mem:4096;disk:0");
   allocator->addSlave(
-      agent4.id(),
-      agent4,
+      resourceProviderId(agent4.id()),
+      resourceProviderInfo(agent4),
       AGENT_CAPABILITIES(),
+      agent4,
       None(),
-      agent4.resources(),
       {});
 
   // framework3 will be offered all of agent4's resources since role1
@@ -759,7 +735,7 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   // role1's frameworks.
   expected = Allocation(
       framework3.id(),
-      {{"role1", {{agent4.id(), agent4.resources()}}}});
+      {{"role1", {{resourceProviderId(agent4.id()), agent4.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -785,18 +761,18 @@ TEST_F(HierarchicalAllocatorTest, DRFWithFairnessExclusion)
   //   framework2 share = 1
   SlaveInfo agent5 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent5.id(),
-      agent5,
+      resourceProviderId(agent5.id()),
+      resourceProviderInfo(agent5),
       AGENT_CAPABILITIES(),
+      agent5,
       None(),
-      agent5.resources(),
       {});
 
   // Even though framework4 doesn't have any resources, role2 has a
   // lower share than role1, so framework2 receives agent5's resources.
   expected = Allocation(
       framework2.id(),
-      {{"role2", {{agent5.id(), agent5.resources()}}}});
+      {{"role2", {{resourceProviderId(agent5.id()), agent5.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -816,11 +792,11 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleDRF)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo slave1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   // framework1 will be offered all of slave1's resources since it is
@@ -835,7 +811,7 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleDRF)
   {
     Allocation expected = Allocation(
         framework1.id(),
-        {{"a/b", {{slave1.id(), slave1.resources()}}}});
+        {{"a/b", {{resourceProviderId(slave1.id()), slave1.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -867,17 +843,17 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleDRF)
   // Total cluster resources will become cpus=3, mem=1536.
   SlaveInfo slave2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   {
     Allocation expected = Allocation(
         framework3.id(),
-        {{"d/e", {{slave2.id(), slave2.resources()}}}});
+        {{"d/e", {{resourceProviderId(slave2.id()), slave2.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -906,17 +882,17 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleDRF)
   // Total cluster resources will become cpus=5, mem=2560.
   SlaveInfo slave3 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave3.id(),
-      slave3,
+      resourceProviderId(slave3.id()),
+      resourceProviderInfo(slave3),
       AGENT_CAPABILITIES(),
+      slave3,
       None(),
-      slave3.resources(),
       {});
 
   {
     Allocation expected = Allocation(
         framework4.id(),
-        {{"d/f", {{slave3.id(), slave3.resources()}}}});
+        {{"d/f", {{resourceProviderId(slave3.id()), slave3.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -958,18 +934,18 @@ TEST_F(HierarchicalAllocatorTest, OfferFilter)
 
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // `framework` will be offered all of `agent` resources
   // because it is the only framework in the cluster.
   Allocation expected = Allocation(
       framework.id(),
-      {{ROLE, {{agent.id(), agent.resources()}}}});
+      {{ROLE, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -982,8 +958,8 @@ TEST_F(HierarchicalAllocatorTest, OfferFilter)
 
   allocator->recoverResources(
       framework.id(),
-      agent.id(),
-      allocation->resources.at(ROLE).at(agent.id()),
+      resourceProviderId(agent.id()),
+      allocation->resources.at(ROLE).at(resourceProviderId(agent.id())),
       offerFilter);
 
   // Ensure the offer filter timeout is set before advancing the clock.
@@ -1011,7 +987,7 @@ TEST_F(HierarchicalAllocatorTest, OfferFilter)
   // The next batch allocation should offer resources to `framework1`.
   expected = Allocation(
       framework.id(),
-      {{ROLE, {{agent.id(), agent.resources()}}}});
+      {{ROLE, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 
@@ -1062,11 +1038,11 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), ROLE)}});
 
   // Process all triggered allocation events.
@@ -1082,11 +1058,11 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   // Add one more agent with some free resources.
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // Process the allocation triggered by the agent addition.
@@ -1096,7 +1072,7 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   // because its share (0) is smaller than `framework1`.
   Allocation expected = Allocation(
       framework2.id(),
-      {{ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1116,8 +1092,8 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
 
   allocator->recoverResources(
       framework2.id(),
-      agent2.id(),
-      allocation->resources.at(ROLE).at(agent2.id()),
+      resourceProviderId(agent2.id()),
+      allocation->resources.at(ROLE).at(resourceProviderId(agent2.id())),
       offerFilter);
 
   // Total cluster resources (2 agents): cpus=2, mem=1024.
@@ -1141,7 +1117,7 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   // even though its share is greater than `framework2`.
   expected = Allocation(
        framework1.id(),
-       {{ROLE, {{agent2.id(), agent2.resources()}}}});
+       {{ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1157,8 +1133,8 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   // Now `framework1` declines the offer.
   allocator->recoverResources(
       framework1.id(),
-      agent2.id(),
-      allocation->resources.at(ROLE).at(agent2.id()),
+      resourceProviderId(agent2.id()),
+      allocation->resources.at(ROLE).at(resourceProviderId(agent2.id())),
       None());
 
   // Total cluster resources (2 agents): cpus=2, mem=1024.
@@ -1172,7 +1148,7 @@ TEST_F(HierarchicalAllocatorTest, SmallOfferFilterTimeout)
   // Since the filter is removed, resources are offered to `framework2`.
   expected = Allocation(
        framework2.id(),
-       {{ROLE, {{agent2.id(), agent2.resources()}}}});
+       {{ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1198,11 +1174,11 @@ TEST_F(HierarchicalAllocatorTest, MaintenanceInverseOffers)
   // Create an agent.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // This framework will be offered all of the resources.
@@ -1216,7 +1192,7 @@ TEST_F(HierarchicalAllocatorTest, MaintenanceInverseOffers)
   // Check that the resources go to the framework.
   Allocation expected = Allocation(
       framework.id(),
-      {{"*", {{agent.id(), agent.resources()}}}});
+      {{"*", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -1224,7 +1200,7 @@ TEST_F(HierarchicalAllocatorTest, MaintenanceInverseOffers)
 
   // Give the agent some unavailability.
   allocator->updateUnavailability(
-      agent.id(),
+      resourceProviderId(agent.id()),
       protobuf::maintenance::createUnavailability(
           start));
 
@@ -1232,7 +1208,7 @@ TEST_F(HierarchicalAllocatorTest, MaintenanceInverseOffers)
   Future<Deallocation> deallocation = deallocations.get();
   AWAIT_READY(deallocation);
   EXPECT_EQ(framework.id(), deallocation->frameworkId);
-  EXPECT_TRUE(deallocation->resources.contains(agent.id()));
+  EXPECT_TRUE(deallocation->resources.contains(resourceProviderId(agent.id())));
 
   foreachvalue (
       const UnavailableResources& unavailableResources,
@@ -1261,20 +1237,20 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
 
   SlaveInfo slave1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   SlaveInfo slave2 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   // Once framework1 is added, an allocation will occur. Return the
@@ -1290,8 +1266,8 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
   Allocation expected = Allocation(
       framework1.id(),
       {{"role1", {
-          {slave1.id(), slave1.resources()},
-          {slave2.id(), slave2.resources()}}
+          {resourceProviderId(slave1.id()), slave1.resources()},
+          {resourceProviderId(slave2.id()), slave2.resources()}}
       }});
 
   Future<Allocation> allocation = allocations.get();
@@ -1299,13 +1275,13 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
 
   allocator->recoverResources(
       framework1.id(),
-      slave1.id(),
-      allocation->resources.at("role1").at(slave1.id()),
+      resourceProviderId(slave1.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave1.id())),
       None());
   allocator->recoverResources(
       framework1.id(),
-      slave2.id(),
-      allocation->resources.at("role1").at(slave2.id()),
+      resourceProviderId(slave2.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave2.id())),
       None());
 
   // Now add the second framework, we expect there to be 2 subsequent
@@ -1374,11 +1350,11 @@ TEST_F(HierarchicalAllocatorTest, SameShareFairness)
 
   SlaveInfo slave = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Ensure that the slave's resources are alternated between both
@@ -1391,7 +1367,7 @@ TEST_F(HierarchicalAllocatorTest, SameShareFairness)
 
     Allocation expected = Allocation(
         allocation->frameworkId,
-        {{"*", {{slave.id(), slave.resources()}}}});
+        {{"*", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
     EXPECT_EQ(expected, allocation.get());
 
@@ -1399,8 +1375,8 @@ TEST_F(HierarchicalAllocatorTest, SameShareFairness)
 
     allocator->recoverResources(
         allocation->frameworkId,
-        slave.id(),
-        allocation->resources.at("*").at(slave.id()),
+        resourceProviderId(slave.id()),
+        allocation->resources.at("*").at(resourceProviderId(slave.id())),
         None());
 
     Clock::advance(flags.allocation_interval);
@@ -1422,21 +1398,21 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
   SlaveInfo slave1 = createSlaveInfo(
       "cpus(role1):2;mem(role1):1024;disk(role1):0");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   SlaveInfo slave2 = createSlaveInfo(
       "cpus(role2):2;mem(role2):1024;cpus:1;mem:1024;disk:0");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   // This slave's resources should never be allocated, since there
@@ -1444,11 +1420,11 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
   SlaveInfo slave3 = createSlaveInfo(
       "cpus(role3):1;mem(role3):1024;disk(role3):0");
   allocator->addSlave(
-      slave3.id(),
-      slave3,
+      resourceProviderId(slave3.id()),
+      resourceProviderInfo(slave3),
       AGENT_CAPABILITIES(),
+      slave3,
       None(),
-      slave3.resources(),
       {});
 
   // framework1 should get all the resources from slave1, and the
@@ -1462,10 +1438,10 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
 
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {
-        {slave1.id(), slave1.resources()},
-        {slave2.id(), Resources(slave2.resources()).unreserved()}
-      }}});
+      {{"role1",
+        {{resourceProviderId(slave1.id()), slave1.resources()},
+         {resourceProviderId(slave2.id()),
+          Resources(slave2.resources()).unreserved()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -1479,9 +1455,9 @@ TEST_F(HierarchicalAllocatorTest, Reservations)
 
   expected = Allocation(
       framework2.id(),
-      {{"role2", {
-        {slave2.id(), Resources(slave2.resources()).reserved("role2")}
-      }}});
+      {{"role2",
+        {{resourceProviderId(slave2.id()),
+          Resources(slave2.resources()).reserved("role2")}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -1498,11 +1474,11 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
       "cpus(role1):1;mem(role1):200;"
       "cpus:1;mem:200;disk:0");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Initially, all the resources are allocated.
@@ -1515,20 +1491,22 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
 
   // Recover the reserved resources, expect them to be re-offered.
-  Resources reserved = allocation->resources.at("role1").at(slave.id())
-    .reserved("role1");
-  Resources unreserved = allocation->resources.at("role1").at(slave.id())
-    .unreserved();
+  Resources reserved = allocation->resources.at("role1")
+                         .at(resourceProviderId(slave.id()))
+                         .reserved("role1");
+  Resources unreserved = allocation->resources.at("role1")
+                           .at(resourceProviderId(slave.id()))
+                           .unreserved();
 
   allocator->recoverResources(
       allocation->frameworkId,
-      slave.id(),
+      resourceProviderId(slave.id()),
       reserved,
       None());
 
@@ -1536,7 +1514,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), reserved}}}});
+      {{"role1", {{resourceProviderId(slave.id()), reserved}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1544,7 +1522,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
   // Recover the unreserved resources, expect them to be re-offered.
   allocator->recoverResources(
       allocation->frameworkId,
-      slave.id(),
+      resourceProviderId(slave.id()),
       unreserved,
       None());
 
@@ -1552,7 +1530,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverResources)
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), unreserved}}}});
+      {{"role1", {{resourceProviderId(slave.id()), unreserved}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1581,11 +1559,11 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "mem:" + stringify((MIN_MEM / 2u).megabytes()) + ";"
       "disk:128");
   allocator->addSlave(
-      slave1.id(),
-      slave1,
+      resourceProviderId(slave1.id()),
+      resourceProviderInfo(slave1),
       AGENT_CAPABILITIES(),
+      slave1,
       None(),
-      slave1.resources(),
       {});
 
   // Enough cpus to be considered allocatable.
@@ -1594,16 +1572,16 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "mem:" + stringify((MIN_MEM / 2u).megabytes()) + ";"
       "disk:128");
   allocator->addSlave(
-      slave2.id(),
-      slave2,
+      resourceProviderId(slave2.id()),
+      resourceProviderInfo(slave2),
       AGENT_CAPABILITIES(),
+      slave2,
       None(),
-      slave2.resources(),
       {});
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave2.id(), slave2.resources()}}}});
+      {{"role1", {{resourceProviderId(slave2.id()), slave2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -1613,16 +1591,16 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "mem:" + stringify((MIN_MEM).megabytes()) + ";"
       "disk:128");
   allocator->addSlave(
-      slave3.id(),
-      slave3,
+      resourceProviderId(slave3.id()),
+      resourceProviderInfo(slave3),
       AGENT_CAPABILITIES(),
+      slave3,
       None(),
-      slave3.resources(),
       {});
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave3.id(), slave3.resources()}}}});
+      {{"role1", {{resourceProviderId(slave3.id()), slave3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -1635,16 +1613,16 @@ TEST_F(HierarchicalAllocatorTest, Allocatable)
       "mem(role1):" + stringify((MIN_MEM / 2u).megabytes()) + ";"
       "disk:128");
   allocator->addSlave(
-      slave4.id(),
-      slave4,
+      resourceProviderId(slave4.id()),
+      resourceProviderInfo(slave4),
       AGENT_CAPABILITIES(),
+      slave4,
       None(),
-      slave4.resources(),
       {});
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave4.id(), slave4.resources()}}}});
+      {{"role1", {{resourceProviderId(slave4.id()), slave4.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -1660,11 +1638,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Initially, all the resources are allocated.
@@ -1677,7 +1655,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1693,23 +1671,24 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
   create.mutable_create()->add_volumes()->CopyFrom(volume);
 
   // Ensure the offer operation can be applied.
-  Try<Resources> updated =
-    allocation->resources.at("role1").at(slave.id()).apply(create);
+  Try<Resources> updated = allocation->resources.at("role1")
+                             .at(resourceProviderId(slave.id()))
+                             .apply(create);
 
   ASSERT_SOME(updated);
 
   // Update the allocation in the allocator.
   allocator->updateAllocation(
       framework.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       {create});
 
   // Now recover the resources, and expect the next allocation to
   // contain the updated resources.
   allocator->recoverResources(
       framework.id(),
-      slave.id(),
+      resourceProviderId(slave.id()),
       updated.get(),
       None());
 
@@ -1719,7 +1698,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocation)
   // operation applied.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), updated.get()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), updated.get()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1736,23 +1715,22 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk(role1):100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Initially, all the resources are allocated.
   FrameworkInfo framework = createFrameworkInfo(
       {"role1"},
       {FrameworkInfo::Capability::SHARED_RESOURCES});
-  allocator->addFramework(
-      framework.id(), framework, hashmap<SlaveID, Resources>(), true);
+  allocator->addFramework(framework.id(), framework, {}, true);
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1766,23 +1744,24 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
   Offer::Operation create = CREATE(volume);
 
   // Ensure the offer operation can be applied.
-  Try<Resources> update =
-    allocation->resources.at("role1").at(slave.id()).apply(create);
+  Try<Resources> update = allocation->resources.at("role1")
+                            .at(resourceProviderId(slave.id()))
+                            .apply(create);
 
   ASSERT_SOME(update);
 
   // Update the allocation in the allocator.
   allocator->updateAllocation(
       framework.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       {create});
 
   // Now recover the resources, and expect the next allocation to
   // contain the updated resources.
   allocator->recoverResources(
       framework.id(),
-      slave.id(),
+      resourceProviderId(slave.id()),
       update.get(),
       None());
 
@@ -1792,7 +1771,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
   // operation applied.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), update.get()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), update.get()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1804,8 +1783,8 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
   // Update the allocation in the allocator.
   allocator->updateAllocation(
       framework.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       {destroy});
 
   // The resources to recover should be equal to the agent's original
@@ -1815,7 +1794,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
 
   allocator->recoverResources(
       framework.id(),
-      slave.id(),
+      resourceProviderId(slave.id()),
       update.get(),
       None());
 
@@ -1823,7 +1802,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAllocationSharedPersistentVolume)
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), update.get()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), update.get()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1840,11 +1819,11 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk(role1):100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Create `framework1` without opting in for SHARED_RESOURCES.
@@ -1858,7 +1837,7 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
   // Initially, all the resources are allocated to `framework1`.
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1871,23 +1850,24 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
   Offer::Operation create = CREATE(volume);
 
   // Ensure the offer operation can be applied.
-  Try<Resources> update =
-    allocation->resources.at("role1").at(slave.id()).apply(create);
+  Try<Resources> update = allocation->resources.at("role1")
+                            .at(resourceProviderId(slave.id()))
+                            .apply(create);
 
   ASSERT_SOME(update);
 
   // Update the allocation in the allocator.
   allocator->updateAllocation(
       framework1.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       {create});
 
   // Now recover the resources, and expect the next allocation to
   // contain the updated resources.
   allocator->recoverResources(
       framework1.id(),
-      slave.id(),
+      resourceProviderId(slave.id()),
       update.get(),
       None());
 
@@ -1897,7 +1877,7 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
 
   expected = Allocation(
       framework1.id(),
-      {{"role1", {{slave.id(), update.get() - volume}}}});
+      {{"role1", {{resourceProviderId(slave.id()), update.get() - volume}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1905,8 +1885,8 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
   // Recover the resources for the offer in the next allocation cycle.
   allocator->recoverResources(
       framework1.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       None());
 
   // Create `framework2` with opting in for SHARED_RESOURCES.
@@ -1925,7 +1905,7 @@ TEST_F(HierarchicalAllocatorTest, SharedResourcesCapability)
 
   expected = Allocation(
       framework2.id(),
-      {{"role1", {{slave.id(), update.get()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), update.get()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -1940,11 +1920,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableSuccess)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Construct an offer operation for the framework's allocation.
@@ -1959,7 +1939,8 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableSuccess)
   EXPECT_NE(Resources(slave.resources()), update.get());
 
   // Update the allocation in the allocator.
-  AWAIT_READY(allocator->updateAvailable(slave.id(), {reserve}));
+  AWAIT_READY(
+      allocator->updateAvailable(resourceProviderId(slave.id()), {reserve}));
 
   // Expect to receive the updated available resources.
   FrameworkInfo framework = createFrameworkInfo({"role1"});
@@ -1973,7 +1954,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableSuccess)
   // operation applied.
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), update.get()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), update.get()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -1987,11 +1968,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableFail)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Expect to receive the all of the available resources.
@@ -2004,7 +1985,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableFail)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2016,7 +1997,8 @@ TEST_F(HierarchicalAllocatorTest, UpdateAvailableFail)
   Offer::Operation reserve = RESERVE(dynamicallyReserved);
 
   // Update the allocation in the allocator.
-  AWAIT_FAILED(allocator->updateAvailable(slave.id(), {reserve}));
+  AWAIT_FAILED(
+      allocator->updateAvailable(resourceProviderId(slave.id()), {reserve}));
 }
 
 
@@ -2031,11 +2013,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveOversubscribedResources)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Add a framework that can accept revocable resources.
@@ -2051,35 +2033,36 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveOversubscribedResources)
   // Initially, all the resources are allocated.
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // Update the slave with 10 oversubscribed cpus.
   Resources oversubscribed = createRevocableResources("cpus", "10");
-  allocator->updateSlave(slave.id(), oversubscribed);
+  allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed);
 
   // The next allocation should be for 10 oversubscribed resources.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), oversubscribed}}}});
+      {{"role1", {{resourceProviderId(slave.id()), oversubscribed}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // Update the slave again with 12 oversubscribed cpus.
   Resources oversubscribed2 = createRevocableResources("cpus", "12");
-  allocator->updateSlave(slave.id(), oversubscribed2);
+  allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed2);
 
   // The next allocation should be for 2 oversubscribed cpus.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), oversubscribed2 - oversubscribed}}}});
+      {{"role1",
+        {{resourceProviderId(slave.id()), oversubscribed2 - oversubscribed}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // Update the slave again with 5 oversubscribed cpus.
   Resources oversubscribed3 = createRevocableResources("cpus", "5");
-  allocator->updateSlave(slave.id(), oversubscribed3);
+  allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed3);
 
   // Since there are no more available oversubscribed resources there
   // shouldn't be an allocation.
@@ -2101,11 +2084,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)
 
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:1;disk:1");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       {},
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Add a MULTI_ROLE framework. We explicitly check the capability here
@@ -2128,14 +2111,15 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)
   ASSERT_TRUE(allocation.isPending());
 
   // Update the agent to be MULTI_ROLE capable.
-  allocator->updateSlave(agent.id(), None(), AGENT_CAPABILITIES());
+  allocator->updateSlave(
+      resourceProviderId(agent.id()), None(), AGENT_CAPABILITIES());
 
   Clock::settle();
 
   // Resources of agent should be allocated to framework now.
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 }
@@ -2152,11 +2136,11 @@ TEST_F(HierarchicalAllocatorTest, OversubscribedNotAllocated)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Add a framework that does *not* accept revocable resources.
@@ -2170,13 +2154,13 @@ TEST_F(HierarchicalAllocatorTest, OversubscribedNotAllocated)
   // Initially, all the resources are allocated.
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // Update the slave with 10 oversubscribed cpus.
   Resources oversubscribed = createRevocableResources("cpus", "10");
-  allocator->updateSlave(slave.id(), oversubscribed);
+  allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed);
 
   // No allocation should be made for oversubscribed resources because
   // the framework has not opted in for them.
@@ -2198,11 +2182,11 @@ TEST_F(HierarchicalAllocatorTest, RecoverOversubscribedResources)
 
   SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Add a framework that can accept revocable resources.
@@ -2218,18 +2202,18 @@ TEST_F(HierarchicalAllocatorTest, RecoverOversubscribedResources)
   // Initially, all the resources are allocated.
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // Update the slave with 10 oversubscribed cpus.
   Resources oversubscribed = createRevocableResources("cpus", "10");
-  allocator->updateSlave(slave.id(), oversubscribed);
+  allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed);
 
   // The next allocation should be for 10 oversubscribed cpus.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), oversubscribed}}}});
+      {{"role1", {{resourceProviderId(slave.id()), oversubscribed}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2238,7 +2222,8 @@ TEST_F(HierarchicalAllocatorTest, RecoverOversubscribedResources)
   recovered += Resources::parse("cpus:2").get();
   recovered.allocate("role1");
 
-  allocator->recoverResources(framework.id(), slave.id(), recovered, None());
+  allocator->recoverResources(
+      framework.id(), resourceProviderId(slave.id()), recovered, None());
 
   Clock::advance(flags.allocation_interval);
 
@@ -2246,7 +2231,7 @@ TEST_F(HierarchicalAllocatorTest, RecoverOversubscribedResources)
   // cpus.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{slave.id(), recovered}}}});
+      {{"role1", {{resourceProviderId(slave.id()), recovered}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -2268,11 +2253,11 @@ TEST_F(HierarchicalAllocatorTest, Whitelist)
 
   SlaveInfo slave = createSlaveInfo("cpus:2;mem:1024");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   FrameworkInfo framework = createFrameworkInfo({"*"});
@@ -2300,7 +2285,7 @@ TEST_F(HierarchicalAllocatorTest, Whitelist)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"*", {{slave.id(), slave.resources()}}}});
+      {{"*", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 }
@@ -2338,10 +2323,13 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, NoDoubleAccounting)
   hashmap<FrameworkID, Resources> agent2Allocation =
     {{framework2.id(), allocatedResources(agent2.resources(), ROLE2)}};
 
-  hashmap<SlaveID, Resources> framework1Allocation =
-    {{agent1.id(), allocatedResources(agent1.resources(), ROLE1)}};
-  hashmap<SlaveID, Resources> framework2Allocation =
-    {{agent2.id(), allocatedResources(agent2.resources(), ROLE2)}};
+  hashmap<ResourceProviderID, Resources> framework1Allocation = {
+    {resourceProviderId(agent1.id()),
+     allocatedResources(agent1.resources(), ROLE1)}};
+
+  hashmap<ResourceProviderID, Resources> framework2Allocation = {
+    {resourceProviderId(agent2.id()),
+     allocatedResources(agent2.resources(), ROLE2)}};
 
   // Call `addFramework()` and `addSlave()` in different order for
   // `framework1` and `framework2`
@@ -2349,19 +2337,19 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, NoDoubleAccounting)
       framework1.id(), framework1, framework1Allocation, true);
 
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       agent1Allocation);
 
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       agent2Allocation);
 
   allocator->addFramework(
@@ -2449,18 +2437,18 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   // `framework1` will be offered all of `agent1`'s resources because it is
   // the only framework in the only role with unsatisfied quota.
   Allocation expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent1.id(), agent1.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2472,11 +2460,11 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework1` will again be offered all of `agent2`'s resources
@@ -2484,7 +2472,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
   // quota. `framework2` has to wait.
   expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -2505,8 +2493,8 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
 
   allocator->recoverResources(
       framework1.id(),
-      agent2.id(),
-      allocation->resources.at(QUOTA_ROLE).at(agent2.id()),
+      resourceProviderId(agent2.id()),
+      allocation->resources.at(QUOTA_ROLE).at(resourceProviderId(agent2.id())),
       offerFilter);
 
   // Total cluster resources: cpus=2, mem=1024.
@@ -2533,7 +2521,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaProvidesGuarantee)
   // Previously declined resources should be offered to the quota'ed role.
   expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 
@@ -2578,20 +2566,20 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE)}});
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {{framework1.id(), allocatedResources(agent2.resources(), QUOTA_ROLE)}});
 
   // Total cluster resources (2 identical agents): cpus=2, mem=1024.
@@ -2614,7 +2602,7 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
 
   allocator->recoverResources(
       framework1.id(),
-      agent1.id(),
+      resourceProviderId(agent1.id()),
       allocatedResources(agent1.resources(), QUOTA_ROLE),
       None());
 
@@ -2623,7 +2611,8 @@ TEST_F(HierarchicalAllocatorTest, RemoveQuota)
 
   Allocation expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent1.id(), agent1.resources()}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2693,18 +2682,18 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   // `framework1a` will be offered all of `agent1`'s resources because
   // it is the only framework in the only role with unsatisfied quota.
   Allocation expected = Allocation(
       framework1a.id(),
-      {{QUOTA_ROLE, {{agent1.id(), agent1.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2724,11 +2713,11 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework1b` will be offered all of `agent2`'s resources
@@ -2736,7 +2725,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   // to a role with unsatisfied quota.
   expected = Allocation(
       framework1b.id(),
-      {{QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2749,11 +2738,11 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
 
   SlaveInfo agent3 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent3.id(),
-      agent3,
+      resourceProviderId(agent3.id()),
+      resourceProviderInfo(agent3),
       AGENT_CAPABILITIES(),
+      agent3,
       None(),
-      agent3.resources(),
       {});
 
   // `framework1a` will be offered all of `agent3`'s resources because
@@ -2761,7 +2750,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   // has unsatisfied quota.
   expected = Allocation(
       framework1a.id(),
-      {{QUOTA_ROLE, {{agent3.id(), agent3.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2778,7 +2767,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
   filter5s.set_refuse_seconds(5.);
   allocator->recoverResources(
       framework1a.id(),
-      agent3.id(),
+      resourceProviderId(agent3.id()),
       allocatedResources(agent3.resources(), QUOTA_ROLE),
       filter5s);
 
@@ -2787,7 +2776,7 @@ TEST_F(HierarchicalAllocatorTest, MultipleFrameworksInRoleWithQuota)
 
   expected = Allocation(
       framework1b.id(),
-      {{QUOTA_ROLE, {{agent3.id(), agent3.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2843,11 +2832,11 @@ TEST_F(HierarchicalAllocatorTest, QuotaAllocationGranularity)
 
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // `framework1` will be offered all of `agent`'s resources because
@@ -2855,7 +2844,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAllocationGranularity)
   // and the allocator performs coarse-grained allocation.
   Allocation expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent.id(), agent.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -2923,11 +2912,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
   // Add an agent with some allocated resources.
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(),
         allocatedResources(quota.info.guarantee(), QUOTA_ROLE)}});
 
@@ -2945,7 +2934,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
   // share is 0.
   Allocation expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent1.id(),
+      {{NO_QUOTA_ROLE, {{resourceProviderId(agent1.id()),
           Resources(agent1.resources()) - quota.info.guarantee()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
@@ -2981,11 +2970,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework2` will be offered all of `agent2`'s resources (coarse-grained
@@ -2994,7 +2983,8 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DRFWithQuota)
 
   expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -3038,11 +3028,11 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE)}});
 
   // Total cluster resources (1 agent): cpus=1, mem=512.
@@ -3053,11 +3043,11 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // Free cluster resources on `agent2` will be allocated to `framework2`
@@ -3065,7 +3055,8 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
 
   Allocation expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3082,7 +3073,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
   filter0s.set_refuse_seconds(0.);
   allocator->recoverResources(
       framework2.id(),
-      agent2.id(),
+      resourceProviderId(agent2.id()),
       allocatedResources(agent2.resources(), NO_QUOTA_ROLE),
       filter0s);
 
@@ -3097,14 +3088,15 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
 
   expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   // `framework2` continues declining offers.
   allocator->recoverResources(
       framework2.id(),
-      agent2.id(),
+      resourceProviderId(agent2.id()),
       allocatedResources(agent2.resources(), NO_QUOTA_ROLE),
       filter0s);
 
@@ -3120,7 +3112,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaAgainstStarvation)
 
   expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3179,20 +3171,20 @@ TEST_F(HierarchicalAllocatorTest, QuotaAbsentFramework)
   // hence freely allocates for the non-quota'ed `NO_QUOTA_ROLE` role.
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework` can only be allocated resources on `agent2`. This
@@ -3208,7 +3200,8 @@ TEST_F(HierarchicalAllocatorTest, QuotaAbsentFramework)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{NO_QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3243,11 +3236,11 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaAbsentFrameworks)
 
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:2048;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Set quota for both roles.
@@ -3269,7 +3262,7 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaAbsentFrameworks)
   // get all `agent`'s resources.
   Allocation expected = Allocation(
       framework.id(),
-      {{QUOTA_ROLE2, {{agent.id(), agent.resources()}}}});
+      {{QUOTA_ROLE2, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -3323,20 +3316,20 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaWithFrameworks)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(), allocatedResources(agent1.resources(), QUOTA_ROLE1)}});
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:1024;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {{framework2.id(), allocatedResources(agent2.resources(), QUOTA_ROLE2)}});
 
   // TODO(bmahler): Add assertions to test this is accurate!
@@ -3353,18 +3346,18 @@ TEST_F(HierarchicalAllocatorTest, MultiQuotaWithFrameworks)
 
   SlaveInfo agent3 = createSlaveInfo("cpus:2;mem:2048");
   allocator->addSlave(
-      agent3.id(),
-      agent3,
+      resourceProviderId(agent3.id()),
+      resourceProviderInfo(agent3),
       AGENT_CAPABILITIES(),
+      agent3,
       None(),
-      agent3.resources(),
       {});
 
   // `framework2` will get all agent3's resources because its role is under
   // quota, while other roles' quotas are satisfied.
   Allocation expected = Allocation(
       framework2.id(),
-      {{QUOTA_ROLE2, {{agent3.id(), agent3.resources()}}}});
+      {{QUOTA_ROLE2, {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3417,11 +3410,11 @@ TEST_F(HierarchicalAllocatorTest, ReservationWithinQuota)
   // no resources.
   SlaveInfo agent1 = createSlaveInfo("cpus:8;mem(" + QUOTA_ROLE + "):256");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {{framework1.id(),
         // The `mem` portion is used to test that reserved resources are
         // accounted for, and the `cpus` portion is allocated to show that
@@ -3432,7 +3425,9 @@ TEST_F(HierarchicalAllocatorTest, ReservationWithinQuota)
 
   Allocation expected = Allocation(
       framework2.id(),
-      {{NON_QUOTA_ROLE, {{agent1.id(), Resources::parse("cpus:6").get()}}}});
+      {{NON_QUOTA_ROLE,
+        {{resourceProviderId(agent1.id()),
+          Resources::parse("cpus:6").get()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3441,16 +3436,17 @@ TEST_F(HierarchicalAllocatorTest, ReservationWithinQuota)
   // `framework2`.
   SlaveInfo agent2 = createSlaveInfo("cpus:4");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   expected = Allocation(
       framework2.id(),
-      {{NON_QUOTA_ROLE, {{agent2.id(), agent2.resources()}}}});
+      {{NON_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 }
@@ -3475,20 +3471,20 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   // Create two agents.
   SlaveInfo agent1 = createSlaveInfo("cpus:4;mem:512;disk:0");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   SlaveInfo agent2 = createSlaveInfo("cpus:4;mem:512;disk:0");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // Reserve 4 CPUs and 512MB of memory on `agent2` for non-quota'ed role.
@@ -3499,7 +3495,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   Offer::Operation reserve = RESERVE(dynamicallyReserved);
 
   Future<Nothing> updateAgent2 =
-    allocator->updateAvailable(agent2.id(), {reserve});
+    allocator->updateAvailable(resourceProviderId(agent2.id()), {reserve});
 
   AWAIT_EXPECT_READY(updateAgent2);
 
@@ -3518,7 +3514,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   // resources at `agent2` are reserved for a different role.
   Allocation expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent1.id(), agent1.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3529,7 +3525,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
 
   allocator->recoverResources(
       framework1.id(),
-      agent1.id(),
+      resourceProviderId(agent1.id()),
       allocatedResources(agent1.resources(), QUOTA_ROLE),
       longFilter);
 
@@ -3553,7 +3549,8 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   // because those resources are reserved for its role.
   expected = Allocation(
       framework2.id(),
-      {{NO_QUOTA_ROLE, {{agent2.id(), dynamicallyReserved}}}});
+      {{NO_QUOTA_ROLE,
+        {{resourceProviderId(agent2.id()), dynamicallyReserved}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 
@@ -3561,7 +3558,7 @@ TEST_F(HierarchicalAllocatorTest, QuotaSetAsideReservedResources)
   // of the test.
   allocator->recoverResources(
       framework2.id(),
-      agent2.id(),
+      resourceProviderId(agent2.id()),
       allocatedResources(dynamicallyReserved, NO_QUOTA_ROLE),
       longFilter);
 
@@ -3595,11 +3592,11 @@ TEST_F(HierarchicalAllocatorTest, DeactivateAndReactivateFramework)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Framework will be offered all of the agent's resources since it is
@@ -3613,13 +3610,13 @@ TEST_F(HierarchicalAllocatorTest, DeactivateAndReactivateFramework)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
   allocator->recoverResources(
       framework.id(),
-      agent.id(),
+      resourceProviderId(agent.id()),
       allocatedResources(agent.resources(), "role1"),
       None());
 
@@ -3644,7 +3641,7 @@ TEST_F(HierarchicalAllocatorTest, DeactivateAndReactivateFramework)
   // after getting activated.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 }
@@ -3663,11 +3660,11 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffers)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Framework will be offered all of the agent's resources since it is
@@ -3681,7 +3678,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffers)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -3698,7 +3695,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffers)
 
   allocator->recoverResources(
       framework.id(),
-      agent.id(),
+      resourceProviderId(agent.id()),
       allocatedResources(agent.resources(), "role1"),
       None());
 
@@ -3718,7 +3715,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffers)
   // reviving offers.
   expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 }
@@ -3737,11 +3734,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, ResourceMetrics)
 
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   Clock::settle();
@@ -3784,7 +3781,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, ResourceMetrics)
 
   EXPECT_TRUE(metrics.contains(expected));
 
-  allocator->removeSlave(agent.id());
+  allocator->removeSlave(resourceProviderId(agent.id()));
   Clock::settle();
 
   // No frameworks are registered yet, so nothing is allocated.
@@ -3852,11 +3849,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, AllocationRunsMetric)
 
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Wait for the allocation triggered from `addSlave()` to complete.
@@ -3927,11 +3924,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   // to generate the window statistics.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Due to the batching of allocation work, wait for the `allocate()`
@@ -4078,11 +4075,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Register three frameworks, two of which are in the same role.
@@ -4101,15 +4098,15 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   Allocation expectedAllocation = Allocation(
       framework1.id(),
-      {{"roleA", {{agent.id(), agent.resources()}}}});
+      {{"roleA", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expectedAllocation, allocation);
 
   allocator->recoverResources(
       allocation->frameworkId,
-      agent.id(),
-      allocation->resources.at("roleA").at(agent.id()),
+      resourceProviderId(agent.id()),
+      allocation->resources.at("roleA").at(resourceProviderId(agent.id())),
       offerFilter);
 
   JSON::Object expected;
@@ -4130,15 +4127,15 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   expectedAllocation = Allocation(
       framework2.id(),
-      {{"roleB", {{agent.id(), agent.resources()}}}});
+      {{"roleB", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expectedAllocation, allocation);
 
   allocator->recoverResources(
       allocation->frameworkId,
-      agent.id(),
-      allocation->resources.at("roleB").at(agent.id()),
+      resourceProviderId(agent.id()),
+      allocation->resources.at("roleB").at(resourceProviderId(agent.id())),
       offerFilter);
 
   expected.values = {
@@ -4159,15 +4156,15 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   expectedAllocation = Allocation(
       framework3.id(),
-      {{"roleA", {{agent.id(), agent.resources()}}}});
+      {{"roleA", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   allocation = allocations.get();
   AWAIT_EXPECT_EQ(expectedAllocation, allocation);
 
   allocator->recoverResources(
       allocation->frameworkId,
-      agent.id(),
-      allocation->resources.at("roleA").at(agent.id()),
+      resourceProviderId(agent.id()),
+      allocation->resources.at("roleA").at(resourceProviderId(agent.id())),
       offerFilter);
 
   expected.values = {
@@ -4196,11 +4193,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DominantShareMetrics)
   // maximum possible dominant share.
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   FrameworkInfo framework1 = createFrameworkInfo({"roleA"});
@@ -4225,8 +4222,8 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DominantShareMetrics)
   AWAIT_READY(allocation);
   allocator->recoverResources(
       allocation->frameworkId,
-      agent1.id(),
-      allocation->resources.at("roleA").at(agent1.id()),
+      resourceProviderId(agent1.id()),
+      allocation->resources.at("roleA").at(resourceProviderId(agent1.id())),
       None());
   Clock::settle();
 
@@ -4263,11 +4260,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(HierarchicalAllocatorTest, DominantShareMetrics)
   // `framework1` and `framework2` are equal.
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:1024");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   Clock::settle();
@@ -4321,11 +4318,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   // maximum possible dominant share.
   SlaveInfo agent1 = createSlaveInfo("cpus:1;mem:1024;gpus:1");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   FrameworkInfo framework1 = createFrameworkInfo(
@@ -4360,11 +4357,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   // the 100% of `gpus` allocated to framework1 are excluded!
   SlaveInfo agent2 = createSlaveInfo("cpus:3;mem:3072");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   Clock::settle();
@@ -4417,12 +4414,12 @@ TEST_F(HierarchicalAllocatorTest, UpdateWeight)
         // Recover the allocated resources so they can be offered
         // again next time.
         foreachkey (const string& role, allocation->resources) {
-          foreachpair (const SlaveID& slaveId,
+          foreachpair (const ResourceProviderID& resourceProviderId,
                        const Resources& resources,
                        allocation->resources.at(role)) {
           allocator->recoverResources(
               allocation->frameworkId,
-              slaveId,
+              resourceProviderId,
               resources,
               None());
           }
@@ -4437,11 +4434,11 @@ TEST_F(HierarchicalAllocatorTest, UpdateWeight)
     SlaveInfo agent = createSlaveInfo(SINGLE_RESOURCES);
     agents.push_back(agent);
     allocator->addSlave(
-        agent.id(),
-        agent,
+        resourceProviderId(agent.id()),
+        resourceProviderInfo(agent),
         AGENT_CAPABILITIES(),
+        agent,
         None(),
-        agent.resources(),
         {});
   }
 
@@ -4629,11 +4626,11 @@ TEST_F(HierarchicalAllocatorTest, ReviveOffers)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Framework will be offered all of agent's resources since it is
@@ -4647,7 +4644,7 @@ TEST_F(HierarchicalAllocatorTest, ReviveOffers)
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -4655,7 +4652,7 @@ TEST_F(HierarchicalAllocatorTest, ReviveOffers)
   filter1000s.set_refuse_seconds(1000.);
   allocator->recoverResources(
       framework.id(),
-      agent.id(),
+      resourceProviderId(agent.id()),
       allocatedResources(agent.resources(), "role1"),
       filter1000s);
 
@@ -4701,16 +4698,16 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffersWithMultiRole)
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   Allocation expected = Allocation(
       framework.id(),
-      {{"role2", {{agent.id(), agent.resources()}}}});
+      {{"role2", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -4718,7 +4715,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffersWithMultiRole)
   filter1day.set_refuse_seconds(Days(1).secs());
   allocator->recoverResources(
       framework.id(),
-      agent.id(),
+      resourceProviderId(agent.id()),
       allocatedResources(agent.resources(), "role2"),
       filter1day);
 
@@ -4735,7 +4732,7 @@ TEST_F(HierarchicalAllocatorTest, SuppressAndReviveOffersWithMultiRole)
 
   expected = Allocation(
       framework.id(),
-      {{"role1", {{agent.id(), agent.resources()}}}});
+      {{"role1", {{resourceProviderId(agent.id()), agent.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocation);
 }
@@ -4764,7 +4761,13 @@ TEST_F(HierarchicalAllocatorTest, DontOfferOldAgentToMultiRoleFramework)
 
   // Total cluster resources will become cpus=2, mem=1024.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
-  allocator->addSlave(agent.id(), agent, {}, None(), agent.resources(), {});
+  allocator->addSlave(
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
+      {},
+      agent,
+      None(),
+      {});
 
   // Advance the clock to trigger a batch allocation.
   Clock::advance(flags.allocation_interval);
@@ -4831,16 +4834,16 @@ TEST_F(HierarchicalAllocatorTest, DisproportionateQuotaVsAllocation)
   // have an ability to offer out only the cpus.
   SlaveInfo agent1 = createSlaveInfo(agentResources);
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   Allocation expected = Allocation(
       framework1.id(),
-      {{QUOTA_ROLE, {{agent1.id(), agent1.resources()}}}});
+      {{QUOTA_ROLE, {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
   AWAIT_EXPECT_EQ(expected, allocations.get());
 
@@ -4853,11 +4856,11 @@ TEST_F(HierarchicalAllocatorTest, DisproportionateQuotaVsAllocation)
   // to its quota (e.g. cpus:2;mem:512 on each agent).
   SlaveInfo agent2 = createSlaveInfo(agentResources);
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   Clock::settle();
@@ -4895,11 +4898,11 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuota)
 
   SlaveInfo agent = createSlaveInfo("cpus:1;mem:512");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // `framework1` will be offered all the resources on `agent` because
@@ -4907,7 +4910,7 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuota)
   {
     Allocation expected = Allocation(
         framework1.id(),
-        {{PARENT_ROLE, {{agent.id(), agent.resources()}}}});
+        {{PARENT_ROLE, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -4919,7 +4922,7 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuota)
 
   allocator->recoverResources(
       framework1.id(),
-      agent.id(),
+      resourceProviderId(agent.id()),
       allocatedResources(agent.resources(), PARENT_ROLE),
       longFilter);
 
@@ -4960,7 +4963,7 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuota)
   {
     Allocation expected = Allocation(
         framework3.id(),
-        {{CHILD_ROLE2, {{agent.id(), agent.resources()}}}});
+        {{CHILD_ROLE2, {{resourceProviderId(agent.id()), agent.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocation);
   }
@@ -4996,18 +4999,19 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuotaAllocateToParent)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:1024");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   // `framework1` will be offered all of the resources on `agent1`.
   {
     Allocation expected = Allocation(
         framework1.id(),
-        {{PARENT_ROLE, {{agent1.id(), agent1.resources()}}}});
+        {{PARENT_ROLE,
+          {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -5025,29 +5029,30 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuotaAllocateToParent)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:512");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework2` will be offered all of the resources on `agent2`.
   {
     Allocation expected = Allocation(
         framework2.id(),
-        {{CHILD_ROLE, {{agent2.id(), agent2.resources()}}}});
+        {{CHILD_ROLE,
+          {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
 
   SlaveInfo agent3 = createSlaveInfo("cpus:1;mem:512");
   allocator->addSlave(
-      agent3.id(),
-      agent3,
+      resourceProviderId(agent3.id()),
+      resourceProviderInfo(agent3),
       AGENT_CAPABILITIES(),
+      agent3,
       None(),
-      agent3.resources(),
       {});
 
   // `framework1` will be offered all of the resources on `agent3`.
@@ -5062,7 +5067,8 @@ TEST_F(HierarchicalAllocatorTest, NestedRoleQuotaAllocateToParent)
   {
     Allocation expected = Allocation(
         framework1.id(),
-        {{PARENT_ROLE, {{agent3.id(), agent3.resources()}}}});
+        {{PARENT_ROLE,
+          {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -5106,18 +5112,19 @@ TEST_F(HierarchicalAllocatorTest, DISABLED_NestedQuotaAccounting)
 
   SlaveInfo agent1 = createSlaveInfo("cpus:2;mem:200");
   allocator->addSlave(
-      agent1.id(),
-      agent1,
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
       AGENT_CAPABILITIES(),
+      agent1,
       None(),
-      agent1.resources(),
       {});
 
   // `framework2` will be offered all of the resources on `agent1`.
   {
     Allocation expected = Allocation(
         framework2.id(),
-        {{PARENT_ROLE, {{agent1.id(), agent1.resources()}}}});
+        {{PARENT_ROLE,
+          {{resourceProviderId(agent1.id()), agent1.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -5136,29 +5143,30 @@ TEST_F(HierarchicalAllocatorTest, DISABLED_NestedQuotaAccounting)
 
   SlaveInfo agent2 = createSlaveInfo("cpus:1;mem:100");
   allocator->addSlave(
-      agent2.id(),
-      agent2,
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
       AGENT_CAPABILITIES(),
+      agent2,
       None(),
-      agent2.resources(),
       {});
 
   // `framework3` will be offered all of the resources on `agent2`.
   {
     Allocation expected = Allocation(
         framework3.id(),
-        {{CHILD_ROLE, {{agent2.id(), agent2.resources()}}}});
+        {{CHILD_ROLE,
+          {{resourceProviderId(agent2.id()), agent2.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
 
   SlaveInfo agent3 = createSlaveInfo("cpus:1;mem:100");
   allocator->addSlave(
-      agent3.id(),
-      agent3,
+      resourceProviderId(agent3.id()),
+      resourceProviderInfo(agent3),
       AGENT_CAPABILITIES(),
+      agent3,
       None(),
-      agent3.resources(),
       {});
 
   // Quota of both frameworks are satisfied at this point, therefore
@@ -5167,7 +5175,8 @@ TEST_F(HierarchicalAllocatorTest, DISABLED_NestedQuotaAccounting)
   {
     Allocation expected = Allocation(
         framework1.id(),
-        {{PARENT_ROLE, {{agent3.id(), agent3.resources()}}}});
+        {{PARENT_ROLE,
+          {{resourceProviderId(agent3.id()), agent3.resources()}}}});
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
@@ -5225,17 +5234,17 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
 
   SlaveInfo slave = createSlaveInfo("cpus:4;mem:1024;disk(role1):2048");
   allocator->addSlave(
-      slave.id(),
-      slave,
+      resourceProviderId(slave.id()),
+      resourceProviderInfo(slave),
       AGENT_CAPABILITIES(),
+      slave,
       None(),
-      slave.resources(),
       {});
 
   // Initially, all the resources are allocated to `framework1`.
   Allocation expected = Allocation(
       framework1.id(),
-      {{"role1", {{slave.id(), slave.resources()}}}});
+      {{"role1", {{resourceProviderId(slave.id()), slave.resources()}}}});
 
   Future<Allocation> allocation = allocations.get();
   AWAIT_EXPECT_EQ(expected, allocation);
@@ -5260,8 +5269,9 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
   protobuf::injectAllocationInfo(&launch, allocationInfo);
 
   // Ensure the CREATE operation can be applied.
-  Try<Resources> updated =
-    allocation->resources.at("role1").at(slave.id()).apply(create);
+  Try<Resources> updated = allocation->resources.at("role1")
+                             .at(resourceProviderId(slave.id()))
+                             .apply(create);
 
   ASSERT_SOME(updated);
 
@@ -5269,8 +5279,8 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
   // (with one task using the created shared volume) operation.
   allocator->updateAllocation(
       framework1.id(),
-      slave.id(),
-      allocation->resources.at("role1").at(slave.id()),
+      resourceProviderId(slave.id()),
+      allocation->resources.at("role1").at(resourceProviderId(slave.id())),
       {create, launch});
 
   // Now recover the resources, and expect the next allocation to contain
@@ -5278,7 +5288,7 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
   // used by the task (but it is still offerable because it is shared).
   allocator->recoverResources(
       framework1.id(),
-      slave.id(),
+      resourceProviderId(slave.id()),
       updated.get() - allocatedResources(task.resources(), "role1"),
       None());
 
@@ -5287,7 +5297,7 @@ TEST_P(HierarchicalAllocatorTestWithParam, AllocateSharedResources)
 
   expected = Allocation(
       framework2.id(),
-      {{"role1", {{slave.id(),
+      {{"role1", {{resourceProviderId(slave.id()),
           updated.get() -
           launch.launch().task_infos(0).resources() +
           create.create().volumes()}}}});
@@ -5391,11 +5401,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AddAndUpdateSlave)
     };
 
     allocator->addSlave(
-        slaves[i].id(),
-        slaves[i],
+        resourceProviderId(slaves[i].id()),
+        resourceProviderInfo(slaves[i]),
         AGENT_CAPABILITIES(),
+        slaves[i],
         None(),
-        slaves[i].resources(),
         used);
   }
 
@@ -5418,7 +5428,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AddAndUpdateSlave)
   watch.start(); // Reset.
 
   foreach (const SlaveInfo& slave, slaves) {
-    allocator->updateSlave(slave.id(), oversubscribed);
+    allocator->updateSlave(resourceProviderId(slave.id()), oversubscribed);
   }
 
   // Wait for all the `updateSlave` operations to be processed.
@@ -5444,9 +5454,9 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
 
   struct OfferedResources
   {
-    FrameworkID   frameworkId;
-    SlaveID       slaveId;
-    Resources     resources;
+    FrameworkID frameworkId;
+    ResourceProviderID resourceProviderId;
+    Resources resources;
   };
 
   vector<OfferedResources> offers;
@@ -5459,10 +5469,8 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
       foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
-        SlaveID slaveId;
-        slaveId.set_value(resourceProviderId.value());
-
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+        offers.push_back(
+            OfferedResources{frameworkId, resourceProviderId, resources});
       }
     }
   };
@@ -5525,11 +5533,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
     };
 
     allocator->addSlave(
-        slaves[i].id(),
-        slaves[i],
+        resourceProviderId(slaves[i].id()),
+        resourceProviderInfo(slaves[i]),
         AGENT_CAPABILITIES(),
+        slaves[i],
         None(),
-        slaves[i].resources(),
         used);
   }
 
@@ -5551,7 +5559,10 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
 
       filters.set_refuse_seconds(INT_MAX);
       allocator->recoverResources(
-          offer.frameworkId, offer.slaveId, offer.resources, filters);
+          offer.frameworkId,
+          offer.resourceProviderId,
+          offer.resources,
+          filters);
     }
 
     declinedOfferCount += offers.size();
@@ -5607,9 +5618,9 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
 
   struct OfferedResources
   {
-    FrameworkID   frameworkId;
-    SlaveID       slaveId;
-    Resources     resources;
+    FrameworkID frameworkId;
+    ResourceProviderID resourceProviderId;
+    Resources resources;
   };
 
   vector<OfferedResources> offers;
@@ -5622,10 +5633,8 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
       foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
-        SlaveID slaveId;
-        slaveId.set_value(resourceProviderId.value());
-
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+        offers.push_back(
+            OfferedResources{frameworkId, resourceProviderId, resources});
       }
     }
   };
@@ -5725,11 +5734,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
     };
 
     allocator->addSlave(
-        slaves[i].id(),
-        slaves[i],
+        resourceProviderId(slaves[i].id()),
+        resourceProviderInfo(slaves[i]),
         AGENT_CAPABILITIES(),
+        slaves[i],
         None(),
-        slaves[i].resources(),
         used);
   }
 
@@ -5751,7 +5760,10 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
 
       filters.set_refuse_seconds(INT_MAX);
       allocator->recoverResources(
-          offer.frameworkId, offer.slaveId, offer.resources, filters);
+          offer.frameworkId,
+          offer.resourceProviderId,
+          offer.resources,
+          filters);
     }
 
     declinedOfferCount += offers.size();
@@ -5790,9 +5802,9 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
 
   struct OfferedResources
   {
-    FrameworkID   frameworkId;
-    SlaveID       slaveId;
-    Resources     resources;
+    FrameworkID frameworkId;
+    ResourceProviderID resourceProviderId;
+    Resources resources;
   };
 
   vector<OfferedResources> offers;
@@ -5805,10 +5817,8 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
       foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
-        SlaveID slaveId;
-        slaveId.set_value(resourceProviderId.value());
-
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+        offers.push_back(
+            OfferedResources{frameworkId, resourceProviderId, resources});
       }
     }
   };
@@ -5869,11 +5879,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
     };
 
     allocator->addSlave(
-        agents[i].id(),
-        agents[i],
+        resourceProviderId(agents[i].id()),
+        resourceProviderInfo(agents[i]),
         AGENT_CAPABILITIES(),
+        agents[i],
         None(),
-        agents[i].resources(),
         used);
   }
 
@@ -5901,7 +5911,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
     foreach (const OfferedResources& offer, offers) {
       allocator->recoverResources(
           offer.frameworkId,
-          offer.slaveId,
+          offer.resourceProviderId,
           offer.resources,
           None());
     }
@@ -6157,11 +6167,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, Metrics)
   for (size_t i = 0; i < slaveCount; i++) {
     SlaveInfo slave = createSlaveInfo(agentResources);
     allocator->addSlave(
-        slave.id(),
-        slave,
+        resourceProviderId(slave.id()),
+        resourceProviderInfo(slave),
         AGENT_CAPABILITIES(),
+        slave,
         None(),
-        slave.resources(),
         {});
   }
 
@@ -6250,11 +6260,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AllocatorBacklog)
 
   for (size_t i = 0; i < agentCount; i++) {
     allocator->addSlave(
-        agents.at(i).id(),
-        agents.at(i),
+        resourceProviderId(agents.at(i).id()),
+        resourceProviderInfo(agents.at(i)),
         AGENT_CAPABILITIES(),
+        agents.at(i),
         None(),
-        agents.at(i).resources(),
         {});
   }
 
