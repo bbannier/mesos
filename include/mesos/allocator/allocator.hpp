@@ -84,16 +84,16 @@ public:
    */
   virtual void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
-      const Option<std::set<std::string>>&
-        fairnessExcludeResourceNames = None()) = 0;
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None()) = 0;
 
   /**
    * Informs the allocator of the recovered state from the master.
@@ -127,7 +127,7 @@ public:
   virtual void addFramework(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
-      const hashmap<SlaveID, Resources>& used,
+      const hashmap<ResourceProviderID, Resources>& used,
       bool active) = 0;
 
   /**
@@ -182,8 +182,8 @@ public:
    *     are added later in `addFramework()`.
    */
   virtual void addSlave(
-      const SlaveID& slaveId,
-      const SlaveInfo& slaveInfo,
+      const ResourceProviderID& slaveId,
+      const ResourceProviderInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
       const Resources& total,
@@ -193,8 +193,7 @@ public:
    * Removes an agent from the Mesos cluster. All resources belonging to this
    * agent should be released by the allocator.
    */
-  virtual void removeSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void removeSlave(const ResourceProviderID& slaveId) = 0;
 
   /**
    * Updates an agent.
@@ -210,7 +209,7 @@ public:
    * @param capabilities The new capabilities of the agent.
    */
   virtual void updateSlave(
-      const SlaveID& slave,
+      const ResourceProviderID& slave,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
@@ -219,8 +218,7 @@ public:
    * Activates an agent. This is invoked when an agent reregisters. Offers
    * are only sent for activated agents.
    */
-  virtual void activateSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void activateSlave(const ResourceProviderID& slaveId) = 0;
 
   /**
    * Deactivates an agent.
@@ -230,8 +228,7 @@ public:
    * is no separate call to the allocator to handle this). Resources aren't
    * "recovered" when an agent deactivates because the resources are lost.
    */
-  virtual void deactivateSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void deactivateSlave(const ResourceProviderID& slaveId) = 0;
 
   /**
    * Updates the list of trusted agents.
@@ -267,7 +264,7 @@ public:
    */
   virtual void updateAllocation(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
 
@@ -279,7 +276,7 @@ public:
    * @param operations The offer operations to apply to this agent's resources.
    */
   virtual process::Future<Nothing> updateAvailable(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const std::vector<Offer::Operation>& operations) = 0;
 
   /**
@@ -291,7 +288,7 @@ public:
    * remove any inverse offers that are outstanding.
    */
   virtual void updateUnavailability(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Option<Unavailability>& unavailability) = 0;
 
   /**
@@ -313,7 +310,7 @@ public:
    *     existing mechanism for re-offering Offers to frameworks.
    */
   virtual void updateInverseOffer(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
@@ -323,7 +320,7 @@ public:
    * Retrieves the status of all inverse offers maintained by the allocator.
    */
   virtual process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses() = 0;
 
@@ -342,7 +339,7 @@ public:
    */
   virtual void recoverResources(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
 
