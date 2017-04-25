@@ -4767,9 +4767,12 @@ Future<Response> Master::Http::_operation(
     // NOTE: However it's entirely possible that these resources are
     // offered to other frameworks in the next 'allocate' and the filter
     // cannot prevent it.
+    ResourceProviderID resourceProviderId;
+    resourceProviderId.set_value(slaveId.value());
+
     master->allocator->recoverResources(
         offer->framework_id(),
-        offer->slave_id(),
+        resourceProviderId,
         offer->resources(),
         Filters());
 
