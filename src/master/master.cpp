@@ -125,6 +125,24 @@ using process::metrics::Counter;
 
 namespace mesos {
 namespace internal {
+
+// FIXME(bbannier): this is transient helper function which should be removed.
+ResourceProviderID resourceProviderID(const SlaveID& slaveId)
+{
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value(slaveId.value());
+  return resourceProviderId;
+}
+
+// FIXME(bbannier): this is transient helper function which should be removed.
+ResourceProviderInfo resourceProviderInfo(const SlaveInfo& slaveInfo)
+{
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->set_value(slaveInfo.id().value());
+  resourceProviderInfo.mutable_resources()->CopyFrom(slaveInfo.resources());
+  return resourceProviderInfo;
+}
+
 namespace master {
 
 using mesos::allocator::Allocator;
@@ -1167,7 +1185,7 @@ void Master::finalize()
   foreachvalue (Slave* slave, slaves.registered) {
     // We first remove the slave from the allocator so that any
     // recovered resources below are not reoffered.
-    allocator->removeSlave(slave->id);
+    allocator->removeSlave(resourceProviderID(slave->id));
 
     foreachkey (const FrameworkID& frameworkId, utils::copy(slave->tasks)) {
       foreachvalue (Task* task, utils::copy(slave->tasks[frameworkId])) {
@@ -3002,7 +3020,7 @@ void Master::_subscribe(
       foreach (Offer* offer, utils::copy(framework->offers)) {
         allocator->recoverResources(
             offer->framework_id(),
-            offer->slave_id(),
+            resourceProviderID(offer->slave_id()),
             offer->resources(),
             None());
         removeOffer(offer, true); // Rescind.
@@ -3012,7 +3030,7 @@ void Master::_subscribe(
       foreach (InverseOffer* inverseOffer,
                utils::copy(framework->inverseOffers)) {
         allocator->updateInverseOffer(
-            inverseOffer->slave_id(),
+            resourceProviderID(inverseOffer->slave_id()),
             inverseOffer->framework_id(),
             UnavailableResources{
                 inverseOffer->resources(),
@@ -3166,7 +3184,7 @@ void Master::deactivate(Framework* framework, bool rescind)
   foreach (Offer* offer, utils::copy(framework->offers)) {
     allocator->recoverResources(
         offer->framework_id(),
-        offer->slave_id(),
+        resourceProviderID(offer->slave_id()),
         offer->resources(),
         None());
 
@@ -3176,7 +3194,7 @@ void Master::deactivate(Framework* framework, bool rescind)
   // Remove the framework's inverse offers.
   foreach (InverseOffer* inverseOffer, utils::copy(framework->inverseOffers)) {
     allocator->updateInverseOffer(
-        inverseOffer->slave_id(),
+        resourceProviderID(inverseOffer->slave_id()),
         inverseOffer->framework_id(),
         UnavailableResources{
             inverseOffer->resources(),
@@ -3215,13 +3233,13 @@ void Master::deactivate(Slave* slave)
 
   slave->active = false;
 
-  allocator->deactivateSlave(slave->id);
+  allocator->deactivateSlave(resourceProviderID(slave->id));
 
   // Remove and rescind offers.
   foreach (Offer* offer, utils::copy(slave->offers)) {
     allocator->recoverResources(
         offer->framework_id(),
-        slave->id,
+        resourceProviderID(slave->id),
         offer->resources(),
         None());
 
@@ -3231,7 +3249,7 @@ void Master::deactivate(Slave* slave)
   // Remove and rescind inverse offers.
   foreach (InverseOffer* inverseOffer, utils::copy(slave->inverseOffers)) {
     allocator->updateInverseOffer(
-        slave->id,
+        resourceProviderID(slave->id),
         inverseOffer->framework_id(),
         UnavailableResources{
             inverseOffer->resources(),
@@ -3775,7 +3793,7 @@ void Master::accept(
         if (error.isSome()) {
           allocator->recoverResources(
               offer->framework_id(),
-              offer->slave_id(),
+              resourceProviderID(offer->slave_id()),
               offer->resources(),
               None());
         } else {
@@ -4030,7 +4048,7 @@ void Master::_accept(
     // Tell the allocator about the recovered resources.
     allocator->recoverResources(
         frameworkId,
-        slaveId,
+        resourceProviderID(slaveId),
         offeredResources,
         None());
 
@@ -4101,7 +4119,7 @@ void Master::_accept(
     // Tell the allocator about the recovered resources.
     allocator->recoverResources(
         frameworkId,
-        slaveId,
+        resourceProviderID(slaveId),
         offeredResources,
         None());
 
@@ -4360,7 +4378,7 @@ void Master::_accept(
             if (offered.contains(volume)) {
               allocator->recoverResources(
                   offer->framework_id(),
-                  offer->slave_id(),
+                  resourceProviderID(offer->slave_id()),
                   offered,
                   None());
 
@@ -4793,7 +4811,7 @@ void Master::_accept(
   if (!operations.empty()) {
     allocator->updateAllocation(
         frameworkId,
-        slaveId,
+        resourceProviderID(slaveId),
         offeredResources,
         operations);
   }
@@ -4802,7 +4820,7 @@ void Master::_accept(
     // Tell the allocator about the unused (e.g., refused) resources.
     allocator->recoverResources(
         frameworkId,
-        slaveId,
+        resourceProviderID(slaveId),
         _offeredResources,
         accept.filters());
   }
@@ -4841,7 +4859,7 @@ void Master::acceptInverseOffers(
         status.mutable_timestamp()->CopyFrom(protobuf::getCurrentTime());
 
         allocator->updateInverseOffer(
-            inverseOffer->slave_id(),
+            resourceProviderID(inverseOffer->slave_id()),
             inverseOffer->framework_id(),
             UnavailableResources{
                 inverseOffer->resources(),
@@ -4884,7 +4902,7 @@ void Master::decline(
     if (offer != nullptr) {
       allocator->recoverResources(
           offer->framework_id(),
-          offer->slave_id(),
+          resourceProviderID(offer->slave_id()),
           offer->resources(),
           decline.filters());
 
@@ -4922,7 +4940,7 @@ void Master::declineInverseOffers(
       status.mutable_timestamp()->CopyFrom(protobuf::getCurrentTime());
 
       allocator->updateInverseOffer(
-          inverseOffer->slave_id(),
+          resourceProviderID(inverseOffer->slave_id()),
           inverseOffer->framework_id(),
           UnavailableResources{
               inverseOffer->resources(),
@@ -5911,7 +5929,10 @@ void Master::_reregisterSlave(
     slave->reregisteredTime = Clock::now();
     slave->capabilities = agentCapabilities;
 
-    allocator->updateSlave(slave->id, None(), agentCapabilities);
+    allocator->updateSlave(
+        resourceProviderID(slave->id),
+        None(),
+        agentCapabilities);
 
     // Reconcile tasks between master and slave, and send the
     // `SlaveReregisteredMessage`.
@@ -5929,7 +5950,7 @@ void Master::_reregisterSlave(
       dispatch(slave->observer, &SlaveObserver::reconnect);
 
       slave->active = true;
-      allocator->activateSlave(slave->id);
+      allocator->activateSlave(resourceProviderID(slave->id));
     }
 
     CHECK(slave->active)
@@ -6299,7 +6320,7 @@ void Master::updateFramework(
 
     allocator->recoverResources(
         offer->framework_id(),
-        offer->slave_id(),
+        resourceProviderID(offer->slave_id()),
         offer->resources(),
         None());
 
@@ -6349,7 +6370,7 @@ void Master::updateSlave(
     slave->totalResources.nonRevocable() + oversubscribedResources.revocable();
 
   // First update the agent's resources in the allocator.
-  allocator->updateSlave(slaveId, oversubscribedResources);
+  allocator->updateSlave(resourceProviderID(slaveId), oversubscribedResources);
 
   // Then rescind any outstanding offers with revocable resources.
   // NOTE: Need a copy of offers because the offers are removed inside the loop.
@@ -6361,7 +6382,10 @@ void Master::updateSlave(
                 << " on agent " << *slave;
 
       allocator->recoverResources(
-          offer->framework_id(), offer->slave_id(), offered, None());
+          offer->framework_id(),
+          resourceProviderID(offer->slave_id()),
+          offered,
+          None());
 
       removeOffer(offer, true); // Rescind.
     }
@@ -6409,7 +6433,10 @@ void Master::updateUnavailability(
       // unavailability change as soon as possible.
       foreach (Offer* offer, utils::copy(slave->offers)) {
         allocator->recoverResources(
-            offer->framework_id(), slave->id, offer->resources(), None());
+            offer->framework_id(),
+            resourceProviderID(slave->id),
+            offer->resources(),
+            None());
 
         removeOffer(offer, true); // Rescind!
       }
@@ -6418,7 +6445,7 @@ void Master::updateUnavailability(
       // inverse offers for the updated unavailability.
       foreach (InverseOffer* inverseOffer, utils::copy(slave->inverseOffers)) {
         allocator->updateInverseOffer(
-            slave->id,
+            resourceProviderID(slave->id),
             inverseOffer->framework_id(),
             UnavailableResources{
                 inverseOffer->resources(),
@@ -6436,7 +6463,9 @@ void Master::updateUnavailability(
       // `offer()`, are guaranteed to happen after this function exits due to
       // the Actor pattern.
 
-      allocator->updateUnavailability(slaveId, unavailability);
+      allocator->updateUnavailability(
+          resourceProviderID(slaveId),
+          unavailability);
     }
   }
 }
@@ -6763,7 +6792,7 @@ void Master::_markUnreachable(
   // only within recoverResources() (see MESOS-621). The calls to
   // recoverResources() below are therefore required, even though
   // the slave is already removed.
-  allocator->removeSlave(slave->id);
+  allocator->removeSlave(resourceProviderID(slave->id));
 
   // Transition tasks to TASK_UNREACHABLE / TASK_LOST and remove them.
   // We only use TASK_UNREACHABLE if the framework has opted in to the
@@ -6820,7 +6849,10 @@ void Master::_markUnreachable(
     // TODO(vinod): We don't need to call 'Allocator::recoverResources'
     // once MESOS-621 is fixed.
     allocator->recoverResources(
-        offer->framework_id(), slave->id, offer->resources(), None());
+        offer->framework_id(),
+        resourceProviderID(slave->id),
+        offer->resources(),
+        None());
 
     // Remove and rescind offers.
     removeOffer(offer, true); // Rescind!
@@ -7186,7 +7218,11 @@ void Master::offer(
           << "Master returning resources offered to framework " << *framework
           << " because agent " << slaveId << " is not valid";
 
-        allocator->recoverResources(frameworkId, slaveId, offered, None());
+        allocator->recoverResources(
+            frameworkId,
+            resourceProviderID(slaveId),
+            offered,
+            None());
         continue;
       }
 
@@ -7197,7 +7233,11 @@ void Master::offer(
           << "Master returning resources offered because agent " << *slave
           << " is " << (slave->connected ? "deactivated" : "disconnected");
 
-        allocator->recoverResources(frameworkId, slaveId, offered, None());
+        allocator->recoverResources(
+            frameworkId,
+            resourceProviderID(slaveId),
+            offered,
+            None());
         continue;
       }
 
@@ -7710,10 +7750,20 @@ void Master::addFramework(Framework* framework)
   // There should be no offered resources yet!
   CHECK_EQ(Resources(), framework->totalOfferedResources);
 
+  // FIXME(bbannier): Move this into Framework itself.
+  hashmap<ResourceProviderID, Resources> usedResources;
+  foreachpair (
+      const SlaveID& slaveId,
+      const Resources& resources,
+      framework->usedResources) {
+    const ResourceProviderID& resourceProviderId = resourceProviderID(slaveId);
+    usedResources[resourceProviderId] += resources;
+  }
+
   allocator->addFramework(
       framework->id(),
       framework->info,
-      framework->usedResources,
+      usedResources,
       framework->active());
 
   // Export framework metrics if a principal is specified in `FrameworkInfo`.
@@ -7937,7 +7987,10 @@ void Master::_failoverFramework(Framework* framework)
   // Remove the framework's offers (if they weren't removed before).
   foreach (Offer* offer, utils::copy(framework->offers)) {
     allocator->recoverResources(
-        offer->framework_id(), offer->slave_id(), offer->resources(), None());
+        offer->framework_id(),
+        resourceProviderID(offer->slave_id()),
+        offer->resources(),
+        None());
 
     removeOffer(offer);
   }
@@ -7945,7 +7998,7 @@ void Master::_failoverFramework(Framework* framework)
   // Also remove the inverse offers.
   foreach (InverseOffer* inverseOffer, utils::copy(framework->inverseOffers)) {
     allocator->updateInverseOffer(
-        inverseOffer->slave_id(),
+        resourceProviderID(inverseOffer->slave_id()),
         inverseOffer->framework_id(),
         UnavailableResources{
             inverseOffer->resources(),
@@ -8304,12 +8357,17 @@ void Master::addSlave(
     unavailability = machines[slave->machineId].info.unavailability();
   }
 
+  ResourceProviderInfo resourceProviderInfo_ =
+    resourceProviderInfo(slave->info);
+
+  resourceProviderInfo_.mutable_resources()->CopyFrom(slave->totalResources);
+
   allocator->addSlave(
-      slave->id,
-      slave->info,
+      resourceProviderID(slave->id),
+      resourceProviderInfo_,
       google::protobuf::convert(slave->capabilities.toRepeatedPtrField()),
+      slave->info,
       unavailability,
-      slave->totalResources,
       slave->usedResources);
 
   if (!subscribers.subscribed.empty()) {
@@ -8400,7 +8458,7 @@ void Master::_removeSlave(
   // only within recoverResources() (see MESOS-621). The calls to
   // recoverResources() below are therefore required, even though
   // the slave is already removed.
-  allocator->removeSlave(slave->id);
+  allocator->removeSlave(resourceProviderID(slave->id));
 
   // Transition the tasks to lost and remove them.
   foreachkey (const FrameworkID& frameworkId, utils::copy(slave->tasks)) {
@@ -8443,7 +8501,10 @@ void Master::_removeSlave(
     // TODO(vinod): We don't need to call 'Allocator::recoverResources'
     // once MESOS-621 is fixed.
     allocator->recoverResources(
-        offer->framework_id(), slave->id, offer->resources(), None());
+        offer->framework_id(),
+        resourceProviderID(slave->id),
+        offer->resources(),
+        None());
 
     // Remove and rescind offers.
     removeOffer(offer, true); // Rescind!
@@ -8567,7 +8628,7 @@ void Master::updateTask(Task* task, const StatusUpdate& update)
   if (removable) {
     allocator->recoverResources(
         task->framework_id(),
-        task->slave_id(),
+        resourceProviderID(task->slave_id()),
         task->resources(),
         None());
 
@@ -8648,7 +8709,7 @@ void Master::removeTask(Task* task)
     // not yet been recovered.
     allocator->recoverResources(
         task->framework_id(),
-        task->slave_id(),
+        resourceProviderID(task->slave_id()),
         task->resources(),
         None());
   } else {
@@ -8686,7 +8747,10 @@ void Master::removeExecutor(
             << " of framework " << frameworkId << " on agent " << *slave;
 
   allocator->recoverResources(
-      frameworkId, slave->id, executor.resources(), None());
+      frameworkId,
+      resourceProviderID(slave->id),
+      executor.resources(),
+      None());
 
   Framework* framework = getFramework(frameworkId);
   if (framework != nullptr) { // The framework might not be re-registered yet.
@@ -8701,7 +8765,7 @@ Future<Nothing> Master::apply(Slave* slave, const Offer::Operation& operation)
 {
   CHECK_NOTNULL(slave);
 
-  return allocator->updateAvailable(slave->id, {operation})
+  return allocator->updateAvailable(resourceProviderID(slave->id), {operation})
     .onReady(defer(self(), &Master::_apply, slave, operation));
 }
 
@@ -8727,7 +8791,10 @@ void Master::offerTimeout(const OfferID& offerId)
   Offer* offer = getOffer(offerId);
   if (offer != nullptr) {
     allocator->recoverResources(
-        offer->framework_id(), offer->slave_id(), offer->resources(), None());
+        offer->framework_id(),
+        resourceProviderID(offer->slave_id()),
+        offer->resources(),
+        None());
     removeOffer(offer, true);
   }
 }
@@ -8778,7 +8845,7 @@ void Master::inverseOfferTimeout(const OfferID& inverseOfferId)
   InverseOffer* inverseOffer = getInverseOffer(inverseOfferId);
   if (inverseOffer != nullptr) {
     allocator->updateInverseOffer(
-        inverseOffer->slave_id(),
+        resourceProviderID(inverseOffer->slave_id()),
         inverseOffer->framework_id(),
         UnavailableResources{
             inverseOffer->resources(),
