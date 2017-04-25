@@ -112,7 +112,7 @@ public:
   void addFramework(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
-      const hashmap<SlaveID, Resources>& used,
+      const hashmap<ResourceProviderID, Resources>& used,
       bool active);
 
   void removeFramework(
@@ -129,26 +129,23 @@ public:
       const FrameworkInfo& frameworkInfo);
 
   void addSlave(
-      const SlaveID& slaveId,
-      const SlaveInfo& slaveInfo,
+      const ResourceProviderID& resourceProviderId,
+      const ResourceProviderInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
+      const Option<SlaveInfo>& agentInfo,
       const Option<Unavailability>& unavailability,
-      const Resources& total,
       const hashmap<FrameworkID, Resources>& used);
 
-  void removeSlave(
-      const SlaveID& slaveId);
+  void removeSlave(const ResourceProviderID& resourceProviderId);
 
   void updateSlave(
-      const SlaveID& slave,
+      const ResourceProviderID& resourceProviderId,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
 
-  void deactivateSlave(
-      const SlaveID& slaveId);
+  void deactivateSlave(const ResourceProviderID& resourceProviderId);
 
-  void activateSlave(
-      const SlaveID& slaveId);
+  void activateSlave(const ResourceProviderID& resourceProviderId);
 
   void updateWhitelist(
       const Option<hashset<std::string>>& whitelist);
@@ -159,20 +156,20 @@ public:
 
   void updateAllocation(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations);
 
   process::Future<Nothing> updateAvailable(
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const std::vector<Offer::Operation>& operations);
 
   void updateUnavailability(
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Option<Unavailability>& unavailability);
 
   void updateInverseOffer(
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<mesos::allocator::InverseOfferStatus>& status,
@@ -185,7 +182,7 @@ public:
 
   void recoverResources(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources,
       const Option<Filters>& filters);
 
