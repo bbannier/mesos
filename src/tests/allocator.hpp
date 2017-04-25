@@ -356,16 +356,19 @@ public:
   }
 
   virtual ~TestAllocator() {}
-
-  MOCK_METHOD4(initialize, void(
-      const Duration&,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&,
-      const Option<std::set<std::string>>&));
+  MOCK_METHOD4(
+      initialize,
+      void(
+          const Duration&,
+          const lambda::function<void(
+              const FrameworkID&,
+              const hashmap<
+                  std::string,
+                  hashmap<ResourceProviderID, Resources>>&)>&,
+          const lambda::function<void(
+              const FrameworkID&,
+              const hashmap<ResourceProviderID, UnavailableResources>&)>&,
+          const Option<std::set<std::string>>&));
 
   MOCK_METHOD2(recover, void(
       const int expectedAgentCount,
@@ -374,7 +377,7 @@ public:
   MOCK_METHOD4(addFramework, void(
       const FrameworkID&,
       const FrameworkInfo&,
-      const hashmap<SlaveID, Resources>&,
+      const hashmap<ResourceProviderID, Resources>&,
       bool active));
 
   MOCK_METHOD1(removeFramework, void(
@@ -391,26 +394,26 @@ public:
       const FrameworkInfo&));
 
   MOCK_METHOD6(addSlave, void(
-      const SlaveID&,
-      const SlaveInfo&,
+      const ResourceProviderID&,
+      const ResourceProviderInfo&,
       const std::vector<SlaveInfo::Capability>&,
       const Option<Unavailability>&,
       const Resources&,
       const hashmap<FrameworkID, Resources>&));
 
   MOCK_METHOD1(removeSlave, void(
-      const SlaveID&));
+      const ResourceProviderID&));
 
   MOCK_METHOD3(updateSlave, void(
-      const SlaveID&,
+      const ResourceProviderID&,
       const Option<Resources>&,
       const Option<std::vector<SlaveInfo::Capability>>&));
 
   MOCK_METHOD1(activateSlave, void(
-      const SlaveID&));
+      const ResourceProviderID&));
 
   MOCK_METHOD1(deactivateSlave, void(
-      const SlaveID&));
+      const ResourceProviderID&));
 
   MOCK_METHOD1(updateWhitelist, void(
       const Option<hashset<std::string>>&));
@@ -421,33 +424,33 @@ public:
 
   MOCK_METHOD4(updateAllocation, void(
       const FrameworkID&,
-      const SlaveID&,
+      const ResourceProviderID&,
       const Resources&,
       const std::vector<Offer::Operation>&));
 
   MOCK_METHOD2(updateAvailable, process::Future<Nothing>(
-      const SlaveID&,
+      const ResourceProviderID&,
       const std::vector<Offer::Operation>&));
 
   MOCK_METHOD2(updateUnavailability, void(
-      const SlaveID&,
+      const ResourceProviderID&,
       const Option<Unavailability>&));
 
   MOCK_METHOD5(updateInverseOffer, void(
-      const SlaveID&,
+      const ResourceProviderID&,
       const FrameworkID&,
       const Option<UnavailableResources>&,
       const Option<mesos::allocator::InverseOfferStatus>&,
       const Option<Filters>&));
 
   MOCK_METHOD0(getInverseOfferStatuses, process::Future<
-      hashmap<SlaveID, hashmap<
+      hashmap<ResourceProviderID, hashmap<
           FrameworkID,
           mesos::allocator::InverseOfferStatus>>>());
 
   MOCK_METHOD4(recoverResources, void(
       const FrameworkID&,
-      const SlaveID&,
+      const ResourceProviderID&,
       const Resources&,
       const Option<Filters>& filters));
 

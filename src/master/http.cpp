@@ -4617,7 +4617,7 @@ Future<mesos::maintenance::ClusterStatus>
     .then(defer(
         master->self(),
         [=](hashmap<
-            SlaveID,
+            ResourceProviderID,
             hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>> result)
           -> Future<mesos::maintenance::ClusterStatus> {
     // Unwrap the master's machine information into two arrays of machines.
@@ -4637,10 +4637,13 @@ Future<mesos::maintenance::ClusterStatus>
 
           // Unwrap inverse offer status information from the allocator.
           foreach (const SlaveID& slave, machine.slaves) {
-            if (result.contains(slave)) {
+            ResourceProviderID resourceProviderId;
+            resourceProviderId.set_value(slave.value());
+
+            if (result.contains(resourceProviderId)) {
               foreachvalue (
                   const mesos::allocator::InverseOfferStatus& status,
-                  result[slave]) {
+                  result[resourceProviderId]) {
                 drainingMachine->add_statuses()->CopyFrom(status);
               }
             }
@@ -4866,9 +4869,12 @@ Future<Response> Master::Http::_operation(
     // We explicitly pass 'Filters()' which has a default 'refuse_sec'
     // of 5 seconds rather than 'None()' here, so that we can
     // virtually always win the race against 'allocate'.
+    ResourceProviderID resourceProviderId;
+    resourceProviderId.set_value(offer->slave_id().value());
+
     master->allocator->recoverResources(
         offer->framework_id(),
-        offer->slave_id(),
+        resourceProviderId,
         offer->resources(),
         Filters());
 

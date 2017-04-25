@@ -48,16 +48,16 @@ public:
 
   void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
-      const Option<std::set<std::string>>&
-        fairnessExcludeResourceNames = None());
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None());
 
   void recover(
       const int expectedAgentCount,
@@ -66,7 +66,7 @@ public:
   void addFramework(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
-      const hashmap<SlaveID, Resources>& used,
+      const hashmap<ResourceProviderID, Resources>& used,
       bool active);
 
   void removeFramework(
@@ -83,26 +83,24 @@ public:
       const FrameworkInfo& frameworkInfo);
 
   void addSlave(
-      const SlaveID& slaveId,
-      const SlaveInfo& slaveInfo,
+      const ResourceProviderID& slaveId,
+      const ResourceProviderInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used);
 
   void removeSlave(
-      const SlaveID& slaveId);
+      const ResourceProviderID& slaveId);
 
   void updateSlave(
-      const SlaveID& slave,
+      const ResourceProviderID& slave,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
 
-  void activateSlave(
-      const SlaveID& slaveId);
+  void activateSlave(const ResourceProviderID& slaveId);
 
-  void deactivateSlave(
-      const SlaveID& slaveId);
+  void deactivateSlave(const ResourceProviderID& slaveId);
 
   void updateWhitelist(
       const Option<hashset<std::string>>& whitelist);
@@ -113,33 +111,33 @@ public:
 
   void updateAllocation(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations);
 
   process::Future<Nothing> updateAvailable(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const std::vector<Offer::Operation>& operations);
 
   void updateUnavailability(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Option<Unavailability>& unavailability);
 
   void updateInverseOffer(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<mesos::allocator::InverseOfferStatus>& status,
       const Option<Filters>& filters);
 
   process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses();
 
   void recoverResources(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& resources,
       const Option<Filters>& filters);
 
@@ -184,16 +182,16 @@ public:
 
   virtual void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
-      const Option<std::set<std::string>>&
-        fairnessExcludeResourceNames = None()) = 0;
+      const Option<std::set<std::string>>& fairnessExcludeResourceNames =
+        None()) = 0;
 
   virtual void recover(
       const int expectedAgentCount,
@@ -202,7 +200,7 @@ public:
   virtual void addFramework(
       const FrameworkID& frameworkId,
       const FrameworkInfo& frameworkInfo,
-      const hashmap<SlaveID, Resources>& used,
+      const hashmap<ResourceProviderID, Resources>& used,
       bool active) = 0;
 
   virtual void removeFramework(
@@ -219,27 +217,24 @@ public:
       const FrameworkInfo& frameworkInfo) = 0;
 
   virtual void addSlave(
-      const SlaveID& slaveId,
-      const SlaveInfo& slaveInfo,
+      const ResourceProviderID& slaveId,
+      const ResourceProviderInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
 
-  virtual void removeSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void removeSlave(const ResourceProviderID& slaveId) = 0;
 
   virtual void updateSlave(
-      const SlaveID& slave,
+      const ResourceProviderID& slave,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
 
-  virtual void activateSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void activateSlave(const ResourceProviderID& slaveId) = 0;
 
-  virtual void deactivateSlave(
-      const SlaveID& slaveId) = 0;
+  virtual void deactivateSlave(const ResourceProviderID& slaveId) = 0;
 
   virtual void updateWhitelist(
       const Option<hashset<std::string>>& whitelist) = 0;
@@ -250,33 +245,33 @@ public:
 
   virtual void updateAllocation(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
 
   virtual process::Future<Nothing> updateAvailable(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const std::vector<Offer::Operation>& operations) = 0;
 
   virtual void updateUnavailability(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Option<Unavailability>& unavailability) = 0;
 
   virtual void updateInverseOffer(
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<mesos::allocator::InverseOfferStatus>& status,
       const Option<Filters>& filters = None()) = 0;
 
   virtual process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses() = 0;
 
   virtual void recoverResources(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& slaveId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
 
@@ -329,13 +324,13 @@ MesosAllocator<AllocatorProcess>::~MesosAllocator()
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::initialize(
     const Duration& allocationInterval,
-    const lambda::function<
-        void(const FrameworkID&,
-             const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                 offerCallback,
-    const lambda::function<
-        void(const FrameworkID&,
-              const hashmap<SlaveID, UnavailableResources>&)>&
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+      offerCallback,
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<ResourceProviderID, UnavailableResources>&)>&
       inverseOfferCallback,
     const Option<std::set<std::string>>& fairnessExcludeResourceNames)
 {
@@ -366,7 +361,7 @@ template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::addFramework(
     const FrameworkID& frameworkId,
     const FrameworkInfo& frameworkInfo,
-    const hashmap<SlaveID, Resources>& used,
+    const hashmap<ResourceProviderID, Resources>& used,
     bool active)
 {
   process::dispatch(
@@ -427,8 +422,8 @@ inline void MesosAllocator<AllocatorProcess>::updateFramework(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::addSlave(
-    const SlaveID& slaveId,
-    const SlaveInfo& slaveInfo,
+    const ResourceProviderID& slaveId,
+    const ResourceProviderInfo& slaveInfo,
     const std::vector<SlaveInfo::Capability>& capabilities,
     const Option<Unavailability>& unavailability,
     const Resources& total,
@@ -448,7 +443,7 @@ inline void MesosAllocator<AllocatorProcess>::addSlave(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::removeSlave(
-    const SlaveID& slaveId)
+    const ResourceProviderID& slaveId)
 {
   process::dispatch(
       process,
@@ -459,7 +454,7 @@ inline void MesosAllocator<AllocatorProcess>::removeSlave(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::updateSlave(
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const Option<Resources>& oversubscribed,
     const Option<std::vector<SlaveInfo::Capability>>& capabilities)
 {
@@ -474,7 +469,7 @@ inline void MesosAllocator<AllocatorProcess>::updateSlave(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::activateSlave(
-    const SlaveID& slaveId)
+    const ResourceProviderID& slaveId)
 {
   process::dispatch(
       process,
@@ -485,7 +480,7 @@ inline void MesosAllocator<AllocatorProcess>::activateSlave(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::deactivateSlave(
-    const SlaveID& slaveId)
+    const ResourceProviderID& slaveId)
 {
   process::dispatch(
       process,
@@ -521,7 +516,7 @@ inline void MesosAllocator<AllocatorProcess>::requestResources(
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::updateAllocation(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const Resources& offeredResources,
     const std::vector<Offer::Operation>& operations)
 {
@@ -538,7 +533,7 @@ inline void MesosAllocator<AllocatorProcess>::updateAllocation(
 template <typename AllocatorProcess>
 inline process::Future<Nothing>
 MesosAllocator<AllocatorProcess>::updateAvailable(
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const std::vector<Offer::Operation>& operations)
 {
   return process::dispatch(
@@ -551,7 +546,7 @@ MesosAllocator<AllocatorProcess>::updateAvailable(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::updateUnavailability(
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const Option<Unavailability>& unavailability)
 {
   return process::dispatch(
@@ -564,7 +559,7 @@ inline void MesosAllocator<AllocatorProcess>::updateUnavailability(
 
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::updateInverseOffer(
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const FrameworkID& frameworkId,
     const Option<UnavailableResources>& unavailableResources,
     const Option<mesos::allocator::InverseOfferStatus>& status,
@@ -583,7 +578,7 @@ inline void MesosAllocator<AllocatorProcess>::updateInverseOffer(
 
 template <typename AllocatorProcess>
 inline process::Future<
-    hashmap<SlaveID,
+    hashmap<ResourceProviderID,
             hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
   MesosAllocator<AllocatorProcess>::getInverseOfferStatuses()
 {
@@ -596,7 +591,7 @@ inline process::Future<
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::recoverResources(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const ResourceProviderID& slaveId,
     const Resources& resources,
     const Option<Filters>& filters)
 {

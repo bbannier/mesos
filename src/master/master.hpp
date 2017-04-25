@@ -448,11 +448,12 @@ public:
 
   void offer(
       const FrameworkID& frameworkId,
-      const hashmap<std::string, hashmap<SlaveID, Resources>>& resources);
+      const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&
+        resources);
 
   void inverseOffer(
       const FrameworkID& frameworkId,
-      const hashmap<SlaveID, UnavailableResources>& resources);
+      const hashmap<ResourceProviderID, UnavailableResources>& resources);
 
   // Invoked when there is a newly elected leading master.
   // Made public for testing purposes.

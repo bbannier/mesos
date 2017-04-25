@@ -303,9 +303,12 @@ void Master::WeightsHandler::rescindOffers(
   if (rescind) {
     foreachvalue (const Slave* slave, master->slaves.registered) {
       foreach (Offer* offer, utils::copy(slave->offers)) {
+        ResourceProviderID resourceProviderId;
+        resourceProviderId.set_value(offer->slave_id().value());
+
         master->allocator->recoverResources(
             offer->framework_id(),
-            offer->slave_id(),
+            resourceProviderId,
             offer->resources(),
             None());
 
