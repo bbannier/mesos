@@ -36,7 +36,6 @@
 #include "master/flags.hpp"
 #include "master/master.hpp"
 
-#include "tests/allocator.hpp"
 #include "tests/mesos.hpp"
 #include "tests/resources_utils.hpp"
 #include "tests/utils.hpp"
@@ -114,24 +113,21 @@ public:
 // statically reserved resources, and can then destroy that volume.
 TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -146,7 +142,7 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -185,7 +181,7 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -210,24 +206,21 @@ TEST_F(PersistentVolumeEndpointsTest, StaticReservation)
 // dynamically reserved resources, and can then destroy that volume.
 TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(*):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -240,7 +233,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -289,7 +282,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -314,7 +307,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -332,24 +325,21 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
 // the slave have been reserved by a different role.
 TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(*):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -362,7 +352,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -401,7 +391,7 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 
@@ -414,24 +404,21 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservationRoleMismatch)
 // persistent volume results in a 'Conflict' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(*):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -444,7 +431,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -461,7 +448,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -469,7 +456,7 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, response);
 }
@@ -479,25 +466,21 @@ TEST_F(PersistentVolumeEndpointsTest, UnreserveVolumeResources)
 // invalid resource will receive a Bad Request response.
 TEST_F(PersistentVolumeEndpointsTest, InvalidVolume)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
-  AWAIT_READY(slaveId);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   // This volume has role "*", which is not allowed.
   Try<Resource> disk = Resources::parse("disk", "64", "*");
@@ -514,7 +497,7 @@ TEST_F(PersistentVolumeEndpointsTest, InvalidVolume)
   // function `createRequestBody` accepts `Resources`.
   string body = strings::format(
         "slaveId=%s&volumes=[%s]",
-        slaveId->value(),
+        slaveId.value(),
         JSON::protobuf(volume)).get();
 
   {
@@ -547,24 +530,21 @@ TEST_F(PersistentVolumeEndpointsTest, InvalidVolume)
 // reserved resources at the slave results in a 'Conflict' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(1025),
@@ -579,7 +559,7 @@ TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Conflict().status, createResponse);
 }
@@ -589,24 +569,21 @@ TEST_F(PersistentVolumeEndpointsTest, VolumeExceedsReservedSize)
 // volume results in a 'BadRequest' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -621,7 +598,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -639,7 +616,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", badVolumeId));
+      createRequestBody(slaveId, "volumes", badVolumeId));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -657,7 +634,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", badRole));
+      createRequestBody(slaveId, "volumes", badRole));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -675,7 +652,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", badSize));
+      createRequestBody(slaveId, "volumes", badSize));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, destroyResponse);
 
@@ -695,7 +672,7 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", differentPath));
+      createRequestBody(slaveId, "volumes", differentPath));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 }
@@ -705,24 +682,21 @@ TEST_F(PersistentVolumeEndpointsTest, DeleteNonExistentVolume)
 // authorization header results in an 'Unauthorized' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, NoHeader)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -739,7 +713,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
       master.get()->pid,
       "create-volumes",
       None(),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -749,7 +723,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
       master.get()->pid,
       "destroy-volumes",
       None(),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -761,24 +735,21 @@ TEST_F(PersistentVolumeEndpointsTest, NoHeader)
 // credentials results in an 'Unauthorized' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, BadCredentials)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Credential credential;
   credential.set_principal("bad-principal");
@@ -794,7 +765,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCredentials)
       DEFAULT_CREDENTIAL.principal());
 
   process::http::Headers headers = createBasicAuthHeaders(credential);
-  string body = createRequestBody(slaveId.get(), "volumes", volume);
+  string body = createRequestBody(slaveId, "volumes", volume);
 
   Future<Response> response =
     process::http::post(master.get()->pid, "create-volumes", headers, body);
@@ -819,7 +790,6 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
   // Pause the clock to gain control over the offer cycle.
   Clock::pause();
 
-  TestAllocator<> allocator;
   ACLs acls;
 
   // This ACL asserts that the principal of `DEFAULT_CREDENTIAL`
@@ -839,9 +809,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.acls = acls;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create a slave. Disk resources are statically reserved to allow the
@@ -849,16 +817,19 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
-  // Advance clock to trigger agent registration befor we HTTP POST.
+  // Advance clock to trigger agent registration before we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
+  Clock::settle();
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
@@ -875,7 +846,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -917,7 +888,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACL)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -949,7 +920,6 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
   const string AUTHORIZED_ROLE_1 = "potato_head";
   const string AUTHORIZED_ROLE_2 = "gumby";
 
-  TestAllocator<> allocator;
   ACLs acls;
 
   // This ACL asserts that the principal of `DEFAULT_CREDENTIAL`
@@ -962,9 +932,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.acls = acls;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create a slave. Disk resources are statically reserved to allow the
@@ -974,13 +942,15 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
     "cpus:1;mem:512;disk(" + AUTHORIZED_ROLE_1 + "):1024;disk(" +
     AUTHORIZED_ROLE_2 + "):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume1 = createPersistentVolume(
       Megabytes(64),
@@ -1006,7 +976,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateACLMultipleRoles)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volumesMultipleRoles));
+      createRequestBody(slaveId, "volumes", volumesMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 }
@@ -1019,7 +989,6 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
   // Pause the clock to gain control over the offer cycle.
   Clock::pause();
 
-  TestAllocator<> allocator;
   ACLs acls;
 
   // This ACL asserts that the principal of `DEFAULT_CREDENTIAL_2`
@@ -1047,9 +1016,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.acls = acls;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create a slave. Disk resources are statically reserved to allow the
@@ -1057,10 +1024,8 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1068,6 +1033,10 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
 
   // Advance clock to trigger agent registration befor we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
+  Clock::settle();
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   // The failed creation attempt.
   {
@@ -1084,7 +1053,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
         master.get()->pid,
         "create-volumes",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-        createRequestBody(slaveId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
   }
@@ -1104,7 +1073,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
         master.get()->pid,
         "create-volumes",
         createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-        createRequestBody(slaveId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1140,7 +1109,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateAndDestroyACL)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL_2),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, destroyResponse);
 
@@ -1157,7 +1126,6 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
   const string AUTHORIZED_ROLE = "potato_head";
   const string UNAUTHORIZED_ROLE = "gumby";
 
-  TestAllocator<> allocator;
   ACLs acls;
 
   // This ACL asserts that the principal of `DEFAULT_CREDENTIAL`
@@ -1176,9 +1144,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.acls = acls;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create a slave. Disk resources are statically reserved to allow the
@@ -1188,13 +1154,15 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
     "cpus:1;mem:512;disk(" + AUTHORIZED_ROLE + "):1024;disk(" +
     UNAUTHORIZED_ROLE + "):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume1 = createPersistentVolume(
       Megabytes(64),
@@ -1220,7 +1188,7 @@ TEST_F(PersistentVolumeEndpointsTest, BadCreateACLMultipleRoles)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volumesMultipleRoles));
+      createRequestBody(slaveId, "volumes", volumesMultipleRoles));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Forbidden().status, response);
 }
@@ -1240,7 +1208,6 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
   failedCredential.set_principal("awesome-principal");
   failedCredential.set_secret("super-secret-secret");
 
-  TestAllocator<> allocator;
   ACLs acls;
 
   // This ACL asserts that the principal of `failedCredential`
@@ -1266,9 +1233,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.acls = acls;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create a slave. Disk resources are statically reserved to allow the
@@ -1276,10 +1241,8 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512;disk(role1):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -1287,6 +1250,10 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
 
   // Advance clock to trigger agent registration befor we HTTP POST.
   Clock::advance(slaveFlags.registration_backoff_factor);
+  Clock::settle();
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -1302,7 +1269,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(failedCredential),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1313,7 +1280,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, createResponse);
 
@@ -1348,7 +1315,7 @@ TEST_F(PersistentVolumeEndpointsTest, GoodCreateAndDestroyACLBadCredential)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(failedCredential),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(
       Unauthorized({}).status,
@@ -1368,15 +1335,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
 {
   const string TEST_ROLE = "role1";
 
-  TestAllocator<> allocator;
-
   // Create master flags that will disable authentication.
   master::Flags masterFlags = CreateMasterFlags();
   masterFlags.authenticate_http_readwrite = false;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator, masterFlags);
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
 
   // Create an agent with statically reserved disk resources to allow the
@@ -1384,15 +1347,15 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:1;mem:512;disk(" + TEST_ROLE + "):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator), FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
-  AWAIT_READY(slaveId);
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -1409,7 +1372,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
         master.get()->pid,
         "create-volumes",
         None(),
-        createRequestBody(slaveId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1420,7 +1383,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
         master.get()->pid,
         "destroy-volumes",
         None(),
-        createRequestBody(slaveId.get(), "volumes", volume));
+        createRequestBody(slaveId, "volumes", volume));
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
   }
@@ -1431,24 +1394,21 @@ TEST_F(PersistentVolumeEndpointsTest, NoAuthentication)
 // 'slaveId' results in a 'BadRequest' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   Resources volume = createPersistentVolume(
       Megabytes(64),
@@ -1475,7 +1435,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1490,17 +1450,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoSlaveId)
 // the 'volumes' parameter results in a 'BadRequest' HTTP error.
 TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
 
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(role1):1024";
@@ -1509,8 +1463,11 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
 
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
+
   process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
-  string body = "slaveId=" + slaveId->value();
+  string body = "slaveId=" + slaveId.value();
 
   Future<Response> response =
     process::http::post(master.get()->pid, "create-volumes", headers, body);
@@ -1531,7 +1488,7 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1547,24 +1504,21 @@ TEST_F(PersistentVolumeEndpointsTest, NoVolumes)
 // using the HTTP endpoints.
 TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(*):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1577,8 +1531,6 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
   Resources dynamicallyReserved = unreserved.flatten(
       frameworkInfo.role(),
       createReservationInfo(DEFAULT_CREDENTIAL.principal())).get();
-
-  EXPECT_CALL(allocator, addFramework(_, _, _, _));
 
   EXPECT_CALL(sched, registered(_, _, _));
 
@@ -1594,7 +1546,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
   ASSERT_EQ(1u, offers->size());
   Offer offer = offers.get()[0];
 
-  EXPECT_EQ(offer.slave_id(), slaveId.get());
+  EXPECT_EQ(offer.slave_id(), slaveId);
 
   // We use the filter explicitly here so that the resources will not
   // be filtered for 5 seconds (the default).
@@ -1654,7 +1606,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
       master.get()->pid,
       "destroy-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, destroyResponse);
 
@@ -1681,7 +1633,7 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, unreserveResponse);
 
@@ -1707,24 +1659,21 @@ TEST_F(PersistentVolumeEndpointsTest, OfferCreateThenEndpointRemove)
 // offer cycle.
 TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "disk(*):1024";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1738,7 +1687,7 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1756,7 +1705,7 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -1829,31 +1778,24 @@ TEST_F(PersistentVolumeEndpointsTest, EndpointCreateThenOfferRemove)
 // correctly. See MESOS-5698 for context.
 TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
 
-  Future<SlaveID> slave1Id;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slave1Id)));
+  Future<SlaveRegisteredMessage> slave1RegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   slave::Flags slave1Flags = CreateSlaveFlags();
   slave1Flags.resources = "cpus:4";
   Try<Owned<cluster::Slave>> slave1 = StartSlave(detector.get(), slave1Flags);
 
   ASSERT_SOME(slave1);
-  AWAIT_READY(slave1Id);
+  AWAIT_READY(slave1RegisteredMessage);
+  const SlaveID& slave1Id = slave1RegisteredMessage->slave_id();
 
-  Future<SlaveID> slave2Id;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slave2Id)));
+  Future<SlaveRegisteredMessage> slave2RegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   // Each slave needs its own flags to ensure work_dirs are unique.
   slave::Flags slave2Flags = CreateSlaveFlags();
@@ -1861,7 +1803,8 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
   Try<Owned<cluster::Slave>> slave2 = StartSlave(detector.get(), slave2Flags);
 
   ASSERT_SOME(slave2);
-  AWAIT_READY(slave2Id);
+  AWAIT_READY(slave2RegisteredMessage);
+  const SlaveID& slave2Id = slave2RegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1875,15 +1818,13 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slave1Id.get(), "resources", slave1Reserved));
+      createRequestBody(slave1Id, "resources", slave1Reserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
   MockScheduler sched;
   MesosSchedulerDriver driver(
       &sched, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
-
-  EXPECT_CALL(allocator, addFramework(_, _, _, _));
 
   EXPECT_CALL(sched, registered(_, _, _));
 
@@ -1914,10 +1855,10 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
     const Offer& offer = offers.get()[i];
     const SlaveID& offeredSlaveId = offer.slave_id();
 
-    ASSERT_TRUE(offeredSlaveId == slave1Id.get() ||
-                offeredSlaveId == slave2Id.get());
+    ASSERT_TRUE(offeredSlaveId == slave1Id ||
+                offeredSlaveId == slave2Id);
 
-    if (offeredSlaveId == slave2Id.get()) {
+    if (offeredSlaveId == slave2Id) {
       driver.acceptOffers({offer.id()}, {RESERVE(slave2Reserved)});
       break;
     }
@@ -1928,11 +1869,6 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
             slave2Reserved);
 
   // Shutdown `slave2` with an explicit shutdown message.
-  Future<Nothing> removeSlave;
-  EXPECT_CALL(allocator, removeSlave(_))
-    .WillOnce(DoAll(InvokeRemoveSlave(&allocator),
-                    FutureSatisfy(&removeSlave)));
-
   EXPECT_CALL(sched, offerRescinded(_, _));
 
   Future<Nothing> slaveLost;
@@ -1941,22 +1877,18 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
 
   slave2.get()->shutdown();
 
-  AWAIT_READY(removeSlave);
-
   AWAIT_READY(slaveLost);
 
   response = process::http::post(
       master.get()->pid,
       "unreserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slave1Id.get(), "resources", slave1Reserved));
+      createRequestBody(slave1Id, "resources", slave1Reserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
   driver.stop();
   driver.join();
-
-  EXPECT_CALL(allocator, removeSlave(_));
 }
 
 
@@ -1964,24 +1896,21 @@ TEST_F(PersistentVolumeEndpointsTest, ReserveAndSlaveRemoval)
 // reflected in the "/slaves" master endpoint.
 TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
 {
-  TestAllocator<> allocator;
-
-  EXPECT_CALL(allocator, initialize(_, _, _, _));
-
-  Try<Owned<cluster::Master>> master = StartMaster(&allocator);
+  Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
-
-  Future<SlaveID> slaveId;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(DoAll(InvokeAddSlave(&allocator),
-                    FutureArg<0>(&slaveId)));
 
   slave::Flags slaveFlags = CreateSlaveFlags();
   slaveFlags.resources = "cpus:4;gpus:0;mem:2048;disk:4096";
 
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
   ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
 
   FrameworkInfo frameworkInfo = createFrameworkInfo();
 
@@ -1994,7 +1923,7 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
       master.get()->pid,
       "reserve",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "resources", dynamicallyReserved));
+      createRequestBody(slaveId, "resources", dynamicallyReserved));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
@@ -2011,7 +1940,7 @@ TEST_F(PersistentVolumeEndpointsTest, SlavesEndpointFullResources)
       master.get()->pid,
       "create-volumes",
       createBasicAuthHeaders(DEFAULT_CREDENTIAL),
-      createRequestBody(slaveId.get(), "volumes", volume));
+      createRequestBody(slaveId, "volumes", volume));
 
   AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
 
