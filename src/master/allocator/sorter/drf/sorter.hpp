@@ -66,38 +66,40 @@ public:
 
   virtual void allocated(
       const std::string& clientPath,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources);
 
   virtual void update(
       const std::string& clientPath,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& oldAllocation,
       const Resources& newAllocation);
 
   virtual void unallocated(
       const std::string& clientPath,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources);
 
-  virtual const hashmap<SlaveID, Resources>& allocation(
+  virtual const hashmap<ResourceProviderID, Resources>& allocation(
       const std::string& clientPath) const;
 
   virtual const Resources& allocationScalarQuantities(
       const std::string& clientPath) const;
 
   virtual hashmap<std::string, Resources> allocation(
-      const SlaveID& slaveId) const;
+      const ResourceProviderID& resourceProviderId) const;
 
   virtual Resources allocation(
       const std::string& clientPath,
-      const SlaveID& slaveId) const;
+      const ResourceProviderID& resourceProviderId) const;
 
   virtual const Resources& totalScalarQuantities() const;
 
-  virtual void add(const SlaveID& slaveId, const Resources& resources);
+  virtual void add(
+      const ResourceProviderID& resourceProviderId, const Resources& resources);
 
-  virtual void remove(const SlaveID& slaveId, const Resources& resources);
+  virtual void remove(
+      const ResourceProviderID& resourceProviderId, const Resources& resources);
 
   virtual std::vector<std::string> sort();
 
@@ -152,15 +154,15 @@ private:
     // resources. We need to ensure that we do not update the scalar
     // quantities for shared resources when the change is only in the
     // number of copies in the sorter.
-    hashmap<SlaveID, Resources> resources;
+    hashmap<ResourceProviderID, Resources> resources;
 
-    // NOTE: Scalars can be safely aggregated across slaves. We keep
-    // that to speed up the calculation of shares. See MESOS-2891 for
-    // the reasons why we want to do that.
+    // NOTE: Scalars can be safely aggregated across providers. We
+    // keep that to speed up the calculation of shares. See MESOS-2891
+    // for the reasons why we want to do that.
     //
     // NOTE: We omit information about dynamic reservations and
     // persistent volumes here to enable resources to be aggregated
-    // across slaves more effectively. See MESOS-4833 for more
+    // across providers more effectively. See MESOS-4833 for more
     // information.
     //
     // Sharedness info is also stripped out when resource identities
@@ -279,20 +281,20 @@ struct DRFSorter::Node
   struct Allocation
   {
     Allocation() : count(0) {}
-
-    void add(const SlaveID& slaveId, const Resources& toAdd)
+    void add(
+        const ResourceProviderID& resourceProviderId, const Resources& toAdd)
     {
       // Add shared resources to the allocated quantities when the same
       // resources don't already exist in the allocation.
-      const Resources sharedToAdd = toAdd.shared()
-        .filter([this, slaveId](const Resource& resource) {
-            return !resources[slaveId].contains(resource);
-        });
+      const Resources sharedToAdd = toAdd.shared().filter(
+          [this, resourceProviderId](const Resource& resource) {
+            return !resources[resourceProviderId].contains(resource);
+          });
 
       const Resources quantitiesToAdd =
         (toAdd.nonShared() + sharedToAdd).createStrippedScalarQuantity();
 
-      resources[slaveId] += toAdd;
+      resources[resourceProviderId] += toAdd;
       scalarQuantities += quantitiesToAdd;
 
       foreach (const Resource& resource, quantitiesToAdd) {
@@ -302,19 +304,20 @@ struct DRFSorter::Node
       count++;
     }
 
-    void subtract(const SlaveID& slaveId, const Resources& toRemove)
+    void subtract(
+        const ResourceProviderID& resourceProviderId, const Resources& toRemove)
     {
-      CHECK(resources.contains(slaveId));
-      CHECK(resources.at(slaveId).contains(toRemove));
+      CHECK(resources.contains(resourceProviderId));
+      CHECK(resources.at(resourceProviderId).contains(toRemove));
 
-      resources[slaveId] -= toRemove;
+      resources[resourceProviderId] -= toRemove;
 
       // Remove shared resources from the allocated quantities when there
       // are no instances of same resources left in the allocation.
-      const Resources sharedToRemove = toRemove.shared()
-        .filter([this, slaveId](const Resource& resource) {
-            return !resources[slaveId].contains(resource);
-        });
+      const Resources sharedToRemove = toRemove.shared().filter(
+          [this, resourceProviderId](const Resource& resource) {
+            return !resources[resourceProviderId].contains(resource);
+          });
 
       const Resources quantitiesToRemove =
         (toRemove.nonShared() + sharedToRemove).createStrippedScalarQuantity();
@@ -326,13 +329,13 @@ struct DRFSorter::Node
       CHECK(scalarQuantities.contains(quantitiesToRemove));
       scalarQuantities -= quantitiesToRemove;
 
-      if (resources[slaveId].empty()) {
-        resources.erase(slaveId);
+      if (resources[resourceProviderId].empty()) {
+        resources.erase(resourceProviderId);
       }
     }
 
     void update(
-        const SlaveID& slaveId,
+        const ResourceProviderID& resourceProviderId,
         const Resources& oldAllocation,
         const Resources& newAllocation)
     {
@@ -341,11 +344,11 @@ struct DRFSorter::Node
       const Resources newAllocationQuantity =
         newAllocation.createStrippedScalarQuantity();
 
-      CHECK(resources[slaveId].contains(oldAllocation));
+      CHECK(resources[resourceProviderId].contains(oldAllocation));
       CHECK(scalarQuantities.contains(oldAllocationQuantity));
 
-      resources[slaveId] -= oldAllocation;
-      resources[slaveId] += newAllocation;
+      resources[resourceProviderId] -= oldAllocation;
+      resources[resourceProviderId] += newAllocation;
 
       scalarQuantities -= oldAllocationQuantity;
       scalarQuantities += newAllocationQuantity;
@@ -372,11 +375,11 @@ struct DRFSorter::Node
     // to a client, where the number of copies represents the number
     // of times this shared resource has been allocated to (and has
     // not been recovered from) a specific client.
-    hashmap<SlaveID, Resources> resources;
+    hashmap<ResourceProviderID, Resources> resources;
 
-    // Similarly, we aggregate scalars across slaves and omit information
-    // about dynamic reservations, persistent volumes and sharedness of
-    // the corresponding resource. See notes above.
+    // Similarly, we aggregate scalars across providers and omit information
+    // about dynamic reservations, persistent volumes and sharedness of the
+    // corresponding resource. See notes above.
     Resources scalarQuantities;
 
     // We also store a map version of `scalarQuantities`, mapping

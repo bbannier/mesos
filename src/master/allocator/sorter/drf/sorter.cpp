@@ -176,7 +176,7 @@ void DRFSorter::remove(const string& clientPath)
 
   // Save a copy of the leaf node's allocated resources, because we
   // destroy the leaf node below.
-  const hashmap<SlaveID, Resources> leafAllocation =
+  const hashmap<ResourceProviderID, Resources> leafAllocation =
     current->allocation.resources;
 
   // Remove the lookup table entry for the client.
@@ -204,10 +204,11 @@ void DRFSorter::remove(const string& clientPath)
     // `parent`. We skip `root`, because we never update the
     // allocation made to the root node.
     if (parent != root) {
-      foreachpair (const SlaveID& slaveId,
-                   const Resources& resources,
-                   leafAllocation) {
-        parent->allocation.subtract(slaveId, resources);
+      foreachpair (
+          const ResourceProviderID& resourceProviderId,
+          const Resources& resources,
+          leafAllocation) {
+        parent->allocation.subtract(resourceProviderId, resources);
       }
     }
 
@@ -272,7 +273,7 @@ void DRFSorter::updateWeight(const string& path, double weight)
 
 void DRFSorter::allocated(
     const string& clientPath,
-    const SlaveID& slaveId,
+    const ResourceProviderID& resourceProviderId,
     const Resources& resources)
 {
   Node* current = CHECK_NOTNULL(find(clientPath));
@@ -281,7 +282,7 @@ void DRFSorter::allocated(
   // node. This is debatable, but the current implementation doesn't
   // require looking at the allocation of the root node.
   while (current != root) {
-    current->allocation.add(slaveId, resources);
+    current->allocation.add(resourceProviderId, resources);
     current = CHECK_NOTNULL(current->parent);
   }
 
@@ -292,7 +293,7 @@ void DRFSorter::allocated(
 
 void DRFSorter::update(
     const string& clientPath,
-    const SlaveID& slaveId,
+    const ResourceProviderID& resourceProviderId,
     const Resources& oldAllocation,
     const Resources& newAllocation)
 {
@@ -307,7 +308,8 @@ void DRFSorter::update(
   // node. This is debatable, but the current implementation doesn't
   // require looking at the allocation of the root node.
   while (current != root) {
-    current->allocation.update(slaveId, oldAllocation, newAllocation);
+    current->allocation.update(
+        resourceProviderId, oldAllocation, newAllocation);
     current = CHECK_NOTNULL(current->parent);
   }
 
@@ -318,7 +320,7 @@ void DRFSorter::update(
 
 void DRFSorter::unallocated(
     const string& clientPath,
-    const SlaveID& slaveId,
+    const ResourceProviderID& resourceProviderId,
     const Resources& resources)
 {
   Node* current = CHECK_NOTNULL(find(clientPath));
@@ -327,7 +329,7 @@ void DRFSorter::unallocated(
   // node. This is debatable, but the current implementation doesn't
   // require looking at the allocation of the root node.
   while (current != root) {
-    current->allocation.subtract(slaveId, resources);
+    current->allocation.subtract(resourceProviderId, resources);
     current = CHECK_NOTNULL(current->parent);
   }
 
@@ -336,7 +338,7 @@ void DRFSorter::unallocated(
 }
 
 
-const hashmap<SlaveID, Resources>& DRFSorter::allocation(
+const hashmap<ResourceProviderID, Resources>& DRFSorter::allocation(
     const string& clientPath) const
 {
   const Node* client = CHECK_NOTNULL(find(clientPath));
@@ -352,25 +354,26 @@ const Resources& DRFSorter::allocationScalarQuantities(
 }
 
 
-hashmap<string, Resources> DRFSorter::allocation(const SlaveID& slaveId) const
+hashmap<string, Resources> DRFSorter::allocation(
+    const ResourceProviderID& resourceProviderId) const
 {
   hashmap<string, Resources> result;
 
   // We want to find the allocation that has been made to each client
-  // on a particular `slaveId`. Rather than traversing the tree
+  // on a particular `resourceProviderId`. Rather than traversing the tree
   // looking for leaf nodes (clients), we can instead just iterate
   // over the `clients` hashmap.
   //
-  // TODO(jmlvanre): We can index the allocation by slaveId to make
+  // TODO(jmlvanre): We can index the allocation by resourceProviderId to make
   // this faster.  It is a tradeoff between speed vs. memory. For now
   // we use existing data structures.
   foreachvalue (const Node* client, clients) {
-    if (client->allocation.resources.contains(slaveId)) {
+    if (client->allocation.resources.contains(resourceProviderId)) {
       // It is safe to use `at()` here because we've just checked the
       // existence of the key. This avoids unnecessary copies.
       string path = client->clientPath();
       CHECK(!result.contains(path));
-      result.emplace(path, client->allocation.resources.at(slaveId));
+      result.emplace(path, client->allocation.resources.at(resourceProviderId));
     }
   }
 
@@ -380,12 +383,12 @@ hashmap<string, Resources> DRFSorter::allocation(const SlaveID& slaveId) const
 
 Resources DRFSorter::allocation(
     const string& clientPath,
-    const SlaveID& slaveId) const
+    const ResourceProviderID& resourceProviderId) const
 {
   const Node* client = CHECK_NOTNULL(find(clientPath));
 
-  if (client->allocation.resources.contains(slaveId)) {
-    return client->allocation.resources.at(slaveId);
+  if (client->allocation.resources.contains(resourceProviderId)) {
+    return client->allocation.resources.at(resourceProviderId);
   }
 
   return Resources();
@@ -398,17 +401,18 @@ const Resources& DRFSorter::totalScalarQuantities() const
 }
 
 
-void DRFSorter::add(const SlaveID& slaveId, const Resources& resources)
+void DRFSorter::add(
+    const ResourceProviderID& resourceProviderId, const Resources& resources)
 {
   if (!resources.empty()) {
     // Add shared resources to the total quantities when the same
     // resources don't already exist in the total.
-    const Resources newShared = resources.shared()
-      .filter([this, slaveId](const Resource& resource) {
-        return !total_.resources[slaveId].contains(resource);
-      });
+    const Resources newShared = resources.shared().filter(
+        [this, resourceProviderId](const Resource& resource) {
+          return !total_.resources[resourceProviderId].contains(resource);
+        });
 
-    total_.resources[slaveId] += resources;
+    total_.resources[resourceProviderId] += resources;
 
     const Resources scalarQuantities =
       (resources.nonShared() + newShared).createStrippedScalarQuantity();
@@ -428,21 +432,23 @@ void DRFSorter::add(const SlaveID& slaveId, const Resources& resources)
 }
 
 
-void DRFSorter::remove(const SlaveID& slaveId, const Resources& resources)
+void DRFSorter::remove(
+    const ResourceProviderID& resourceProviderId, const Resources& resources)
 {
   if (!resources.empty()) {
-    CHECK(total_.resources.contains(slaveId));
-    CHECK(total_.resources[slaveId].contains(resources))
-      << total_.resources[slaveId] << " does not contain " << resources;
+    CHECK(total_.resources.contains(resourceProviderId));
+    CHECK(total_.resources[resourceProviderId].contains(resources))
+      << total_.resources[resourceProviderId] << " does not contain "
+      << resources;
 
-    total_.resources[slaveId] -= resources;
+    total_.resources[resourceProviderId] -= resources;
 
     // Remove shared resources from the total quantities when there
     // are no instances of same resources left in the total.
-    const Resources absentShared = resources.shared()
-      .filter([this, slaveId](const Resource& resource) {
-        return !total_.resources[slaveId].contains(resource);
-      });
+    const Resources absentShared = resources.shared().filter(
+        [this, resourceProviderId](const Resource& resource) {
+          return !total_.resources[resourceProviderId].contains(resource);
+        });
 
     const Resources scalarQuantities =
       (resources.nonShared() + absentShared).createStrippedScalarQuantity();
@@ -454,8 +460,8 @@ void DRFSorter::remove(const SlaveID& slaveId, const Resources& resources)
     CHECK(total_.scalarQuantities.contains(scalarQuantities));
     total_.scalarQuantities -= scalarQuantities;
 
-    if (total_.resources[slaveId].empty()) {
-      total_.resources.erase(slaveId);
+    if (total_.resources[resourceProviderId].empty()) {
+      total_.resources.erase(resourceProviderId);
     }
 
     dirty = true;
