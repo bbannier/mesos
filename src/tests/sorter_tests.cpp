@@ -146,19 +146,22 @@ TEST(SorterTest, WDRFSorter)
   sorter.add("a");
   sorter.activate("a");
 
-  sorter.allocated("a", resourceProviderId, Resources::parse("cpus:5;mem:5").get());
+  sorter.allocated(
+      "a", resourceProviderId, Resources::parse("cpus:5;mem:5").get());
 
   sorter.add("b");
   sorter.activate("b");
   sorter.updateWeight("b", 2);
-  sorter.allocated("b", resourceProviderId, Resources::parse("cpus:6;mem:6").get());
+  sorter.allocated(
+      "b", resourceProviderId, Resources::parse("cpus:6;mem:6").get());
 
   // shares: a = .05, b = .03
   EXPECT_EQ(vector<string>({"b", "a"}), sorter.sort());
 
   sorter.add("c");
   sorter.activate("c");
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:4;mem:4").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:4;mem:4").get());
 
   // shares: a = .05, b = .03, c = .04
   EXPECT_EQ(vector<string>({"b", "c", "a"}), sorter.sort());
@@ -166,7 +169,8 @@ TEST(SorterTest, WDRFSorter)
   sorter.add("d");
   sorter.activate("d");
   sorter.updateWeight("d", 10);
-  sorter.allocated("d", resourceProviderId, Resources::parse("cpus:10;mem:20").get());
+  sorter.allocated(
+      "d", resourceProviderId, Resources::parse("cpus:10;mem:20").get());
 
   // shares: a = .05, b = .03, c = .04, d = .02
   EXPECT_EQ(vector<string>({"d", "b", "c", "a"}), sorter.sort());
@@ -175,7 +179,8 @@ TEST(SorterTest, WDRFSorter)
 
   EXPECT_EQ(vector<string>({"d", "c", "a"}), sorter.sort());
 
-  sorter.allocated("d", resourceProviderId, Resources::parse("cpus:10;mem:25").get());
+  sorter.allocated(
+      "d", resourceProviderId, Resources::parse("cpus:10;mem:25").get());
 
   // shares: a = .05, c = .04, d = .045
   EXPECT_EQ(vector<string>({"c", "d", "a"}), sorter.sort());
@@ -183,7 +188,8 @@ TEST(SorterTest, WDRFSorter)
   sorter.add("e");
   sorter.activate("e");
   sorter.updateWeight("e", 0.1);
-  sorter.allocated("e", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
+  sorter.allocated(
+      "e", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
 
   // shares: a = .05, c = .04, d = .045, e = .1
   EXPECT_EQ(vector<string>({"c", "d", "a", "e"}), sorter.sort());
@@ -207,11 +213,13 @@ TEST(SorterTest, WDRFSorterUpdateWeight)
 
   sorter.add("a");
   sorter.activate("a");
-  sorter.allocated("a", resourceProviderId, Resources::parse("cpus:5;mem:5").get());
+  sorter.allocated(
+      "a", resourceProviderId, Resources::parse("cpus:5;mem:5").get());
 
   sorter.add("b");
   sorter.activate("b");
-  sorter.allocated("b", resourceProviderId, Resources::parse("cpus:6;mem:6").get());
+  sorter.allocated(
+      "b", resourceProviderId, Resources::parse("cpus:6;mem:6").get());
 
   // shares: a = .05, b = .06
   EXPECT_EQ(vector<string>({"a", "b"}), sorter.sort());
@@ -251,25 +259,35 @@ TEST(SorterTest, CountAllocations)
   // Everyone is allocated the same amount of resources; "c" gets
   // three distinct allocations, "d" gets two, and all other clients
   // get one.
-  sorter.allocated("a", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
-  sorter.allocated("b", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
-  sorter.allocated("d", resourceProviderId, Resources::parse("cpus:2;mem:2").get());
-  sorter.allocated("d", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
-  sorter.allocated("e", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.allocated(
+      "a", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.allocated(
+      "b", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
+  sorter.allocated(
+      "d", resourceProviderId, Resources::parse("cpus:2;mem:2").get());
+  sorter.allocated(
+      "d", resourceProviderId, Resources::parse("cpus:1;mem:1").get());
+  sorter.allocated(
+      "e", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
 
   // Allocation count: {a,b,e} = 1, {d} = 2, {c} = 3.
   EXPECT_EQ(vector<string>({"a", "b", "e", "d", "c"}), sorter.sort());
 
   // Check that unallocating and re-allocating to a client does not
   // reset the allocation count.
-  sorter.unallocated("c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.unallocated(
+      "c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
 
   EXPECT_EQ(vector<string>({"c", "a", "b", "e", "d"}), sorter.sort());
 
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
 
   // Allocation count: {a,b,e} = 1, {d} = 2, {c} = 4.
   EXPECT_EQ(vector<string>({"a", "b", "e", "d", "c"}), sorter.sort());
@@ -282,8 +300,10 @@ TEST(SorterTest, CountAllocations)
   // Allocation count: {a,b,e} = 1, {d} = 2, {c} = 4.
   EXPECT_EQ(vector<string>({"a", "b", "e", "d", "c"}), sorter.sort());
 
-  sorter.unallocated("c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
-  sorter.allocated("c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.unallocated(
+      "c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
+  sorter.allocated(
+      "c", resourceProviderId, Resources::parse("cpus:3;mem:3").get());
 
   // Allocation count: {a,b,e} = 1, {d} = 2, {c} = 5.
   EXPECT_EQ(vector<string>({"a", "b", "e", "d", "c"}), sorter.sort());
@@ -292,8 +312,10 @@ TEST(SorterTest, CountAllocations)
   // allocation count.
   sorter.deactivate("a");
 
-  sorter.unallocated("a", resourceProviderId, Resources::parse("cpus:1;mem:3").get());
-  sorter.allocated("a", resourceProviderId, Resources::parse("cpus:1;mem:3").get());
+  sorter.unallocated(
+      "a", resourceProviderId, Resources::parse("cpus:1;mem:3").get());
+  sorter.allocated(
+      "a", resourceProviderId, Resources::parse("cpus:1;mem:3").get());
 
   // Allocation count: {b,e} = 1, {d} = 2, {c} = 5.
   EXPECT_EQ(vector<string>({"b", "e", "d", "c"}), sorter.sort());
@@ -909,7 +931,9 @@ TEST(SorterTest, SplitResourceShares)
   sorter.allocated(
       "a", resourceProviderId, Resources::parse("cpus:9;mem:9;disk:9").get());
   sorter.allocated(
-      "b", resourceProviderId, Resources::parse("cpus:9;mem:9").get() + disk1 + disk2);
+      "b",
+      resourceProviderId,
+      Resources::parse("cpus:9;mem:9").get() + disk1 + disk2);
 
   EXPECT_EQ(vector<string>({"a", "b"}), sorter.sort());
 }
@@ -927,10 +951,13 @@ TEST(SorterTest, UpdateAllocation)
   sorter.activate("a");
   sorter.activate("b");
 
-  sorter.add(resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
+  sorter.add(
+      resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
 
   sorter.allocated(
-      "a", resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
+      "a",
+      resourceProviderId,
+      Resources::parse("cpus:10;mem:10;disk:10").get());
 
   // Construct an offer operation.
   Resource volume = Resources::parse("disk", "5", "*").get();
@@ -964,10 +991,13 @@ TEST(SorterTest, UpdateAllocationNestedClient)
   sorter.activate("a/x");
   sorter.activate("b/y");
 
-  sorter.add(resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
+  sorter.add(
+      resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
 
   sorter.allocated(
-      "a/x", resourceProviderId, Resources::parse("cpus:10;mem:10;disk:10").get());
+      "a/x",
+      resourceProviderId,
+      Resources::parse("cpus:10;mem:10;disk:10").get());
 
   // Construct an offer operation.
   Resource volume = Resources::parse("disk", "5", "*").get();
@@ -1059,12 +1089,15 @@ TEST(SorterTest, MultipleProvidersUpdateAllocation)
   ASSERT_SOME(newAllocation);
 
   // Update the resources for the client.
-  sorter.update("framework", resourcProviderIdA, resources, newAllocation.get());
+  sorter.update(
+      "framework", resourcProviderIdA, resources, newAllocation.get());
   sorter.update("framework", resourceProviderB, resources, newAllocation.get());
 
   EXPECT_EQ(2u, sorter.allocation("framework").size());
-  EXPECT_EQ(newAllocation.get(), sorter.allocation("framework", resourcProviderIdA));
-  EXPECT_EQ(newAllocation.get(), sorter.allocation("framework", resourceProviderB));
+  EXPECT_EQ(
+      newAllocation.get(), sorter.allocation("framework", resourcProviderIdA));
+  EXPECT_EQ(
+      newAllocation.get(), sorter.allocation("framework", resourceProviderB));
 }
 
 
@@ -1421,7 +1454,8 @@ TEST(SorterTest, SharedResourcesUnallocated)
 
   // Unallocate remaining copies of shared resource from client 'a',
   // which would affect the fair share.
-  sorter.unallocated("a", resourceProviderId, Resources(sharedDisk) + sharedDisk);
+  sorter.unallocated(
+      "a", resourceProviderId, Resources(sharedDisk) + sharedDisk);
 
   // Shares: a = .02 (dominant: cpus), b = .06 (dominant: cpus).
   EXPECT_EQ(vector<string>({"a", "b"}), sorter.sort());
@@ -1441,7 +1475,8 @@ TEST(SorterTest, RemoveSharedResources)
       "100", "role1", "id1", "path1", None(), true);
 
   sorter.add(
-      resourceProviderId, Resources::parse("cpus:100;mem:100;disk(role1):900").get());
+      resourceProviderId,
+      Resources::parse("cpus:100;mem:100;disk(role1):900").get());
 
   Resources quantity1 = sorter.totalScalarQuantities();
 

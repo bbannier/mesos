@@ -308,9 +308,10 @@ void HierarchicalAllocatorProcess::removeFramework(
       frameworkSorters.at(role)->allocation(frameworkId.value());
 
     // Update the allocation for this framework.
-    foreachpair (const ResourceProviderID& resourceProviderId,
-                 const Resources& allocated,
-                 allocation) {
+    foreachpair (
+        const ResourceProviderID& resourceProviderId,
+        const Resources& allocated,
+        allocation) {
       roleSorter->unallocated(role, resourceProviderId, allocated);
       frameworkSorters.at(role)->remove(resourceProviderId, allocated);
 
@@ -837,10 +838,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
 
   // Update the allocation in the role sorter.
   roleSorter->update(
-      role,
-      resourceProviderId,
-      offeredResources,
-      updatedOfferedResources);
+      role, resourceProviderId, offeredResources, updatedOfferedResources);
 
   // Update the allocated resources in the quota sorter. We only update
   // the allocated resources if this role has quota set.
