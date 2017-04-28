@@ -336,7 +336,7 @@ protected:
 
   hashmap<FrameworkID, Framework> frameworks;
 
-  struct Slave
+  struct Provider
   {
     // Total amount of regular *and* oversubscribed resources.
     Resources total;
@@ -414,7 +414,7 @@ protected:
     Option<Maintenance> maintenance;
   };
 
-  hashmap<ResourceProviderID, Slave> slaves;
+  hashmap<ResourceProviderID, Provider> providers;
 
   // A set of agents that are kept as allocation candidates. Events
   // may add or remove candidates to the set. When an allocation is
