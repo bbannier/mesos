@@ -128,23 +128,23 @@ public:
       const FrameworkInfo& frameworkInfo);
 
   void addSlave(
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const ResourceProviderInfo& slaveInfo,
       const std::vector<SlaveInfo::Capability>& capabilities,
       const Option<Unavailability>& unavailability,
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used);
 
-  void removeSlave(const ResourceProviderID& slaveId);
+  void removeSlave(const ResourceProviderID& resourceProviderId);
 
   void updateSlave(
       const ResourceProviderID& slave,
       const Option<Resources>& oversubscribed = None(),
       const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
 
-  void deactivateSlave(const ResourceProviderID& slaveId);
+  void deactivateSlave(const ResourceProviderID& resourceProviderId);
 
-  void activateSlave(const ResourceProviderID& slaveId);
+  void activateSlave(const ResourceProviderID& resourceProviderId);
 
   void updateWhitelist(
       const Option<hashset<std::string>>& whitelist);
@@ -155,20 +155,20 @@ public:
 
   void updateAllocation(
       const FrameworkID& frameworkId,
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations);
 
   process::Future<Nothing> updateAvailable(
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const std::vector<Offer::Operation>& operations);
 
   void updateUnavailability(
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Option<Unavailability>& unavailability);
 
   void updateInverseOffer(
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const FrameworkID& frameworkId,
       const Option<UnavailableResources>& unavailableResources,
       const Option<mesos::allocator::InverseOfferStatus>& status,
@@ -181,7 +181,7 @@ public:
 
   void recoverResources(
       const FrameworkID& frameworkId,
-      const ResourceProviderID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources,
       const Option<Filters>& filters);
 
@@ -219,11 +219,13 @@ protected:
   process::Future<Nothing> allocate();
 
   // Allocate resources from the specified agent.
-  process::Future<Nothing> allocate(const SlaveID& slaveId);
+  process::Future<Nothing> allocate(
+      const ResourceProviderID& resourceProviderId);
 
   // Allocate resources from the specified agents. The allocation
   // is deferred and batched with other allocation requests.
-  process::Future<Nothing> allocate(const hashset<SlaveID>& slaveIds);
+  process::Future<Nothing> allocate(
+      const hashset<ResourceProviderID>& resourceProviderIds);
 
   // Method that performs allocation work.
   Nothing _allocate();
@@ -238,37 +240,37 @@ protected:
   void expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       OfferFilter* offerFilter);
 
   void _expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       OfferFilter* offerFilter);
 
   // Remove an inverse offer filter for the specified framework.
   void expire(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       InverseOfferFilter* inverseOfferFilter);
 
   // Checks whether the slave is whitelisted.
-  bool isWhitelisted(const SlaveID& slaveId) const;
+  bool isWhitelisted(const ResourceProviderID& resourceProviderId) const;
 
   // Returns true if there is a resource offer filter for the
   // specified role of this framework on this slave.
   bool isFiltered(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources) const;
 
   // Returns true if there is an inverse offer filter for this framework
   // on this slave.
   bool isFiltered(
       const FrameworkID& frameworkID,
-      const SlaveID& slaveID) const;
+      const ResourceProviderID& slaveID) const;
 
   static bool allocatable(const Resources& resources);
 
@@ -307,8 +309,11 @@ protected:
     // Active offer and inverse offer filters for the framework.
     // Offer filters are tied to the role the filtered resources
     // were allocated to.
-    hashmap<std::string, hashmap<SlaveID, hashset<OfferFilter*>>> offerFilters;
-    hashmap<SlaveID, hashset<InverseOfferFilter*>> inverseOfferFilters;
+    hashmap<std::string, hashmap<ResourceProviderID, hashset<OfferFilter*>>>
+      offerFilters;
+
+    hashmap<ResourceProviderID, hashset<InverseOfferFilter*>>
+      inverseOfferFilters;
   };
 
   double _event_queue_dispatches()
@@ -409,12 +414,12 @@ protected:
     Option<Maintenance> maintenance;
   };
 
-  hashmap<SlaveID, Slave> slaves;
+  hashmap<ResourceProviderID, Slave> slaves;
 
   // A set of agents that are kept as allocation candidates. Events
   // may add or remove candidates to the set. When an allocation is
   // processed, the set of candidates is cleared.
-  hashset<SlaveID> allocationCandidates;
+  hashset<ResourceProviderID> allocationCandidates;
 
   // Future for the dispatched allocation that becomes
   // ready after the allocation run is complete.
@@ -519,7 +524,9 @@ private:
   // Helper to update the agent's total resources maintained in the allocator
   // and the role and quota sorters (whose total resources match the agent's
   // total resources).
-  void updateSlaveTotal(const SlaveID& slaveId, const Resources& total);
+  void updateSlaveTotal(
+      const ResourceProviderID& resourceProviderId,
+      const Resources& total);
 };
 
 
