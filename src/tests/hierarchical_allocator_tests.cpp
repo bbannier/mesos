@@ -1228,6 +1228,58 @@ TEST_F(HierarchicalAllocatorTest, CoarseGrained)
 }
 
 
+// This test confirms the we perform coarse-grained allocation from
+// all resource providers on an agent.
+TEST_F(HierarchicalAllocatorTest, CoarseGrainedMultipleProviders)
+{
+  Clock::pause();
+
+  initialize();
+
+  FrameworkInfo framework1 = createFrameworkInfo({"role"});
+  allocator->addFramework(framework1.id(), framework1, {}, true);
+
+  FrameworkInfo framework2 = createFrameworkInfo({"role"});
+  allocator->addFramework(framework2.id(), framework2, {}, true);
+
+  SlaveInfo agent = createSlaveInfo("cpus:2;mem:200");
+  allocator->addSlave(
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
+      AGENT_CAPABILITIES(),
+      None(),
+      agent.resources(),
+      {});
+
+  Resources resources = Resources::parse("disk:100", "*").get();
+
+  ResourceProviderInfo resourceProvider;
+  resourceProvider.mutable_id()->set_value("RESOURCE_PROVIDER");
+  resourceProvider.mutable_agent_info()->CopyFrom(agent);
+  resourceProvider.mutable_resources()->CopyFrom(resources);
+
+  allocator->addSlave(
+      resourceProvider.id(),
+      resourceProvider,
+      AGENT_CAPABILITIES(),
+      None(),
+      resourceProvider.resources(),
+      {});
+
+  // Since all existing providers are on a single agent we expect them
+  // to be offered together.
+  Allocation expected = Allocation(
+      framework1.id(),
+      {{"role",
+        {{resourceProviderId(agent.id()), agent.resources()},
+         {resourceProvider.id(), resourceProvider.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
+}
+
+// //FIXME(bbannier): implement me.
+// TEST_F(HierarchicalAllocatorTest, CoarseGrainedMultipleProvidersQuota)
+
 // This test ensures that frameworks that have the same share get an
 // equal number of allocations over time (rather than the same
 // framework getting all the allocations because its name is
