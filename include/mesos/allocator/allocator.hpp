@@ -131,6 +131,29 @@ public:
       const hashmap<SlaveID, Resources>& used,
       bool active) = 0;
 
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void addFramework(
+      const FrameworkID& frameworkId,
+      const FrameworkInfo& frameworkInfo,
+      const hashmap<ResourceProviderID, Resources>& used,
+      bool active)
+  {
+    hashmap<SlaveID, Resources> used_;
+
+    foreachpair (
+        const ResourceProviderID& resourceProviderId,
+        const Resources& resources,
+        used) {
+      SlaveID slaveId;
+      slaveId.set_value(resourceProviderId.value());
+
+      used_[slaveId] += resources;
+    }
+
+    addFramework(frameworkId, frameworkInfo, used_, active);
+  }
+
   /**
    * Removes a framework from the Mesos cluster. It is up to an allocator to
    * decide what to do with framework's resources. For example, they may be
@@ -190,12 +213,46 @@ public:
       const Resources& total,
       const hashmap<FrameworkID, Resources>& used) = 0;
 
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void addSlave(
+      const ResourceProviderID& resourceProviderId,
+      const ResourceProviderInfo& resourceProviderInfo,
+      const std::vector<SlaveInfo::Capability>& capabilities,
+      const Option<SlaveInfo>& agentInfo,
+      const Option<Unavailability>& unavailability,
+      const hashmap<FrameworkID, Resources>& used)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    CHECK_SOME(agentInfo);
+
+    addSlave(
+        slaveId,
+        agentInfo.get(),
+        capabilities,
+        unavailability,
+        resourceProviderInfo.resources(),
+        used);
+  }
+
   /**
    * Removes an agent from the Mesos cluster. All resources belonging to this
    * agent should be released by the allocator.
    */
   virtual void removeSlave(
       const SlaveID& slaveId) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void removeSlave(const ResourceProviderID& resourceProviderId)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    removeSlave(slaveId);
+  }
 
   /**
    * Updates an agent.
@@ -216,12 +273,36 @@ public:
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
 
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void updateSlave(
+      const ResourceProviderID& resourceProviderId,
+      const Option<Resources>& oversubscribed = None(),
+      const Option<std::vector<SlaveInfo::Capability>>&
+          capabilities = None())
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    updateSlave(slaveId, oversubscribed, capabilities);
+  }
+
   /**
    * Activates an agent. This is invoked when an agent reregisters. Offers
    * are only sent for activated agents.
    */
   virtual void activateSlave(
       const SlaveID& slaveId) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void activateSlave(const ResourceProviderID& resourceProviderId)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    activateSlave(slaveId);
+  }
 
   /**
    * Deactivates an agent.
@@ -233,6 +314,16 @@ public:
    */
   virtual void deactivateSlave(
       const SlaveID& slaveId) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void deactivateSlave(const ResourceProviderID& resourceProviderId)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    deactivateSlave(slaveId);
+  }
 
   /**
    * Updates the list of trusted agents.
@@ -272,6 +363,20 @@ public:
       const Resources& offeredResources,
       const std::vector<Offer::Operation>& operations) = 0;
 
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void updateAllocation(
+      const FrameworkID& frameworkId,
+      const ResourceProviderID& resourceProviderId,
+      const Resources& offeredResources,
+      const std::vector<Offer::Operation>& operations)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    updateAllocation(frameworkId, slaveId, offeredResources, operations);
+  }
+
   /**
    * Updates available resources on an agent based on a sequence of offer
    * operations. Operations may include reserve, unreserve, create or destroy.
@@ -283,6 +388,17 @@ public:
       const SlaveID& slaveId,
       const std::vector<Offer::Operation>& operations) = 0;
 
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual process::Future<Nothing> updateAvailable(
+      const ResourceProviderID& resourceProviderId,
+      const std::vector<Offer::Operation>& operations)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    return updateAvailable(slaveId, operations);
+  }
   /**
    * Updates unavailability for an agent.
    *
@@ -294,6 +410,18 @@ public:
   virtual void updateUnavailability(
       const SlaveID& slaveId,
       const Option<Unavailability>& unavailability) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void updateUnavailability(
+      const ResourceProviderID& resourceProviderId,
+      const Option<Unavailability>& unavailability)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    updateUnavailability(slaveId, unavailability);
+  }
 
   /**
    * Updates inverse offer.
@@ -319,6 +447,26 @@ public:
       const Option<UnavailableResources>& unavailableResources,
       const Option<InverseOfferStatus>& status,
       const Option<Filters>& filters = None()) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void updateInverseOffer(
+      const ResourceProviderID& resourceProviderId,
+      const FrameworkID& frameworkId,
+      const Option<UnavailableResources>& unavailableResources,
+      const Option<InverseOfferStatus>& status,
+      const Option<Filters>& filters = None())
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    updateInverseOffer(
+        slaveId,
+        frameworkId,
+        unavailableResources,
+        status,
+        filters);
+  }
 
   /**
    * Retrieves the status of all inverse offers maintained by the allocator.
@@ -346,6 +494,20 @@ public:
       const SlaveID& slaveId,
       const Resources& resources,
       const Option<Filters>& filters) = 0;
+
+  // TODO(bbannier): This is a transitional dummy implementation which
+  // should be removed once all callers are migrated to it.
+  virtual void recoverResources(
+      const FrameworkID& frameworkId,
+      const ResourceProviderID& resourceProviderId,
+      const Resources& resources,
+      const Option<Filters>& filters)
+  {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
+    recoverResources(frameworkId, slaveId, resources, filters);
+  }
 
   /**
    * Suppresses offers.
