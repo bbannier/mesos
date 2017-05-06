@@ -79,20 +79,20 @@ Try<std::shared_ptr<SocketImpl>> SocketImpl::create(
 
   Try<Nothing> nonblock = os::nonblock(s.get());
   if (nonblock.isError()) {
-    os::close(s.get());
+    CHECK_SOME(os::close(s.get()));
     return Error("Failed to create socket, nonblock: " + nonblock.error());
   }
 
   Try<Nothing> cloexec = os::cloexec(s.get());
   if (cloexec.isError()) {
-    os::close(s.get());
+    CHECK_SOME(os::close(s.get()));
     return Error("Failed to create socket, cloexec: " + cloexec.error());
   }
 #endif
 
   Try<std::shared_ptr<SocketImpl>> impl = create(s.get(), kind);
   if (impl.isError()) {
-    os::close(s.get());
+    CHECK_SOME(os::close(s.get()));
   }
 
   return impl;

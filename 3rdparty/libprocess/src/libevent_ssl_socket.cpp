@@ -798,7 +798,7 @@ Future<size_t> LibeventSSLSocketImpl::sendfile(
   // Set the close-on-exec flag.
   Try<Nothing> cloexec = os::cloexec(owned_fd);
   if (cloexec.isError()) {
-    os::close(owned_fd);
+    CHECK_SOME(os::close(owned_fd));
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
         cloexec.error());
@@ -807,7 +807,7 @@ Future<size_t> LibeventSSLSocketImpl::sendfile(
   // Make the file descriptor non-blocking.
   Try<Nothing> nonblock = os::nonblock(owned_fd);
   if (nonblock.isError()) {
-    os::close(owned_fd);
+    CHECK_SOME(os::close(owned_fd));
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
         nonblock.error());
@@ -846,7 +846,7 @@ Future<size_t> LibeventSSLSocketImpl::sendfile(
               size);
           CHECK_EQ(0, result);
         } else {
-          os::close(owned_fd);
+          CHECK_SOME(os::close(owned_fd));
         }
       },
       DISALLOW_SHORT_CIRCUIT);
@@ -895,7 +895,7 @@ Try<Nothing> LibeventSSLSocketImpl::listen(int backlog)
                 Failure("Failed to accept, cloexec: " + cloexec.error()));
           }
 
-          os::close(socket);
+          CHECK_SOME(os::close(socket));
           return;
         }
 

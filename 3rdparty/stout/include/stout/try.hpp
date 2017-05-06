@@ -31,7 +31,7 @@
 // stored. Calling 'isError' will return true if it stores an error,
 // in which case calling 'error' will return the error string.
 template <typename T, typename E = Error>
-class Try
+class [[nodiscard]] Try
 {
 public:
   static_assert(

@@ -47,7 +47,7 @@ TEST(TimeTest, Arithmetic)
 TEST_TEMP_DISABLED_ON_WINDOWS(TimeTest, Now)
 {
   Time t1 = Clock::now();
-  os::sleep(Microseconds(10));
+  ASSERT_SOME(os::sleep(Microseconds(10)));
   ASSERT_LT(Microseconds(10), Clock::now() - t1);
 }
 

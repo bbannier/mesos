@@ -91,10 +91,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(CredentialsTest, AuthenticatedSlaveText)
 
   ASSERT_SOME(os::close(fd.get()));
 
-  map<string, Option<string>> values{{"credentials", Some("file://" + path)}};
-
   master::Flags masterFlags = CreateMasterFlags();
-  masterFlags.load(values, true);
+  masterFlags.authenticate_agents = true;
+  masterFlags.credentials = "file://" + path;
 
   Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
@@ -102,8 +101,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(CredentialsTest, AuthenticatedSlaveText)
   Future<SlaveRegisteredMessage> slaveRegisteredMessage =
     FUTURE_PROTOBUF(SlaveRegisteredMessage(), _, _);
 
+  // Agent credentials are expected to be set by the test infrastructure.
   slave::Flags slaveFlags = CreateSlaveFlags();
-  slaveFlags.load(values, true);
+  ASSERT_SOME(slaveFlags.credential);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
@@ -144,10 +144,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(CredentialsTest, AuthenticatedSlaveJSON)
 
   ASSERT_SOME(os::close(fd.get()));
 
-  map<string, Option<string>> values{{"credentials", Some("file://" + path)}};
-
   master::Flags masterFlags = CreateMasterFlags();
-  masterFlags.load(values, true);
+  masterFlags.authenticate_agents = true;
+  masterFlags.credentials = "file://" + path;
 
   Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
   ASSERT_SOME(master);
@@ -155,8 +154,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(CredentialsTest, AuthenticatedSlaveJSON)
   Future<SlaveRegisteredMessage> slaveRegisteredMessage =
     FUTURE_PROTOBUF(SlaveRegisteredMessage(), _, _);
 
+  // Agent credentials are expected to be set by the test infrastructure.
   slave::Flags slaveFlags = CreateSlaveFlags();
-  slaveFlags.load(values, true);
+  ASSERT_SOME(slaveFlags.credential);
 
   Owned<MasterDetector> detector = master.get()->createDetector();
   Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);

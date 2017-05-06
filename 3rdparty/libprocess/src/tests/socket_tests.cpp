@@ -191,7 +191,7 @@ TEST_P(NetSocketTest, EOFBeforeRecv)
   AWAIT_EXPECT_EQ(data, client->recv(data.size()));
 
   // Shutdown the socket before the final `recv()` is called.
-  server_socket.shutdown(Socket::Shutdown::READ_WRITE);
+  ASSERT_SOME(server_socket.shutdown(Socket::Shutdown::READ_WRITE));
 
   AWAIT_EXPECT_EQ(string(), client->recv());
 }
@@ -238,7 +238,7 @@ TEST_P(NetSocketTest, EOFAfterRecv)
   // Make the final `recv()` call before the socket is shutdown.
   Future<string> receive = client->recv();
 
-  server_socket.shutdown(Socket::Shutdown::READ_WRITE);
+  ASSERT_SOME(server_socket.shutdown(Socket::Shutdown::READ_WRITE));
 
   AWAIT_EXPECT_EQ(string(), receive);
 }

@@ -34,6 +34,7 @@
 
 #include <stout/abort.hpp>
 #include <stout/base64.hpp>
+#include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/json.hpp>
 #include <stout/jsonify.hpp>
@@ -132,7 +133,7 @@ Try<Nothing> write(const std::string& path, const T& t)
   // NOTE: We ignore the return value of close(). This is because
   // users calling this function are interested in the return value of
   // write(). Also an unsuccessful close() doesn't affect the write.
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return result;
 }
@@ -163,7 +164,7 @@ inline Try<Nothing> append(
   // NOTE: We ignore the return value of close(). This is because
   // users calling this function are interested in the return value of
   // write(). Also an unsuccessful close() doesn't affect the write.
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return result;
 }
@@ -231,7 +232,7 @@ struct Read
 
     if (result.isError()) {
       if (undoFailed) {
-        os::lseek(fd, offset, SEEK_SET);
+        CHECK_SOME(os::lseek(fd, offset, SEEK_SET));
       }
       return Error("Failed to read size: " + result.error());
     } else if (result.isNone()) {
@@ -240,7 +241,7 @@ struct Read
       // Hit EOF unexpectedly.
       if (undoFailed) {
         // Restore the offset to before the size read.
-        os::lseek(fd, offset, SEEK_SET);
+        CHECK_SOME(os::lseek(fd, offset, SEEK_SET));
       }
       if (ignorePartial) {
         return None();
@@ -260,14 +261,14 @@ struct Read
     if (result.isError()) {
       if (undoFailed) {
         // Restore the offset to before the size read.
-        os::lseek(fd, offset, SEEK_SET);
+        CHECK_SOME(os::lseek(fd, offset, SEEK_SET));
       }
       return Error("Failed to read message: " + result.error());
     } else if (result.isNone() || result.get().size() < size) {
       // Hit EOF unexpectedly.
       if (undoFailed) {
         // Restore the offset to before the size read.
-        os::lseek(fd, offset, SEEK_SET);
+        CHECK_SOME(os::lseek(fd, offset, SEEK_SET));
       }
       if (ignorePartial) {
         return None();
@@ -294,7 +295,7 @@ struct Read
     if (!message.ParseFromZeroCopyStream(&stream)) {
       if (undoFailed) {
         // Restore the offset to before the size read.
-        os::lseek(fd, offset, SEEK_SET);
+        CHECK_SOME(os::lseek(fd, offset, SEEK_SET));
       }
       return Error("Failed to deserialize message");
     }
@@ -376,7 +377,7 @@ Result<T> read(const std::string& path)
   // NOTE: We ignore the return value of close(). This is because
   // users calling this function are interested in the return value of
   // read(). Also an unsuccessful close() doesn't affect the read.
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return result;
 }

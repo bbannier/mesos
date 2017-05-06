@@ -333,7 +333,7 @@ TEST_F(ContainerLoggerTest, LOGROTATE_RotateInSandbox)
       Clock::advance(Seconds(1));
       Clock::resume();
 
-      os::sleep(Milliseconds(100));
+      ASSERT_SOME(os::sleep(Milliseconds(100)));
       waited += Milliseconds(100);
     } while (waited < Seconds(5));
 
@@ -717,7 +717,7 @@ TEST_P(UserContainerLoggerTest, ROOT_LOGROTATE_RotateWithSwitchUserTrueOrFalse)
       Clock::advance(Seconds(1));
       Clock::resume();
 
-      os::sleep(Milliseconds(100));
+      ASSERT_SOME(os::sleep(Milliseconds(100)));
       waited += Milliseconds(100);
     } while (waited < Seconds(5));
 

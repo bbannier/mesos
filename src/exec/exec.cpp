@@ -115,7 +115,7 @@ protected:
 
     // The signal might not get delivered immediately, so sleep for a
     // few seconds. Worst case scenario, exit abnormally.
-    os::sleep(Seconds(5));
+    CHECK_SOME(os::sleep(Seconds(5)));
     exit(EXIT_FAILURE);
   }
 

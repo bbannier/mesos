@@ -48,6 +48,7 @@
 #include <string>
 
 #include <stout/bytes.hpp>
+#include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/ip.hpp>
 #ifdef __WINDOWS__
@@ -152,7 +153,7 @@ inline Try<int> download(const std::string& url, const std::string& path)
 
   if (curl == nullptr) {
     curl_easy_cleanup(curl);
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return Error("Failed to initialize libcurl");
   }
 
@@ -169,7 +170,7 @@ inline Try<int> download(const std::string& url, const std::string& path)
 #endif
   if (file == nullptr) {
     curl_easy_cleanup(curl);
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return ErrnoError("Failed to open file handle of '" + path + "'");
   }
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, file);

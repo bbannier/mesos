@@ -266,19 +266,19 @@ static Try<Nothing> doIncreasePageCache(const vector<string>& tokens)
     // Write UNIT size to disk at a time. The content isn't important.
     Try<Nothing> write = os::write(fd.get(), string(UNIT.bytes(), 'a'));
     if (write.isError()) {
-      os::close(fd.get());
+      CHECK_SOME(os::close(fd.get()));
       return Error("Failed to write file: " + write.error());
     }
 
     // Use fsync to make sure data is written to disk.
     Try<Nothing> fsync = os::fsync(fd.get());
     if (fsync.isError()) {
-      os::close(fd.get());
+      CHECK_SOME(os::close(fd.get()));
       return Error("Failed to fsync: " + fsync.error());
     }
   }
 
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
   return Nothing();
 }
 

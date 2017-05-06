@@ -165,8 +165,8 @@ public:
     // inherited by the second child for stderr.
     Try<Nothing> cloexec = os::cloexec(outfds.write.get());
     if (cloexec.isError()) {
-      os::close(outfds.read);
-      os::close(outfds.write.get());
+      CHECK_SOME(os::close(outfds.read));
+      CHECK_SOME(os::close(outfds.write.get()));
       return Failure("Failed to cloexec: " + cloexec.error());
     }
 
@@ -201,15 +201,15 @@ public:
         parentHooks);
 
     if (outProcess.isError()) {
-      os::close(outfds.write.get());
+      CHECK_SOME(os::close(outfds.write.get()));
       return Failure("Failed to create logger process: " + outProcess.error());
     }
 
     // NOTE: We manually construct a pipe here to properly express
     // ownership of the FDs.  See the NOTE above.
     if (::pipe(pipefd) == -1) {
-      os::close(outfds.write.get());
-      os::killtree(outProcess.get().pid(), SIGKILL);
+      CHECK_SOME(os::close(outfds.write.get()));
+      CHECK_SOME(os::killtree(outProcess.get().pid(), SIGKILL));
       return Failure(ErrnoError("Failed to create pipe").message);
     }
 
@@ -221,10 +221,10 @@ public:
     // the child subprocess is spawned.
     cloexec = os::cloexec(errfds.write.get());
     if (cloexec.isError()) {
-      os::close(outfds.write.get());
-      os::close(errfds.read);
-      os::close(errfds.write.get());
-      os::killtree(outProcess.get().pid(), SIGKILL);
+      CHECK_SOME(os::close(outfds.write.get()));
+      CHECK_SOME(os::close(errfds.read));
+      CHECK_SOME(os::close(errfds.write.get()));
+      CHECK_SOME(os::killtree(outProcess.get().pid(), SIGKILL));
       return Failure("Failed to cloexec: " + cloexec.error());
     }
 
@@ -248,9 +248,9 @@ public:
         parentHooks);
 
     if (errProcess.isError()) {
-      os::close(outfds.write.get());
-      os::close(errfds.write.get());
-      os::killtree(outProcess.get().pid(), SIGKILL);
+      CHECK_SOME(os::close(outfds.write.get()));
+      CHECK_SOME(os::close(errfds.write.get()));
+      CHECK_SOME(os::killtree(outProcess.get().pid(), SIGKILL));
       return Failure("Failed to create logger process: " + errProcess.error());
     }
 

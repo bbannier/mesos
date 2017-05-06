@@ -127,7 +127,7 @@ protected:
 #endif // __WINDOWS__
     // The signal might not get delivered immediately, so sleep for a
     // few seconds. Worst case scenario, exit abnormally.
-    os::sleep(Seconds(5));
+    CHECK_SOME(os::sleep(Seconds(5)));
     exit(-1);
   }
 

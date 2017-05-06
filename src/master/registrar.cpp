@@ -487,7 +487,7 @@ void RegistrarProcess::update()
 
   foreach (Owned<Operation>& operation, operations) {
     // No need to process the result of the operation.
-    (*operation)(updatedRegistry.get(), &slaveIDs);
+    (void)(*operation)(updatedRegistry.get(), &slaveIDs);
   }
 
   LOG(INFO) << "Applied " << operations.size() << " operations in "

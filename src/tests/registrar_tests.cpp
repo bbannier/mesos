@@ -158,10 +158,10 @@ protected:
     string path2 = os::getcwd() + "/.log2";
 
     initializer.flags.path = path1;
-    initializer.execute();
+    ASSERT_SOME(initializer.execute());
 
     initializer.flags.path = path2;
-    initializer.execute();
+    ASSERT_SOME(initializer.execute());
 
     // Only create the replica for 'path2' (i.e., the second replica)
     // as the first replica will be created when we create a Log.

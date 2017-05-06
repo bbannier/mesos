@@ -388,7 +388,7 @@ private:
       if (symlinked) {
         // The sandbox directory is a symlink, remove it at container
         // destroy.
-        os::rm(directory);
+        CHECK_SOME(os::rm(directory));
       }
     }
 

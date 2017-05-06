@@ -127,7 +127,7 @@ public:
         }
       }
 
-      os::sleep(Milliseconds(200));
+      CHECK_SOME(os::sleep(Milliseconds(200)));
       waited += Milliseconds(200);
     } while (waited < Seconds(5));
 
@@ -940,7 +940,7 @@ TEST_F(DockerContainerizerTest, ROOT_DOCKER_Usage)
       }
     }
 
-    os::sleep(Milliseconds(200));
+    ASSERT_SOME(os::sleep(Milliseconds(200)));
     waited += Milliseconds(200);
   } while (waited < Seconds(3));
 

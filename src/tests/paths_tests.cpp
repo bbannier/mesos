@@ -64,8 +64,8 @@ public:
 
   virtual void TearDown()
   {
-     os::rmdir(rootDir);
-     os::rmdir(diskSourceDir);
+     CHECK_SOME(os::rmdir(rootDir));
+     CHECK_SOME(os::rmdir(diskSourceDir));
   }
 
 protected:

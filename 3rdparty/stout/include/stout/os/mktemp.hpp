@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/path.hpp>
 #include <stout/try.hpp>
@@ -52,7 +53,7 @@ inline Try<std::string> mktemp(
   // We ignore the return value of close(). This is because users
   // calling this function are interested in the return value of
   // mkstemp(). Also an unsuccessful close() doesn't affect the file.
-  os::close(fd);
+  CHECK_SOME(os::close(fd));
 
   std::string result(temp);
   delete[] temp;

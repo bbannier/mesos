@@ -812,7 +812,7 @@ protected:
   virtual void TearDown()
   {
     if (linkee.isSome()) {
-      os::killtree(linkee->pid(), SIGKILL);
+      CHECK_SOME(os::killtree(linkee->pid(), SIGKILL));
       reap_linkee();
       linkee = None();
     }
@@ -840,7 +840,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(ProcessRemoteLinkTest, RemoteLink)
 
   spawn(process);
 
-  os::killtree(linkee->pid(), SIGKILL);
+  ASSERT_SOME(os::killtree(linkee->pid(), SIGKILL));
   reap_linkee();
   linkee = None();
 
@@ -895,7 +895,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(ProcessRemoteLinkTest, RemoteRelink)
   spawn(process);
   process.relink();
 
-  os::killtree(linkee->pid(), SIGKILL);
+  ASSERT_SOME(os::killtree(linkee->pid(), SIGKILL));
   reap_linkee();
   linkee = None();
 
@@ -923,7 +923,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(ProcessRemoteLinkTest, RemoteLinkRelink)
   process.linkup();
   process.relink();
 
-  os::killtree(linkee->pid(), SIGKILL);
+  ASSERT_SOME(os::killtree(linkee->pid(), SIGKILL));
   reap_linkee();
   linkee = None();
 
@@ -957,7 +957,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(ProcessRemoteLinkTest, RemoteDoubleLinkRelink)
   relinker.linkup();
   relinker.relink();
 
-  os::killtree(linkee->pid(), SIGKILL);
+  ASSERT_SOME(os::killtree(linkee->pid(), SIGKILL));
   reap_linkee();
   linkee = None();
 
@@ -1147,14 +1147,14 @@ public:
 
   virtual void initialize()
   {
-    os::sleep(Milliseconds(10));
+    CHECK_SOME(os::sleep(Milliseconds(10)));
     delay(Seconds(0), self(), &SettleProcess::afterDelay);
   }
 
   void afterDelay()
   {
     dispatch(self(), &SettleProcess::afterDispatch);
-    os::sleep(Milliseconds(10));
+    CHECK_SOME(os::sleep(Milliseconds(10)));
     TimeoutProcess timeoutProcess;
     spawn(timeoutProcess);
     terminate(timeoutProcess);
@@ -1163,7 +1163,7 @@ public:
 
   void afterDispatch()
   {
-    os::sleep(Milliseconds(10));
+    CHECK_SOME(os::sleep(Milliseconds(10)));
     calledDispatch.store(true);
   }
 

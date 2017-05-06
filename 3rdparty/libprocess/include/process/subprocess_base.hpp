@@ -315,9 +315,9 @@ private:
   {
     ~Data()
     {
-      if (in.isSome()) { os::close(in.get()); }
-      if (out.isSome()) { os::close(out.get()); }
-      if (err.isSome()) { os::close(err.get()); }
+      if (in.isSome()) { CHECK_SOME(os::close(in.get())); }
+      if (out.isSome()) { CHECK_SOME(os::close(out.get())); }
+      if (err.isSome()) { CHECK_SOME(os::close(err.get())); }
 
 #ifdef __WINDOWS__
       CloseHandle(processInformation.hProcess);
@@ -445,7 +445,7 @@ inline void close(std::initializer_list<int_fd> fds)
 {
   foreach (int_fd fd, fds) {
     if (fd >= 0) {
-      os::close(fd);
+      CHECK_SOME(os::close(fd));
     }
   }
 }

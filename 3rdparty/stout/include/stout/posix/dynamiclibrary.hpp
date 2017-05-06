@@ -17,6 +17,7 @@
 
 #include <string>
 
+#include <stout/check.hpp>
 #include <stout/nothing.hpp>
 #include <stout/option.hpp>
 #include <stout/try.hpp>
@@ -39,7 +40,7 @@ public:
   virtual ~DynamicLibrary()
   {
     if (handle_ != nullptr) {
-      close();
+      CHECK_SOME(close());
     }
   }
 

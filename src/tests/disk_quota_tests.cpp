@@ -432,7 +432,7 @@ TEST_F(DiskQuotaTest, NoQuotaEnforcement)
 
     ASSERT_LT(elapsed, Seconds(5));
 
-    os::sleep(Milliseconds(1));
+    ASSERT_SOME(os::sleep(Milliseconds(1)));
     elapsed += Milliseconds(1);
   }
 
@@ -583,7 +583,7 @@ TEST_F(DiskQuotaTest, ResourceStatistics)
 
     ASSERT_LT(elapsed, Seconds(5));
 
-    os::sleep(Milliseconds(1));
+    ASSERT_SOME(os::sleep(Milliseconds(1)));
     elapsed += Milliseconds(1);
   }
 
@@ -728,7 +728,7 @@ TEST_F(DiskQuotaTest, SlaveRecovery)
 
     ASSERT_LT(elapsed, Seconds(15));
 
-    os::sleep(Milliseconds(1));
+    ASSERT_SOME(os::sleep(Milliseconds(1)));
     elapsed += Milliseconds(1);
   }
 

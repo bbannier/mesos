@@ -1546,14 +1546,14 @@ Future<Nothing> sendfile(
     // TODO(benh): VLOG(1)?
     // TODO(benh): Don't send error back as part of InternalServiceError?
     // TODO(benh): Copy headers from `response`?
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return send(socket, InternalServerError(body), request);
   } else if (S_ISDIR(s.st_mode)) {
     const string body = "'" + response.path + "' is a directory";
     // TODO(benh): VLOG(1)?
     // TODO(benh): Don't send error back as part of InternalServiceError?
     // TODO(benh): Copy headers from `response`?
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return send(socket, InternalServerError(body), request);
   }
 
@@ -1571,7 +1571,7 @@ Future<Nothing> sendfile(
 
       // Close file descriptor if we aren't doing any more sending.
       if (future.isDiscarded() || future.isFailed()) {
-        os::close(fd.get());
+        CHECK_SOME(os::close(fd.get()));
       }
     })
     .then([=]() mutable -> Future<Nothing> {
@@ -1832,7 +1832,7 @@ Future<Nothing> serve(
         // `Socket::shutdown` because the socket might already be
         // shutdown!
         pipeline.put(None());
-        socket.shutdown(network::Socket::Shutdown::READ);
+        (void)socket.shutdown(network::Socket::Shutdown::READ);
       });
 
   Future<Nothing> sending =
@@ -1857,8 +1857,8 @@ Future<Nothing> serve(
         // because on OSX if the socket is already shutdown with READ
         // due to the call above then the call will fail rather than
         // just treat it like a shutdown WRITE.
-        socket.shutdown(network::Socket::Shutdown::READ);
-        socket.shutdown(network::Socket::Shutdown::WRITE);
+        (void)socket.shutdown(network::Socket::Shutdown::READ);
+        (void)socket.shutdown(network::Socket::Shutdown::WRITE);
       });
 
   std::shared_ptr<Promise<Nothing>> promise(new Promise<Nothing>());

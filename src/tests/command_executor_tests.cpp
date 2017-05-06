@@ -327,7 +327,7 @@ TEST_P(CommandExecutorTest, NoTransitionFromKillingToRunning)
   EXPECT_FALSE(statusKilling->has_healthy());
 
   // Remove the temporary file, so that the health check fails.
-  os::rm(tmpPath);
+  ASSERT_SOME(os::rm(tmpPath));
 
   AWAIT_READY(statusKilled);
   EXPECT_EQ(TASK_KILLED, statusKilled->state());

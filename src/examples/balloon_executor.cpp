@@ -84,7 +84,7 @@ void run(ExecutorDriver* driver, const TaskInfo& task)
     }
 
     // Try not to increase the memory footprint too fast.
-    os::sleep(Seconds(1));
+    CHECK_SOME(os::sleep(Seconds(1)));
   }
 
   LOG(INFO) << "Finishing task " << task.task_id().value();
@@ -97,7 +97,7 @@ void run(ExecutorDriver* driver, const TaskInfo& task)
   // slave before we exit the process. Without this, we
   // may exit before libprocess has sent the data over
   // the socket. See MESOS-4111.
-  os::sleep(Seconds(1));
+  CHECK_SOME(os::sleep(Seconds(1)));
   driver->stop();
 }
 

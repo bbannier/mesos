@@ -100,7 +100,7 @@ TEST_F(SubprocessTest, PipeOutputToFileDescriptor)
 
   // RAII handle for the file descriptor increases chance that we clean up
   // after ourselves.
-  const auto close_fd = [](int_fd* fd) { os::close(*fd); };
+  const auto close_fd = [](int_fd* fd) { ASSERT_SOME(os::close(*fd)); };
 
   shared_ptr<int_fd> safe_out_fd(&outfile_fd.get(), close_fd);
   shared_ptr<int_fd> safe_err_fd(&errorfile_fd.get(), close_fd);

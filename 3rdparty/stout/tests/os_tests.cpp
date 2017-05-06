@@ -446,7 +446,7 @@ TEST_F(OsTest, Killtree)
              << "(" << process.get().command << ") did not terminate";
     }
 
-    os::sleep(Milliseconds(5));
+    CHECK_SOME(os::sleep(Milliseconds(5)));
     elapsed += Milliseconds(5);
   }
 
@@ -497,7 +497,7 @@ TEST_F(OsTest, Killtree)
       FAIL() << "Processes were not reaped after killtree invocation";
     }
 
-    os::sleep(Milliseconds(5));
+    ASSERT_SOME(os::sleep(Milliseconds(5)));
     elapsed += Milliseconds(5);
   }
 
@@ -564,7 +564,7 @@ TEST_F(OsTest, KilltreeNoRoot)
       FAIL() << "Child process " << stringify(child) << " did not terminate";
     }
 
-    os::sleep(Milliseconds(5));
+    ASSERT_SOME(os::sleep(Milliseconds(5)));
     elapsed += Milliseconds(5);
   }
 
@@ -621,7 +621,7 @@ TEST_F(OsTest, KilltreeNoRoot)
       FAIL() << "Processes were not reaped after killtree invocation";
     }
 
-    os::sleep(Milliseconds(5));
+    ASSERT_SOME(os::sleep(Milliseconds(5)));
     elapsed += Milliseconds(5);
   }
 
@@ -672,7 +672,7 @@ TEST_F(OsTest, ProcessExists)
 
     ASSERT_LT(elapsed, Milliseconds(100));
 
-    os::sleep(Milliseconds(5));
+    ASSERT_SOME(os::sleep(Milliseconds(5)));
     elapsed += Milliseconds(5);
   };
 
@@ -1009,8 +1009,8 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(OsTest, SYMLINK_Realpath)
   EXPECT_TRUE(strings::contains(resolved.get(), testFile));
 
   // Remove the file and the symlink.
-  os::rm(testFile);
-  os::rm(testLink);
+  ASSERT_SOME(os::rm(testFile));
+  ASSERT_SOME(os::rm(testLink));
 }
 
 

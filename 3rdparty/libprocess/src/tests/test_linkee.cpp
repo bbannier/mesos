@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 
   // Now sit and accept links until the linkee is killed.
   while (true) {
-    os::sleep(Seconds(1));
+    CHECK_SOME(os::sleep(Seconds(1)));
   }
 
   return EXIT_FAILURE;

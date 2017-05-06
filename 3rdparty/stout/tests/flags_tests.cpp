@@ -97,7 +97,7 @@ TEST(FlagsTest, Load)
     {"name5", None()}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   EXPECT_EQ("billy joel", flags.name1);
   EXPECT_EQ(43, flags.name2);
@@ -136,7 +136,7 @@ TEST(FlagsTest, Add)
     {"name4", Some("")}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   ASSERT_SOME(flags.name1);
   EXPECT_EQ("ben folds", flags.name1.get());
@@ -191,7 +191,7 @@ TEST(FlagsTest, Alias)
      {"alias3", Some("bar")}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   ASSERT_SOME(flags.name1);
   EXPECT_EQ("foo", flags.name1.get());
@@ -214,7 +214,7 @@ TEST(FlagsTest, Flags)
     {"name5", None()}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   EXPECT_EQ("billy joel", flags.name1);
   EXPECT_EQ(43, flags.name2);
@@ -418,7 +418,7 @@ TEST(FlagsTest, Stringification)
     {"name5", None()}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   foreachpair (const string& name, const Flag& flag, flags) {
     Option<string> value = flag.stringify(flags);
@@ -481,7 +481,7 @@ TEST(FlagsTest, EffectiveName)
     {"alias1", Some("value6")}
   };
 
-  flags.load(values);
+  CHECK_SOME(flags.load(values));
 
   foreachvalue (const Flag& flag, flags) {
     if (flag.name == "name1") {

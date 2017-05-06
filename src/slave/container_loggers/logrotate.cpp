@@ -69,7 +69,7 @@ public:
     }
 
     if (leading.isSome()) {
-      os::close(leading.get());
+      CHECK_SOME(os::close(leading.get()));
     }
   }
 
@@ -184,7 +184,7 @@ public:
   void rotate()
   {
     if (leading.isSome()) {
-      os::close(leading.get());
+      CHECK_SOME(os::close(leading.get()));
       leading = None();
     }
 
@@ -193,7 +193,7 @@ public:
     // the error and continue logging.  In case the leading log file
     // is not renamed, we will continue appending to the existing
     // leading log file.
-    os::shell(
+    (void)os::shell(
         flags.logrotate_path +
         " --state \"" + flags.log_filename.get() + STATE_SUFFIX + "\" \"" +
         flags.log_filename.get() + CONF_SUFFIX + "\"");

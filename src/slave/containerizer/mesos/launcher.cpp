@@ -163,7 +163,7 @@ Future<Nothing> SubprocessLauncher::destroy(const ContainerID& containerId)
   pid_t pid = pids.get(containerId).get();
 
   // Kill all processes in the session and process group.
-  os::killtree(pid, SIGKILL, true, true);
+  CHECK_SOME(os::killtree(pid, SIGKILL, true, true));
 
   pids.erase(containerId);
 

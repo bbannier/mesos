@@ -5297,7 +5297,7 @@ void Slave::removeExecutor(Framework* framework, Executor* executor)
       executor->id,
       executor->containerId);
 
-  os::utime(path); // Update the modification time.
+  CHECK_SOME(os::utime(path)); // Update the modification time.
   garbageCollect(path)
     .then(defer(self(), &Self::detachFile, path));
 
@@ -5307,7 +5307,7 @@ void Slave::removeExecutor(Framework* framework, Executor* executor)
     const string path = paths::getExecutorPath(
         flags.work_dir, info.id(), framework->id(), executor->id);
 
-    os::utime(path); // Update the modification time.
+    CHECK_SOME(os::utime(path)); // Update the modification time.
     garbageCollect(path);
   }
 
@@ -5320,7 +5320,7 @@ void Slave::removeExecutor(Framework* framework, Executor* executor)
         executor->id,
         executor->containerId);
 
-    os::utime(path); // Update the modification time.
+    CHECK_SOME(os::utime(path)); // Update the modification time.
     garbageCollect(path);
 
     // Schedule the top level executor meta directory, only if the
@@ -5329,7 +5329,7 @@ void Slave::removeExecutor(Framework* framework, Executor* executor)
       const string path = paths::getExecutorPath(
           metaDir, info.id(), framework->id(), executor->id);
 
-      os::utime(path); // Update the modification time.
+      CHECK_SOME(os::utime(path)); // Update the modification time.
       garbageCollect(path);
     }
   }
@@ -5367,7 +5367,9 @@ void Slave::removeFramework(Framework* framework)
   const string path = paths::getFrameworkPath(
       flags.work_dir, info.id(), framework->id());
 
-  os::utime(path); // Update the modification time.
+  // Update the modification time. We ignore the return value of
+  // `utime` as `path` is not guaranteed to exist.
+  (void)os::utime(path);
   garbageCollect(path);
 
   if (framework->info.checkpoint()) {
@@ -5375,7 +5377,9 @@ void Slave::removeFramework(Framework* framework)
     const string path = paths::getFrameworkPath(
         metaDir, info.id(), framework->id());
 
-    os::utime(path); // Update the modification time.
+    // Update the modification time. We ignore the return value of
+    // `utime` as `path` is not guaranteed to exist.
+    (void)os::utime(path);
     garbageCollect(path);
   }
 
@@ -6000,13 +6004,13 @@ void Slave::__recover(const Future<Nothing>& future)
         // directories might not have been scheduled for gc before.
 
         // GC the slave work directory.
-        os::utime(path); // Update the modification time.
+        CHECK_SOME(os::utime(path)); // Update the modification time.
         garbageCollect(path);
 
         // GC the slave meta directory.
         path = paths::getSlavePath(metaDir, slaveId);
         if (os::exists(path)) {
-          os::utime(path); // Update the modification time.
+          CHECK_SOME(os::utime(path)); // Update the modification time.
           garbageCollect(path);
         }
       }

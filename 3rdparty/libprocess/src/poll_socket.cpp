@@ -63,7 +63,7 @@ Future<int_fd> accept(int_fd fd)
   if (nonblock.isError()) {
     LOG_IF(INFO, VLOG_IS_ON(1)) << "Failed to accept, nonblock: "
                                 << nonblock.error();
-    os::close(s);
+    CHECK_SOME(os::close(s));
     return Failure("Failed to accept, nonblock: " + nonblock.error());
   }
 
@@ -71,7 +71,7 @@ Future<int_fd> accept(int_fd fd)
   if (cloexec.isError()) {
     LOG_IF(INFO, VLOG_IS_ON(1)) << "Failed to accept, cloexec: "
                                 << cloexec.error();
-    os::close(s);
+    CHECK_SOME(os::close(s));
     return Failure("Failed to accept, cloexec: " + cloexec.error());
   }
 
@@ -79,7 +79,7 @@ Future<int_fd> accept(int_fd fd)
   if (address.isError()) {
     LOG_IF(INFO, VLOG_IS_ON(1)) << "Failed to get address: "
                                 << address.error();
-    os::close(s);
+    CHECK_SOME(os::close(s));
     return Failure("Failed to get address: " + address.error());
   }
 
@@ -96,7 +96,7 @@ Future<int_fd> accept(int_fd fd)
             sizeof(on)) < 0) {
       const string error = os::strerror(errno);
       VLOG(1) << "Failed to turn off the Nagle algorithm: " << error;
-      os::close(s);
+      CHECK_SOME(os::close(s));
       return Failure(
           "Failed to turn off the Nagle algorithm: " + stringify(error));
     }
@@ -115,7 +115,7 @@ Future<std::shared_ptr<SocketImpl>> PollSocketImpl::accept()
     .then([](int_fd s) -> Future<std::shared_ptr<SocketImpl>> {
       Try<std::shared_ptr<SocketImpl>> impl = create(s);
       if (impl.isError()) {
-        os::close(s);
+        CHECK_SOME(os::close(s));
         return Failure("Failed to create socket: " + impl.error());
       }
       return impl.get();

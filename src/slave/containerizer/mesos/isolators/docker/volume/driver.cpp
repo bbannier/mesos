@@ -141,7 +141,7 @@ Future<string> DriverClient::mount(
     })
     .after(MOUNT_TIMEOUT, [s](Future<string> future) -> Future<string> {
       future.discard();
-      os::killtree(s->pid(), SIGKILL);
+      CHECK_SOME(os::killtree(s->pid(), SIGKILL));
 
       return Failure("'mount' timed out in " + stringify(MOUNT_TIMEOUT));
     });
@@ -216,7 +216,7 @@ Future<Nothing> DriverClient::unmount(
     })
     .after(UNMOUNT_TIMEOUT, [s](Future<Nothing> future) -> Future<Nothing> {
       future.discard();
-      os::killtree(s->pid(), SIGKILL);
+      CHECK_SOME(os::killtree(s->pid(), SIGKILL));
 
       return Failure("'unmount' timed out in " + stringify(UNMOUNT_TIMEOUT));
     });

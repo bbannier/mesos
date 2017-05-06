@@ -496,7 +496,7 @@ protected:
   {
     foreach (const Owned<Entry>& entry, entries) {
       if (entry->du.isSome() && entry->du.get().status().isPending()) {
-        os::killtree(entry->du.get().pid(), SIGKILL);
+        CHECK_SOME(os::killtree(entry->du.get().pid(), SIGKILL));
       }
 
       entry->promise.fail("DiskUsageCollector is destroyed");

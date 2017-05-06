@@ -928,7 +928,7 @@ protected:
     // TODO(qianzhang): Remove this hack since the executor now receives
     // acknowledgements for status updates. The executor can terminate
     // after it receives an ACK for a terminal status update.
-    os::sleep(duration);
+    CHECK_SOME(os::sleep(duration));
     terminate(self());
   }
 

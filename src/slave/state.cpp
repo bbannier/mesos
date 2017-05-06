@@ -654,7 +654,7 @@ Try<TaskState> TaskState::recover(
 
   Try<off_t> lseek = os::lseek(fd.get(), 0, SEEK_CUR);
   if (lseek.isError()) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return Error(
         "Failed to lseek status updates file '" + path + "':" + lseek.error());
   }
@@ -668,7 +668,7 @@ Try<TaskState> TaskState::recover(
   Try<Nothing> truncated = os::ftruncate(fd.get(), offset);
 
   if (truncated.isError()) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return Error(
         "Failed to truncate status updates file '" + path +
         "': " + truncated.error());
@@ -680,7 +680,7 @@ Try<TaskState> TaskState::recover(
     message = "Failed to read status updates file  '" + path +
               "': " + record.error();
 
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
 
     if (strict) {
       return Error(message);
@@ -692,7 +692,7 @@ Try<TaskState> TaskState::recover(
   }
 
   // Close the updates file.
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return state;
 }
@@ -775,7 +775,7 @@ Try<Resources> ResourcesState::recoverResources(
 
   Try<off_t> lseek = os::lseek(fd.get(), 0, SEEK_CUR);
   if (lseek.isError()) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return Error(
         "Failed to lseek resources file '" + path + "':" + lseek.error());
   }
@@ -789,7 +789,7 @@ Try<Resources> ResourcesState::recoverResources(
   Try<Nothing> truncated = os::ftruncate(fd.get(), offset);
 
   if (truncated.isError()) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return Error(
       "Failed to truncate resources file '" + path +
       "': " + truncated.error());
@@ -801,7 +801,7 @@ Try<Resources> ResourcesState::recoverResources(
     string message =
       "Failed to read resources file  '" + path + "': " + resource.error();
 
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
 
     if (strict) {
       return Error(message);
@@ -812,7 +812,7 @@ Try<Resources> ResourcesState::recoverResources(
     }
   }
 
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return resources;
 }

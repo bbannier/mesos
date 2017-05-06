@@ -292,8 +292,8 @@ inline Try<pid_t> cloneChild(
     internal::close(stdinfds, stdoutfds, stderrfds);
 
     if (blocking) {
-      os::close(pipes[0]);
-      os::close(pipes[1]);
+      CHECK_SOME(os::close(pipes[0]));
+      CHECK_SOME(os::close(pipes[1]));
     }
 
     return error;
@@ -304,7 +304,7 @@ inline Try<pid_t> cloneChild(
   internal::close({stdinfds.read, stdoutfds.write, stderrfds.write});
 
   if (blocking) {
-    os::close(pipes[0]);
+    CHECK_SOME(os::close(pipes[0]));
 
     // Run the parent hooks.
     foreach (const Subprocess::ParentHook& hook, parent_hooks) {
@@ -317,7 +317,7 @@ inline Try<pid_t> cloneChild(
           << "Failed to execute Subprocess::ParentHook in parent for child '"
           << pid << "': " << parentSetup.error();
 
-        os::close(pipes[1]);
+        CHECK_SOME(os::close(pipes[1]));
 
         // Ensure the child is killed.
         ::kill(pid, SIGKILL);
@@ -335,7 +335,7 @@ inline Try<pid_t> cloneChild(
     while ((length = ::write(pipes[1], &dummy, sizeof(dummy))) == -1 &&
            errno == EINTR);
 
-    os::close(pipes[1]);
+    CHECK_SOME(os::close(pipes[1]));
 
     if (length != sizeof(dummy)) {
       // Ensure the child is killed.

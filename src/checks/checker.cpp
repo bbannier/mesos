@@ -571,7 +571,7 @@ Future<int> CheckerProcess::commandCheck()
         VLOG(1) << "Killing the COMMAND check process '" << commandPid
                 << "' for task '" << _taskId << "'";
 
-        os::killtree(commandPid, SIGKILL);
+        CHECK_SOME(os::killtree(commandPid, SIGKILL));
       }
 
       return Failure("Command timed out after " + stringify(timeout));
@@ -1006,7 +1006,7 @@ Future<int> CheckerProcess::httpCheck()
         VLOG(1) << "Killing the HTTP check process " << curlPid
                 << " for task '" << _taskId << "'";
 
-        os::killtree(curlPid, SIGKILL);
+        CHECK_SOME(os::killtree(curlPid, SIGKILL));
       }
 
       return Failure(
@@ -1152,7 +1152,7 @@ Future<bool> CheckerProcess::tcpCheck()
         VLOG(1) << "Killing the TCP check process " << commandPid
                 << " for task '" << _taskId << "'";
 
-        os::killtree(commandPid, SIGKILL);
+        CHECK_SOME(os::killtree(commandPid, SIGKILL));
       }
 
       return Failure(

@@ -148,7 +148,7 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
   Try<Nothing> checkpoint = internal::checkpoint(temp.get(), t);
   if (checkpoint.isError()) {
     // Try removing the temporary file on error.
-    os::rm(temp.get());
+    CHECK_SOME(os::rm(temp.get()));
 
     return Error("Failed to write temporary file '" + temp.get() +
                  "': " + checkpoint.error());
@@ -158,7 +158,7 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
   Try<Nothing> rename = os::rename(temp.get(), path);
   if (rename.isError()) {
     // Try removing the temporary file on error.
-    os::rm(temp.get());
+    CHECK_SOME(os::rm(temp.get()));
 
     return Error("Failed to rename '" + temp.get() + "' to '" +
                  path + "': " + rename.error());

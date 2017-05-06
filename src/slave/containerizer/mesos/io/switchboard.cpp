@@ -353,7 +353,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   // Helper for closing a set of file descriptors.
   auto close = [](const hashset<int>& fds) {
     foreach (int fd, fds) {
-      os::close(fd);
+      CHECK_SOME(os::close(fd));
     }
   };
 
@@ -1619,7 +1619,7 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
             // `EOF`, so we should close `stdinToFd` if there is no tty.
             // If tty is enabled, the client is expected to send `EOT` instead.
             if (!tty && message.data().data().length() == 0) {
-              os::close(stdinToFd);
+              CHECK_SOME(os::close(stdinToFd));
               return Continue();
             }
 

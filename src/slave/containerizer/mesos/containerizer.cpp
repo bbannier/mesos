@@ -1643,8 +1643,8 @@ Future<bool> MesosContainerizerProcess::_launch(
                 containerId,
                 slaveId))
     .then(defer(self(), &Self::exec, containerId, pipes[1]))
-    .onAny([pipes]() { os::close(pipes[0]); })
-    .onAny([pipes]() { os::close(pipes[1]); });
+    .onAny([pipes]() { CHECK_SOME(os::close(pipes[0])); })
+    .onAny([pipes]() { CHECK_SOME(os::close(pipes[1])); });
 }
 
 

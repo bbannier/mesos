@@ -206,7 +206,7 @@ protected:
     tasks[task.task_id()] = task;
 
     std::thread thread([=]() {
-      os::sleep(Seconds(random() % 10));
+      CHECK_SOME(os::sleep(Seconds(random() % 10)));
 
       process::dispatch(self(), &Self::update, task, TaskState::TASK_FINISHED);
     });

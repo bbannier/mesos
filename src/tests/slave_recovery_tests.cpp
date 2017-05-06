@@ -112,7 +112,7 @@ TEST_F(SlaveStateTest, CheckpointString)
   // Checkpoint a test string.
   const string expected = "test";
   const string file = "test-file";
-  slave::state::checkpoint(file, expected);
+  ASSERT_SOME(slave::state::checkpoint(file, expected));
 
   EXPECT_SOME_EQ(expected, os::read(file));
 }
@@ -125,7 +125,7 @@ TEST_F(SlaveStateTest, CheckpointProtobufMessage)
   expected.set_value("agent1");
 
   const string& file = "slave.id";
-  slave::state::checkpoint(file, expected);
+  ASSERT_SOME(slave::state::checkpoint(file, expected));
 
   const Result<SlaveID>& actual = ::protobuf::read<SlaveID>(file);
   ASSERT_SOME(actual);
@@ -141,7 +141,7 @@ TEST_F(SlaveStateTest, CheckpointRepeatedProtobufMessages)
     Resources::parse("cpus:2;mem:512;cpus(role):4;mem(role):1024").get();
 
   const string file = "resources-file";
-  slave::state::checkpoint(file, expected);
+  ASSERT_SOME(slave::state::checkpoint(file, expected));
 
   Result<RepeatedPtrField<Resource>> actual =
     ::protobuf::read<RepeatedPtrField<Resource>>(file);
@@ -1231,7 +1231,7 @@ TYPED_TEST(SlaveRecoveryTest, RecoverTerminatedHTTPExecutor)
 
   // Ensure the executor is killed before restarting the slave.
   while (os::exists(runState.forkedPid.get())) {
-    os::sleep(Milliseconds(100));
+    ASSERT_SOME(os::sleep(Milliseconds(100)));
   }
 
   Future<Nothing> _recover = FUTURE_DISPATCH(_, &Slave::_recover);
@@ -1476,7 +1476,7 @@ TYPED_TEST(SlaveRecoveryTest, DISABLED_RecoveryTimeout)
 
   // Ensure the executor terminates by causing the recovery timeout
   // to elapse while disconnected from the slave.
-  os::sleep(Milliseconds(1));
+  ASSERT_SOME(os::sleep(Milliseconds(1)));
 
   Future<Nothing> _recover = FUTURE_DISPATCH(_, &Slave::_recover);
 

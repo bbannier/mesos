@@ -225,7 +225,7 @@ public:
     variable->set_name("HOOKTEST_EXECUTOR");
     variable->set_value("bar");
 
-    os::touch(path::join(containerWorkDirectory, "foo"));
+    CHECK_SOME(os::touch(path::join(containerWorkDirectory, "foo")));
 
     return prepareInfo;
   }

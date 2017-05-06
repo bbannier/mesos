@@ -123,7 +123,7 @@ int main(int argc, char** argv)
 
   io::poll(unblockFds[0], io::READ)
     .onAny([server](const Future<short>& future) {
-      os::close(unblockFds[0]);
+      CHECK_SOME(os::close(unblockFds[0]));
 
       if (!future.isReady()) {
         EXIT(EXIT_FAILURE) << "Failed while polling on 'unblockFds[0]': "

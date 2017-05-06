@@ -87,9 +87,9 @@ private:
       messages++;
 
       // Compensate for the driver call overhead.
-      os::sleep(std::max(
+      CHECK_SOME(os::sleep(std::max(
           Duration::zero(),
-          Seconds(1) / qps - reconcile.elapsed()));
+          Seconds(1) / qps - reconcile.elapsed())));
     }
   }
 

@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/nothing.hpp>
 #include <stout/try.hpp>
@@ -79,7 +80,7 @@ inline Try<int_fd> open(const std::string& path, int oflag, mode_t mode = 0)
   if (cloexec) {
     Try<Nothing> result = os::cloexec(fd);
     if (result.isError()) {
-      os::close(fd);
+      CHECK_SOME(os::close(fd));
       return Error("Failed to set cloexec: " + result.error());
     }
   }

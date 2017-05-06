@@ -89,8 +89,8 @@ TEST_F(ProtobufIOTest, Basic)
   ASSERT_TRUE(read.isNone());
   ASSERT_EQ(writes, reads);
 
-  os::close(fdw);
-  os::close(fdr);
+  ASSERT_SOME(os::close(fdw));
+  ASSERT_SOME(os::close(fdr));
 }
 
 
@@ -130,7 +130,7 @@ TEST_F(ProtobufIOTest, Append)
   ASSERT_TRUE(read.isNone());
   ASSERT_EQ(writes, reads);
 
-  os::close(fd.get());
+  ASSERT_SOME(os::close(fd.get()));
 }
 
 TEST_F(ProtobufIOTest, RepeatedPtrField)

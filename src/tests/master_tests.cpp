@@ -1212,7 +1212,7 @@ protected:
 
   virtual ~WhitelistTest()
   {
-    os::rm(path);
+    (void)os::rm(path);
   }
   const string path;
 };

@@ -564,7 +564,7 @@ Future<Nothing> FetcherProcess::__fetch(
           if (entry.get()->completion().isPending()) {
             // Unsuccessfully (or partially) downloaded! Remove from the cache.
             entry.get()->fail();
-            cache.remove(entry.get()); // Might delete partial download.
+            CHECK_SOME(cache.remove(entry.get())); // Might delete partial download.
           }
         }
       }
@@ -594,7 +594,7 @@ Future<Nothing> FetcherProcess::__fetch(
               // Successfully fetched, but not reusable from the
               // cache, because we are deleting the entry now.
               entry.get()->fail();
-              cache.remove(entry.get());
+              CHECK_SOME(cache.remove(entry.get()));
             }
           }
         }
@@ -687,7 +687,7 @@ FetcherProcess::reserveCacheSpace(
     // failed to download and they should bypass the cache
     // (any new requests will try again).
     entry->fail();
-    cache.remove(entry);
+    CHECK_SOME(cache.remove(entry));
 
     return Failure("Could not determine size of cache file for '" +
                    entry->key + "' with error: " +
@@ -701,7 +701,7 @@ FetcherProcess::reserveCacheSpace(
     // failed to download and they should bypass the cache
     // (any new requests will try again).
     entry->fail();
-    cache.remove(entry);
+    CHECK_SOME(cache.remove(entry));
 
     return Failure("Failed to reserve space in the cache: " +
                    reservation.error());
@@ -754,7 +754,7 @@ Future<Nothing> FetcherProcess::run(
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (err.isError()) {
-    os::close(out.get());
+    CHECK_SOME(os::close(out.get()));
     return Failure("Failed to create 'stderr' file: " + err.error());
   }
 
@@ -771,8 +771,8 @@ Future<Nothing> FetcherProcess::run(
         false);
 
     if (chownOut.isError()) {
-      os::close(out.get());
-      os::close(err.get());
+      CHECK_SOME(os::close(out.get()));
+      CHECK_SOME(os::close(err.get()));
       return Failure(
           "Failed to chown '" +
           stdoutPath +
@@ -786,8 +786,8 @@ Future<Nothing> FetcherProcess::run(
         false);
 
     if (chownErr.isError()) {
-      os::close(out.get());
-      os::close(err.get());
+      CHECK_SOME(os::close(out.get()));
+      CHECK_SOME(os::close(err.get()));
       return Failure(
           "Failed to chown '" +
           stderrPath +
@@ -799,8 +799,8 @@ Future<Nothing> FetcherProcess::run(
 
   // Return early if there are no URIs to fetch.
   if (info.items_size() == 0) {
-      os::close(out.get());
-      os::close(err.get());
+      CHECK_SOME(os::close(out.get()));
+      CHECK_SOME(os::close(err.get()));
       return Nothing();
   }
 
@@ -815,8 +815,8 @@ Future<Nothing> FetcherProcess::run(
                << (realpath.isError() ? realpath.error()
                                       : "No such file or directory");
 
-    os::close(out.get());
-    os::close(err.get());
+    CHECK_SOME(os::close(out.get()));
+    CHECK_SOME(os::close(err.get()));
 
     return Failure("Could not fetch URIs: failed to find mesos-fetcher");
   }
@@ -914,7 +914,7 @@ void FetcherProcess::kill(const ContainerID& containerId)
   if (subprocessPids.contains(containerId)) {
     VLOG(1) << "Killing the fetcher for container '" << containerId << "'";
     // Best effort kill the entire fetcher tree.
-    os::killtree(subprocessPids.get(containerId).get(), SIGKILL);
+    CHECK_SOME(os::killtree(subprocessPids.get(containerId).get(), SIGKILL));
 
     subprocessPids.erase(containerId);
   }

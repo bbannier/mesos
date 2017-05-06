@@ -227,16 +227,16 @@ TEST_F(IOSwitchboardServerTest, RedirectLog)
   write = os::write(stderrPipe[1], data);
   ASSERT_SOME(write);
 
-  os::close(stdoutPipe[1]);
-  os::close(stderrPipe[1]);
+  ASSERT_SOME(os::close(stdoutPipe[1]));
+  ASSERT_SOME(os::close(stderrPipe[1]));
 
   AWAIT_ASSERT_READY(runServer);
 
-  os::close(nullFd.get());
-  os::close(stdoutPipe[0]);
-  os::close(stderrPipe[0]);
-  os::close(stdoutFd.get());
-  os::close(stderrFd.get());
+  ASSERT_SOME(os::close(nullFd.get()));
+  ASSERT_SOME(os::close(stdoutPipe[0]));
+  ASSERT_SOME(os::close(stderrPipe[0]));
+  ASSERT_SOME(os::close(stdoutFd.get()));
+  ASSERT_SOME(os::close(stderrFd.get()));
 
   Try<string> read = os::read(stdoutPath);
   ASSERT_SOME(read);
@@ -290,8 +290,8 @@ TEST_F(IOSwitchboardServerTest, AttachOutput)
   write = os::write(stderrFd.get(), data);
   ASSERT_SOME(write);
 
-  os::close(stdoutFd.get());
-  os::close(stderrFd.get());
+  ASSERT_SOME(os::close(stdoutFd.get()));
+  ASSERT_SOME(os::close(stderrFd.get()));
 
   stdoutFd = os::open(stdoutPath, O_RDONLY);
   ASSERT_SOME(stdoutFd);
@@ -352,9 +352,9 @@ TEST_F(IOSwitchboardServerTest, AttachOutput)
 
   AWAIT_ASSERT_READY(runServer);
 
-  os::close(nullFd.get());
-  os::close(stdoutFd.get());
-  os::close(stderrFd.get());
+  ASSERT_SOME(os::close(nullFd.get()));
+  ASSERT_SOME(os::close(stdoutFd.get()));
+  ASSERT_SOME(os::close(stderrFd.get()));
 }
 
 
@@ -453,15 +453,15 @@ TEST_F(IOSwitchboardServerTest, SendHeartbeat)
 
   // Closing the write end of the pipe will trigger the switchboard
   // to shutdown and close any outstanding connections.
-  os::close(stdoutPipe[1]);
+  ASSERT_SOME(os::close(stdoutPipe[1]));
 
   AWAIT_READY(connection.disconnect());
   AWAIT_READY(connection.disconnected());
 
   AWAIT_ASSERT_READY(runServer);
 
-  os::close(stdoutPipe[0]);
-  os::close(nullFd.get());
+  ASSERT_SOME(os::close(stdoutPipe[0]));
+  ASSERT_SOME(os::close(nullFd.get()));
 }
 
 
@@ -582,12 +582,12 @@ TEST_F(IOSwitchboardServerTest, AttachInput)
 
   // Closing the write end of `stdoutPipe`
   // will trigger the switchboard to exit.
-  os::close(stdoutPipe[1]);
+  ASSERT_SOME(os::close(stdoutPipe[1]));
   AWAIT_ASSERT_READY(runServer);
 
-  os::close(stdoutPipe[0]);
-  os::close(nullFd.get());
-  os::close(stdinFd.get());
+  ASSERT_SOME(os::close(stdoutPipe[0]));
+  ASSERT_SOME(os::close(nullFd.get()));
+  ASSERT_SOME(os::close(stdinFd.get()));
 
   Try<string> stdinData = os::read(stdinPath);
   ASSERT_SOME(stdinData);
@@ -693,11 +693,11 @@ TEST_F(IOSwitchboardServerTest, ReceiveHeartbeat)
 
   // Closing the write end of `stdoutPipe`
   // will trigger the switchboard to exit.
-  os::close(stdoutPipe[1]);
+  ASSERT_SOME(os::close(stdoutPipe[1]));
   AWAIT_ASSERT_READY(runServer);
 
-  os::close(stdoutPipe[0]);
-  os::close(nullFd.get());
+  ASSERT_SOME(os::close(stdoutPipe[0]));
+  ASSERT_SOME(os::close(nullFd.get()));
 }
 
 

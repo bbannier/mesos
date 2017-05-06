@@ -1436,7 +1436,7 @@ TEST_F(OversubscriptionTest, LoadQoSController)
                                [&stubLoad]() { return stubLoad; });
 
   // Prepare lambda creating ResourceUsage stub with two revocable executors.
-  controller.initialize([this]() -> Future<ResourceUsage> {
+  ASSERT_SOME(controller.initialize([this]() -> Future<ResourceUsage> {
     ResourceUsage usage;
     ResourceStatistics statistics = createResourceStatistics();
 
@@ -1461,7 +1461,7 @@ TEST_F(OversubscriptionTest, LoadQoSController)
     executor->mutable_statistics()->CopyFrom(statistics);
 
     return usage;
-  });
+  }));
 
   // First correction iteration. All system loads are below the threshold.
   Future<list<QoSCorrection>> qosCorrections = controller.corrections();

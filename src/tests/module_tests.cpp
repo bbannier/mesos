@@ -74,7 +74,7 @@ protected:
     MesosTest::TearDownTestCase();
 
     // Close the module library.
-    dynamicLibrary.close();
+    CHECK_SOME(dynamicLibrary.close());
   }
 
   ModuleTest()
@@ -102,7 +102,8 @@ protected:
     moduleBase->mesosVersion = MESOS_VERSION;
 
     // Unload the module so a subsequent loading may succeed.
-    ModuleManager::unload(DEFAULT_MODULE_NAME);
+    // CHECK_SOME(ModuleManager::unload(DEFAULT_MODULE_NAME));
+    (void)ModuleManager::unload(DEFAULT_MODULE_NAME); // FIXME(bbannier):
   }
 
   Modules defaultModules;

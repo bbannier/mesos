@@ -159,7 +159,7 @@ TEST(ReapTest, TerminatedChildProcess)
       break;
     }
 
-    os::sleep(Milliseconds(1));
+    CHECK_SOME(os::sleep(Milliseconds(1)));
   }
 
   // Now that it's terminated, attempt to reap it.

@@ -673,14 +673,14 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
         os::strerror(errno)).get();
 
     LOG(WARNING) << error;
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return FilesError(FilesError::Type::UNKNOWN, error + ".\n");
   }
 
   const off_t size = lseek.get();
 
   if (offset >= static_cast<size_t>(size)) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return std::make_tuple(size, "");
   }
 
@@ -690,7 +690,7 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
 
   // Return the size of file if length is 0.
   if (length == 0) {
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return std::make_tuple(size, "");
   }
 
@@ -706,7 +706,7 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
         os::strerror(errno)).get();
 
     LOG(WARNING) << error;
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return FilesError(FilesError::Type::UNKNOWN, error);
   }
 
@@ -715,7 +715,7 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
     string error =
         "Failed to set file descriptor nonblocking: " + nonblock.error();
     LOG(WARNING) << error;
-    os::close(fd.get());
+    CHECK_SOME(os::close(fd.get()));
     return FilesError(FilesError::Type::UNKNOWN, error);
   }
 
@@ -727,7 +727,7 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
         -> Try<tuple<size_t, string>, FilesError> {
       return std::make_tuple(size, string(data.get(), dataLength));
     })
-    .onAny([fd]() { os::close(fd.get()); });
+    .onAny([fd]() { CHECK_SOME(os::close(fd.get())); });
 }
 
 

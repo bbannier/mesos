@@ -121,7 +121,7 @@ public:
       if (zh == nullptr && errno == EINVAL) {
         ErrnoError error("zookeeper_init failed");
         LOG(WARNING) << error.message << " ; retrying in 1 second";
-        os::sleep(Seconds(1));
+        CHECK_SOME(os::sleep(Seconds(1)));
         continue;
       }
 

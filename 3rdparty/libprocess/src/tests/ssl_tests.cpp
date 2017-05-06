@@ -107,7 +107,7 @@ Future<Nothing> await_subprocess(
       // If the subprocess ran successfully then return nothing.
       return Nothing();
     }).onAny([=]() {
-      os::close(out);
+      CHECK_SOME(os::close(out));
     });
 }
 

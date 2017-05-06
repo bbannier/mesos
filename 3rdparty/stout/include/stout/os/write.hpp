@@ -13,6 +13,7 @@
 #ifndef __STOUT_OS_WRITE_HPP__
 #define __STOUT_OS_WRITE_HPP__
 
+#include <stout/check.hpp>
 #include <stout/error.hpp>
 #include <stout/nothing.hpp>
 #include <stout/try.hpp>
@@ -79,7 +80,7 @@ inline Try<Nothing> write(const std::string& path, const std::string& message)
   // We ignore the return value of close(). This is because users
   // calling this function are interested in the return value of
   // write(). Also an unsuccessful close() doesn't affect the write.
-  os::close(fd.get());
+  CHECK_SOME(os::close(fd.get()));
 
   return result;
 }

@@ -231,7 +231,7 @@ Future<string> read(int_fd fd)
   // Set the close-on-exec flag.
   Try<Nothing> cloexec = os::cloexec(fd);
   if (cloexec.isError()) {
-    os::close(fd);
+    CHECK_SOME(os::close(fd));
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
         cloexec.error());
@@ -240,7 +240,7 @@ Future<string> read(int_fd fd)
   // Make the file descriptor non-blocking.
   Try<Nothing> nonblock = os::nonblock(fd);
   if (nonblock.isError()) {
-    os::close(fd);
+    CHECK_SOME(os::close(fd));
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
         nonblock.error());
@@ -264,7 +264,7 @@ Future<string> read(int_fd fd)
         return Continue();
       })
     .onAny([fd]() {
-      os::close(fd);
+      CHECK_SOME(os::close(fd));
     });
 }
 
@@ -292,7 +292,7 @@ Future<Nothing> write(int_fd fd, const string& data)
   // Set the close-on-exec flag.
   Try<Nothing> cloexec = os::cloexec(fd);
   if (cloexec.isError()) {
-    os::close(fd);
+    CHECK_SOME(os::close(fd));
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
         cloexec.error());
@@ -301,7 +301,7 @@ Future<Nothing> write(int_fd fd, const string& data)
   // Make the file descriptor non-blocking.
   Try<Nothing> nonblock = os::nonblock(fd);
   if (nonblock.isError()) {
-    os::close(fd);
+    CHECK_SOME(os::close(fd));
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
         nonblock.error());
@@ -328,7 +328,7 @@ Future<Nothing> write(int_fd fd, const string& data)
         return Break();
       })
     .onAny([fd]() {
-        os::close(fd);
+        CHECK_SOME(os::close(fd));
     });
 }
 
@@ -368,7 +368,7 @@ Future<Nothing> redirect(
   // Duplicate 'from' so that we're in control of its lifetime.
   Try<int_fd> dup = os::dup(from);
   if (dup.isError()) {
-    os::close(to.get());
+    CHECK_SOME(os::close(to.get()));
     return Failure(ErrnoError("Failed to duplicate 'from' file descriptor"));
   }
 
@@ -377,37 +377,37 @@ Future<Nothing> redirect(
   // Set the close-on-exec flag (no-op if already set).
   Try<Nothing> cloexec = os::cloexec(from);
   if (cloexec.isError()) {
-    os::close(from);
-    os::close(to.get());
+    CHECK_SOME(os::close(from));
+    CHECK_SOME(os::close(to.get()));
     return Failure("Failed to set close-on-exec on 'from': " + cloexec.error());
   }
 
   cloexec = os::cloexec(to.get());
   if (cloexec.isError()) {
-    os::close(from);
-    os::close(to.get());
+    CHECK_SOME(os::close(from));
+    CHECK_SOME(os::close(to.get()));
     return Failure("Failed to set close-on-exec on 'to': " + cloexec.error());
   }
 
   // Make the file descriptors non-blocking (no-op if already set).
   Try<Nothing> nonblock = os::nonblock(from);
   if (nonblock.isError()) {
-    os::close(from);
-    os::close(to.get());
+    CHECK_SOME(os::close(from));
+    CHECK_SOME(os::close(to.get()));
     return Failure("Failed to make 'from' non-blocking: " + nonblock.error());
   }
 
   nonblock = os::nonblock(to.get());
   if (nonblock.isError()) {
-    os::close(from);
-    os::close(to.get());
+    CHECK_SOME(os::close(from));
+    CHECK_SOME(os::close(to.get()));
     return Failure("Failed to make 'to' non-blocking: " + nonblock.error());
   }
 
   // NOTE: We wrap `os::close` in a lambda to disambiguate on Windows.
   return internal::splice(from, to.get(), chunk, hooks)
-    .onAny([from]() { os::close(from); })
-    .onAny([to]() { os::close(to.get()); });
+    .onAny([from]() { CHECK_SOME(os::close(from)); })
+    .onAny([to]() { CHECK_SOME(os::close(to.get())); });
 }
 
 } // namespace io {

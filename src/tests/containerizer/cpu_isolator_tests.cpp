@@ -144,7 +144,7 @@ TEST_P(CpuIsolatorTest, ROOT_UserCpuUsage)
       break;
     }
 
-    os::sleep(Milliseconds(200));
+    ASSERT_SOME(os::sleep(Milliseconds(200)));
     waited += Milliseconds(200);
   } while (waited < Seconds(1));
 
@@ -236,7 +236,7 @@ TEST_P(CpuIsolatorTest, ROOT_SystemCpuUsage)
       break;
     }
 
-    os::sleep(Milliseconds(200));
+    ASSERT_SOME(os::sleep(Milliseconds(200)));
     waited += Milliseconds(200);
   } while (waited < Seconds(1));
 

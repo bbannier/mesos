@@ -61,7 +61,7 @@ int KillPolicyTestHelper::execute()
   // Block the process until we get a signal.
   pause();
 
-  os::sleep(Seconds(flags.sleep_duration));
+  CHECK_SOME(os::sleep(Seconds(flags.sleep_duration)));
 
   return EXIT_SUCCESS;
 }

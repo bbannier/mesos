@@ -136,9 +136,11 @@ static void signalSafeWriteStatus(int status)
       statusString);
 
   if (write.isError()) {
-    os::write(STDERR_FILENO,
-              "Failed to write container status '" +
-              statusString + "': " + ::strerror(errno));
+    CHECK_SOME(
+        os::write(
+            STDERR_FILENO,
+            "Failed to write container status '" + statusString + "': " +
+              ::strerror(errno)));
   }
 }
 
@@ -211,7 +213,7 @@ static void exitWithSignal(int sig)
 #ifndef __WINDOWS__
   if (containerStatusFd.isSome()) {
     signalSafeWriteStatus(W_EXITCODE(0, sig));
-    os::close(containerStatusFd.get());
+    CHECK_SOME(os::close(containerStatusFd.get()));
   }
 #endif // __WINDOWS__
   ::_exit(EXIT_FAILURE);
@@ -223,7 +225,7 @@ static void exitWithStatus(int status)
 #ifndef __WINDOWS__
   if (containerStatusFd.isSome()) {
     signalSafeWriteStatus(W_EXITCODE(status, 0));
-    os::close(containerStatusFd.get());
+    CHECK_SOME(os::close(containerStatusFd.get()));
   }
 #endif // __WINDOWS__
   ::_exit(status);
@@ -762,7 +764,7 @@ int MesosContainerizerLaunch::execute()
       }
 
       signalSafeWriteStatus(status);
-      os::close(containerStatusFd.get());
+      CHECK_SOME(os::close(containerStatusFd.get()));
       ::_exit(EXIT_SUCCESS);
     }
   }

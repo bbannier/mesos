@@ -320,7 +320,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(MetricsTest, SnapshotTimeout)
   //
   // TODO(neilc): Replace the `sleep` here with a less flaky
   // synchronization method.
-  os::sleep(Milliseconds(10));
+  CHECK_SOME(os::sleep(Milliseconds(10)));
   Clock::settle();
 
   ASSERT_TRUE(response.isPending());

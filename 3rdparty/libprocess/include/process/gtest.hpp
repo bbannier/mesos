@@ -89,7 +89,7 @@ bool await(const process::Future<T>& future, const Duration& duration)
     // timeouts for some time in the future. These timeouts will
     // never be executed due to the paused process::Clock. In this
     // case we return after the stopwatch (system clock) runs out.
-    os::sleep(Milliseconds(10));
+    CHECK_SOME(os::sleep(Milliseconds(10)));
   }
 
   return !future.isPending();

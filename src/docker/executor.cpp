@@ -498,7 +498,7 @@ private:
     // TODO(tnachen): Remove this hack and also the same hack in the
     // command executor when we have the new HTTP APIs to wait until
     // an ack.
-    os::sleep(Seconds(1));
+    CHECK_SOME(os::sleep(Seconds(1)));
     driver.get()->stop();
   }
 

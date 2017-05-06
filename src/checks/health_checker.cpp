@@ -485,7 +485,7 @@ Future<Nothing> HealthCheckerProcess::commandHealthCheck()
         VLOG(1) << "Killing the COMMAND health check process '" << commandPid
                 << "' for task '" << _taskId << "'";
 
-        os::killtree(commandPid, SIGKILL);
+        CHECK_SOME(os::killtree(commandPid, SIGKILL));
       }
 
       return Failure("Command timed out after " + stringify(timeout));
@@ -886,7 +886,7 @@ Future<Nothing> HealthCheckerProcess::httpHealthCheck()
         VLOG(1) << "Killing the HTTP health check process '" << curlPid
                 << "' for task '" << _taskId << "'";
 
-        os::killtree(curlPid, SIGKILL);
+        CHECK_SOME(os::killtree(curlPid, SIGKILL));
       }
 
       return Failure(
@@ -1018,7 +1018,7 @@ Future<Nothing> HealthCheckerProcess::tcpHealthCheck()
         VLOG(1) << "Killing the TCP health check process " << tcpConnectPid
                 << " for task '" << _taskId << "'";
 
-        os::killtree(tcpConnectPid, SIGKILL);
+        CHECK_SOME(os::killtree(tcpConnectPid, SIGKILL));
       }
 
       return Failure(

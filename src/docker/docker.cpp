@@ -147,7 +147,7 @@ Try<Owned<Docker>> Docker::create(
 void commandDiscarded(const Subprocess& s, const string& cmd)
 {
   VLOG(1) << "'" << cmd << "' is being discarded";
-  os::killtree(s.pid(), SIGKILL);
+  CHECK_SOME(os::killtree(s.pid(), SIGKILL));
 }
 
 
