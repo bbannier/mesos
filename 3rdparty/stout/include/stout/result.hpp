@@ -37,7 +37,7 @@
 // an error, in which case calling 'error' will return the error
 // string.
 template <typename T>
-class Result
+class [[nodiscard]] Result
 {
 public:
   static Result<T> none()
