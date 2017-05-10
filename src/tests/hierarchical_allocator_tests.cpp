@@ -141,39 +141,81 @@ protected:
 
   void initialize(
       const master::Flags& _flags = master::Flags(),
-      Option<lambda::function<
-          void(const FrameworkID&,
-               const hashmap<string, hashmap<SlaveID, Resources>>&)>>
-                 offerCallback = None(),
-      Option<lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>>
-                 inverseOfferCallback = None())
+      Option<lambda::function<void(
+          const FrameworkID&,
+          const hashmap<string, hashmap<ResourceProviderID, Resources>>&)>>
+        offerCallback = None(),
+      Option<lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>>
+        inverseOfferCallback = None())
   {
     flags = _flags;
 
     if (offerCallback.isNone()) {
-      offerCallback =
-        [this](const FrameworkID& frameworkId,
-               const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
-          Allocation allocation;
-          allocation.frameworkId = frameworkId;
-          allocation.resources = resources;
+      offerCallback = [this](
+          const FrameworkID& frameworkId,
+          const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+            resources) {
+        Allocation allocation;
+        allocation.frameworkId = frameworkId;
 
-          allocations.put(allocation);
-        };
+        // We still show agent ids to users, so transform the
+        // allocations from ResourceProviderID-based to SlaveID-based.
+        //
+        // TODO(bbannier): Remove this code once all users are
+        // ResourceProviderID-based.
+        hashmap<string, hashmap<SlaveID, Resources>> resources_;
+
+        foreachpair (const string& role, auto&& allocations, resources) {
+          hashmap<SlaveID, Resources> allocation_;
+          foreachpair (
+              const ResourceProviderID& resourceProviderId,
+              const Resources& _resources,
+              allocations) {
+            SlaveID agentId;
+            agentId.set_value(resourceProviderId.value());
+
+            allocation_[std::move(agentId)] = _resources;
+          }
+
+          resources_[role] = std::move(allocation_);
+        }
+
+        allocation.resources = resources_;
+
+        allocations.put(allocation);
+      };
     }
 
     if (inverseOfferCallback.isNone()) {
-      inverseOfferCallback =
-        [this](const FrameworkID& frameworkId,
-               const hashmap<SlaveID, UnavailableResources>& resources) {
-          Deallocation deallocation;
-          deallocation.frameworkId = frameworkId;
-          deallocation.resources = resources;
+      inverseOfferCallback = [this](
+          const FrameworkID& frameworkId,
+          const hashmap<ResourceProviderID, UnavailableResources>& resources) {
+        Deallocation deallocation;
+        deallocation.frameworkId = frameworkId;
 
-          deallocations.put(deallocation);
-        };
+        // We still show agent ids to users, so transform the
+        // allocations from ResourceProviderID-based to SlaveID-based.
+        //
+        // TODO(bbannier): Remove this code once all users are
+        // ResourceProviderID-based.
+        hashmap<SlaveID, UnavailableResources> resources_;
+
+        foreachpair (
+            const ResourceProviderID& resourceProviderId,
+            const UnavailableResources& _resources,
+            resources) {
+          SlaveID agentId;
+          agentId.set_value(resourceProviderId.value());
+
+          resources_[std::move(agentId)] = _resources;
+        }
+
+        deallocation.resources = resources_;
+
+        deallocations.put(deallocation);
+      };
     }
 
     allocator->initialize(
@@ -3990,7 +4032,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   Clock::resume();
 
   FrameworkInfo framework = createFrameworkInfo({"role1"});
-  allocator->addFramework(framework.id(), framework, {}, true);
+  allocator->addFramework(
+      framework.id(),
+      framework,
+      createEmptyUsedSet(),
+      true);
 
   // Wait for the allocation triggered by `addFramework()` to complete.
   AWAIT_READY(allocations.get());
@@ -5301,7 +5347,8 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, AddAndUpdateSlave)
 
   auto offerCallback = [&offerCallbacks](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources) {
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+        resources) {
     offerCallbacks++;
   };
 
@@ -5406,12 +5453,15 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, DeclineOffers)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
-  {
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+        resources_) {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
+        SlaveID slaveId;
+        slaveId.set_value(resourceProviderId.value());
+
         offers.push_back(OfferedResources{frameworkId, slaveId, resources});
       }
     }
@@ -5566,12 +5616,15 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ResourceLabels)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
-  {
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+        resources_) {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
+        SlaveID slaveId;
+        slaveId.set_value(resourceProviderId.value());
+
         offers.push_back(OfferedResources{frameworkId, slaveId, resources});
       }
     }
@@ -5746,12 +5799,15 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, SuppressOffers)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
-  {
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+        resources_) {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
+        SlaveID slaveId;
+        slaveId.set_value(resourceProviderId.value());
+
         offers.push_back(OfferedResources{frameworkId, slaveId, resources});
       }
     }
@@ -5898,22 +5954,26 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
 
   struct OfferedResources
   {
-    FrameworkID   frameworkId;
-    SlaveID       slaveId;
-    Resources     resources;
+    FrameworkID frameworkId;
+    ResourceProviderID resourceProviderId;
+    Resources resources;
   };
 
   vector<OfferedResources> offers;
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<SlaveID, Resources>>& resources_)
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>& resources_)
   {
     foreachkey (const string& role, resources_) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
                    resources_.at(role)) {
-        offers.push_back(OfferedResources{frameworkId, slaveId, resources});
+        offers.push_back(
+            OfferedResources{
+              frameworkId,
+              resourceProviderId,
+              resources});
       }
     }
   };
@@ -5932,7 +5992,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
 
   for (size_t i = 0; i < frameworkCount; i++) {
     frameworks.push_back(createFrameworkInfo({"*"}));
-    allocator->addFramework(frameworks[i].id(), frameworks[i], {}, true);
+    allocator->addFramework(
+        frameworks[i].id(),
+        frameworks[i],
+        createEmptyUsedSet(),
+        true);
   }
 
   // Wait for all the `addFramework` operations to be processed.
@@ -6009,7 +6073,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
     foreach (const OfferedResources& offer, offers) {
       allocator->recoverResources(
           offer.frameworkId,
-          offer.slaveId,
+          offer.resourceProviderId,
           offer.resources,
           None());
     }

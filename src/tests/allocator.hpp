@@ -359,12 +359,16 @@ public:
 
   MOCK_METHOD5(initialize, void(
       const Duration&,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<
+            std::string,
+            hashmap<ResourceProviderID, Resources>>&)>&,
       const lambda::function<
           void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&,
+               const hashmap<
+                 ResourceProviderID,
+                 UnavailableResources>&)>&,
       const Option<std::set<std::string>>&,
       bool));
 
