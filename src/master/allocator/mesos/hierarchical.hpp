@@ -179,7 +179,7 @@ public:
       const Option<Filters>& filters);
 
   process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
       hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses();
 

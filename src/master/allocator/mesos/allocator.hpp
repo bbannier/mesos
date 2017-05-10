@@ -134,7 +134,7 @@ public:
       const Option<Filters>& filters);
 
   process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses();
 
@@ -272,7 +272,7 @@ public:
       const Option<Filters>& filters = None()) = 0;
 
   virtual process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses() = 0;
 
@@ -587,7 +587,7 @@ inline void MesosAllocator<AllocatorProcess>::updateInverseOffer(
 
 template <typename AllocatorProcess>
 inline process::Future<
-    hashmap<SlaveID,
+    hashmap<ResourceProviderID,
             hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
   MesosAllocator<AllocatorProcess>::getInverseOfferStatuses()
 {

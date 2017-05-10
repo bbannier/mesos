@@ -446,7 +446,7 @@ public:
       const Option<Filters>&));
 
   MOCK_METHOD0(getInverseOfferStatuses, process::Future<
-      hashmap<SlaveID, hashmap<
+      hashmap<ResourceProviderID, hashmap<
           FrameworkID,
           mesos::allocator::InverseOfferStatus>>>());
 

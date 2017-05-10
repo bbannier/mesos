@@ -472,7 +472,7 @@ public:
    * Retrieves the status of all inverse offers maintained by the allocator.
    */
   virtual process::Future<
-      hashmap<SlaveID,
+      hashmap<ResourceProviderID,
               hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>>>
     getInverseOfferStatuses() = 0;
 

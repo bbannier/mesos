@@ -1047,17 +1047,20 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
 }
 
 
-Future<hashmap<SlaveID, hashmap<FrameworkID, InverseOfferStatus>>>
+Future<hashmap<ResourceProviderID, hashmap<FrameworkID, InverseOfferStatus>>>
 HierarchicalAllocatorProcess::getInverseOfferStatuses()
 {
   CHECK(initialized);
 
-  hashmap<SlaveID, hashmap<FrameworkID, InverseOfferStatus>> result;
+  hashmap<ResourceProviderID, hashmap<FrameworkID, InverseOfferStatus>> result;
 
   // Make a copy of the most recent statuses.
   foreachpair (const SlaveID& id, const Slave& slave, slaves) {
     if (slave.maintenance.isSome()) {
-      result[id] = slave.maintenance.get().statuses;
+      ResourceProviderID resourceProviderId;
+      resourceProviderId.set_value(id.value());
+
+      result[resourceProviderId] = slave.maintenance.get().statuses;
     }
   }
 
