@@ -42,6 +42,8 @@
 
 #include <mesos/quota/quota.hpp>
 
+#include <mesos/resource_provider/resource_provider.hpp>
+
 #include <mesos/scheduler/scheduler.hpp>
 
 #include <process/limiter.hpp>
@@ -110,6 +112,61 @@ class SlaveObserver;
 struct BoundedRateLimiter;
 struct Framework;
 struct Role;
+
+
+struct ResourceProvider
+{
+  ResourceProvider(
+      const ResourceProviderInfo& info,
+      const UUID& uuid,
+      const process::UPID& pid);
+
+  ~ResourceProvider();
+
+  void addOffer(Offer* offer);
+
+  void removeOffer(Offer* offer);
+
+  void addInverseOffer(InverseOffer* inverseOffer);
+
+  void removeInverseOffer(InverseOffer* inverseOffer);
+
+  void apply(const Offer::Operation& operation);
+
+  const ResourceProviderInfo info;
+
+  // UUID used to register this resource provider.
+  const UUID uuid;
+
+  // PID of the agent the resource provider is running on.
+  const process::UPID pid;
+
+  // Active offers on this resource provider.
+  hashset<Offer*> offers;
+
+  // Active inverse offers on this resource provider.
+  hashset<InverseOffer*> inverseOffers;
+
+  Resources offeredResources; // Offers.
+
+  // The current total resource of the resource provider. Note that this
+  // is different from 'info.resources()' because this also considers
+  // operations (e.g., CREATE, RESERVE) that have been applied and
+  // includes revocable resources as well.
+  Resources totalResources;
+
+private:
+  ResourceProvider(const ResourceProvider&);            // No copying.
+  ResourceProvider& operator=(const ResourceProvider&); // No assigning.
+};
+
+
+inline std::ostream& operator<<(
+  std::ostream& stream,
+  const ResourceProvider& provider)
+{
+  return stream << provider.info.id();
+}
 
 
 struct Slave
@@ -1797,6 +1854,67 @@ private:
     // 'flags.rate_limits'.
     Option<process::Owned<BoundedRateLimiter>> defaultLimiter;
   } frameworks;
+
+  struct ResourceProviders {
+    struct
+    {
+      bool contains(const ResourceProviderID& providerId) const
+      {
+        return ids.contains(providerId);
+      }
+
+      bool contains(const UUID& uuid) const
+      {
+        return uuids.contains(uuid);
+      }
+
+      ResourceProvider* get(const ResourceProviderID& providerId) const
+      {
+        return ids.get(providerId).getOrElse(nullptr);
+      }
+
+      ResourceProvider* get(const UUID& uuid) const
+      {
+        return uuids.get(uuid).getOrElse(nullptr);
+      }
+
+      void put(ResourceProvider* provider)
+      {
+        CHECK_NOTNULL(provider);
+        ids[provider->info.id()] = provider;
+        uuids[provider->uuid] = provider;
+      }
+
+      void remove(ResourceProvider* provider)
+      {
+        CHECK_NOTNULL(provider);
+        ids.erase(provider->info.id());
+        uuids.erase(provider->uuid);
+      }
+
+      void clear()
+      {
+        ids.clear();
+        uuids.clear();
+      }
+
+      size_t size() const { return ids.size(); }
+
+      typedef hashmap<ResourceProviderID, ResourceProvider*>::iterator iterator;
+      typedef hashmap<
+        ResourceProviderID, ResourceProvider*>::const_iterator const_iterator;
+
+      iterator begin() { return ids.begin(); }
+      iterator end()   { return ids.end();   }
+
+      const_iterator begin() const { return ids.begin(); }
+      const_iterator end()   const { return ids.end();   }
+
+    private:
+      hashmap<ResourceProviderID, ResourceProvider*> ids;
+      hashmap<UUID, ResourceProvider*> uuids;
+    } registered;
+  } providers;
 
   struct Subscribers
   {

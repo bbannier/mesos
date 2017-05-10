@@ -9447,6 +9447,70 @@ void Slave::apply(const Offer::Operation& operation)
   checkpointedResources = totalResources.filter(needCheckpointing);
 }
 
+
+ResourceProvider::ResourceProvider(
+    const ResourceProviderInfo& _info,
+    const UUID& _uuid,
+    const process::UPID& _pid)
+  : info(_info), uuid(_uuid), pid(_pid), totalResources(_info.resources())
+{
+}
+
+
+ResourceProvider::~ResourceProvider() {}
+
+
+void ResourceProvider::addOffer(Offer* offer)
+{
+  CHECK(!offers.contains(offer)) << "Duplicate offer " << offer->id();
+
+  offers.insert(offer);
+  offeredResources += offer->resources();
+}
+
+
+void ResourceProvider::removeOffer(Offer* offer)
+{
+  CHECK(offers.contains(offer)) << "Unknown offer " << offer->id();
+
+  offeredResources -= offer->resources();
+  offers.erase(offer);
+}
+
+
+void ResourceProvider::addInverseOffer(InverseOffer* inverseOffer)
+{
+  CHECK(!inverseOffers.contains(inverseOffer))
+    << "Duplicate inverse offer " << inverseOffer->id();
+
+  inverseOffers.insert(inverseOffer);
+}
+
+
+void ResourceProvider::removeInverseOffer(InverseOffer* inverseOffer)
+{
+  CHECK(!inverseOffers.contains(inverseOffer))
+    << "Unknown inverse offer " << inverseOffer->id();
+
+  inverseOffers.erase(inverseOffer);
+}
+
+
+void ResourceProvider::apply(const Offer::Operation& operation)
+{
+  // We need to strip the allocation info from the operation's
+  // resources in order to apply the operation successfully
+  // since the resource provider's total is stored as unallocated
+  // resources.
+  Offer::Operation strippedOperation = operation;
+  protobuf::stripAllocationInfo(&strippedOperation);
+
+  Try<Resources> resources = totalResources.apply(strippedOperation);
+  CHECK_SOME(resources);
+
+  totalResources = resources.get();
+}
+
 } // namespace master {
 } // namespace internal {
 } // namespace mesos {
