@@ -1442,6 +1442,7 @@ message Offer {
   required OfferID id = 1;
   required FrameworkID framework_id = 2;
   required SlaveID slave_id = 3;
+  optional ResourceProviderID provider_id = 11;
   required string hostname = 4;
 
   // URL for reaching the slave running on the host.
@@ -1596,6 +1597,12 @@ message InverseOffer {
   // maintenance, this field is always empty (maintenance always requests
   // all resources back).
   repeated Resource resources = 6;
+
+  // Specified if the resources need to be released from a particular
+  // resource provider. All the framework's resources on this resource
+  // provider are requested back, unless further qualified by the
+  // `resources` field.
+  optional ResourceProviderID provider_id = 7;
 
   // TODO(josephw): Add additional options for narrowing down the resources
   // being requested back.  Such as specific executors, tasks, etc.
