@@ -425,6 +425,7 @@ if (NOT WIN32)
     INSTALL_COMMAND   cd ${ZOOKEEPER_C_ROOT} && make install
     URL               ${ZOOKEEPER_URL}
     URL_HASH          ${ZOOKEEPER_HASH}
+    BUILD_BYPRODUCTS  ${ZOOKEEPER_C_ROOT}/lib/libzookeeper_mt.so
     )
 else ()
   ExternalProject_Add(
@@ -459,5 +460,6 @@ if (NOT WIN32)
     INSTALL_COMMAND   ${CMAKE_NOOP}
     URL               ${LEVELDB_URL}
     URL_HASH          ${LEVELDB_HASH}
+    BUILD_BYPRODUCTS  ${LEVELDB_ROOT}/out-static/libleveldb.a
     )
 endif ()
