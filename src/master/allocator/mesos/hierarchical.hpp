@@ -410,7 +410,14 @@ protected:
 
   hashmap<SlaveID, Slave> slaves;
 
-  hashmap<ResourceProviderID, ResourceProviderInfo> resourceProviders;
+  struct ResourceProvider {
+    Resources allocated;
+    Resources total;
+    ResourceProviderInfo info;
+    Option<SlaveID> agent = None();
+  };
+
+  hashmap<ResourceProviderID, ResourceProvider> resourceProviders;
 
   // A set of agents that are kept as allocation candidates. Events
   // may add or remove candidates to the set. When an allocation is

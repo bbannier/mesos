@@ -524,7 +524,17 @@ void HierarchicalAllocatorProcess::addSlave(
     }
   }
 
-  resourceProviders[resourceProviderId] = resourceProviderInfo;
+  ResourceProvider resourceProvider;
+  resourceProvider.allocated = Resources::sum(used);
+  resourceProvider.total = total;
+  resourceProvider.info = resourceProviderInfo;
+
+  if (agentInfo.isSome()) {
+    CHECK(agentInfo->has_id());
+    resourceProvider.agent = agentInfo->id();
+  }
+
+  resourceProviders[resourceProviderId] = resourceProvider;
 
   slaves[slaveId] = Slave();
 
