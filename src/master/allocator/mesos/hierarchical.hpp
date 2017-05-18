@@ -236,13 +236,13 @@ protected:
   void expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       OfferFilter* offerFilter);
 
   void _expire(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       OfferFilter* offerFilter);
 
   // Remove an inverse offer filter for the specified framework.
@@ -302,7 +302,8 @@ protected:
     // Active offer and inverse offer filters for the framework.
     // Offer filters are tied to the role the filtered resources
     // were allocated to.
-    hashmap<std::string, hashmap<SlaveID, hashset<OfferFilter*>>> offerFilters;
+    hashmap<std::string, hashmap<ResourceProviderID, hashset<OfferFilter*>>>
+      offerFilters;
     hashmap<SlaveID, hashset<InverseOfferFilter*>> inverseOfferFilters;
   };
 
