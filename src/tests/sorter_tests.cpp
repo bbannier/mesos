@@ -45,7 +45,7 @@ TEST(SorterTest, DRFSorter)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -138,7 +138,7 @@ TEST(SorterTest, WDRFSorter)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -198,7 +198,7 @@ TEST(SorterTest, WDRFSorterUpdateWeight)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -230,7 +230,7 @@ TEST(SorterTest, CountAllocations)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -313,7 +313,7 @@ TEST(SorterTest, ShallowHierarchy)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -408,7 +408,7 @@ TEST(SorterTest, DeepHierarchy)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -504,7 +504,7 @@ TEST(SorterTest, HierarchicalAllocation)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -611,7 +611,7 @@ TEST(SorterTest, HierarchicalIterationOrder)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resources totalResources = Resources::parse("cpus:100;mem:100").get();
@@ -659,7 +659,7 @@ TEST(SorterTest, AddChildToLeaf)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -730,7 +730,7 @@ TEST(SorterTest, AddChildToInternal)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -773,7 +773,7 @@ TEST(SorterTest, AddChildToInactiveLeaf)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -808,7 +808,7 @@ TEST(SorterTest, RemoveLeafCollapseParent)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -843,7 +843,7 @@ TEST(SorterTest, RemoveLeafCollapseParentInactive)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -879,7 +879,7 @@ TEST(SorterTest, ChangeWeightOnSubtree)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:100;mem:100").get());
@@ -932,7 +932,7 @@ TEST(SorterTest, SplitResourceShares)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add("a");
@@ -967,7 +967,7 @@ TEST(SorterTest, UpdateAllocation)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add("a");
@@ -993,7 +993,7 @@ TEST(SorterTest, UpdateAllocation)
   // Update the resources for the client.
   sorter.update("a", slaveId, oldAllocation, newAllocation.get());
 
-  hashmap<SlaveID, Resources> allocation = sorter.allocation("a");
+  hashmap<ResourceProviderID, Resources> allocation = sorter.allocation("a");
   EXPECT_EQ(1u, allocation.size());
   EXPECT_EQ(newAllocation.get(), allocation.at(slaveId));
   EXPECT_EQ(newAllocation.get(), sorter.allocation("a", slaveId));
@@ -1004,7 +1004,7 @@ TEST(SorterTest, UpdateAllocationNestedClient)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add("a/x");
@@ -1030,7 +1030,7 @@ TEST(SorterTest, UpdateAllocationNestedClient)
   // Update the resources for the client.
   sorter.update("a/x", slaveId, oldAllocation, newAllocation.get());
 
-  hashmap<SlaveID, Resources> allocation = sorter.allocation("a/x");
+  hashmap<ResourceProviderID, Resources> allocation = sorter.allocation("a/x");
   EXPECT_EQ(1u, allocation.size());
   EXPECT_EQ(newAllocation.get(), allocation.at(slaveId));
   EXPECT_EQ(newAllocation.get(), sorter.allocation("a/x", slaveId));
@@ -1043,7 +1043,7 @@ TEST(SorterTest, AllocationForInactiveClient)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add(slaveId, Resources::parse("cpus:10;mem:10").get());
@@ -1062,12 +1062,14 @@ TEST(SorterTest, AllocationForInactiveClient)
   EXPECT_EQ(Resources::parse("cpus:2;mem:2").get(), clientAllocation.at("a"));
   EXPECT_EQ(Resources::parse("cpus:3;mem:3").get(), clientAllocation.at("b"));
 
-  hashmap<SlaveID, Resources> agentAllocation1 = sorter.allocation("a");
+  hashmap<ResourceProviderID, Resources> agentAllocation1 =
+    sorter.allocation("a");
   EXPECT_EQ(1u, agentAllocation1.size());
   EXPECT_EQ(
       Resources::parse("cpus:2;mem:2").get(), agentAllocation1.at(slaveId));
 
-  hashmap<SlaveID, Resources> agentAllocation2 = sorter.allocation("b");
+  hashmap<ResourceProviderID, Resources> agentAllocation2 =
+    sorter.allocation("b");
   EXPECT_EQ(1u, agentAllocation2.size());
   EXPECT_EQ(
       Resources::parse("cpus:3;mem:3").get(), agentAllocation2.at(slaveId));
@@ -1076,17 +1078,17 @@ TEST(SorterTest, AllocationForInactiveClient)
 
 // We aggregate resources from multiple slaves into the sorter.
 // Since non-scalar resources don't aggregate well across slaves,
-// we need to keep track of the SlaveIDs of the resources. This
+// we need to keep track of the ResourceProviderIDs of the resources. This
 // tests that no resources vanish in the process of aggregation
 // by inspecting the result of 'allocation'.
 TEST(SorterTest, MultipleSlaves)
 {
   DRFSorter sorter;
 
-  SlaveID slaveA;
+  ResourceProviderID slaveA;
   slaveA.set_value("agentA");
 
-  SlaveID slaveB;
+  ResourceProviderID slaveB;
   slaveB.set_value("agentB");
 
   sorter.add("framework");
@@ -1109,17 +1111,17 @@ TEST(SorterTest, MultipleSlaves)
 
 // We aggregate resources from multiple slaves into the sorter. Since
 // non-scalar resources don't aggregate well across slaves, we need to
-// keep track of the SlaveIDs of the resources. This tests that no
+// keep track of the ResourceProviderIDs of the resources. This tests that no
 // resources vanish in the process of aggregation by performing update
 // allocations from unreserved to reserved resources.
 TEST(SorterTest, MultipleSlavesUpdateAllocation)
 {
   DRFSorter sorter;
 
-  SlaveID slaveA;
+  ResourceProviderID slaveA;
   slaveA.set_value("agentA");
 
-  SlaveID slaveB;
+  ResourceProviderID slaveB;
   slaveB.set_value("agentB");
 
   sorter.add("framework");
@@ -1159,7 +1161,7 @@ TEST(SorterTest, UpdateTotal)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add("a");
@@ -1196,10 +1198,10 @@ TEST(SorterTest, MultipleSlavesUpdateTotal)
 {
   DRFSorter sorter;
 
-  SlaveID slaveA;
+  ResourceProviderID slaveA;
   slaveA.set_value("agentA");
 
-  SlaveID slaveB;
+  ResourceProviderID slaveB;
   slaveB.set_value("agentB");
 
   sorter.add("a");
@@ -1237,7 +1239,7 @@ TEST(SorterTest, RevocableResources)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   sorter.add("a");
@@ -1278,7 +1280,7 @@ TEST(SorterTest, SharedResources)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resource sharedDisk = createDiskResource(
@@ -1372,7 +1374,7 @@ TEST(SorterTest, SameDominantSharedResourcesAcrossClients)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resource sharedDisk = createDiskResource(
@@ -1421,7 +1423,7 @@ TEST(SorterTest, SameSharedResourcesSameClient)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resource sharedDisk = createDiskResource(
@@ -1466,7 +1468,7 @@ TEST(SorterTest, SharedResourcesUnallocated)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resource sharedDisk = createDiskResource(
@@ -1519,7 +1521,7 @@ TEST(SorterTest, RemoveSharedResources)
 {
   DRFSorter sorter;
 
-  SlaveID slaveId;
+  ResourceProviderID slaveId;
   slaveId.set_value("agentId");
 
   Resource sharedDisk = createDiskResource(
@@ -1576,7 +1578,7 @@ TEST_P(Sorter_BENCHMARK_Test, FullSort)
   cout << "Using " << agentCount << " agents and "
        << clientCount << " clients" << endl;
 
-  vector<SlaveID> agents;
+  vector<ResourceProviderID> agents;
   agents.reserve(agentCount);
 
   vector<string> clients;
@@ -1606,7 +1608,7 @@ TEST_P(Sorter_BENCHMARK_Test, FullSort)
   watch.start();
   {
     for (size_t i = 0; i < agentCount; i++) {
-      SlaveID slaveId;
+      ResourceProviderID slaveId;
       slaveId.set_value("agent" + stringify(i));
 
       agents.push_back(slaveId);
@@ -1633,7 +1635,7 @@ TEST_P(Sorter_BENCHMARK_Test, FullSort)
   {
     // Allocate resources on all agents, round-robin through the clients.
     size_t clientIndex = 0;
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       const string& client = clients[clientIndex++ % clients.size()];
       sorter.allocated(client, slaveId, allocated);
     }
@@ -1665,7 +1667,7 @@ TEST_P(Sorter_BENCHMARK_Test, FullSort)
   {
     // Unallocate resources on all agents, round-robin through the clients.
     size_t clientIndex = 0;
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       const string& client = clients[clientIndex++ % clients.size()];
       sorter.unallocated(client, slaveId, allocated);
     }
@@ -1677,7 +1679,7 @@ TEST_P(Sorter_BENCHMARK_Test, FullSort)
 
   watch.start();
   {
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       sorter.remove(slaveId, agentResources);
     }
   }
@@ -1730,7 +1732,7 @@ TEST_P(HierarchicalSorter_BENCHMARK_Test, FullSort)
   const size_t treeHeight = std::get<0>(tuple);
   const size_t branchingFactor = std::get<1>(tuple);
 
-  vector<SlaveID> agents;
+  vector<ResourceProviderID> agents;
   agents.reserve(agentCount);
 
   // Compute total number of clients in a tree of given depth and
@@ -1786,7 +1788,7 @@ TEST_P(HierarchicalSorter_BENCHMARK_Test, FullSort)
   watch.start();
   {
     for (size_t i = 0; i < agentCount; i++) {
-      SlaveID slaveId;
+      ResourceProviderID slaveId;
       slaveId.set_value("agent" + stringify(i));
 
       agents.push_back(slaveId);
@@ -1812,7 +1814,7 @@ TEST_P(HierarchicalSorter_BENCHMARK_Test, FullSort)
   {
     // Allocate resources on all agents, round-robin through the clients.
     size_t clientIndex = 0;
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       const string& client = clients[clientIndex++ % clients.size()];
       sorter.allocated(client, slaveId, allocated);
     }
@@ -1844,7 +1846,7 @@ TEST_P(HierarchicalSorter_BENCHMARK_Test, FullSort)
   {
     // Unallocate resources on all agents, round-robin through the clients.
     size_t clientIndex = 0;
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       const string& client = clients[clientIndex++ % clients.size()];
       sorter.unallocated(client, slaveId, allocated);
     }
@@ -1856,7 +1858,7 @@ TEST_P(HierarchicalSorter_BENCHMARK_Test, FullSort)
 
   watch.start();
   {
-    foreach (const SlaveID& slaveId, agents) {
+    foreach (const ResourceProviderID& slaveId, agents) {
       sorter.remove(slaveId, agentResources);
     }
   }
