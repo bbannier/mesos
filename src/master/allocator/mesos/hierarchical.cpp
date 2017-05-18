@@ -284,15 +284,16 @@ void HierarchicalAllocatorProcess::addFramework(
     hashmap<string, Resources> allocations = resources.allocations();
 
     foreachpair (const string& role, const Resources& allocation, allocations) {
-      roleSorter->allocated(role, slaveId, allocation);
-      frameworkSorters.at(role)->add(slaveId, allocation);
+      roleSorter->allocated(role, resourceProviderId, allocation);
+      frameworkSorters.at(role)->add(resourceProviderId, allocation);
       frameworkSorters.at(role)->allocated(
-          frameworkId.value(), slaveId, allocation);
+          frameworkId.value(), resourceProviderId, allocation);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration
         // regarding non-revocable.
-        quotaRoleSorter->allocated(role, slaveId, allocation.nonRevocable());
+        quotaRoleSorter->allocated(
+            role, resourceProviderId, allocation.nonRevocable());
       }
     }
   }
@@ -323,20 +324,21 @@ void HierarchicalAllocatorProcess::removeFramework(
       continue;
     }
 
-    hashmap<SlaveID, Resources> allocation =
+    hashmap<ResourceProviderID, Resources> allocation =
       frameworkSorters.at(role)->allocation(frameworkId.value());
 
     // Update the allocation for this framework.
-    foreachpair (const SlaveID& slaveId,
+    foreachpair (const ResourceProviderID& resourceProviderId,
                  const Resources& allocated,
                  allocation) {
-      roleSorter->unallocated(role, slaveId, allocated);
-      frameworkSorters.at(role)->remove(slaveId, allocated);
+      roleSorter->unallocated(role, resourceProviderId, allocated);
+      frameworkSorters.at(role)->remove(resourceProviderId, allocated);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration
         // regarding non-revocable.
-        quotaRoleSorter->unallocated(role, slaveId, allocated.nonRevocable());
+        quotaRoleSorter->unallocated(
+            role, resourceProviderId, allocated.nonRevocable());
       }
     }
 
@@ -479,10 +481,10 @@ void HierarchicalAllocatorProcess::addSlave(
 
   const Resources total = resourceProviderInfo.resources();
 
-  roleSorter->add(slaveId, total);
+  roleSorter->add(resourceProviderId, total);
 
   // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-  quotaRoleSorter->add(slaveId, total);
+  quotaRoleSorter->add(resourceProviderId, total);
 
   // Update the allocation for each framework.
   foreachpair (const FrameworkID& frameworkId,
@@ -508,14 +510,15 @@ void HierarchicalAllocatorProcess::addSlave(
       CHECK(frameworkSorters.contains(role));
       CHECK(frameworkSorters.at(role)->contains(frameworkId.value()));
 
-      roleSorter->allocated(role, slaveId, allocated);
-      frameworkSorters.at(role)->add(slaveId, allocated);
+      roleSorter->allocated(role, resourceProviderId, allocated);
+      frameworkSorters.at(role)->add(resourceProviderId, allocated);
       frameworkSorters.at(role)->allocated(
-          frameworkId.value(), slaveId, allocated);
+          frameworkId.value(), resourceProviderId, allocated);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-        quotaRoleSorter->allocated(role, slaveId, allocated.nonRevocable());
+        quotaRoleSorter->allocated(
+            role, resourceProviderId, allocated.nonRevocable());
       }
     }
   }
@@ -582,10 +585,11 @@ void HierarchicalAllocatorProcess::removeSlave(
   // all the resources. Fixing this would require more information
   // than what we currently track in the allocator.
 
-  roleSorter->remove(slaveId, slaves.at(slaveId).total);
+  roleSorter->remove(resourceProviderId, slaves.at(slaveId).total);
 
   // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-  quotaRoleSorter->remove(slaveId, slaves.at(slaveId).total.nonRevocable());
+  quotaRoleSorter->remove(
+      resourceProviderId, slaves.at(slaveId).total.nonRevocable());
 
   slaves.erase(slaveId);
   allocationCandidates.erase(slaveId);
@@ -651,8 +655,8 @@ void HierarchicalAllocatorProcess::updateSlave(
       // Update the total resources in the `roleSorter` by removing the
       // previous oversubscribed resources and adding the new
       // oversubscription estimate.
-      roleSorter->remove(slaveId, oldRevocable);
-      roleSorter->add(slaveId, oversubscribed.get());
+      roleSorter->remove(resourceProviderId, oldRevocable);
+      roleSorter->add(resourceProviderId, oversubscribed.get());
 
       updated = true;
 
@@ -762,7 +766,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
 
   const Owned<Sorter>& frameworkSorter = frameworkSorters.at(role);
   const Resources frameworkAllocation =
-    frameworkSorter->allocation(frameworkId.value(), slaveId);
+    frameworkSorter->allocation(frameworkId.value(), resourceProviderId);
 
   // We keep a copy of the offered resources here and it is updated
   // by the operations.
@@ -847,14 +851,14 @@ void HierarchicalAllocatorProcess::updateAllocation(
   // Update the allocation in the framework sorter.
   frameworkSorter->update(
       frameworkId.value(),
-      slaveId,
+      resourceProviderId,
       offeredResources,
       updatedOfferedResources);
 
   // Update the allocation in the role sorter.
   roleSorter->update(
       role,
-      slaveId,
+      resourceProviderId,
       offeredResources,
       updatedOfferedResources);
 
@@ -864,7 +868,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
     // See comment at `quotaRoleSorter` declaration regarding non-revocable.
     quotaRoleSorter->update(
         role,
-        slaveId,
+        resourceProviderId,
         offeredResources.nonRevocable(),
         updatedOfferedResources.nonRevocable());
   }
@@ -887,13 +891,13 @@ void HierarchicalAllocatorProcess::updateAllocation(
   updateResourceProviderTotal(resourceProviderId, updatedTotal.get());
 
   // Update the total resources in the framework sorter.
-  frameworkSorter->remove(slaveId, offeredResources);
-  frameworkSorter->add(slaveId, updatedOfferedResources);
+  frameworkSorter->remove(resourceProviderId, offeredResources);
+  frameworkSorter->add(resourceProviderId, updatedOfferedResources);
 
   // Check that the `flattened` quantities for framework allocations
   // have not changed by the above operations.
   const Resources updatedFrameworkAllocation =
-    frameworkSorter->allocation(frameworkId.value(), slaveId);
+    frameworkSorter->allocation(frameworkId.value(), resourceProviderId);
 
   CHECK_EQ(
       frameworkAllocation.flatten().createStrippedScalarQuantity(),
@@ -1149,15 +1153,16 @@ void HierarchicalAllocatorProcess::recoverResources(
     const Owned<Sorter>& frameworkSorter = frameworkSorters.at(role);
 
     if (frameworkSorter->contains(frameworkId.value())) {
-      frameworkSorter->unallocated(frameworkId.value(), slaveId, resources);
-      frameworkSorter->remove(slaveId, resources);
-      roleSorter->unallocated(role, slaveId, resources);
+      frameworkSorter->unallocated(
+          frameworkId.value(), resourceProviderId, resources);
+      frameworkSorter->remove(resourceProviderId, resources);
+      roleSorter->unallocated(role, resourceProviderId, resources);
 
       if (quotas.contains(role)) {
         // See comment at `quotaRoleSorter` declaration
         // regarding non-revocable
         quotaRoleSorter->unallocated(
-            role, slaveId, resources.nonRevocable());
+            role, resourceProviderId, resources.nonRevocable());
       }
 
       // Stop tracking the framework under this role if it's no longer
@@ -1341,11 +1346,15 @@ void HierarchicalAllocatorProcess::setQuota(
 
   // Copy allocation information for the quota'ed role.
   if (roleSorter->contains(role)) {
-    hashmap<SlaveID, Resources> roleAllocation = roleSorter->allocation(role);
+    hashmap<ResourceProviderID, Resources> roleAllocation =
+      roleSorter->allocation(role);
     foreachpair (
-        const SlaveID& slaveId, const Resources& resources, roleAllocation) {
+        const ResourceProviderID& resourceProviderId,
+        const Resources& resources,
+        roleAllocation) {
       // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-      quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
+      quotaRoleSorter->allocated(
+          role, resourceProviderId, resources.nonRevocable());
     }
   }
 
@@ -1706,10 +1715,10 @@ void HierarchicalAllocatorProcess::__allocate()
         // role's and the framework's fair share.
         //
         // NOTE: Revocable resources have already been excluded.
-        frameworkSorter->add(slaveId, resources);
-        frameworkSorter->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
-        quotaRoleSorter->allocated(role, slaveId, resources);
+        frameworkSorter->add(resourceProviderId, resources);
+        frameworkSorter->allocated(frameworkId_, resourceProviderId, resources);
+        roleSorter->allocated(role, resourceProviderId, resources);
+        quotaRoleSorter->allocated(role, resourceProviderId, resources);
       }
     }
   }
@@ -1906,14 +1915,15 @@ void HierarchicalAllocatorProcess::__allocate()
 
         slave.allocated += resources;
 
-        frameworkSorter->add(slaveId, resources);
-        frameworkSorter->allocated(frameworkId_, slaveId, resources);
-        roleSorter->allocated(role, slaveId, resources);
+        frameworkSorter->add(resourceProviderId, resources);
+        frameworkSorter->allocated(frameworkId_, resourceProviderId, resources);
+        roleSorter->allocated(role, resourceProviderId, resources);
 
         if (quotas.contains(role)) {
           // See comment at `quotaRoleSorter` declaration regarding
           // non-revocable.
-          quotaRoleSorter->allocated(role, slaveId, resources.nonRevocable());
+          quotaRoleSorter->allocated(
+              role, resourceProviderId, resources.nonRevocable());
         }
       }
     }
@@ -1969,7 +1979,7 @@ void HierarchicalAllocatorProcess::deallocate()
         Slave::Maintenance& maintenance = slave.maintenance.get();
 
         hashmap<string, Resources> allocation =
-          frameworkSorter->allocation(slaveId);
+          frameworkSorter->allocation(resourceProviderId);
 
         foreachkey (const string& frameworkId_, allocation) {
           FrameworkID frameworkId;
@@ -2362,17 +2372,17 @@ void HierarchicalAllocatorProcess::updateResourceProviderTotal(
   const Resources oldTotal = slave.total;
   slave.total = total;
 
-  // Currently `roleSorter` and `quotaRoleSorter`, being the root-level
-  // sorters, maintain all of `slaves[slaveId].total` (or the `nonRevocable()`
-  // portion in the case of `quotaRoleSorter`) in their own totals (which
-  // don't get updated in the allocation runs or during recovery of allocated
+  // Currently `roleSorter` and `quotaRoleSorter`, being the root-level sorters,
+  // maintain all of `slaves[resourceProviderId].total` (or the `nonRevocable()`
+  // portion in the case of `quotaRoleSorter`) in their own totals (which don't
+  // get updated in the allocation runs or during recovery of allocated
   // resources). So, we update them using the resources in `slave.total`.
-  roleSorter->remove(slaveId, oldTotal);
-  roleSorter->add(slaveId, total);
+  roleSorter->remove(resourceProviderId, oldTotal);
+  roleSorter->add(resourceProviderId, total);
 
   // See comment at `quotaRoleSorter` declaration regarding non-revocable.
-  quotaRoleSorter->remove(slaveId, oldTotal.nonRevocable());
-  quotaRoleSorter->add(slaveId, total.nonRevocable());
+  quotaRoleSorter->remove(resourceProviderId, oldTotal.nonRevocable());
+  quotaRoleSorter->add(resourceProviderId, total.nonRevocable());
 }
 
 } // namespace internal {
