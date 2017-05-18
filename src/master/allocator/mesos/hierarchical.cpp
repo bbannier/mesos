@@ -477,6 +477,7 @@ void HierarchicalAllocatorProcess::addSlave(
 
   CHECK(initialized);
   CHECK(!slaves.contains(slaveId));
+  CHECK(!resourceProviders.contains(resourceProviderId));
   CHECK(!paused || expectedAgentCount.isSome());
 
   const Resources total = resourceProviderInfo.resources();
@@ -522,6 +523,8 @@ void HierarchicalAllocatorProcess::addSlave(
       }
     }
   }
+
+  resourceProviders[resourceProviderId] = resourceProviderInfo;
 
   slaves[slaveId] = Slave();
 
@@ -577,6 +580,7 @@ void HierarchicalAllocatorProcess::removeSlave(
   slaveId.set_value(resourceProviderId.value());
 
   CHECK(initialized);
+  CHECK(resourceProviders.contains(resourceProviderId));
   CHECK(slaves.contains(slaveId));
 
   // TODO(bmahler): Per MESOS-621, this should remove the allocations
@@ -592,6 +596,7 @@ void HierarchicalAllocatorProcess::removeSlave(
       resourceProviderId, slaves.at(slaveId).total.nonRevocable());
 
   slaves.erase(slaveId);
+  resourceProviders.erase(resourceProviderId);
   allocationCandidates.erase(slaveId);
 
   // Note that we DO NOT actually delete any filters associated with
