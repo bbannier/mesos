@@ -516,10 +516,12 @@ private:
       const FrameworkID& frameworkId,
       const std::string& role);
 
-  // Helper to update the agent's total resources maintained in the allocator
-  // and the role and quota sorters (whose total resources match the agent's
-  // total resources).
-  void updateSlaveTotal(const SlaveID& slaveId, const Resources& total);
+  // Helper to update the resource providers's total resources maintained in the
+  // allocator and the role and quota sorters (whose total resources match the
+  // resource providers's total resources).
+  void updateResourceProviderTotal(
+      const ResourceProviderID& resourceProviderId,
+      const Resources& total);
 };
 
 

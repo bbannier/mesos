@@ -884,7 +884,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
 
   Try<Resources> updatedTotal = slave.total.apply(strippedOperations);
   CHECK_SOME(updatedTotal);
-  updateSlaveTotal(slaveId, updatedTotal.get());
+  updateResourceProviderTotal(resourceProviderId, updatedTotal.get());
 
   // Update the total resources in the framework sorter.
   frameworkSorter->remove(slaveId, offeredResources);
@@ -945,7 +945,7 @@ Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
   CHECK_SOME(updatedTotal);
 
   // Update the total resources in the allocator and role and quota sorters.
-  updateSlaveTotal(slaveId, updatedTotal.get());
+  updateResourceProviderTotal(resourceProviderId, updatedTotal.get());
 
   return Nothing();
 }
@@ -2345,10 +2345,13 @@ void HierarchicalAllocatorProcess::untrackFrameworkUnderRole(
 }
 
 
-void HierarchicalAllocatorProcess::updateSlaveTotal(
-    const SlaveID& slaveId,
+void HierarchicalAllocatorProcess::updateResourceProviderTotal(
+    const ResourceProviderID& resourceProviderId,
     const Resources& total)
 {
+  SlaveID slaveId;
+  slaveId.set_value(resourceProviderId.value());
+
   CHECK(slaves.contains(slaveId));
 
   Slave& slave = slaves.at(slaveId);
