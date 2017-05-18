@@ -972,7 +972,7 @@ void HierarchicalAllocatorProcess::updateUnavailability(
   // can have a large effect on failure domain calculations and inter-leaved
   // unavailability schedules.
   foreachvalue (Framework& framework, frameworks) {
-    framework.inverseOfferFilters.erase(slaveId);
+    framework.inverseOfferFilters.erase(resourceProviderId);
   }
 
   // Remove any old unavailability.
@@ -1067,13 +1067,14 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
     InverseOfferFilter* inverseOfferFilter =
       new RefusedInverseOfferFilter(Timeout::in(seconds.get()));
 
-    framework.inverseOfferFilters[slaveId].insert(inverseOfferFilter);
+    framework.inverseOfferFilters[resourceProviderId].insert(
+        inverseOfferFilter);
 
     // We need to disambiguate the function call to pick the correct
     // `expire()` overload.
     void (Self::*expireInverseOffer)(
              const FrameworkID&,
-             const SlaveID&,
+             const ResourceProviderID&,
              InverseOfferFilter*) = &Self::expire;
 
     delay(
@@ -1081,7 +1082,7 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
         self(),
         expireInverseOffer,
         frameworkId,
-        slaveId,
+        resourceProviderId,
         inverseOfferFilter);
   }
 }
@@ -2075,7 +2076,7 @@ void HierarchicalAllocatorProcess::expire(
 
 void HierarchicalAllocatorProcess::expire(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId,
+    const ResourceProviderID& resourceProviderId,
     InverseOfferFilter* inverseOfferFilter)
 {
   // The filter might have already been removed (e.g., if the
@@ -2091,12 +2092,12 @@ void HierarchicalAllocatorProcess::expire(
   if (frameworkIterator != frameworks.end()) {
     Framework& framework = frameworkIterator->second;
 
-    auto filters = framework.inverseOfferFilters.find(slaveId);
+    auto filters = framework.inverseOfferFilters.find(resourceProviderId);
     if (filters != framework.inverseOfferFilters.end()) {
       filters->second.erase(inverseOfferFilter);
 
       if (filters->second.empty()) {
-        framework.inverseOfferFilters.erase(slaveId);
+        framework.inverseOfferFilters.erase(resourceProviderId);
       }
     }
   }
@@ -2179,9 +2180,12 @@ bool HierarchicalAllocatorProcess::isFiltered(
 
   const Framework& framework = frameworks.at(frameworkId);
 
-  if (framework.inverseOfferFilters.contains(slaveId)) {
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value(slaveId.value());
+
+  if (framework.inverseOfferFilters.contains(resourceProviderId)) {
     foreach (InverseOfferFilter* inverseOfferFilter,
-             framework.inverseOfferFilters.at(slaveId)) {
+             framework.inverseOfferFilters.at(resourceProviderId)) {
       if (inverseOfferFilter->filter()) {
         VLOG(1) << "Filtered unavailability on agent " << slaveId
                 << " for framework " << frameworkId;

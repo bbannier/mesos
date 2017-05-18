@@ -248,7 +248,7 @@ protected:
   // Remove an inverse offer filter for the specified framework.
   void expire(
       const FrameworkID& frameworkId,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       InverseOfferFilter* inverseOfferFilter);
 
   // Checks whether the slave is whitelisted.
@@ -304,7 +304,8 @@ protected:
     // were allocated to.
     hashmap<std::string, hashmap<ResourceProviderID, hashset<OfferFilter*>>>
       offerFilters;
-    hashmap<SlaveID, hashset<InverseOfferFilter*>> inverseOfferFilters;
+    hashmap<ResourceProviderID, hashset<InverseOfferFilter*>>
+      inverseOfferFilters;
   };
 
   double _event_queue_dispatches()
