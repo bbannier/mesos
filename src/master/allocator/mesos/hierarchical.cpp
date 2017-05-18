@@ -544,6 +544,8 @@ void HierarchicalAllocatorProcess::addSlave(
   slave.allocated = Resources::sum(used);
   slave.activated = true;
 
+  slave.resourceProviders.insert(resourceProviderId);
+
   // TODO(bbannier): For external resource providers we need to update
   // this function so hostname is not a required field anymore.
   CHECK_SOME(agentInfo);
@@ -606,6 +608,11 @@ void HierarchicalAllocatorProcess::removeSlave(
   // See comment at `quotaRoleSorter` declaration regarding non-revocable.
   quotaRoleSorter->remove(
       resourceProviderId, slaves.at(slaveId).total.nonRevocable());
+
+  Slave& slave = slaves.at(slaveId);
+
+  CHECK(slave.resourceProviders.contains(resourceProviderId));
+  slave.resourceProviders.erase(resourceProviderId);
 
   slaves.erase(slaveId);
   resourceProviders.erase(resourceProviderId);

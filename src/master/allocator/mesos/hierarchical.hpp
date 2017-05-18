@@ -369,6 +369,8 @@ protected:
 
     protobuf::slave::Capabilities capabilities;
 
+    hashset<ResourceProviderID> resourceProviders;
+
     bool hasGpus = false;
 
     // Represents a scheduled unavailability due to maintenance for a specific
