@@ -363,11 +363,13 @@ protected:
       return total - allocated_;
     }
 
-    bool activated;  // Whether to offer resources.
+    bool activated = false; // Whether to offer resources.
 
     std::string hostname;
 
     protobuf::slave::Capabilities capabilities;
+
+    bool hasGpus = false;
 
     // Represents a scheduled unavailability due to maintenance for a specific
     // slave, and the responses from frameworks as to whether they will be able

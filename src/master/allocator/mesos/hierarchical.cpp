@@ -541,6 +541,8 @@ void HierarchicalAllocatorProcess::addSlave(
 
   slave.capabilities = protobuf::slave::Capabilities(capabilities);
 
+  slave.hasGpus = total.gpus().getOrElse(0) > 0;
+
   // NOTE: We currently implement maintenance in the allocator to be able to
   // leverage state and features such as the FrameworkSorter and OfferFilter.
   if (unavailability.isSome()) {
@@ -1641,9 +1643,8 @@ void HierarchicalAllocatorProcess::__allocate()
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
         // See MESOS-5634.
-        if (filterGpuResources &&
-            !framework.capabilities.gpuResources &&
-            slave.total.gpus().getOrElse(0) > 0) {
+        if (filterGpuResources && !framework.capabilities.gpuResources &&
+            slave.hasGpus) {
           continue;
         }
 
@@ -1813,9 +1814,8 @@ void HierarchicalAllocatorProcess::__allocate()
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
         // See MESOS-5634.
-        if (filterGpuResources &&
-            !framework.capabilities.gpuResources &&
-            slave.total.gpus().getOrElse(0) > 0) {
+        if (filterGpuResources && !framework.capabilities.gpuResources &&
+            slave.hasGpus) {
           continue;
         }
 
