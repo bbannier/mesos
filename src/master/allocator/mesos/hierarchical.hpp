@@ -255,18 +255,18 @@ protected:
   bool isWhitelisted(const SlaveID& slaveId) const;
 
   // Returns true if there is a resource offer filter for the
-  // specified role of this framework on this slave.
+  // specified role of this framework on this resource provider.
   bool isFiltered(
       const FrameworkID& frameworkId,
       const std::string& role,
-      const SlaveID& slaveId,
+      const ResourceProviderID& resourceProviderId,
       const Resources& resources) const;
 
   // Returns true if there is an inverse offer filter for this framework
-  // on this slave.
+  // on this resource provider.
   bool isFiltered(
       const FrameworkID& frameworkID,
-      const SlaveID& slaveID) const;
+      const ResourceProviderID& resourceProviderId) const;
 
   static bool allocatable(const Resources& resources);
 

@@ -1679,9 +1679,12 @@ void HierarchicalAllocatorProcess::__allocate()
           break;
         }
 
+        ResourceProviderID resourceProviderId;
+        resourceProviderId.set_value(slaveId.value());
+
         // If the framework filters these resources, ignore. The unallocated
         // part of the quota will not be allocated to other roles.
-        if (isFiltered(frameworkId, role, slaveId, resources)) {
+        if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
           continue;
         }
 
@@ -1694,9 +1697,6 @@ void HierarchicalAllocatorProcess::__allocate()
         // NOTE: We perform "coarse-grained" allocation for quota'ed
         // resources, which may lead to overcommitment of resources beyond
         // quota. This is fine since quota currently represents a guarantee.
-        ResourceProviderID resourceProviderId;
-        resourceProviderId.set_value(slaveId.value());
-
         offerable[frameworkId][role][resourceProviderId] += resources;
         offeredSharedResources[slaveId] += resources.shared();
 
@@ -1867,8 +1867,11 @@ void HierarchicalAllocatorProcess::__allocate()
           continue;
         }
 
+        ResourceProviderID resourceProviderId;
+        resourceProviderId.set_value(slaveId.value());
+
         // If the framework filters these resources, ignore.
-        if (isFiltered(frameworkId, role, slaveId, resources)) {
+        if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
           continue;
         }
 
@@ -1985,7 +1988,7 @@ void HierarchicalAllocatorProcess::deallocate()
               // inverse offers for maintenance primitives, and those are at the
               // whole slave level, we only need to filter based on the
               // time-out.
-              if (isFiltered(frameworkId, slaveId)) {
+              if (isFiltered(frameworkId, resourceProviderId)) {
                 continue;
               }
 
@@ -2120,9 +2123,12 @@ bool HierarchicalAllocatorProcess::isWhitelisted(
 bool HierarchicalAllocatorProcess::isFiltered(
     const FrameworkID& frameworkId,
     const string& role,
-    const SlaveID& slaveId,
+    const ResourceProviderID& resourceProviderId,
     const Resources& resources) const
 {
+  SlaveID slaveId;
+  slaveId.set_value(resourceProviderId.value());
+
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
 
@@ -2148,9 +2154,6 @@ bool HierarchicalAllocatorProcess::isFiltered(
     return false;
   }
 
-  ResourceProviderID resourceProviderId;
-  resourceProviderId.set_value(slaveId.value());
-
   auto agentFilters = roleFilters->second.find(resourceProviderId);
   if (agentFilters == roleFilters->second.end()) {
     return false;
@@ -2173,15 +2176,15 @@ bool HierarchicalAllocatorProcess::isFiltered(
 
 bool HierarchicalAllocatorProcess::isFiltered(
     const FrameworkID& frameworkId,
-    const SlaveID& slaveId) const
+    const ResourceProviderID& resourceProviderId) const
 {
+  SlaveID slaveId;
+  slaveId.set_value(resourceProviderId.value());
+
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
 
   const Framework& framework = frameworks.at(frameworkId);
-
-  ResourceProviderID resourceProviderId;
-  resourceProviderId.set_value(slaveId.value());
 
   if (framework.inverseOfferFilters.contains(resourceProviderId)) {
     foreach (InverseOfferFilter* inverseOfferFilter,
