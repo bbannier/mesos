@@ -1766,8 +1766,11 @@ void HierarchicalAllocatorProcess::__allocate()
           break;
         }
 
-        ResourceProviderID resourceProviderId;
-        resourceProviderId.set_value(slaveId.value());
+        // FIXME(bbannier): Right now just assume a single resource
+        // per agent (the agent itself).
+        CHECK_EQ(1u, slave.resourceProviders.size());
+        const ResourceProviderID& resourceProviderId =
+          *slave.resourceProviders.begin();
 
         // If the framework filters these resources, ignore. The unallocated
         // part of the quota will not be allocated to other roles.
@@ -1865,9 +1868,6 @@ void HierarchicalAllocatorProcess::__allocate()
       break;
     }
 
-    ResourceProviderID resourceProviderId;
-    resourceProviderId.set_value(slaveId.value());
-
     foreach (const string& role, roleSorter->sort()) {
       // NOTE: Suppressed frameworks are not included in the sort.
       CHECK(frameworkSorters.contains(role));
@@ -1953,8 +1953,11 @@ void HierarchicalAllocatorProcess::__allocate()
           continue;
         }
 
-        ResourceProviderID resourceProviderId;
-        resourceProviderId.set_value(slaveId.value());
+        // FIXME(bbannier): Right now just assume a single resource
+        // per agent (the agent itself).
+        CHECK_EQ(1u, slave.resourceProviders.size());
+        const ResourceProviderID& resourceProviderId =
+          *slave.resourceProviders.begin();
 
         // If the framework filters these resources, ignore.
         if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
@@ -2045,10 +2048,13 @@ void HierarchicalAllocatorProcess::deallocate()
     foreach (const SlaveID& slaveId, allocationCandidates) {
       CHECK(slaves.contains(slaveId));
 
-      ResourceProviderID resourceProviderId;
-      resourceProviderId.set_value(slaveId.value());
-
       Slave& slave = slaves.at(slaveId);
+
+      // FIXME(bbannier): Right now just assume a single resource per
+      // agent (the agent itself).
+      CHECK_EQ(1u, slave.resourceProviders.size());
+      const ResourceProviderID& resourceProviderId =
+        *slave.resourceProviders.begin();
 
       if (slave.maintenance.isSome()) {
         // We use a reference by alias because we intend to modify the
