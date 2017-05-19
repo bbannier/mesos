@@ -1026,6 +1026,8 @@ message Resource {
     }
 
     optional Source source = 3;
+
+    optional Labels id = 4;
   }
 
   optional DiskInfo disk = 7;
