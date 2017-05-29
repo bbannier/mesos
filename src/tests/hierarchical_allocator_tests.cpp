@@ -3752,11 +3752,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   // Trigger at least two calls to allocate to generate the window statistics.
   SlaveInfo agent = createSlaveInfo("cpus:2;mem:1024;disk:0");
   allocator->addSlave(
-      agent.id(),
-      agent,
+      resourceProviderId(agent.id()),
+      resourceProviderInfo(agent),
       AGENT_CAPABILITIES(),
+      agent,
       None(),
-      agent.resources(),
       {});
 
   // Wait for the allocation triggered by `addSlave()` to complete.
