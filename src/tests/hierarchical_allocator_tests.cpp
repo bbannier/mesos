@@ -3765,11 +3765,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   Clock::resume();
 
   FrameworkInfo framework = createFrameworkInfo({"role1"});
-  allocator->addFramework(
-      framework.id(),
-      framework,
-      createEmptyUsedSet(),
-      true);
+  allocator->addFramework(framework.id(), framework, {}, true);
 
   // Wait for the allocation triggered by `addFramework()` to complete.
   AWAIT_READY(allocations.get());
@@ -5593,8 +5589,8 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
 
   auto offerCallback = [&offers](
       const FrameworkID& frameworkId,
-      const hashmap<string, hashmap<ResourceProviderID, Resources>>& resources_)
-  {
+      const hashmap<string, hashmap<ResourceProviderID, Resources>>&
+        resources_) {
     foreachkey (const string& role, resources_) {
       foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& resources,
@@ -5622,11 +5618,7 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
 
   for (size_t i = 0; i < frameworkCount; i++) {
     frameworks.push_back(createFrameworkInfo({"*"}));
-    allocator->addFramework(
-        frameworks[i].id(),
-        frameworks[i],
-        createEmptyUsedSet(),
-        true);
+    allocator->addFramework(frameworks[i].id(), frameworks[i], {}, true);
   }
 
   // Wait for all the `addFramework` operations to be processed.
@@ -5664,11 +5656,11 @@ TEST_P(HierarchicalAllocator_BENCHMARK_Test, ExtremeSuppressOffers)
     };
 
     allocator->addSlave(
-        agents[i].id(),
-        agents[i],
+        resourceProviderId(agents[i].id()),
+        resourceProviderInfo(agents[i]),
         AGENT_CAPABILITIES(),
+        agents[i],
         None(),
-        agents[i].resources(),
         used);
   }
 
