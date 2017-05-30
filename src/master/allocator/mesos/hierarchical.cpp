@@ -2336,9 +2336,8 @@ double HierarchicalAllocatorProcess::_resources_offered_or_allocated(
 {
   double offered_or_allocated = 0;
 
-  foreachvalue (const Slave& slave, slaves) {
-    Option<Value::Scalar> value =
-      slave.allocated.get<Value::Scalar>(resource);
+  foreachvalue (const ResourceProvider& resourceProvider, resourceProviders) {
+    auto value = resourceProvider.allocated.get<Value::Scalar>(resource);
 
     if (value.isSome()) {
       offered_or_allocated += value->value();
