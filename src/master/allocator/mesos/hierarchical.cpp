@@ -551,7 +551,8 @@ void HierarchicalAllocatorProcess::addSlave(
   slave.allocated = Resources::sum(used);
   slave.activated = true;
 
-  slave.resourceProviders.insert(resourceProviderId);
+  slave.resourceProviders[resourceProviderId] =
+    &resourceProviders[resourceProviderId];
 
   // TODO(bbannier): For external resource providers we need to update
   // this function so hostname is not a required field anymore.
@@ -1187,7 +1188,7 @@ HierarchicalAllocatorProcess::getInverseOfferStatuses()
   // Make a copy of the most recent statuses.
   foreachvalue (const Slave& slave, slaves) {
     if (slave.maintenance.isSome()) {
-      foreach (
+      foreachkey (
           const ResourceProviderID& resourceProviderId,
           slave.resourceProviders) {
         result[resourceProviderId] = slave.maintenance.get().statuses;
@@ -1786,7 +1787,7 @@ void HierarchicalAllocatorProcess::__allocate()
         // per agent (the agent itself).
         CHECK_EQ(1u, slave.resourceProviders.size());
         const ResourceProviderID& resourceProviderId =
-          *slave.resourceProviders.begin();
+          slave.resourceProviders.begin()->first;
 
         // If the framework filters these resources, ignore. The unallocated
         // part of the quota will not be allocated to other roles.
@@ -1978,7 +1979,7 @@ void HierarchicalAllocatorProcess::__allocate()
         // per agent (the agent itself).
         CHECK_EQ(1u, slave.resourceProviders.size());
         const ResourceProviderID& resourceProviderId =
-          *slave.resourceProviders.begin();
+          slave.resourceProviders.begin()->first;
 
         // If the framework filters these resources, ignore.
         if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
@@ -2080,7 +2081,7 @@ void HierarchicalAllocatorProcess::deallocate()
       // agent (the agent itself).
       CHECK_EQ(1u, slave.resourceProviders.size());
       const ResourceProviderID& resourceProviderId =
-        *slave.resourceProviders.begin();
+        slave.resourceProviders.begin()->first;
 
       if (slave.maintenance.isSome()) {
         // We use a reference by alias because we intend to modify the

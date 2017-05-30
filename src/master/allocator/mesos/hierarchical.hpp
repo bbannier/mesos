@@ -328,6 +328,13 @@ protected:
 
   hashmap<FrameworkID, Framework> frameworks;
 
+  struct ResourceProvider {
+    Resources allocated;
+    Resources total;
+    ResourceProviderInfo info;
+    Option<SlaveID> agent = None();
+  };
+
   struct Slave
   {
     // Total amount of regular *and* oversubscribed resources.
@@ -369,7 +376,7 @@ protected:
 
     protobuf::slave::Capabilities capabilities;
 
-    hashset<ResourceProviderID> resourceProviders;
+    hashmap<ResourceProviderID, ResourceProvider*> resourceProviders;
 
     bool hasGpus = false;
 
@@ -411,13 +418,6 @@ protected:
   };
 
   hashmap<SlaveID, Slave> slaves;
-
-  struct ResourceProvider {
-    Resources allocated;
-    Resources total;
-    ResourceProviderInfo info;
-    Option<SlaveID> agent = None();
-  };
 
   hashmap<ResourceProviderID, ResourceProvider> resourceProviders;
 
