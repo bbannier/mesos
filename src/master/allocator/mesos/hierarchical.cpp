@@ -586,9 +586,10 @@ void HierarchicalAllocatorProcess::addSlave(
     resume();
   }
 
-  LOG(INFO) << "Added agent " << slaveId << " (" << slave.hostname << ")"
-            << " with " << slave.total
-            << " (allocated: " << slave.allocated << ")";
+  LOG(INFO) << "Added resource provider " << resourceProviderId
+            << " (" << agentInfo->hostname() << ")"
+            << " with " << resourceProvider.total
+            << " (allocated: " << resourceProvider.allocated << ")";
 
   allocate(slaveId);
 }
@@ -708,10 +709,16 @@ void HierarchicalAllocatorProcess::updateSlave(
       // function only changes the revocable resources on the slave, but
       // the quota role sorter only manages non-revocable resources.
 
-      LOG(INFO) << "Agent " << slaveId << " (" << slave.hostname << ")"
-                << " updated with oversubscribed resources "
-                << oversubscribed.get() << " (total: " << slave.total
-                << ", allocated: " << slave.allocated << ")";
+      const Option<string> hostname =
+        (resourceProvider.agent.isSome() &&
+         slaves.contains(resourceProvider.agent.get()))
+          ? slaves.at(resourceProvider.agent.get()).hostname
+          : Option<string>::none();
+
+      LOG(INFO) << "Added resource provider " << resourceProviderId
+                << (hostname.isSome() ? " (" + hostname.get() + ")" : "")
+                << " with " << resourceProvider.total
+                << " (allocated: " << resourceProvider.allocated << ")";
     }
   }
 
@@ -966,7 +973,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
       updatedFrameworkAllocation.flatten().createStrippedScalarQuantity());
 
   LOG(INFO) << "Updated allocation of framework " << frameworkId
-            << " on agent " << slaveId
+            << " on resource provider " << resourceProviderId
             << " from " << frameworkAllocation
             << " to " << updatedFrameworkAllocation;
 }
@@ -1141,8 +1148,8 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
 
   if (seconds.get() != Duration::zero()) {
     VLOG(1) << "Framework " << frameworkId
-            << " filtered inverse offers from agent " << slaveId
-            << " for " << seconds.get();
+            << " filtered inverse offers from resource provider "
+            << resourceProviderId << " for " << seconds.get();
 
     // Create a new inverse offer filter and delay its expiration.
     InverseOfferFilter* inverseOfferFilter =
@@ -1270,9 +1277,10 @@ void HierarchicalAllocatorProcess::recoverResources(
       resourceProvider.allocated -= resources;
       slave.allocated -= resources;
 
-      VLOG(1) << "Recovered " << resources << " (total: " << slave.total
-              << ", allocated: " << slave.allocated << ")"
-              << " on agent " << slaveId.get()
+      VLOG(1) << "Recovered " << resources
+              << " (total: " << resourceProvider.total
+              << ", allocated: " << resourceProvider.allocated << ")"
+              << " on resource provider " << resourceProviderId
               << " from framework " << frameworkId;
     }
   }
@@ -2276,7 +2284,7 @@ bool HierarchicalAllocatorProcess::isFiltered(
   foreach (OfferFilter* offerFilter, agentFilters->second) {
     if (offerFilter->filter(resources)) {
       VLOG(1) << "Filtered offer with " << resources
-              << " on agent " << slaveId
+              << " on resource provider " << resourceProviderId
               << " for role " << role
               << " of framework " << frameworkId;
 
@@ -2308,8 +2316,8 @@ bool HierarchicalAllocatorProcess::isFiltered(
     foreach (InverseOfferFilter* inverseOfferFilter,
              framework.inverseOfferFilters.at(resourceProviderId)) {
       if (inverseOfferFilter->filter()) {
-        VLOG(1) << "Filtered unavailability on agent " << slaveId
-                << " for framework " << frameworkId;
+        VLOG(1) << "Filtered unavailability on resource provider "
+                << resourceProviderId << " for framework " << frameworkId;
 
         return true;
       }
