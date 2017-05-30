@@ -798,8 +798,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
   CHECK(initialized);
 
   CHECK(resourceProviders.contains(resourceProviderId));
-  const ResourceProvider& resourceProvider =
-    resourceProviders.at(resourceProviderId);
+  ResourceProvider& resourceProvider = resourceProviders.at(resourceProviderId);
 
   CHECK_SOME(resourceProvider.agent);
   const SlaveID& slaveId = resourceProvider.agent.get();
@@ -901,6 +900,10 @@ void HierarchicalAllocatorProcess::updateAllocation(
 
     updatedOfferedResources += additional;
   }
+
+  // Update the per-resource provider allocation.
+  resourceProvider.allocated -= offeredResources;
+  resourceProvider.allocated += updatedOfferedResources;
 
   // Update the per-slave allocation.
   slave.allocated -= offeredResources;
@@ -1250,7 +1253,7 @@ void HierarchicalAllocatorProcess::recoverResources(
   // before we received Allocator::removeSlave).
 
   if (resourceProviders.contains(resourceProviderId)) {
-    const ResourceProvider& resourceProvider =
+    ResourceProvider& resourceProvider =
       resourceProviders.at(resourceProviderId);
 
     const Option<SlaveID>& slaveId = resourceProvider.agent;
@@ -1258,9 +1261,12 @@ void HierarchicalAllocatorProcess::recoverResources(
     if (slaveId.isSome() && slaves.contains(slaveId.get())) {
       Slave& slave = slaves.at(slaveId.get());
 
+      CHECK(resourceProvider.allocated.contains(resources))
+        << resourceProvider.allocated << " does not contain " << resources;
       CHECK(slave.allocated.contains(resources))
         << slave.allocated << " does not contain " << resources;
 
+      resourceProvider.allocated -= resources;
       slave.allocated -= resources;
 
       VLOG(1) << "Recovered " << resources << " (total: " << slave.total
@@ -1790,6 +1796,11 @@ void HierarchicalAllocatorProcess::__allocate()
         offerable[frameworkId][role][resourceProviderId] += resources;
         offeredSharedResources[slaveId] += resources.shared();
 
+        // TODO(bbannier): Remove this additional lookup once we
+        // iterate over proper allocation packages.
+        CHECK(resourceProviders.contains(resourceProviderId));
+        resourceProviders[resourceProviderId].allocated += resources;
+
         slave.allocated += resources;
 
         // Resources allocated as part of the quota count towards the
@@ -1992,6 +2003,11 @@ void HierarchicalAllocatorProcess::__allocate()
         offerable[frameworkId][role][resourceProviderId] += resources;
         offeredSharedResources[slaveId] += resources.shared();
         allocatedStage2 += scalarQuantity;
+
+        // TODO(bbannier): Remove this additional lookup once we
+        // iterate over proper allocation packages.
+        CHECK(resourceProviders.contains(resourceProviderId));
+        resourceProviders[resourceProviderId].allocated += resources;
 
         slave.allocated += resources;
 
