@@ -638,7 +638,7 @@ void HierarchicalAllocatorProcess::removeSlave(
   // HierarchicalAllocatorProcess::expire gets invoked (or the framework
   // that applied the filters gets removed).
 
-  LOG(INFO) << "Removed agent " << slaveId;
+  LOG(INFO) << "Removed resource provider " << resourceProviderId;
 }
 
 
