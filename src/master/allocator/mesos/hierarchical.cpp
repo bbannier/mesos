@@ -904,7 +904,8 @@ void HierarchicalAllocatorProcess::updateAllocation(
   if (!additional.empty()) {
     LOG(INFO) << "Allocating additional resources " << additional
               << " for tasks " << stringify(taskIds)
-              << " of framework " << frameworkId << " on agent " << slaveId;
+              << " of framework " << frameworkId
+              << " on resource provider " << resourceProviderId;
 
     updatedOfferedResources += additional;
   }
