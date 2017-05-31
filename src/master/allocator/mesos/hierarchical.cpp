@@ -619,11 +619,11 @@ void HierarchicalAllocatorProcess::removeSlave(
   // all the resources. Fixing this would require more information
   // than what we currently track in the allocator.
 
-  roleSorter->remove(resourceProviderId, slaves.at(slaveId).total);
+  roleSorter->remove(resourceProviderId, resourceProvider.total);
 
   // See comment at `quotaRoleSorter` declaration regarding non-revocable.
   quotaRoleSorter->remove(
-      resourceProviderId, slaves.at(slaveId).total.nonRevocable());
+      resourceProviderId, resourceProvider.total.nonRevocable());
 
   Slave& slave = slaves.at(slaveId);
 
@@ -681,7 +681,7 @@ void HierarchicalAllocatorProcess::updateSlave(
     // Check that all the oversubscribed resources are revocable.
     CHECK_EQ(oversubscribed.get(), oversubscribed->revocable());
 
-    const Resources oldRevocable = slave.total.revocable();
+    const Resources oldRevocable = resourceProvider.total.revocable();
 
     if (oldRevocable != oversubscribed.get()) {
       // Update the total resources.
@@ -957,7 +957,8 @@ void HierarchicalAllocatorProcess::updateAllocation(
     protobuf::stripAllocationInfo(&operation);
   }
 
-  Try<Resources> updatedTotal = slave.total.apply(strippedOperations);
+  Try<Resources> updatedTotal =
+    resourceProvider.total.apply(strippedOperations);
   CHECK_SOME(updatedTotal);
   updateResourceProviderTotal(resourceProviderId, updatedTotal.get());
 
@@ -991,17 +992,10 @@ Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
   const ResourceProvider& resourceProvider =
     resourceProviders.at(resourceProviderId);
 
-  CHECK_SOME(resourceProvider.agent);
-  const SlaveID& slaveId = resourceProvider.agent.get();
-
   // Note that the operations may contain allocated resources,
   // however such operations can be applied to unallocated
   // resources unambiguously, so we don't have a strict CHECK
   // for the operations to contain only unallocated resources.
-
-  CHECK(slaves.contains(slaveId));
-
-  Slave& slave = slaves.at(slaveId);
 
   // It's possible for this 'apply' to fail here because a call to
   // 'allocate' could have been enqueued by the allocator itself
@@ -1015,13 +1009,14 @@ Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
   //                \___/ \___/
   //
   //   where A = allocate, R = reserve, U = updateAvailable
-  Try<Resources> updatedAvailable = slave.available().apply(operations);
+  Try<Resources> updatedAvailable =
+    resourceProvider.available().apply(operations);
   if (updatedAvailable.isError()) {
     return Failure(updatedAvailable.error());
   }
 
   // Update the total resources.
-  Try<Resources> updatedTotal = slave.total.apply(operations);
+  Try<Resources> updatedTotal = resourceProvider.total.apply(operations);
   CHECK_SOME(updatedTotal);
 
   // Update the total resources in the allocator and role and quota sorters.
@@ -1672,6 +1667,15 @@ void HierarchicalAllocatorProcess::__allocate()
   // roles for which quota is set (quota'ed roles). Such roles form a
   // special allocation group with a dedicated sorter.
   foreach (const SlaveID& slaveId, slaveIds) {
+    CHECK(slaves.contains(slaveId));
+    Slave& slave = slaves.at(slaveId);
+
+    CHECK_EQ(1u, slave.resourceProviders.size());
+    const ResourceProviderID& resourceProviderId =
+      slave.resourceProviders.begin()->first;
+    ResourceProvider* resourceProvider =
+      slave.resourceProviders.begin()->second;
+
     foreach (const string& role, quotaRoleSorter->sort()) {
       CHECK(quotas.contains(role));
 
@@ -1723,11 +1727,9 @@ void HierarchicalAllocatorProcess::__allocate()
         FrameworkID frameworkId;
         frameworkId.set_value(frameworkId_);
 
-        CHECK(slaves.contains(slaveId));
         CHECK(frameworks.contains(frameworkId));
 
         const Framework& framework = frameworks.at(frameworkId);
-        Slave& slave = slaves.at(slaveId);
 
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
@@ -1743,12 +1745,12 @@ void HierarchicalAllocatorProcess::__allocate()
         // Since shared resources are offerable even when they are in use, we
         // make one copy of the shared resources available regardless of the
         // past allocations.
-        Resources available = slave.available().nonShared();
+        Resources available = resourceProvider->available().nonShared();
 
         // Offer a shared resource only if it has not been offered in
         // this offer cycle to a framework.
         if (framework.capabilities.sharedResources) {
-          available += slave.total.shared();
+          available += resourceProvider->total.shared();
           if (offeredSharedResources.contains(slaveId)) {
             available -= offeredSharedResources[slaveId];
           }
@@ -1783,12 +1785,6 @@ void HierarchicalAllocatorProcess::__allocate()
           break;
         }
 
-        // FIXME(bbannier): Right now just assume a single resource
-        // per agent (the agent itself).
-        CHECK_EQ(1u, slave.resourceProviders.size());
-        const ResourceProviderID& resourceProviderId =
-          slave.resourceProviders.begin()->first;
-
         // If the framework filters these resources, ignore. The unallocated
         // part of the quota will not be allocated to other roles.
         if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
@@ -1807,11 +1803,7 @@ void HierarchicalAllocatorProcess::__allocate()
         offerable[frameworkId][role][resourceProviderId] += resources;
         offeredSharedResources[slaveId] += resources.shared();
 
-        // TODO(bbannier): Remove this additional lookup once we
-        // iterate over proper allocation packages.
-        CHECK(resourceProviders.contains(resourceProviderId));
-        resourceProviders[resourceProviderId].allocated += resources;
-
+        resourceProvider->allocated += resources;
         slave.allocated += resources;
 
         // Resources allocated as part of the quota count towards the
@@ -1885,6 +1877,17 @@ void HierarchicalAllocatorProcess::__allocate()
   // At this point resources for quotas are allocated or accounted for.
   // Proceed with allocating the remaining free pool.
   foreach (const SlaveID& slaveId, slaveIds) {
+    CHECK(slaves.contains(slaveId));
+    Slave& slave = slaves.at(slaveId);
+
+    // FIXME(bbannier): Right now just assume a single resource
+    // per agent (the agent itself).
+    CHECK_EQ(1u, slave.resourceProviders.size());
+    const ResourceProviderID& resourceProviderId =
+      slave.resourceProviders.begin()->first;
+    ResourceProvider* resourceProvider =
+      slave.resourceProviders.begin()->second;
+
     // If there are no resources available for the second stage, stop.
     if (!allocatable(remainingClusterResources - allocatedStage2)) {
       break;
@@ -1899,11 +1902,9 @@ void HierarchicalAllocatorProcess::__allocate()
         FrameworkID frameworkId;
         frameworkId.set_value(frameworkId_);
 
-        CHECK(slaves.contains(slaveId));
         CHECK(frameworks.contains(frameworkId));
 
         const Framework& framework = frameworks.at(frameworkId);
-        Slave& slave = slaves.at(slaveId);
 
         // Only offer resources from slaves that have GPUs to
         // frameworks that are capable of receiving GPUs.
@@ -1919,12 +1920,12 @@ void HierarchicalAllocatorProcess::__allocate()
         // Since shared resources are offerable even when they are in use, we
         // make one copy of the shared resources available regardless of the
         // past allocations.
-        Resources available = slave.available().nonShared();
+        Resources available = resourceProvider->available().nonShared();
 
         // Offer a shared resource only if it has not been offered in
         // this offer cycle to a framework.
         if (framework.capabilities.sharedResources) {
-          available += slave.total.shared();
+          available += resourceProvider->total.shared();
           if (offeredSharedResources.contains(slaveId)) {
             available -= offeredSharedResources[slaveId];
           }
@@ -1975,12 +1976,6 @@ void HierarchicalAllocatorProcess::__allocate()
           continue;
         }
 
-        // FIXME(bbannier): Right now just assume a single resource
-        // per agent (the agent itself).
-        CHECK_EQ(1u, slave.resourceProviders.size());
-        const ResourceProviderID& resourceProviderId =
-          slave.resourceProviders.begin()->first;
-
         // If the framework filters these resources, ignore.
         if (isFiltered(frameworkId, role, resourceProviderId, resources)) {
           continue;
@@ -2015,11 +2010,7 @@ void HierarchicalAllocatorProcess::__allocate()
         offeredSharedResources[slaveId] += resources.shared();
         allocatedStage2 += scalarQuantity;
 
-        // TODO(bbannier): Remove this additional lookup once we
-        // iterate over proper allocation packages.
-        CHECK(resourceProviders.contains(resourceProviderId));
-        resourceProviders[resourceProviderId].allocated += resources;
-
+        resourceProvider->allocated += resources;
         slave.allocated += resources;
 
         frameworkSorter->add(resourceProviderId, resources);
