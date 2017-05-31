@@ -329,8 +329,45 @@ protected:
   hashmap<FrameworkID, Framework> frameworks;
 
   struct ResourceProvider {
+    // Regular *and* oversubscribed resources that are allocated.
+    //
+    // NOTE: We maintain multiple copies of each shared resource allocated
+    // to a slave, where the number of copies represents the number of times
+    // this shared resource has been allocated to (and has not been recovered
+    // from) a specific framework.
+    //
+    // NOTE: We keep track of slave's allocated resources despite
+    // having that information in sorters. This is because the
+    // information in sorters is not accurate if some framework
+    // hasn't reregistered. See MESOS-2919 for details.
     Resources allocated;
+
+    // We track the total and allocated resources on the slave, the
+    // available resources are computed as follows:
+    //
+    //   available = total - allocated
+    //
+    // Note that it's possible for the slave to be over-allocated!
+    // In this case, allocated > total.
     Resources total;
+
+    // We track the total and allocated resources on the slave, the
+    // available resources are computed as follows:
+    //
+    //   available = total - allocated
+    //
+    // Note that it's possible for the slave to be over-allocated!
+    // In this case, allocated > total.
+    Resources available() const
+    {
+      // In order to subtract from the total,
+      // we strip the allocation information.
+      Resources allocated_ = allocated;
+      allocated_.unallocate();
+
+      return total - allocated_;
+    }
+
     ResourceProviderInfo info;
     Option<SlaveID> agent = None();
   };
