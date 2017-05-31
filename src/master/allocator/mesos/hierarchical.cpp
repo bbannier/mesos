@@ -547,8 +547,6 @@ void HierarchicalAllocatorProcess::addSlave(
 
   Slave& slave = slaves.at(slaveId);
 
-  slave.total = total;
-  slave.allocated = Resources::sum(used);
   slave.activated = true;
 
   slave.resourceProviders[resourceProviderId] =
@@ -696,7 +694,6 @@ void HierarchicalAllocatorProcess::updateSlave(
       // is extended beyond oversubscription.
       resourceProvider.total =
         resourceProvider.total.nonRevocable() + oversubscribed.get();
-      slave.total = slave.total.nonRevocable() + oversubscribed.get();
 
       // Update the total resources in the `roleSorter` by removing the
       // previous oversubscribed resources and adding the new
@@ -809,13 +806,7 @@ void HierarchicalAllocatorProcess::updateAllocation(
   CHECK(resourceProviders.contains(resourceProviderId));
   ResourceProvider& resourceProvider = resourceProviders.at(resourceProviderId);
 
-  CHECK_SOME(resourceProvider.agent);
-  const SlaveID& slaveId = resourceProvider.agent.get();
-
-  CHECK(slaves.contains(slaveId));
   CHECK(frameworks.contains(frameworkId));
-
-  Slave& slave = slaves.at(slaveId);
 
   // We require that an allocation is tied to a single role.
   //
@@ -914,10 +905,6 @@ void HierarchicalAllocatorProcess::updateAllocation(
   // Update the per-resource provider allocation.
   resourceProvider.allocated -= offeredResources;
   resourceProvider.allocated += updatedOfferedResources;
-
-  // Update the per-slave allocation.
-  slave.allocated -= offeredResources;
-  slave.allocated += updatedOfferedResources;
 
   // Update the allocation in the framework sorter.
   frameworkSorter->update(
@@ -1261,25 +1248,16 @@ void HierarchicalAllocatorProcess::recoverResources(
     ResourceProvider& resourceProvider =
       resourceProviders.at(resourceProviderId);
 
-    const Option<SlaveID>& slaveId = resourceProvider.agent;
+    CHECK(resourceProvider.allocated.contains(resources))
+      << resourceProvider.allocated << " does not contain " << resources;
 
-    if (slaveId.isSome() && slaves.contains(slaveId.get())) {
-      Slave& slave = slaves.at(slaveId.get());
+    resourceProvider.allocated -= resources;
 
-      CHECK(resourceProvider.allocated.contains(resources))
-        << resourceProvider.allocated << " does not contain " << resources;
-      CHECK(slave.allocated.contains(resources))
-        << slave.allocated << " does not contain " << resources;
-
-      resourceProvider.allocated -= resources;
-      slave.allocated -= resources;
-
-      VLOG(1) << "Recovered " << resources
-              << " (total: " << resourceProvider.total
-              << ", allocated: " << resourceProvider.allocated << ")"
-              << " on resource provider " << resourceProviderId
-              << " from framework " << frameworkId;
-    }
+    VLOG(1) << "Recovered " << resources
+            << " (total: " << resourceProvider.total
+            << ", allocated: " << resourceProvider.allocated << ")"
+            << " on resource provider " << resourceProviderId
+            << " from framework " << frameworkId;
   }
 
   // No need to install the filter if 'filters' is none.
@@ -1804,7 +1782,6 @@ void HierarchicalAllocatorProcess::__allocate()
         offeredSharedResources[slaveId] += resources.shared();
 
         resourceProvider->allocated += resources;
-        slave.allocated += resources;
 
         // Resources allocated as part of the quota count towards the
         // role's and the framework's fair share.
@@ -2011,7 +1988,6 @@ void HierarchicalAllocatorProcess::__allocate()
         allocatedStage2 += scalarQuantity;
 
         resourceProvider->allocated += resources;
-        slave.allocated += resources;
 
         frameworkSorter->add(resourceProviderId, resources);
         frameworkSorter->allocated(frameworkId_, resourceProviderId, resources);
@@ -2473,15 +2449,7 @@ void HierarchicalAllocatorProcess::updateResourceProviderTotal(
   CHECK(resourceProviders.contains(resourceProviderId));
   ResourceProvider& resourceProvider = resourceProviders.at(resourceProviderId);
 
-  CHECK_SOME(resourceProvider.agent);
-  const SlaveID& slaveId = resourceProvider.agent.get();
-
-  CHECK(slaves.contains(slaveId));
-
-  Slave& slave = slaves.at(slaveId);
-
-  const Resources oldTotal = slave.total;
-  slave.total = total;
+  const Resources oldTotal = resourceProvider.total;
   resourceProvider.total = total;
 
   // Currently `roleSorter` and `quotaRoleSorter`, being the root-level sorters,
