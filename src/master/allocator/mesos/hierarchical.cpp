@@ -649,8 +649,7 @@ void HierarchicalAllocatorProcess::updateSlave(
   CHECK(initialized);
 
   CHECK(resourceProviders.contains(resourceProviderId));
-  const ResourceProvider& resourceProvider =
-    resourceProviders.at(resourceProviderId);
+  ResourceProvider& resourceProvider = resourceProviders.at(resourceProviderId);
 
   CHECK_SOME(resourceProvider.agent);
   const SlaveID& slaveId = resourceProvider.agent.get();
@@ -693,6 +692,8 @@ void HierarchicalAllocatorProcess::updateSlave(
       //
       // TODO(alexr): Update this math once the source of revocable resources
       // is extended beyond oversubscription.
+      resourceProvider.total =
+        resourceProvider.total.nonRevocable() + oversubscribed.get();
       slave.total = slave.total.nonRevocable() + oversubscribed.get();
 
       // Update the total resources in the `roleSorter` by removing the
@@ -2470,8 +2471,7 @@ void HierarchicalAllocatorProcess::updateResourceProviderTotal(
     const Resources& total)
 {
   CHECK(resourceProviders.contains(resourceProviderId));
-  const ResourceProvider& resourceProvider =
-    resourceProviders.at(resourceProviderId);
+  ResourceProvider& resourceProvider = resourceProviders.at(resourceProviderId);
 
   CHECK_SOME(resourceProvider.agent);
   const SlaveID& slaveId = resourceProvider.agent.get();
@@ -2482,6 +2482,7 @@ void HierarchicalAllocatorProcess::updateResourceProviderTotal(
 
   const Resources oldTotal = slave.total;
   slave.total = total;
+  resourceProvider.total = total;
 
   // Currently `roleSorter` and `quotaRoleSorter`, being the root-level sorters,
   // maintain all of `slaves[resourceProviderId].total` (or the `nonRevocable()`
