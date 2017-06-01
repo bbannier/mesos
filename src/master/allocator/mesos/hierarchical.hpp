@@ -93,13 +93,13 @@ public:
 
   void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
         offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None(),
@@ -281,14 +281,14 @@ protected:
 
   Duration allocationInterval;
 
-  lambda::function<
-      void(const FrameworkID&,
-           const hashmap<std::string, hashmap<SlaveID, Resources>>&)>
+  lambda::function<void(
+      const FrameworkID&,
+      const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>
     offerCallback;
 
-  lambda::function<
-      void(const FrameworkID&,
-           const hashmap<SlaveID, UnavailableResources>&)>
+  lambda::function<void(
+      const FrameworkID&,
+      const hashmap<ResourceProviderID, UnavailableResources>&)>
     inverseOfferCallback;
 
   friend Metrics;

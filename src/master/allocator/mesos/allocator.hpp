@@ -48,13 +48,13 @@ public:
 
   void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None(),
@@ -185,13 +185,13 @@ public:
 
   virtual void initialize(
       const Duration& allocationInterval,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                   offerCallback,
-      const lambda::function<
-          void(const FrameworkID&,
-               const hashmap<SlaveID, UnavailableResources>&)>&
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+        offerCallback,
+      const lambda::function<void(
+          const FrameworkID&,
+          const hashmap<ResourceProviderID, UnavailableResources>&)>&
         inverseOfferCallback,
       const Option<std::set<std::string>>&
         fairnessExcludeResourceNames = None(),
@@ -331,13 +331,13 @@ MesosAllocator<AllocatorProcess>::~MesosAllocator()
 template <typename AllocatorProcess>
 inline void MesosAllocator<AllocatorProcess>::initialize(
     const Duration& allocationInterval,
-    const lambda::function<
-        void(const FrameworkID&,
-             const hashmap<std::string, hashmap<SlaveID, Resources>>&)>&
-                 offerCallback,
-    const lambda::function<
-        void(const FrameworkID&,
-              const hashmap<SlaveID, UnavailableResources>&)>&
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<std::string, hashmap<ResourceProviderID, Resources>>&)>&
+      offerCallback,
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<ResourceProviderID, UnavailableResources>&)>&
       inverseOfferCallback,
     const Option<std::set<std::string>>& fairnessExcludeResourceNames,
     bool filterGpuResources)

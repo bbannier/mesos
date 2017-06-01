@@ -139,13 +139,13 @@ HierarchicalAllocatorProcess::Framework::Framework(
 
 void HierarchicalAllocatorProcess::initialize(
     const Duration& _allocationInterval,
-    const lambda::function<
-        void(const FrameworkID&,
-             const hashmap<string, hashmap<SlaveID, Resources>>&)>&
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<string, hashmap<ResourceProviderID, Resources>>&)>&
       _offerCallback,
-    const lambda::function<
-        void(const FrameworkID&,
-             const hashmap<SlaveID, UnavailableResources>&)>&
+    const lambda::function<void(
+        const FrameworkID&,
+        const hashmap<ResourceProviderID, UnavailableResources>&)>&
       _inverseOfferCallback,
     const Option<set<string>>& _fairnessExcludeResourceNames,
     bool _filterGpuResources)
@@ -1866,8 +1866,40 @@ void HierarchicalAllocatorProcess::__allocate()
     VLOG(1) << "No allocations performed";
   } else {
     // Now offer the resources to each framework.
-    foreachkey (const FrameworkID& frameworkId, offerable) {
-      offerCallback(frameworkId, offerable.at(frameworkId));
+    // TODO(bbannier): Remove this manual transformation once the allocator
+    // works with ResourceProviders internally.
+    hashmap<
+        FrameworkID,
+        hashmap<string, hashmap<ResourceProviderID, Resources>>>
+      offerable_;
+
+    foreachpair (
+        const FrameworkID& frameworkId,
+        auto&& allocations,
+        offerable) {
+      hashmap<string, hashmap<ResourceProviderID, Resources>> allocations_;
+
+      foreachpair (const string& role, auto&& allocation, allocations) {
+        hashmap<ResourceProviderID, Resources> allocation_;
+
+        foreachpair (
+            const SlaveID& agentId,
+            const Resources& resources,
+            allocation) {
+          ResourceProviderID resourceProviderId;
+          resourceProviderId.set_value(agentId.value());
+
+          allocation_[std::move(resourceProviderId)] = resources;
+        }
+
+        allocations_[role] = std::move(allocation_);
+      }
+
+      offerable_[frameworkId] = std::move(allocations_);
+    }
+
+    foreachkey (const FrameworkID& frameworkId, offerable_) {
+      offerCallback(frameworkId, offerable_.at(frameworkId));
     }
   }
 }
@@ -1956,8 +1988,32 @@ void HierarchicalAllocatorProcess::deallocate()
     VLOG(1) << "No inverse offers to send out!";
   } else {
     // Now send inverse offers to each framework.
-    foreachkey (const FrameworkID& frameworkId, offerable) {
-      inverseOfferCallback(frameworkId, offerable[frameworkId]);
+    // TODO(bbannier): Remove this manual transformation once the allocator
+    // works with ResourceProviders internally.
+    hashmap<FrameworkID, hashmap<ResourceProviderID, UnavailableResources>>
+      offerable_;
+
+    foreachpair (
+        const FrameworkID& frameworkId,
+        auto&& allocations,
+        offerable) {
+      hashmap<ResourceProviderID, UnavailableResources> allocations_;
+
+      foreachpair (
+          const SlaveID& agentId,
+          const UnavailableResources& resources,
+          allocations) {
+        ResourceProviderID resourceProviderId;
+        resourceProviderId.set_value(agentId.value());
+
+        allocations_[std::move(resourceProviderId)] =  resources;
+      }
+
+      offerable_[frameworkId] = std::move(allocations_);
+    }
+
+    foreachkey (const FrameworkID& frameworkId, offerable_) {
+      inverseOfferCallback(frameworkId, offerable_.at(frameworkId));
     }
   }
 }

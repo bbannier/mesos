@@ -7144,7 +7144,7 @@ void Master::frameworkFailoverTimeout(const FrameworkID& frameworkId,
 
 void Master::offer(
     const FrameworkID& frameworkId,
-    const hashmap<string, hashmap<SlaveID, Resources>>& resources)
+    const hashmap<string, hashmap<ResourceProviderID, Resources>>& resources)
 {
   if (!frameworks.registered.contains(frameworkId) ||
       !frameworks.registered[frameworkId]->active()) {
@@ -7153,10 +7153,14 @@ void Master::offer(
                  << " has terminated or is inactive";
 
     foreachkey (const string& role, resources) {
-      foreachpair (const SlaveID& slaveId,
+      foreachpair (const ResourceProviderID& resourceProviderId,
                    const Resources& offered,
                    resources.at(role)) {
-        allocator->recoverResources(frameworkId, slaveId, offered, None());
+        allocator->recoverResources(
+            frameworkId,
+            resourceProviderId,
+            offered,
+            None());
       }
     }
     return;
@@ -7169,9 +7173,12 @@ void Master::offer(
   ResourceOffersMessage message;
 
   foreachkey (const string& role, resources) {
-    foreachpair (const SlaveID& slaveId,
+    foreachpair (const ResourceProviderID& resourceProviderId,
                  const Resources& offered,
                  resources.at(role)) {
+      SlaveID slaveId;
+      slaveId.set_value(resourceProviderId.value());
+
       Slave* slave = slaves.registered.get(slaveId);
 
       if (slave == nullptr) {
@@ -7302,7 +7309,7 @@ void Master::offer(
 
 void Master::inverseOffer(
     const FrameworkID& frameworkId,
-    const hashmap<SlaveID, UnavailableResources>& resources)
+    const hashmap<ResourceProviderID, UnavailableResources>& resources)
 {
   if (!frameworks.registered.contains(frameworkId) ||
       !frameworks.registered[frameworkId]->active()) {
@@ -7315,9 +7322,12 @@ void Master::inverseOffer(
   InverseOffersMessage message;
 
   Framework* framework = CHECK_NOTNULL(frameworks.registered[frameworkId]);
-  foreachpair (const SlaveID& slaveId,
+  foreachpair (const ResourceProviderID& resourceProviderId,
                const UnavailableResources& unavailableResources,
                resources) {
+    SlaveID slaveId;
+    slaveId.set_value(resourceProviderId.value());
+
     Slave* slave = slaves.registered.get(slaveId);
 
     if (slave == nullptr) {
