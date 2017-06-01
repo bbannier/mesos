@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <set>
@@ -4820,6 +4821,136 @@ TEST_F(HierarchicalAllocatorTest, DISABLED_NestedQuotaAccounting)
 
     AWAIT_EXPECT_EQ(expected, allocations.get());
   }
+}
+
+
+// This test checks that resources from multiple resource providers on
+// the same agent are always allocated together when possible.
+TEST_F(HierarchicalAllocatorTest, MultipleResourceProvidersPerAgent)
+{
+  Clock::pause();
+
+  initialize();
+
+  const string ROLE = "ROLE";
+
+  // Create two agents where one agent also has a local resource provider. Both
+  // the resource provider and its agent have more resources than the lone agent
+  // so that they would not be allocated together because of fair-share.
+  SlaveInfo agent1 = createSlaveInfo("cpus:1");
+  allocator->addSlave(
+      resourceProviderId(agent1.id()),
+      resourceProviderInfo(agent1),
+      AGENT_CAPABILITIES(),
+      agent1,
+      None(),
+      {});
+
+  SlaveInfo agent2 = createSlaveInfo("cpus:2");
+  allocator->addSlave(
+      resourceProviderId(agent2.id()),
+      resourceProviderInfo(agent2),
+      AGENT_CAPABILITIES(),
+      agent2,
+      None(),
+      {});
+
+  Resources resourceProviderResources = Resources::parse("cpus:2").get();
+
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->set_value("RESOURCE_PROVIDER");
+  resourceProviderInfo.mutable_resources()->CopyFrom(resourceProviderResources);
+  allocator->addSlave(
+      resourceProviderInfo.id(), resourceProviderInfo, {}, agent2, None(), {});
+
+  // Register two frameworks. Since we want to avoid races between
+  // adding a framework to the allocator and allocations we decline
+  // the first two offers and only when both frameworks are registered
+  // start to examine offers.
+  FrameworkInfo framework1 = createFrameworkInfo({ROLE});
+  allocator->addFramework(framework1.id(), framework1, {}, true);
+
+  // Helper function to install an offer filter for allocations.
+  auto filter = [this](
+      const Allocation& allocations,
+      const Duration& duration) {
+    Filters filters;
+    filters.set_refuse_seconds(duration.secs());
+
+    foreachvalue (auto&& allocation, allocations.resources) {
+      foreachpair (
+          const ResourceProviderID& resourceProviderId,
+          const Resources& resources,
+          allocation) {
+        this->allocator->recoverResources(
+            allocations.frameworkId,
+            resourceProviderId,
+            resources,
+            filters);
+      }
+    }
+  };
+
+  {
+    // Decline this offer.
+    Future<Allocation> allocation = allocations.get();
+    AWAIT_READY(allocation);
+    filter(allocation.get(), flags.allocation_interval);
+  }
+
+  FrameworkInfo framework2 = createFrameworkInfo({ROLE});
+  allocator->addFramework(framework2.id(), framework2, {}, true);
+
+  {
+    // Decline this offer.
+    Future<Allocation> allocation = allocations.get();
+    AWAIT_READY(allocation);
+    filter(allocation.get(), flags.allocation_interval);
+  }
+
+  // Advance clock to trigger expiry of offer filters.
+  Clock::advance(flags.allocation_interval);
+  Clock::settle();
+
+  // Advance clock again to trigger an allocation.
+  Clock::advance(flags.allocation_interval);
+  Clock::settle();
+
+  // Since allocations could be in any order we compare against a pool of
+  // expected allocations. We expect to see all expected allocations.
+  std::list<hashmap<ResourceProviderID, Resources>> expected = {
+    {{resourceProviderId(agent1.id()),
+      allocatedResources(agent1.resources(), ROLE)}},
+    {{resourceProviderId(agent2.id()),
+      allocatedResources(agent2.resources(), ROLE)},
+     {resourceProviderInfo.id(),
+      allocatedResources(resourceProviderInfo.resources(), ROLE)}}};
+
+  auto contains = [](
+      const std::list<hashmap<ResourceProviderID, Resources>>& expected,
+      const hashmap<ResourceProviderID, Resources>& given) {
+    return std::find(expected.begin(), expected.end(), given) != expected.end();
+  };
+
+  {
+    Future<Allocation> allocation = allocations.get();
+    AWAIT_READY(allocation);
+    ASSERT_EQ(1u, allocation->resources.size());
+    EXPECT_TRUE(contains(expected, allocation->resources.begin()->second))
+      << "Unexpected allocation " << stringify(allocation.get());
+    expected.remove(allocation->resources.begin()->second);
+  }
+
+  {
+    Future<Allocation> allocation = allocations.get();
+    AWAIT_READY(allocation);
+    ASSERT_EQ(1u, allocation->resources.size());
+    EXPECT_TRUE(contains(expected, allocation->resources.begin()->second))
+      << "Unexpected allocation " << stringify(allocation.get());
+    expected.remove(allocation->resources.begin()->second);
+  }
+
+  EXPECT_TRUE(expected.empty()) << "Not all expected offers seen";
 }
 
 
