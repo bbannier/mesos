@@ -472,8 +472,8 @@ void HierarchicalAllocatorProcess::addSlave(
     const Option<Unavailability>& unavailability,
     const hashmap<FrameworkID, Resources>& used)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
+  CHECK_SOME(agentInfo);
+  const SlaveID& slaveId = agentInfo->id();
 
   CHECK(initialized);
   CHECK(!slaves.contains(slaveId));
@@ -590,10 +590,17 @@ void HierarchicalAllocatorProcess::addSlave(
 void HierarchicalAllocatorProcess::removeSlave(
     const ResourceProviderID& resourceProviderId)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  // Make a copy of the agent's `SlaveID` so we can access its value for logging
+  // after erasing the data.
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID slaveId = resourceProvider.agent.get();
+
   CHECK(resourceProviders.contains(resourceProviderId));
   CHECK(slaves.contains(slaveId));
 
@@ -632,10 +639,15 @@ void HierarchicalAllocatorProcess::updateSlave(
     const Option<Resources>& oversubscribed,
     const Option<vector<SlaveInfo::Capability>>& capabilities)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(slaves.contains(slaveId));
 
   Slave& slave = slaves.at(slaveId);
@@ -704,10 +716,15 @@ void HierarchicalAllocatorProcess::updateSlave(
 void HierarchicalAllocatorProcess::activateSlave(
     const ResourceProviderID& resourceProviderId)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(slaves.contains(slaveId));
 
   slaves.at(slaveId).activated = true;
@@ -719,10 +736,15 @@ void HierarchicalAllocatorProcess::activateSlave(
 void HierarchicalAllocatorProcess::deactivateSlave(
     const ResourceProviderID& resourceProviderId)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(slaves.contains(slaveId));
 
   slaves.at(slaveId).activated = false;
@@ -766,10 +788,15 @@ void HierarchicalAllocatorProcess::updateAllocation(
     const Resources& offeredResources,
     const vector<Offer::Operation>& operations)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(slaves.contains(slaveId));
   CHECK(frameworks.contains(frameworkId));
 
@@ -938,15 +965,20 @@ Future<Nothing> HierarchicalAllocatorProcess::updateAvailable(
     const ResourceProviderID& resourceProviderId,
     const vector<Offer::Operation>& operations)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
+  CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
 
   // Note that the operations may contain allocated resources,
   // however such operations can be applied to unallocated
   // resources unambiguously, so we don't have a strict CHECK
   // for the operations to contain only unallocated resources.
 
-  CHECK(initialized);
   CHECK(slaves.contains(slaveId));
 
   Slave& slave = slaves.at(slaveId);
@@ -983,10 +1015,15 @@ void HierarchicalAllocatorProcess::updateUnavailability(
     const ResourceProviderID& resourceProviderId,
     const Option<Unavailability>& unavailability)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(slaves.contains(slaveId));
 
   Slave& slave = slaves.at(slaveId);
@@ -1022,10 +1059,15 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
     const Option<InverseOfferStatus>& status,
     const Option<Filters>& filters)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
+
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
+
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
 
@@ -1143,9 +1185,6 @@ void HierarchicalAllocatorProcess::recoverResources(
     const Resources& resources,
     const Option<Filters>& filters)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
-
   CHECK(initialized);
 
   if (resources.empty()) {
@@ -2158,8 +2197,12 @@ bool HierarchicalAllocatorProcess::isFiltered(
     const ResourceProviderID& resourceProviderId,
     const Resources& resources) const
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
 
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
@@ -2210,8 +2253,12 @@ bool HierarchicalAllocatorProcess::isFiltered(
     const FrameworkID& frameworkId,
     const ResourceProviderID& resourceProviderId) const
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
 
   CHECK(frameworks.contains(frameworkId));
   CHECK(slaves.contains(slaveId));
@@ -2384,8 +2431,12 @@ void HierarchicalAllocatorProcess::updateResourceProviderTotal(
     const ResourceProviderID& resourceProviderId,
     const Resources& total)
 {
-  SlaveID slaveId;
-  slaveId.set_value(resourceProviderId.value());
+  CHECK(resourceProviders.contains(resourceProviderId));
+  const ResourceProvider& resourceProvider =
+    resourceProviders.at(resourceProviderId);
+
+  CHECK_SOME(resourceProvider.agent);
+  const SlaveID& slaveId = resourceProvider.agent.get();
 
   CHECK(slaves.contains(slaveId));
 
