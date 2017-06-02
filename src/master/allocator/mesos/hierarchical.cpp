@@ -1248,19 +1248,26 @@ void HierarchicalAllocatorProcess::recoverResources(
   // Update resources allocated on slave (if slave still exists,
   // which it might not in the event that we dispatched Master::offer
   // before we received Allocator::removeSlave).
-  if (slaves.contains(slaveId)) {
-    Slave& slave = slaves.at(slaveId);
 
-    CHECK(slave.allocated.contains(resources))
-      << slave.allocated << " does not contain " << resources;
+  if (resourceProviders.contains(resourceProviderId)) {
+    const ResourceProvider& resourceProvider =
+      resourceProviders.at(resourceProviderId);
 
-    slave.allocated -= resources;
+    const Option<SlaveID>& slaveId = resourceProvider.agent;
 
-    VLOG(1) << "Recovered " << resources
-            << " (total: " << slave.total
-            << ", allocated: " << slave.allocated << ")"
-            << " on agent " << slaveId
-            << " from framework " << frameworkId;
+    if (slaveId.isSome() && slaves.contains(slaveId.get())) {
+      Slave& slave = slaves.at(slaveId.get());
+
+      CHECK(slave.allocated.contains(resources))
+        << slave.allocated << " does not contain " << resources;
+
+      slave.allocated -= resources;
+
+      VLOG(1) << "Recovered " << resources << " (total: " << slave.total
+              << ", allocated: " << slave.allocated << ")"
+              << " on agent " << slaveId.get()
+              << " from framework " << frameworkId;
+    }
   }
 
   // No need to install the filter if 'filters' is none.
@@ -1269,7 +1276,8 @@ void HierarchicalAllocatorProcess::recoverResources(
   }
 
   // No need to install the filter if slave/framework does not exist.
-  if (!frameworks.contains(frameworkId) || !slaves.contains(slaveId)) {
+  if (!frameworks.contains(frameworkId) ||
+      !resourceProviders.contains(resourceProviderId)) {
     return;
   }
 
