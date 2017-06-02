@@ -274,8 +274,15 @@ void HierarchicalAllocatorProcess::addFramework(
       const ResourceProviderID& resourceProviderId,
       const Resources& resources,
       used) {
-    SlaveID slaveId;
-    slaveId.set_value(resourceProviderId.value());
+    if (!resourceProviders.contains(resourceProviderId)) {
+      continue;
+    }
+
+    const ResourceProvider& resourceProvider =
+      resourceProviders.at(resourceProviderId);
+
+    CHECK_SOME(resourceProvider.agent);
+    const SlaveID& slaveId = resourceProvider.agent.get();
 
     if (!slaves.contains(slaveId)) {
       continue;
