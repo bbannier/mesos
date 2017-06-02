@@ -1293,7 +1293,7 @@ void HierarchicalAllocatorProcess::recoverResources(
 
   if (timeout.get() != Duration::zero()) {
     VLOG(1) << "Framework " << frameworkId
-            << " filtered agent " << slaveId
+            << " filtered resource provider " << resourceProviderId
             << " for " << timeout.get();
 
     // Create a new filter. Note that we unallocate the resources
