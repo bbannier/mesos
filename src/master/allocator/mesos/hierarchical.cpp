@@ -1173,12 +1173,13 @@ HierarchicalAllocatorProcess::getInverseOfferStatuses()
   hashmap<ResourceProviderID, hashmap<FrameworkID, InverseOfferStatus>> result;
 
   // Make a copy of the most recent statuses.
-  foreachpair (const SlaveID& id, const Slave& slave, slaves) {
+  foreachvalue (const Slave& slave, slaves) {
     if (slave.maintenance.isSome()) {
-      ResourceProviderID resourceProviderId;
-      resourceProviderId.set_value(id.value());
-
-      result[resourceProviderId] = slave.maintenance.get().statuses;
+      foreach (
+          const ResourceProviderID& resourceProviderId,
+          slave.resourceProviders) {
+        result[resourceProviderId] = slave.maintenance.get().statuses;
+      }
     }
   }
 
