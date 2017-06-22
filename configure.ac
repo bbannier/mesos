@@ -669,12 +669,12 @@ else
   GFLAGS_LIBS=""
 fi
 
-AC_CHECK_LIB([z], [gzread], [],
-             [AC_MSG_ERROR([cannot find libz
--------------------------------------------------------------------
-libz is required for mesos to build.
--------------------------------------------------------------------
-])])
+# AC_CHECK_LIB([z], [gzread], [],
+#              [AC_MSG_ERROR([cannot find libz
+# -------------------------------------------------------------------
+# libz is required for mesos to build.
+# -------------------------------------------------------------------
+# ])])
 
 AC_CHECK_TOOL([PATCHCOMMAND_TEST], [patch], [], [$PATH])
 if test -z "`echo $PATCHCOMMAND_TEST`"; then
