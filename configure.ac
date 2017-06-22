@@ -258,13 +258,11 @@ AC_ARG_ENABLE([xfs-disk-isolator],
 AC_ARG_ENABLE([zlib],
             AS_HELP_STRING([--disable-zlib],
                            [disables zlib compression, which means the webui
-                           will be far less responsive; not recommended]),
-            [], [enable_zlib=yes])
+                           will be far less responsive; not recommended]))
 
 AC_ARG_ENABLE([parallel_test_execution],
               AS_HELP_STRING([--enable-parallel-test-execution],
-                             [execute tests in parallel where possible]),
-            [], [enable_parallel_test_execution=no])
+                             [execute tests in parallel where possible]))
 
 AC_ARG_ENABLE([werror],
               AS_HELP_STRING([--disable-werror],
@@ -1848,7 +1846,7 @@ if test -n "`echo $with_zlib`" ; then
 fi
 
 # Check if we should/can build with libz.
-if test "x$enable_zlib" = "xyes"; then
+if test "x$enable_zlib" != "xno"; then
   AC_CHECK_LIB([z], [deflate, gzread, gzwrite, inflate], [],
                [AC_MSG_ERROR([cannot find libz
 -------------------------------------------------------------------
