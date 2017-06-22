@@ -151,78 +151,65 @@ AC_CONFIG_FILES([mpi/mpiexec-mesos], [chmod +x mpi/mpiexec-mesos])
 AC_ARG_ENABLE([hardening],
               AS_HELP_STRING([--disable-hardening],
                              [disables security measures such as stack
-                             protection and position independent library code]),
-                             [], [enable_hardening=yes])
+                             protection and position independent library code]))
 
 AC_ARG_ENABLE([bundled],
               AS_HELP_STRING([--disable-bundled],
                              [build against preinstalled dependencies instead
-                              of bundled libraries]),
-              [], [enable_bundled=yes])
+                              of bundled libraries]))
 
 AC_ARG_ENABLE([bundled-pip],
               AS_HELP_STRING([--disable-bundled-pip],
                              [excludes building and using the bundled pip
                               package in lieu of an installed version in
-                              PYTHONPATH]),
-              [], [enable_bundled_pip=yes])
+                              PYTHONPATH]))
 
 AC_ARG_ENABLE([bundled-setuptools],
               AS_HELP_STRING([--disable-bundled-setuptools],
                              [excludes building and using the bundled setuptools
                               package in lieu of an installed version in
-                              PYTHONPATH]),
-              [], [enable_bundled_setuptools=yes])
+                              PYTHONPATH]))
 
 AC_ARG_ENABLE([bundled-wheel],
               AS_HELP_STRING([--disable-bundled-wheel],
                              [excludes building and using the bundled wheel
                               package in lieu of an installed version in
-                              PYTHONPATH]),
-              [], [enable_bundled_wheel=yes])
+                              PYTHONPATH]))
 
 AC_ARG_ENABLE([debug],
               AS_HELP_STRING([--enable-debug],
                              [enable debugging. If CFLAGS/CXXFLAGS are set, this
-                              option won't change them]),
-              [], [enable_debug=no])
+                              option won't change them]))
 
 AC_ARG_ENABLE([port-mapping-isolator],
               AS_HELP_STRING([--enable-port-mapping-isolator],
-                             [enable port mapping network isolator]),
-              [], [enable_port_mapping_isolator=no])
+                             [enable port mapping network isolator]))
 
 AC_ARG_ENABLE([java],
               AS_HELP_STRING([--disable-java],
-                             [don't build Java bindings]),
-              [], [enable_java=yes])
+                             [don't build Java bindings]))
 
 AC_ARG_ENABLE([libevent],
               AS_HELP_STRING([--enable-libevent],
-                             [use libevent instead of libev]),
-              [], [enable_libevent=no])
+                             [use libevent instead of libev]))
 
 AC_ARG_ENABLE([install-module-dependencies],
               AS_HELP_STRING([--enable-install-module-dependencies],
                              [Install third-party bundled dependencies required
-                              for module development]),
-              [], [enable_install_module_dependencies=no])
+                              for module development]))
 
 AC_ARG_ENABLE([optimize],
               AS_HELP_STRING([--enable-optimize],
                              [enable optimizations. If CFLAGS/CXXFLAGS are set,
-                              this option won't change them]),
-              [], [enable_optimize=no])
+                              this option won't change them]))
 
 AC_ARG_ENABLE([perftools],
               AS_HELP_STRING([--enable-perftools],
-                             [enable Google perftools]),
-              [], [enable_perftools=no])
+                             [enable Google perftools]))
 
 AC_ARG_ENABLE([python],
               AS_HELP_STRING([--disable-python],
-                             [don't build Python bindings]),
-              [], [enable_python=yes])
+                             [don't build Python bindings]))
 
 # This is used to make distcheck and python install work together. For more
 # information, see the comment above AM_DISTCHECK_CONFIGURE_FLAGS in
@@ -231,29 +218,24 @@ AC_ARG_ENABLE([python-dependency-install],
               AS_HELP_STRING([--disable-python-dependency-install],
                              [when the python packages are installed during
                               make install, no external dependencies are
-                              downloaded or installed]),
-              [], [enable_python_dependency_install=yes])
+                              downloaded or installed]))
 
 AC_ARG_ENABLE([ssl],
               AS_HELP_STRING([--enable-ssl],
-                             [use ssl for libprocess communication]),
-              [], [enable_ssl=no])
+                             [use ssl for libprocess communication]))
 
 AC_ARG_ENABLE([static-unimplemented],
               AS_HELP_STRING([--enable-static-unimplemented],
                              [generate static assertion errors for unimplemented
-                             functions]),
-              [], [enable_static_unimplemented=no])
+                             functions]))
 
 AC_ARG_ENABLE([tests-install],
               AS_HELP_STRING([--enable-tests-install],
-                             [build and install tests and their helper tools]),
-              [], [enable_tests_install=no])
+                             [build and install tests and their helper tools]))
 
 AC_ARG_ENABLE([xfs-disk-isolator],
               AS_HELP_STRING([--enable-xfs-disk-isolator],
-                             [builds the XFS disk isolator]),
-              [], [enable_xfs_disk_isolator=no])
+                             [builds the XFS disk isolator]))
 
 AC_ARG_ENABLE([zlib],
             AS_HELP_STRING([--disable-zlib],
@@ -442,7 +424,7 @@ AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
 ###############################################################################
 
 # Check to see if we should harden or not.
-AM_CONDITIONAL([ENABLE_HARDENING], [test x"$enable_hardening" = "xyes"])
+AM_CONDITIONAL([ENABLE_HARDENING], [test x"$enable_hardening" != "xno"])
 
 AS_CASE($ax_cv_cxx_compiler_vendor,
   [clang], [
@@ -620,7 +602,7 @@ AM_CONDITIONAL([OS_LINUX], [test "x$OS_NAME" = "xlinux"])
 AM_CONDITIONAL([OS_FREEBSD], [test "x$OS_NAME" = "xfreebsd"])
 
 AM_CONDITIONAL([GIT_REPO], [test -d ${srcdir}"/.git"])
-AM_CONDITIONAL([HAS_GPERFTOOLS], [test "x$enable_perftools" = "xyes"])
+AM_CONDITIONAL([HAS_GPERFTOOLS], [test "x$enable_perftools" != "xno"])
 
 AM_CONDITIONAL([INSTALL_MODULE_DEPENDENCIES],
                [test x"$enable_install_module_dependencies" = "xyes"])
@@ -628,7 +610,7 @@ AS_IF([test "x$enable_install_module_dependencies" = "xyes"],
       [AC_SUBST(MODULE_CFLAGS, "-I${libdir}/mesos/3rdparty/include")
        AC_SUBST(MODULE_LDFLAGS, "-L${libdir}/mesos/3rdparty/lib64 -L${libdir}/mesos/3rdparty/lib")])
 
-AM_CONDITIONAL([INSTALL_TESTS], [test x"$enable_tests_install" = "xyes"])
+AM_CONDITIONAL([INSTALL_TESTS], [test x"$enable_tests_install" != "xno"])
 AS_IF([test x"$enable_tests_install" = "xyes"],
       [AC_DEFINE([MESOS_INSTALL_TESTS], [1])])
 
@@ -758,7 +740,7 @@ fi
 # asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_boost" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([boost/version.hpp], [found_boost=yes])
 
@@ -804,7 +786,7 @@ libcurl is required for mesos to build.
 # it has, make sure that the path is absolute. If everything is in
 # order, add this path to the CPPFLAGS.
 if test "x$without_bundled_elfio" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   if test -n "`echo $with_elfio`"; then
     if test "$with_elfio" = "${with_elfio#/}"; then
       AC_MSG_ERROR([The path passed to --with-elfio must be absolute.])
@@ -839,7 +821,7 @@ fi
 # asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_glog" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([glog/logging.h],
                    [AC_LINK_IFELSE(
@@ -877,7 +859,7 @@ if test -n "`echo $with_gmock`"; then
     -isystem ${with_gmock}/src -isystem ${with_gmock}/gtest \
     -isystem ${with_gmock}/gtest/include -isystem ${with_gmock}/gtest/src"
 
-elif test "x$enable_bundled" != "xyes"; then
+elif test "x$enable_bundled" = "xno"; then
   CPPFLAGS="$CPPFLAGS -isystem /usr/src/gmock"
   # On system installations the deps are handled separately.
   # So insert a placeholder for substitution.
@@ -889,7 +871,7 @@ fi
 # asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_gmock" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADER($GMOCKSRC,
                   [found_gmock=yes],
@@ -935,7 +917,7 @@ fi
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_http_parser" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([http_parser.h],
                    [AC_CHECK_LIB([http_parser],
@@ -1180,7 +1162,7 @@ fi
 # asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_leveldb" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([leveldb/db.h],
                    [AC_CHECK_LIB([leveldb],
@@ -1264,7 +1246,7 @@ AM_CONDITIONAL([ENABLE_LIBEVENT], [test x"$enable_libevent" = "xyes"])
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_libprocess" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([process/process.hpp], [found_libprocess=yes])
 
@@ -1376,7 +1358,7 @@ AM_CONDITIONAL([ENABLE_PORT_MAPPING_ISOLATOR],
 # been specified.  If it has, make sure that the path is absolute. If
 # everything is in order, add this path to the CPPFLAGS.
 if test "x$without_bundled_nvml" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   if test -n "`echo $with_nvml`"; then
     if test "$with_nvml" = "${with_nvml#/}"; then
       AC_MSG_ERROR([The path passed to --with-nvml must be absolute.])
@@ -1412,11 +1394,11 @@ fi
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_protobuf" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Use the system default prefix if not specified.
   if test -n "`echo $with_protobuf`"; then
     PROTOBUFPREFIX="${with_protobuf}"
-  elif test "x$enable_bundled" != "xyes"; then
+  elif test "x$enable_bundled" = "xno"; then
     PROTOBUFPREFIX="/usr"
   fi
 
@@ -1494,7 +1476,7 @@ fi
 # asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_libev" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([ev.h], [found_libev=yes])
 
@@ -1539,7 +1521,7 @@ fi
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_picojson" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([picojson.h], [found_picojson=yes])
 
@@ -1723,7 +1705,7 @@ AM_CONDITIONAL([ENABLE_SSL], [test x"$enable_ssl" = "xyes"])
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_stout" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([stout/try.hpp], [found_stout=yes])
 
@@ -1866,7 +1848,7 @@ fi
 if test -n "`echo $with_zookeeper`"; then
   CPPFLAGS="$CPPFLAGS -isystem ${with_zookeeper}/include/zookeeper"
   LDFLAGS="$LDFLAGS -L${with_zookeeper}/lib"
-elif test "x$enable_bundled" != "xyes"; then
+elif test "x$enable_bundled" = "xno"; then
   CPPFLAGS="$CPPFLAGS -isystem /usr/include/zookeeper"
 fi
 
@@ -1875,7 +1857,7 @@ fi
 # they asked us to ignore all bundled libraries while compiling and
 # linking.
 if test "x$without_bundled_zookeeper" = "xyes" || \
-   test "x$enable_bundled" != "xyes"; then
+   test "x$enable_bundled" = "xno"; then
   # Check if headers and library were located.
   AC_CHECK_HEADERS([zookeeper.h],
                    [AC_CHECK_LIB([zookeeper_mt],
@@ -2160,8 +2142,8 @@ There are two possible workarounds for this issue:
 
   # Check if user has asked us to use a preinstalled setuptools, or if
   # they asked us to ignore all bundled libraries while compiling and linking.
-  if test "x$enable_bundled_setuptools" != "xyes" || \
-     test "x$enable_bundled" != "xyes"; then
+  if test "x$enable_bundled_setuptools" = "xno" || \
+     test "x$enable_bundled" = "xno"; then
 
     AC_PYTHON_MODULE([distutils], [no])
     if test "x$HAVE_PYMOD_distutils" = "xno"; then
@@ -2195,8 +2177,8 @@ correct if you're already doing this.
 
   # Check if user has asked us to use a preinstalled pip, or if
   # they asked us to ignore all bundled libraries while compiling and linking.
-  if test "x$enable_bundled_pip" != "xyes" || \
-     test "x$enable_bundled" != "xyes"; then
+  if test "x$enable_bundled_pip" = "xno" || \
+     test "x$enable_bundled" = "xno"; then
 
     AC_PYTHON_MODULE([pip], [no])
     if test "x$HAVE_PYMOD_pip" = "xno"; then
@@ -2219,8 +2201,8 @@ correct if you're already doing this.
 
   # Check if user has asked us to use a preinstalled wheel, or if
   # they asked us to ignore all bundled libraries while compiling and linking.
-  if test "x$enable_bundled_wheel" != "xyes" || \
-     test "x$enable_bundled" != "xyes"; then
+  if test "x$enable_bundled_wheel" = "xno" || \
+     test "x$enable_bundled" = "xno"; then
 
     AC_PYTHON_MODULE([wheel], [no])
     if test "x$HAVE_PYMOD_wheel" = "xno"; then
