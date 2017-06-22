@@ -268,7 +268,7 @@ AC_ARG_ENABLE([parallel_test_execution],
 
 AC_ARG_ENABLE([werror],
               AS_HELP_STRING([--disable-werror],
-                             [turns off fatal compiler errors]))
+                             [do not treat compiler warnings as fatal errors]))
 
 
 ###############################################################################
