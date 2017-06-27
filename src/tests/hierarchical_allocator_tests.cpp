@@ -1905,6 +1905,46 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveOversubscribedResources)
 }
 
 
+// FIXME(bbannier)
+TEST_F(HierarchicalAllocatorTest, UpdateSlaveTotalResources)
+{
+  // Pause clock to disable batch allocation.
+  Clock::pause();
+
+  initialize();
+
+  SlaveInfo slave = createSlaveInfo("cpus:100;mem:100;disk:100");
+  allocator->addSlave(
+      slave.id(),
+      slave,
+      AGENT_CAPABILITIES(),
+      None(),
+      slave.resources(),
+      {});
+
+  FrameworkInfo framework = createFrameworkInfo({"role1"});
+  allocator->addFramework(framework.id(), framework, {}, true, {});
+
+  Allocation expected = Allocation(
+      framework.id(),
+      {{"role1", {{slave.id(), slave.resources()}}}});
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
+
+  Resources addedResources = Resources::parse("cpus:12").get();
+  allocator->updateSlave(
+      slave.id(), None(), slave.resources() + addedResources);
+
+  expected = Allocation(
+      framework.id(),
+      {{"role1", {{slave.id(), addedResources}}}});
+
+  Clock::settle();
+
+  AWAIT_EXPECT_EQ(expected, allocations.get());
+}
+
+
 // This test ensures that when agent capabilities are updated
 // subsequent allocations properly account for that.
 TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)

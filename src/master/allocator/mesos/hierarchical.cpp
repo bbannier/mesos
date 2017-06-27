@@ -687,6 +687,18 @@ void HierarchicalAllocatorProcess::updateSlave(
     }
   }
 
+  if (total.isSome()) {
+    CHECK(total->contains(slave.total))
+      << ": shrinking an agent's total resources is not supported";
+
+    updateSlaveTotal(slaveId, total.get());
+
+    updated = true;
+
+    LOG(INFO) << "Agent " << slaveId << " (" << slave.hostname << ")"
+              << " updated with total resources " << total.get();
+  }
+
   if (updated) {
     allocate(slaveId);
   }
