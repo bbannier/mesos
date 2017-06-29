@@ -687,9 +687,14 @@ void HierarchicalAllocatorProcess::updateSlave(
     }
   }
 
+  // FIXME(bbannier): we should do smarter stripping here (e.g., only
+  // allocation infos).
   if (total.isSome()) {
-    CHECK(total->contains(slave.total))
-      << ": shrinking an agent's total resources is not supported";
+    CHECK(total->contains(slave.allocated.createStrippedScalarQuantity()))
+      << "agent has more than its total resources allocated"
+      << ", total: " << stringify(total.get())
+      << ", allocated: "
+      << stringify(slave.allocated.createStrippedScalarQuantity());
 
     updateSlaveTotal(slaveId, total.get());
 

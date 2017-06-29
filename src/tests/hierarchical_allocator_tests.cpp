@@ -1933,7 +1933,9 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveTotalResources)
 
   Resources addedResources = Resources::parse("cpus:12").get();
   allocator->updateSlave(
-      slave.id(), None(), slave.resources() + addedResources);
+      slave.id(),
+      None(),
+      slave.resources() + addedResources);
 
   expected = Allocation(
       framework.id(),
@@ -1941,7 +1943,20 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveTotalResources)
 
   Clock::settle();
 
-  AWAIT_EXPECT_EQ(expected, allocations.get());
+  Future<Allocation> allocation = allocations.get();
+  AWAIT_EXPECT_EQ(expected, allocation);
+
+  allocator->recoverResources(
+      framework.id(),
+      slave.id(),
+      allocation->resources.at("role1").at(slave.id()),
+      None());
+
+  Clock::settle();
+
+  allocator->updateSlave(slave.id(), None(), slave.resources());
+
+  Clock::settle();
 }
 
 
