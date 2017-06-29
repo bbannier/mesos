@@ -897,8 +897,7 @@ void Master::initialize()
   install<UpdateSlaveMessage>(
       &Master::updateSlave,
       &UpdateSlaveMessage::slave_id,
-      &UpdateSlaveMessage::oversubscribed_resources,
-      &UpdateSlaveMessage::total);
+      &UpdateSlaveMessage::oversubscribed_resources);
 
   install<AuthenticateMessage>(
       &Master::authenticate,
@@ -6478,8 +6477,7 @@ void Master::updateFramework(
 
 void Master::updateSlave(
     const SlaveID& slaveId,
-    const Resources& oversubscribedResources,
-    const Resources& total)
+    const Resources& oversubscribedResources)
 {
   ++metrics->messages_update_slave;
 
@@ -6516,7 +6514,7 @@ void Master::updateSlave(
     slave->totalResources.nonRevocable() + oversubscribedResources.revocable();
 
   // First update the agent's resources in the allocator.
-  allocator->updateSlave(slaveId, oversubscribedResources, total);
+  allocator->updateSlave(slaveId, oversubscribedResources);
 
   // Then rescind any outstanding offers with revocable resources.
   // NOTE: Need a copy of offers because the offers are removed inside the loop.

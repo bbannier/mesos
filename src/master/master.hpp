@@ -426,8 +426,7 @@ public:
 
   void updateSlave(
       const SlaveID& slaveId,
-      const Resources& oversubscribedResources,
-      const Resources& total);
+      const Resources& oversubscribedResources);
 
   void updateUnavailability(
       const MachineID& machineId,
