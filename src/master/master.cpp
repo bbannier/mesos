@@ -66,6 +66,7 @@
 #include <stout/option.hpp>
 #include <stout/path.hpp>
 #include <stout/stringify.hpp>
+#include <stout/unimplemented.hpp>
 #include <stout/unreachable.hpp>
 #include <stout/utils.hpp>
 #include <stout/uuid.hpp>
@@ -6536,6 +6537,23 @@ void Master::updateSlave(
   // oversubscription.
 }
 
+
+void Master::updateResourceProviderTotal(
+    const UpdateResourceProviderTotalMessage& message)
+{
+  const Resources total = message.total();
+
+  if (message.has_slave_id() && message.has_resource_provider_id()) {
+    // FIXME(bbannier): log a warning.
+    return;
+  }
+
+  if (message.has_slave_id()) {
+    allocator->updateSlave(message.slave_id(), None(), total);
+  } else if (message.has_resource_provider_id()) {
+    UNIMPLEMENTED;
+  }
+}
 
 void Master::updateUnavailability(
     const MachineID& machineId,

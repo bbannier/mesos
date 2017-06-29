@@ -428,6 +428,9 @@ public:
       const SlaveID& slaveId,
       const Resources& oversubscribedResources);
 
+  void updateResourceProviderTotal(
+      const UpdateResourceProviderTotalMessage& message);
+
   void updateUnavailability(
       const MachineID& machineId,
       const Option<Unavailability>& unavailability);
