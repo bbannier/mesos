@@ -6543,8 +6543,11 @@ void Master::updateResourceProviderTotal(
 {
   const Resources total = message.total();
 
-  if (message.has_slave_id() && message.has_resource_provider_id()) {
-    // FIXME(bbannier): log a warning.
+  if (message.has_slave_id() == message.has_resource_provider_id()) {
+    LOG(WARNING)
+      << "Ignoring update of totals of resource provider"
+      << ", exactly one of agent_id and resource_provider_id can be set: "
+      << "'" << stringify(JSON::protobuf(message)) << "'";
     return;
   }
 
