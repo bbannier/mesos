@@ -6514,7 +6514,7 @@ void Master::updateSlave(
     slave->totalResources.nonRevocable() + oversubscribedResources.revocable();
 
   // First update the agent's resources in the allocator.
-  allocator->updateSlave(slaveId, oversubscribedResources);
+  allocator->updateSlave(slaveId, slave->totalResources);
 
   // Then rescind any outstanding offers with revocable resources.
   // NOTE: Need a copy of offers because the offers are removed inside the loop.
