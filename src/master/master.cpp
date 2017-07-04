@@ -66,6 +66,7 @@
 #include <stout/option.hpp>
 #include <stout/path.hpp>
 #include <stout/stringify.hpp>
+#include <stout/unimplemented.hpp>
 #include <stout/unreachable.hpp>
 #include <stout/utils.hpp>
 #include <stout/uuid.hpp>
@@ -902,6 +903,9 @@ void Master::initialize()
   install<AuthenticateMessage>(
       &Master::authenticate,
       &AuthenticateMessage::pid);
+
+  install<UpdateResourceProviderTotalMessage>(
+      &Master::updateResourceProviderTotal);
 
   // Setup HTTP routes.
   route("/api/v1",
@@ -6536,6 +6540,26 @@ void Master::updateSlave(
   // oversubscription.
 }
 
+
+void Master::updateResourceProviderTotal(
+    const UpdateResourceProviderTotalMessage& message)
+{
+  const Resources total = message.total();
+
+  if (message.has_slave_id() == message.has_resource_provider_id()) {
+    LOG(WARNING)
+      << "Ignoring update of totals of resource provider"
+      << ", exactly one of agent_id and resource_provider_id can be set: "
+      << "'" << stringify(JSON::protobuf(message)) << "'";
+    return;
+  }
+
+  if (message.has_slave_id()) {
+    allocator->updateSlave(message.slave_id(), None(), total);
+  } else if (message.has_resource_provider_id()) {
+    UNIMPLEMENTED;
+  }
+}
 
 void Master::updateUnavailability(
     const MachineID& machineId,
