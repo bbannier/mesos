@@ -614,6 +614,18 @@ message UpdateSlaveMessage {
 
 
 /**
+ * This message is sent by an agent or resource provider to inform the
+ * master about the total amount of resources.
+ */
+message UpdateResourceProviderTotalMessage {
+  optional ResourceProviderID resource_provider_id = 1;
+  optional SlaveID slave_id = 2;
+
+  repeated Resource total = 3;
+}
+
+
+/**
  * A wrapper message that is sent for a local resource provider Call
  * by the agent to the master. The agent serves as a proxy between the
  * local resource provider and the master.
