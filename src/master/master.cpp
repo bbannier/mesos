@@ -897,7 +897,9 @@ void Master::initialize()
   install<UpdateSlaveMessage>(
       &Master::updateSlave,
       &UpdateSlaveMessage::slave_id,
-      &UpdateSlaveMessage::oversubscribed_resources);
+      &UpdateSlaveMessage::type,
+      &UpdateSlaveMessage::oversubscribed_resources,
+      &UpdateSlaveMessage::total_resources);
 
   install<AuthenticateMessage>(
       &Master::authenticate,
@@ -6477,7 +6479,9 @@ void Master::updateFramework(
 
 void Master::updateSlave(
     const SlaveID& slaveId,
-    const Resources& oversubscribedResources)
+    const UpdateSlaveMessage::Type& type,
+    const Resources& oversubscribedResources,
+    const Resources& totalResources)
 {
   ++metrics->messages_update_slave;
 
@@ -6501,17 +6505,33 @@ void Master::updateSlave(
     return;
   }
 
-  LOG(INFO) << "Received update of agent " << *slave << " with total"
-            << " oversubscribed resources " << oversubscribedResources;
-
   // NOTE: We must *first* update the agent's resources before we
   // recover the resources. If we recovered the resources first,
   // an allocation could trigger between recovering resources and
   // updating the agent in the allocator. This would lead us to
   // re-send out the stale oversubscribed resources!
 
-  slave->totalResources =
-    slave->totalResources.nonRevocable() + oversubscribedResources.revocable();
+  switch (type) {
+    // If the caller did not specify a type we assume we should set
+    // `oversubscribedResources` to be backwards-compatibility with
+    // older clients.
+    case UpdateSlaveMessage::UNKNOWN: // Intentional fallthrough.
+    case UpdateSlaveMessage::OVERSUBSCRIBED: {
+      LOG(INFO) << "Received update of agent " << *slave << " with total"
+                << " oversubscribed resources " << oversubscribedResources;
+
+      slave->totalResources =
+        slave->totalResources.nonRevocable() +
+        oversubscribedResources.revocable();
+      break;
+    }
+    case UpdateSlaveMessage::TOTAL:
+      LOG(INFO) << "Received update of agent " << *slave << " with total"
+                << " resources " << totalResources;
+
+      slave->totalResources = totalResources;
+      break;
+  }
 
   // First update the agent's resources in the allocator.
   allocator->updateSlave(slaveId, slave->totalResources);
