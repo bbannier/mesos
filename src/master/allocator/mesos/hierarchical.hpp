@@ -144,6 +144,7 @@ public:
   void updateSlave(
       const SlaveID& slave,
       const Option<Resources>& oversubscribed = None(),
+      const Option<Resources>& total = None(),
       const Option<std::vector<SlaveInfo::Capability>>& capabilities = None());
 
   void deactivateSlave(

@@ -1939,7 +1939,7 @@ TEST_F(HierarchicalAllocatorTest, UpdateSlaveCapabilities)
   ASSERT_TRUE(allocation.isPending());
 
   // Update the agent to be MULTI_ROLE capable.
-  allocator->updateSlave(agent.id(), None(), AGENT_CAPABILITIES());
+  allocator->updateSlave(agent.id(), None(), None(), AGENT_CAPABILITIES());
 
   Clock::settle();
 

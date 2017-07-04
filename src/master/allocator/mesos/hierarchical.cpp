@@ -624,6 +624,7 @@ void HierarchicalAllocatorProcess::removeSlave(
 void HierarchicalAllocatorProcess::updateSlave(
     const SlaveID& slaveId,
     const Option<Resources>& oversubscribed,
+    const Option<Resources>& total,
     const Option<vector<SlaveInfo::Capability>>& capabilities)
 {
   CHECK(initialized);

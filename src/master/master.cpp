@@ -6040,7 +6040,7 @@ void Master::_reregisterSlave(
     slave->reregisteredTime = Clock::now();
     slave->capabilities = agentCapabilities;
 
-    allocator->updateSlave(slave->id, None(), agentCapabilities);
+    allocator->updateSlave(slave->id, None(), None(), agentCapabilities);
 
     // Reconcile tasks between master and slave, and send the
     // `SlaveReregisteredMessage`.

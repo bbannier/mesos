@@ -212,11 +212,13 @@ public:
    * @param oversubscribed The new oversubscribed resources estimate from
    *     the agent. The oversubscribed resources include the total amount
    *     of oversubscribed resources that are allocated and available.
+   * @param total The new total resources on the agent.
    * @param capabilities The new capabilities of the agent.
    */
   virtual void updateSlave(
       const SlaveID& slave,
       const Option<Resources>& oversubscribed = None(),
+      const Option<Resources>& total = None(),
       const Option<std::vector<SlaveInfo::Capability>>&
           capabilities = None()) = 0;
 
