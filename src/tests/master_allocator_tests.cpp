@@ -1955,41 +1955,41 @@ TYPED_TEST(MasterAllocatorTest, NestedRoles)
 // FIXME(bbannier): document me.
 TYPED_TEST(MasterAllocatorTest, NOPE)
 {
-  Clock::pause();
+  // Clock::pause();
 
-  TestAllocator<TypeParam> allocator;
+  // TestAllocator<TypeParam> allocator;
 
-  EXPECT_CALL(allocator, initialize(_, _, _, _, _));
+  // EXPECT_CALL(allocator, initialize(_, _, _, _, _));
 
-  master::Flags masterFlags = this->CreateMasterFlags();
-  Try<Owned<cluster::Master>> master =
-    this->StartMaster(&allocator, masterFlags);
-  ASSERT_SOME(master);
+  // master::Flags masterFlags = this->CreateMasterFlags();
+  // Try<Owned<cluster::Master>> master =
+  //   this->StartMaster(&allocator, masterFlags);
+  // ASSERT_SOME(master);
 
-  Owned<MasterDetector> detector = master.get()->createDetector();
+  // Owned<MasterDetector> detector = master.get()->createDetector();
 
-  Future<Nothing> addSlave;
-  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
-    .WillOnce(FutureSatisfy(&addSlave));
+  // Future<Nothing> addSlave;
+  // EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+  //   .WillOnce(FutureSatisfy(&addSlave));
 
-  slave::Flags slaveFlags = this->CreateSlaveFlags();
+  // slave::Flags slaveFlags = this->CreateSlaveFlags();
 
-  TestContainerizer containerizer;
+  // TestContainerizer containerizer;
 
-  MockSlave slave(slaveFlags, detector.get(), &containerizer);
+  // MockSlave slave(slaveFlags, detector.get(), &containerizer);
 
-  spawn(slave);
+  // spawn(slave);
 
-  // Advance clock to force agent to register.
-  Clock::advance(slaveFlags.authentication_backoff_factor);
-  Clock::advance(slaveFlags.registration_backoff_factor);
+  // // Advance clock to force agent to register.
+  // Clock::advance(slaveFlags.authentication_backoff_factor);
+  // Clock::advance(slaveFlags.registration_backoff_factor);
 
-  AWAIT_READY(addSlave);
+  // AWAIT_READY(addSlave);
 
-  // FIXME(bbannier): more stuff here.
+  // // FIXME(bbannier): more stuff here.
 
-  process::terminate(slave);
-  process::wait(slave);
+  // process::terminate(slave);
+  // process::wait(slave);
 }
 
 } // namespace tests {
