@@ -49,6 +49,7 @@
 #include "tests/allocator.hpp"
 #include "tests/containerizer.hpp"
 #include "tests/mesos.hpp"
+#include "tests/mock_slave.hpp"
 #include "tests/module.hpp"
 #include "tests/resources_utils.hpp"
 
@@ -1950,6 +1951,46 @@ TYPED_TEST(MasterAllocatorTest, NestedRoles)
   driver3.join();
 }
 
+
+// FIXME(bbannier): document me.
+TYPED_TEST(MasterAllocatorTest, NOPE)
+{
+  Clock::pause();
+
+  TestAllocator<TypeParam> allocator;
+
+  EXPECT_CALL(allocator, initialize(_, _, _, _, _));
+
+  master::Flags masterFlags = this->CreateMasterFlags();
+  Try<Owned<cluster::Master>> master =
+    this->StartMaster(&allocator, masterFlags);
+  ASSERT_SOME(master);
+
+  Owned<MasterDetector> detector = master.get()->createDetector();
+
+  Future<Nothing> addSlave;
+  EXPECT_CALL(allocator, addSlave(_, _, _, _, _, _))
+    .WillOnce(FutureSatisfy(&addSlave));
+
+  slave::Flags slaveFlags = this->CreateSlaveFlags();
+
+  TestContainerizer containerizer;
+
+  MockSlave slave(slaveFlags, detector.get(), &containerizer);
+
+  spawn(slave);
+
+  // Advance clock to force agent to register.
+  Clock::advance(slaveFlags.authentication_backoff_factor);
+  Clock::advance(slaveFlags.registration_backoff_factor);
+
+  AWAIT_READY(addSlave);
+
+  // FIXME(bbannier): more stuff here.
+
+  process::terminate(slave);
+  process::wait(slave);
+}
 
 } // namespace tests {
 } // namespace internal {
