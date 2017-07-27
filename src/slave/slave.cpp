@@ -1307,6 +1307,25 @@ void Slave::reregistered(
       return;
   }
 
+  // Send the latest total, including resources from resource providers.
+  //
+  // TODO(bbannier): Consider unifying this with below forwarding of
+  // oversubscribed resources.
+  if (resourceProviderResources.isSome()) {
+    CHECK_EQ(state, RUNNING) << "Unexpected agent state";
+
+    LOG(INFO) << "Forwarding new total resources "
+              << resourceProviderResources.get();
+
+    UpdateSlaveMessage updateSlaveMessage;
+    updateSlaveMessage.mutable_slave_id()->CopyFrom(info.id());
+    updateSlaveMessage.set_type(UpdateSlaveMessage::TOTAL);
+    updateSlaveMessage.mutable_total_resources()->CopyFrom(
+        info.resources() + resourceProviderResources.get());
+
+    send(master.get(), updateSlaveMessage);
+  }
+
   // Send the latest estimate for oversubscribed resources.
   if (oversubscribedResources.isSome()) {
     LOG(INFO) << "Forwarding total oversubscribed resources "
@@ -6264,6 +6283,10 @@ void Slave::__recover(const Future<Nothing>& future)
     detection = detector->detect()
       .onAny(defer(self(), &Slave::detected, lambda::_1));
 
+    // Start listening for messages from the resource provider manager.
+    resourceProviderManager.messages().get().onAny(
+        defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
+
     // Forward oversubscribed resources.
     forwardOversubscribed();
 
@@ -6453,6 +6476,90 @@ void Slave::_forwardOversubscribed(const Future<Resources>& oversubscribable)
   delay(flags.oversubscribed_resources_interval,
         self(),
         &Self::forwardOversubscribed);
+}
+
+
+void Slave::handleResourceProviderMessage(
+    const Future<ResourceProviderMessage>& message)
+{
+  // Ignore terminal messages which are not ready. These
+  // can arise e.g., if the `Future` was discarded.
+  if (!message.isReady()) {
+    VLOG(1)
+      << "Last resource provider message became terminal before becoming ready";
+
+    // Wait for the next message.
+    resourceProviderManager.messages().get()
+      .onAny(defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
+  }
+
+
+  VLOG(1) << "Handling resource provider message '" << message.get() << "'";
+
+  switch(message->type) {
+    case ResourceProviderMessage::Type::UPDATE_TOTAL_RESOURCES:
+      CHECK_SOME(message->updateTotalResources);
+
+      const Resources& newTotal = message->updateTotalResources->total;
+
+      if (resourceProviderResources.isSome()) {
+        const ResourceProviderID& resourceProviderId =
+          message->updateTotalResources->id;
+
+        const Resources oldTotal = resourceProviderResources->filter(
+            [&resourceProviderId](const Resource& resource) {
+              return resource.provider_id() == resourceProviderId;
+            });
+
+        // Ignore the update if it contained no new information.
+        if (newTotal == oldTotal) {
+          break;
+        }
+
+        // Remember the latest resource provider resources so we can
+        // e.g., resend them to the master on master failover.
+        resourceProviderResources.get() -= oldTotal;
+        resourceProviderResources.get() += newTotal;
+      } else {
+        resourceProviderResources = newTotal;
+      }
+
+      CHECK_SOME(resourceProviderResources);
+
+      // Send the updated resources to the master if the agent is running. Note
+      // that since we have already updated our copy of the latest resource
+      // provider resources, it is safe to consume this message and wait for the
+      // next one; even if we do not send the update to the master right now, an
+      // update will be send once the agent reregisters.
+      switch (state) {
+        case RECOVERING:
+        case DISCONNECTED:
+        case TERMINATING: {
+          break;
+        }
+
+        case RUNNING: {
+          LOG(INFO) << "Forwarding new total resources "
+                    << resourceProviderResources.get();
+
+          // Inform the master that the total capacity of this agent has
+          // changed.
+          UpdateSlaveMessage updateSlaveMessage;
+          updateSlaveMessage.mutable_slave_id()->CopyFrom(info.id());
+          updateSlaveMessage.set_type(UpdateSlaveMessage::TOTAL);
+          updateSlaveMessage.mutable_total_resources()->CopyFrom(
+              info.resources() + resourceProviderResources.get());
+
+          send(master.get(), updateSlaveMessage);
+
+          break;
+        }
+      }
+  }
+
+  // Wait for the next message.
+  resourceProviderManager.messages().get()
+    .onAny(defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
 }
 
 

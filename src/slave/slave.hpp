@@ -524,6 +524,9 @@ private:
   void _forwardOversubscribed(
       const process::Future<Resources>& oversubscribable);
 
+  void handleResourceProviderMessage(
+      const process::Future<ResourceProviderMessage>& message);
+
   // Gauge methods.
   double _frameworks_active()
   {
@@ -645,6 +648,8 @@ private:
   Option<Resources> oversubscribedResources;
 
   ResourceProviderManager resourceProviderManager;
+  Option<Resources> resourceProviderResources;
+
   process::Owned<LocalResourceProviderDaemon> localResourceProviderDaemon;
 
 protected:
