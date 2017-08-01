@@ -28,6 +28,7 @@
 
 #include <mesos/v1/executor.hpp>
 #include <mesos/v1/resources.hpp>
+#include <mesos/v1/resource_provider.hpp>
 #include <mesos/v1/scheduler.hpp>
 
 #include <mesos/v1/executor/executor.hpp>
@@ -2244,6 +2245,95 @@ ACTION_P3(SendUpdateFromTaskID, frameworkId, executorId, state)
 using MockHTTPExecutor = tests::executor::MockHTTPExecutor<
     mesos::v1::executor::Mesos,
     mesos::v1::executor::Event>;
+
+} // namespace v1 {
+
+
+namespace resource_provider {
+
+template <typename Event>
+class MockResourceProvider
+{
+public:
+  MockResourceProvider() = default;
+  ~MockResourceProvider() = default;
+
+  MOCK_METHOD0_T(connected, void());
+  MOCK_METHOD0_T(disconnected, void());
+  MOCK_METHOD1_T(subscribed, void(const typename Event::Subscribed&));
+  MOCK_METHOD1_T(operation, void(const typename Event::Operation&));
+
+  void event(const Event& event)
+  {
+    switch (event.type()) {
+      case Event::SUBSCRIBED:
+        subscribed(event.subscribed());
+        break;
+      case Event::OPERATION:
+        operation(event.operation());
+        break;
+      case Event::UNKNOWN:
+        LOG(FATAL) << "Received unexpected UNKNOWN event";
+        break;
+    }
+  }
+};
+
+
+template <typename Driver, typename Event>
+class TestDriver : public Driver
+{
+public:
+  TestDriver(
+      const process::UPID& upid,
+      ContentType contentType,
+      const std::shared_ptr<MockResourceProvider<Event>>& _resource_provider)
+    : mesos::v1::resource_provider::Driver(
+          upid,
+          contentType,
+          lambda::bind(&MockResourceProvider<Event>::connected,
+                       _resource_provider),
+          lambda::bind(&MockResourceProvider<Event>::disconnected,
+                       _resource_provider),
+          lambda::bind(&TestDriver<Driver, Event>::received,
+                       this,
+                       lambda::_1),
+          v1::DEFAULT_CREDENTIAL),
+          resource_provider(_resource_provider) {}
+
+private:
+  void received(std::queue<Event> events)
+  {
+    while (!events.empty()) {
+      Event event = std::move(events.front());
+      events.pop();
+      resource_provider->event(event);
+    }
+  }
+
+  std::shared_ptr<MockResourceProvider<Event>> resource_provider;
+};
+
+} // namespace resource_provider {
+
+
+namespace v1 {
+namespace resource_provider {
+
+// Alias existing `mesos::v1::resource_provider` classes so that we can easily
+// write `v1::resource_provider::` in tests.
+using Call = mesos::v1::resource_provider::Call;
+using Event = mesos::v1::resource_provider::Event;
+
+
+using TestDriver = tests::resource_provider::TestDriver<
+    mesos::v1::resource_provider::Driver,
+    mesos::v1::resource_provider::Event>;
+
+} // namespace resource_provider {
+
+using MockResourceProvider = tests::resource_provider::MockResourceProvider<
+    mesos::v1::resource_provider::Event>;
 
 } // namespace v1 {
 
