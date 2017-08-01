@@ -45,6 +45,7 @@ using process::ProcessBase;
 
 using process::spawn;
 using process::terminate;
+using process::UPID;
 using process::wait;
 
 namespace mesos {
@@ -55,9 +56,11 @@ class LocalResourceProviderDaemonProcess
 {
 public:
   LocalResourceProviderDaemonProcess(
+      const UPID& _upid,
       const string& _workDir,
       const Option<string>& _configDir)
     : ProcessBase(process::ID::generate("local-resource-provider-daemon")),
+      upid(_upid),
       workDir(_workDir),
       configDir(_configDir) {}
 
@@ -78,6 +81,7 @@ private:
 
   Try<Nothing> load(const string& path);
 
+  const UPID upid;
   const string workDir;
   const Option<string> configDir;
 
@@ -144,7 +148,7 @@ Try<Nothing> LocalResourceProviderDaemonProcess::load(const string& path)
   }
 
   Try<Owned<LocalResourceProvider>> provider =
-    LocalResourceProvider::create(info.get());
+    LocalResourceProvider::create(upid, info.get());
 
   if (provider.isError()) {
     return Error(
@@ -159,6 +163,7 @@ Try<Nothing> LocalResourceProviderDaemonProcess::load(const string& path)
 
 
 Try<Owned<LocalResourceProviderDaemon>> LocalResourceProviderDaemon::create(
+    const UPID& upid,
     const slave::Flags& flags)
 {
   // We require that the config directory exists to create a daemon.
@@ -168,15 +173,17 @@ Try<Owned<LocalResourceProviderDaemon>> LocalResourceProviderDaemon::create(
   }
 
   return new LocalResourceProviderDaemon(
+      upid,
       flags.work_dir,
       configDir);
 }
 
 
 LocalResourceProviderDaemon::LocalResourceProviderDaemon(
+    const UPID& upid,
     const string& workDir,
     const Option<string>& configDir)
-  : process(new LocalResourceProviderDaemonProcess(workDir, configDir))
+  : process(new LocalResourceProviderDaemonProcess(upid, workDir, configDir))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

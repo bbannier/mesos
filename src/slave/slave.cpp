@@ -414,7 +414,7 @@ void Slave::initialize()
   }
 
   Try<Owned<LocalResourceProviderDaemon>> _localResourceProviderDaemon =
-    LocalResourceProviderDaemon::create(flags);
+    LocalResourceProviderDaemon::create(self(), flags);
 
   if (_localResourceProviderDaemon.isError()) {
     EXIT(EXIT_FAILURE)

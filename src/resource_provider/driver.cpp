@@ -31,6 +31,7 @@ using process::ProcessBase;
 
 using process::spawn;
 using process::terminate;
+using process::UPID;
 using process::wait;
 
 namespace mesos {
@@ -63,6 +64,7 @@ protected:
 
 
 Driver::Driver(
+    const UPID& upid,
     ContentType contentType,
     const function<void(void)>& connected,
     const function<void(void)>& disconnected,

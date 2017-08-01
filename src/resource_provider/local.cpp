@@ -19,17 +19,19 @@
 #include "resource_provider/storage/provider.hpp"
 
 using process::Owned;
+using process::UPID;
 
 namespace mesos {
 namespace internal {
 
 Try<Owned<LocalResourceProvider>> LocalResourceProvider::create(
+    const UPID& upid,
     const ResourceProviderInfo& info)
 {
   // TODO(jieyu): Document the built-in local resource providers.
   if (info.type() == "org.apache.mesos.rp.local.storage") {
     Try<Owned<LocalResourceProvider>> provider =
-      StorageLocalResourceProvider::create(info);
+      StorageLocalResourceProvider::create(upid, info);
 
     if (provider.isError()) {
       return Error(

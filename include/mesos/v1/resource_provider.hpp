@@ -21,6 +21,7 @@
 #include <queue>
 
 #include <process/owned.hpp>
+#include <process/pid.hpp>
 
 #include <mesos/http.hpp>
 
@@ -50,6 +51,7 @@ public:
    * the resource provider manager. Note that we drop events while
    * disconnected.
    *
+   * @param upid UPID of the actor serving the resource provider API.
    * @param contentType the content type expected by this driver.
    * @param connected a callback which will be invoked when the driver
    *     is connected.
@@ -58,7 +60,8 @@ public:
    * @param received a callback which will be invoked when the driver
    *     receives resource provider Events.
    */
-  Driver(ContentType contentType,
+  Driver(const process::UPID& upid,
+         ContentType contentType,
          const std::function<void(void)>& connected,
          const std::function<void(void)>& disconnected,
          const std::function<void(const std::queue<Event>&)>& received);

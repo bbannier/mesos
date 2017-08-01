@@ -18,6 +18,7 @@
 #define __RESOURCE_PROVIDER_LOCAL_HPP__
 
 #include <process/owned.hpp>
+#include <process/pid.hpp>
 
 #include <stout/try.hpp>
 
@@ -30,6 +31,7 @@ class LocalResourceProvider
 {
 public:
   static Try<process::Owned<LocalResourceProvider>> create(
+      const process::UPID& upid,
       const ResourceProviderInfo& info);
 
   virtual ~LocalResourceProvider() = default;

@@ -20,6 +20,7 @@
 #include <string>
 
 #include <process/owned.hpp>
+#include <process/pid.hpp>
 
 #include <stout/option.hpp>
 #include <stout/try.hpp>
@@ -40,6 +41,7 @@ class LocalResourceProviderDaemon
 {
 public:
   static Try<process::Owned<LocalResourceProviderDaemon>> create(
+      const process::UPID& upid,
       const slave::Flags& flags);
 
   ~LocalResourceProviderDaemon();
@@ -52,6 +54,7 @@ public:
 
 private:
   LocalResourceProviderDaemon(
+      const process::UPID& upid,
       const std::string& workDir,
       const Option<std::string>& configDir);
 

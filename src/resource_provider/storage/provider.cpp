@@ -32,6 +32,7 @@ using std::queue;
 
 using process::Owned;
 using process::Process;
+using process::UPID;
 
 using process::defer;
 using process::spawn;
@@ -52,8 +53,10 @@ class StorageLocalResourceProviderProcess
 {
 public:
   explicit StorageLocalResourceProviderProcess(
+      const UPID& _upid,
       const ResourceProviderInfo& _info)
     : ProcessBase(process::ID::generate("storage-local-resource-provider")),
+      upid(_upid),
       contentType(ContentType::PROTOBUF),
       info(_info) {}
 
@@ -70,6 +73,7 @@ public:
 private:
   void initialize() override;
 
+  const UPID upid;
   const ContentType contentType;
   ResourceProviderInfo info;
   Owned<v1::resource_provider::Driver> driver;
@@ -110,6 +114,7 @@ void StorageLocalResourceProviderProcess::received(const Event& event)
 void StorageLocalResourceProviderProcess::initialize()
 {
   driver.reset(new Driver(
+      upid,
       contentType,
       defer(self(), &Self::connected),
       defer(self(), &Self::disconnected),
@@ -124,16 +129,18 @@ void StorageLocalResourceProviderProcess::initialize()
 
 
 Try<Owned<LocalResourceProvider>> StorageLocalResourceProvider::create(
+    const UPID& upid,
     const ResourceProviderInfo& info)
 {
   return Owned<LocalResourceProvider>(
-      new StorageLocalResourceProvider(info));
+      new StorageLocalResourceProvider(upid, info));
 }
 
 
 StorageLocalResourceProvider::StorageLocalResourceProvider(
+    const UPID& upid,
     const ResourceProviderInfo& info)
-  : process(new StorageLocalResourceProviderProcess(info))
+  : process(new StorageLocalResourceProviderProcess(upid, info))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

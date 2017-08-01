@@ -17,6 +17,7 @@
 #ifndef __RESOURCE_PROVIDER_STORAGE_PROVIDER_HPP__
 #define __RESOURCE_PROVIDER_STORAGE_PROVIDER_HPP__
 
+#include <process/pid.hpp>
 #include <process/owned.hpp>
 
 #include <stout/try.hpp>
@@ -36,6 +37,7 @@ class StorageLocalResourceProvider : public LocalResourceProvider
 {
 public:
   static Try<process::Owned<LocalResourceProvider>> create(
+      const process::UPID& upid,
       const mesos::ResourceProviderInfo& info);
 
   ~StorageLocalResourceProvider() override;
@@ -48,6 +50,7 @@ public:
 
 private:
   explicit StorageLocalResourceProvider(
+      const process::UPID& upid,
       const mesos::ResourceProviderInfo& info);
 
   process::Owned<StorageLocalResourceProviderProcess> process;
