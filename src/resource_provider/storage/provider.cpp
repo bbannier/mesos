@@ -124,7 +124,8 @@ void StorageLocalResourceProviderProcess::initialize()
           received(devolve(event));
           events.pop();
         }
-      })));
+      }),
+      None()));
 }
 
 

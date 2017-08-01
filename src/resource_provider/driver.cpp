@@ -14,66 +14,91 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <glog/logging.h>
-
-#include <process/dispatch.hpp>
-#include <process/id.hpp>
-#include <process/process.hpp>
-
 #include <mesos/v1/resource_provider.hpp>
 
-using std::function;
-using std::queue;
+#include <string>
 
-using process::Owned;
-using process::Process;
-using process::ProcessBase;
+#include <process/dispatch.hpp>
+#include <process/http.hpp>
+#include <process/process.hpp>
 
+#include <stout/base64.hpp>
+
+#include "internal/devolve.hpp"
+
+#include "resource_provider/http_connection.hpp"
+#include "resource_provider/validation.hpp"
+
+using process::dispatch;
 using process::spawn;
 using process::terminate;
 using process::UPID;
 using process::wait;
 
+using std::function;
+using std::string;
+using std::queue;
+
+namespace {
+
+process::http::URL endpointURL(const process::UPID& upid)
+{
+  string scheme = "http";
+
+#ifdef USE_SSL_SOCKET
+  if (process::network::openssl::flags().enabled) {
+    scheme = "https";
+  }
+#endif // USE_SSL_SOCKET
+
+  return process::http::URL(
+      scheme,
+      upid.address.ip,
+      upid.address.port,
+      upid.id + "/api/v1/resource_provider");
+}
+
+
+Option<Error> validate(const mesos::v1::resource_provider::Call& call)
+{
+  return mesos::internal::resource_provider::validation::call::validate(
+      mesos::internal::devolve(call));
+}
+
+
+Option<string> authenticationToken(
+    const Option<mesos::v1::Credential>& credential)
+{
+  if (credential.isSome()) {
+    return "Basic " +
+           base64::encode(credential->principal() + ":" + credential->secret());
+  }
+
+  return None();
+}
+
+} // namespace {
+
 namespace mesos {
 namespace v1 {
 namespace resource_provider {
-
-class DriverProcess : public Process<DriverProcess>
-{
-public:
-  DriverProcess(
-      ContentType _contentType,
-      const function<void(void)>& connected,
-      const function<void(void)>& disconnected,
-      const function<void(const queue<Event>&)>& received)
-    : ProcessBase(process::ID::generate("resource-provider-driver")),
-      contentType(_contentType),
-      callbacks {connected, disconnected, received} {}
-
-protected:
-  struct Callbacks
-  {
-    function<void(void)> connected;
-    function<void(void)> disconnected;
-    function<void(const queue<Event>&)> received;
-  };
-
-  const ContentType contentType;
-  const Callbacks callbacks;
-};
-
 
 Driver::Driver(
     const UPID& upid,
     ContentType contentType,
     const function<void(void)>& connected,
     const function<void(void)>& disconnected,
-    const function<void(const std::queue<Event>&)>& received)
+    const function<void(const queue<Event>&)>& received,
+    const Option<Credential>& credential)
   : process(new DriverProcess(
+        process::ID::generate("resource-provider-driver"),
+        endpointURL(upid),
         contentType,
+        validate,
         connected,
         disconnected,
-        received))
+        received,
+        authenticationToken(credential)))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }
@@ -83,6 +108,12 @@ Driver::~Driver()
 {
   terminate(process.get());
   wait(process.get());
+}
+
+
+void Driver::send(const Call& call)
+{
+  dispatch(process.get(), &DriverProcess::send, call);
 }
 
 } // namespace resource_provider {

@@ -25,14 +25,27 @@
 
 #include <mesos/http.hpp>
 
+#include <mesos/v1/mesos.hpp>
+
 #include <mesos/v1/resource_provider/resource_provider.hpp>
+
+#include <stout/option.hpp>
+
+namespace mesos {
+namespace internal {
+
+// Forward declarations.
+template <typename Call, typename Event>
+class HttpConnectionProcess;
+
+}
+}
 
 namespace mesos {
 namespace v1 {
 namespace resource_provider {
 
-// Forward declarations.
-class DriverProcess;
+typedef ::mesos::internal::HttpConnectionProcess<Call, Event> DriverProcess;
 
 
 /**
@@ -64,14 +77,15 @@ public:
          ContentType contentType,
          const std::function<void(void)>& connected,
          const std::function<void(void)>& disconnected,
-         const std::function<void(const std::queue<Event>&)>& received);
+         const std::function<void(const std::queue<Event>&)>& received,
+         const Option<Credential>& credential);
 
   ~Driver();
 
   Driver(const Driver& other) = delete;
   Driver& operator=(const Driver& other) = delete;
 
-  void send(const Call& call) {}
+  void send(const Call& call);
 
 private:
   process::Owned<DriverProcess> process;
