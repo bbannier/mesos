@@ -465,7 +465,7 @@ string getResourcesProviderInfoPath(const string& rootDir)
 {
   return path::join(rootDir, "resource_providers", RESOURCE_PROVIDER_INFO_FILE);
 }
-} // namespace paths
+} // namespace paths {
 
 namespace state {
 // FIXME(bbannier): Add this to slave::state::State.
@@ -599,7 +599,8 @@ TEST_F(NOPE, Agent)
     resourceProviderIds.insert(resourceProviderId);
   }
 
-  slave::state::checkpoint(path, resourceProviderIds);
+  slave::state::checkpoint(
+      slave::paths::getResourcesProviderInfoPath(path), resourceProviderIds);
 
   {
     Try<slave::state::ResourceProviderState> state =
