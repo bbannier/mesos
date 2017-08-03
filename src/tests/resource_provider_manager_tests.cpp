@@ -21,6 +21,8 @@
 #include <mesos/http.hpp>
 #include <mesos/resources.hpp>
 
+#include <mesos/state/protobuf.hpp>
+
 #include <mesos/v1/mesos.hpp>
 
 #include <mesos/v1/resource_provider/resource_provider.hpp>
@@ -40,6 +42,7 @@
 #include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
+#include <stout/unimplemented.hpp>
 
 #include "common/http.hpp"
 #include "common/recordio.hpp"
@@ -47,6 +50,7 @@
 #include "internal/devolve.hpp"
 
 #include "resource_provider/manager.hpp"
+#include "resource_provider/registrar.hpp"
 
 #include "slave/slave.hpp"
 
@@ -415,6 +419,47 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 
   EXPECT_EQ(devolve(resourceProviderId), message->updateTotalResources->id);
   EXPECT_EQ(expectedResources, message->updateTotalResources->total);
+}
+
+
+// Test that the resource provider registrar works as expected.
+TEST(ResourceProviderRegistrarTest, Registrar)
+{
+  mesos::state::InMemoryStorage storage;
+  mesos::resource_provider::Registrar registrar(&storage);
+
+  mesos::resource_provider::Registry registry;
+
+  // We expect the registry to contain no resource providers initially.
+  {
+    Future<mesos::resource_provider::Registry> recover = registrar.recover();
+    AWAIT_READY(recover);
+
+    EXPECT_TRUE(recover->resource_providers().resource_providers().empty());
+
+    registry = recover.get();
+  }
+
+  // Add a single resource provider to the registry. We expect to be
+  // able to store this state in the registrar and recover that state.
+  mesos::resource_provider::Registry::ResourceProvider* resourceProvider =
+    registry.mutable_resource_providers()->add_resource_providers();
+
+  resourceProvider->mutable_id()->set_value("foo");
+
+  ASSERT_FALSE(registry.resource_providers().resource_providers().empty());
+
+  {
+    Future<Nothing> store = registrar.store(registry);
+    AWAIT_READY(store);
+  }
+
+  {
+    Future<mesos::resource_provider::Registry> recover = registrar.recover();
+    AWAIT_READY(recover);
+
+    EXPECT_EQ(registry, recover.get());
+  }
 }
 
 } // namespace tests {
