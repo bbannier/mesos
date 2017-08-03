@@ -21,6 +21,8 @@
 #include <mesos/http.hpp>
 #include <mesos/resources.hpp>
 
+#include <mesos/state/protobuf.hpp>
+
 #include <mesos/v1/mesos.hpp>
 
 #include <mesos/v1/resource_provider/resource_provider.hpp>
@@ -40,6 +42,7 @@
 #include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
+#include <stout/unimplemented.hpp>
 
 #include "common/http.hpp"
 #include "common/recordio.hpp"
@@ -418,5 +421,194 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 }
 
 } // namespace tests {
+} // namespace internal {
+} // namespace mesos {
+
+
+namespace mesos {
+namespace internal {
+
+class AdmitResourceProvider : public master::Operation {
+public:
+  explicit AdmitResourceProvider(const ResourceProviderID& id) : id_(id) {}
+  AdmitResourceProvider(const AdmitResourceProvider&) = default;
+
+private:
+  Try<bool> perform(Registry* registry, hashset<SlaveID>*) override
+  {
+    if (std::find_if(
+            registry->resource_providers().begin(),
+            registry->resource_providers().end(),
+            [this](const Registry::ResourceProvider& resourceProvider) {
+              // FIXME(bbannier): use proper op.
+              return resourceProvider.id() == this->id_;
+            }) != registry->resource_providers().end()) {
+      return Error("Resource provider already admitted");
+    }
+
+    Registry::ResourceProvider resourceProvider;
+    resourceProvider.mutable_id()->CopyFrom(id_);
+    registry->add_resource_providers()->CopyFrom(resourceProvider);
+
+
+    return true; // Mutation.
+  }
+
+  const ResourceProviderID id_;
+};
+
+namespace slave {
+namespace paths {
+constexpr char RESOURCE_PROVIDER_INFO_FILE[] = "resource_providers.info";
+
+string getResourcesProviderInfoPath(const string& rootDir)
+{
+  return path::join(rootDir, "resource_providers", RESOURCE_PROVIDER_INFO_FILE);
+}
+} // namespace paths
+
+namespace state {
+// FIXME(bbannier): Add this to slave::state::State.
+struct ResourceProviderState
+{
+  hashset<ResourceProviderID> ids;
+
+  // FIXME(bbannier): Add this to slave::state::recover.
+  static Try<ResourceProviderState> recover(const string& rootDir, bool strict)
+  {
+    ResourceProviderState state;
+    // Process the committed resources.
+    const string& infoPath = paths::getResourcesProviderInfoPath(rootDir);
+    if (!os::exists(infoPath)) {
+      LOG(INFO) << "No committed checkpointed resources found at '" << infoPath
+                << "'";
+      return state;
+  }
+
+  ////////////////////////////////////////////////////////////////////////
+
+  Try<int_fd> fd = os::open(infoPath, O_RDWR | O_CLOEXEC);
+  if (fd.isError()) {
+    string message =
+      "Failed to open resource provider file '" + infoPath + "': " + fd.error();
+
+    if (strict) {
+      return Error(message);
+    } else {
+      LOG(WARNING) << message;
+      return state;
+    }
+    }
+
+
+    Result<ResourceProviderID> resourceProviderId = None();
+    while (true) {
+      // Ignore errors due to partial protobuf read and enable undoing
+      // failed reads by reverting to the previous seek position.
+      resourceProviderId =
+        ::protobuf::read<ResourceProviderID>(fd.get(), true, true);
+      if (!resourceProviderId.isSome()) {
+        break;
+      }
+
+      CHECK_SOME(resourceProviderId);
+
+      state.ids.insert(resourceProviderId.get());
+    }
+
+    if (resourceProviderId.isError()) {
+      // FIXME(bbannier): error handling.
+    }
+
+    os::close(fd.get());
+
+    return state;
+  }
+};
+
+inline Try<Nothing> checkpoint(
+    const std::string& path,
+    const hashset<ResourceProviderID>& resourceProviders)
+{
+  google::protobuf::RepeatedPtrField<ResourceProviderID> resourceProviders_{
+    resourceProviders.begin(), resourceProviders.end()};
+
+  return checkpoint(path, resourceProviders_);
+}
+
+} // namespace state {
+} // namespace slave {
+
+
+class NOPE: public tests::MesosTest {};
+
+TEST_F(NOPE, Master)
+{
+  std::unique_ptr<mesos::state::Storage> storage{
+    new mesos::state::InMemoryStorage{}};
+  auto state = mesos::state::protobuf::State(storage.get());
+  auto registrar = master::Registrar{
+    CreateMasterFlags(), &state, master::READONLY_HTTP_AUTHENTICATION_REALM};
+
+  MasterInfo masterInfo;
+  masterInfo.set_id("master_id");
+  masterInfo.set_ip(0);
+  masterInfo.set_port(0);
+
+  registrar.recover(masterInfo);
+
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value("foo");
+
+  {
+    auto apply = registrar.apply(Owned<master::Operation>{
+      new AdmitResourceProvider{resourceProviderId}});
+
+    AWAIT_ASSERT_READY(apply);
+    EXPECT_TRUE(apply.get());
+  }
+
+  {
+    auto apply = registrar.apply(Owned<master::Operation>{
+      new AdmitResourceProvider{resourceProviderId}});
+
+    AWAIT_READY(apply);
+    EXPECT_FALSE(apply.get());
+  }
+}
+
+
+TEST_F(NOPE, Agent)
+{
+  const auto rootDir = os::getcwd();
+
+  const auto path = slave::paths::getMetaRootDir(rootDir);
+
+  {
+    Try<slave::state::ResourceProviderState> state =
+      slave::state::ResourceProviderState::recover(path, true);
+
+    ASSERT_SOME(state);
+    EXPECT_TRUE(state->ids.empty());
+  }
+
+  hashset<ResourceProviderID> resourceProviderIds;
+  for (int i = 0; i < 100; ++i) {
+    ResourceProviderID resourceProviderId;
+    resourceProviderId.set_value(stringify(i));
+    resourceProviderIds.insert(resourceProviderId);
+  }
+
+  slave::state::checkpoint(path, resourceProviderIds);
+
+  {
+    Try<slave::state::ResourceProviderState> state =
+      slave::state::ResourceProviderState::recover(path, true);
+
+    ASSERT_SOME(state);
+    EXPECT_EQ(resourceProviderIds, state->ids);
+  }
+}
+
 } // namespace internal {
 } // namespace mesos {

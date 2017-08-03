@@ -70,6 +70,10 @@ message Registry {
     required WeightInfo info = 1;
   }
 
+  message ResourceProvider {
+    required ResourceProviderID id = 1;
+  }
+
   // Most recent leading master.
   optional Master master = 1;
 
@@ -104,4 +108,7 @@ message Registry {
   // A list of recorded weights in the cluster, a newly elected master shall
   // reconstruct it from the registry.
   repeated Weight weights = 6;
+
+// All known resource providers.
+  repeated ResourceProvider resource_providers = 8;
 }
