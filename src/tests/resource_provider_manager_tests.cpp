@@ -21,6 +21,11 @@
 #include <mesos/http.hpp>
 #include <mesos/resources.hpp>
 
+#include <mesos/state/in_memory.hpp>
+#include <mesos/state/leveldb.hpp>
+#include <mesos/state/protobuf.hpp>
+#include <mesos/state/state.hpp>
+
 #include <mesos/v1/mesos.hpp>
 
 #include <mesos/v1/resource_provider/resource_provider.hpp>
@@ -40,6 +45,7 @@
 #include <stout/result.hpp>
 #include <stout/stringify.hpp>
 #include <stout/try.hpp>
+#include <stout/unimplemented.hpp>
 
 #include "common/http.hpp"
 #include "common/recordio.hpp"
@@ -47,6 +53,7 @@
 #include "internal/devolve.hpp"
 
 #include "resource_provider/manager.hpp"
+#include "resource_provider/registrar.hpp"
 
 #include "slave/slave.hpp"
 
@@ -57,6 +64,10 @@ namespace http = process::http;
 using mesos::internal::slave::Slave;
 
 using mesos::master::detector::MasterDetector;
+
+using mesos::resource_provider::AdmitResourceProvider;
+using mesos::resource_provider::Registrar;
+using mesos::resource_provider::RemoveResourceProvider;
 
 using mesos::v1::resource_provider::Call;
 using mesos::v1::resource_provider::Event;
@@ -415,6 +426,37 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 
   EXPECT_EQ(devolve(resourceProviderId), message->updateTotalResources->id);
   EXPECT_EQ(expectedResources, message->updateTotalResources->total);
+}
+
+
+class ResourceProviderRegistrarTest : public tests::MesosTest {};
+
+
+// Test that the agent resource provider registrar works as expected.
+TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
+{
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value("foo");
+
+  slave::Flags flags;
+  flags.work_dir = os::getcwd();
+
+  Try<Owned<Registrar>> registrar = Registrar::create(flags);
+
+  ASSERT_SOME(registrar);
+  ASSERT_NE(nullptr, registrar->get());
+
+  // Applying operations on a not yet recovered registrar fails.
+  AWAIT_FAILED(registrar.get()->apply(Owned<Registrar::Operation>(
+          new AdmitResourceProvider(resourceProviderId))));
+
+  AWAIT_READY(registrar.get()->recover());
+
+  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
+          new AdmitResourceProvider(resourceProviderId))));
+
+  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
+          new RemoveResourceProvider(resourceProviderId))));
 }
 
 } // namespace tests {

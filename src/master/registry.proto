@@ -70,6 +70,10 @@ message Registry {
     required WeightInfo info = 1;
   }
 
+  message ResourceProvider {
+    required ResourceProviderID id = 1;
+  }
+
   // Most recent leading master.
   optional Master master = 1;
 
