@@ -58,6 +58,7 @@ GLOG = $(BUNDLED_DIR)/glog-$(GLOG_VERSION)
 GOOGLETEST = $(BUNDLED_DIR)/googletest-release-$(GOOGLETEST_VERSION)
 GMOCK = $(GOOGLETEST)/googlemock
 GPERFTOOLS = $(BUNDLED_DIR)/gperftools-$(GPERFTOOLS_VERSION)
+GRPC = $(BUNDLED_DIR)/grpc-$(GRPC_VERSION)
 GTEST = $(GOOGLETEST)/googletest
 HTTP_PARSER = $(BUNDLED_DIR)/http-parser-$(HTTP_PARSER_VERSION)
 LIBEV = $(BUNDLED_DIR)/libev-$(LIBEV_VERSION)
@@ -111,6 +112,20 @@ $(LIB_GPERFTOOLS): $(GPERFTOOLS)-build-stamp
 BUNDLED_DEPS += $(GPERFTOOLS)-build-stamp
 endif
 
+if WITH_BUNDLED_GRPC
+GRPC_INCLUDE_FLAGS = -I$(GRPC)/include
+GRPC_LIBS = $(GRPC)/libs/opt/libgrpc++.a	\
+            $(GRPC)/libs/opt/libgrpc.a		\
+            $(GRPC)/libs/opt/libgpr.a		\
+            -lssl -lcrypto
+$(GRPC_LIBS): $(GRPC)-build-stamp
+BUNDLED_DEPS += $(GRPC)-build-stamp
+GRPC_CPP_PLUGIN = $(GRPC)/bins/opt/grpc_cpp_plugin
+else
+GRPC_LIBS = -lgrpc++ -lgrpc -lgpr -lssl -lcrypto
+GRPC_CPP_PLUGIN = @GRPCPLUGIN@
+endif
+
 if WITH_BUNDLED_HTTP_PARSER
 HTTP_PARSER_INCLUDE_FLAGS = -I$(HTTP_PARSER)
 LIB_HTTP_PARSER = $(BUNDLED_DIR)/libry_http_parser.la
@@ -140,7 +155,14 @@ BUNDLED_DEPS += $(PICOJSON)-stamp
 endif
 
 if WITH_BUNDLED_PROTOBUF
+PROTOBUF_INCLUDE_FLAGS = -I$(PROTOBUF)/src
+LIB_PROTOBUF = $(PROTOBUF)/src/libprotobuf.la
+$(LIB_PROTOBUF): $(PROTOBUF)-build-stamp
 BUNDLED_DEPS += $(PROTOBUF)-build-stamp
+PROTOC = $(PROTOBUF)/src/protoc
+else
+LIB_PROTOBUF = -lprotobuf
+PROTOC = @PROTOCOMPILER@
 endif
 
 if WITH_BUNDLED_STOUT
@@ -167,6 +189,7 @@ libprocess_la_SOURCES =		\
   src/event_queue.hpp		\
   src/firewall.cpp		\
   src/gate.hpp			\
+  src/grpc.cpp			\
   src/help.cpp			\
   src/http.cpp			\
   src/io.cpp			\
@@ -213,9 +236,11 @@ libprocess_la_CPPFLAGS =			\
   $(ELFIO_INCLUDE_FLAGS)			\
   $(GLOG_INCLUDE_FLAGS)				\
   $(GPERFTOOLS_INCLUDE_FLAGS)			\
+  $(GRPC_INCLUDE_FLAGS)				\
   $(HTTP_PARSER_INCLUDE_FLAGS)			\
   $(LIB_EV_INCLUDE_FLAGS)			\
   $(PICOJSON_INCLUDE_FLAGS)			\
+  $(PROTOBUF_INCLUDE_FLAGS)			\
   $(STOUT_INCLUDE_FLAGS)			\
   $(AM_CPPFLAGS)
 
@@ -253,6 +278,8 @@ libprocess_tests_SOURCES =					\
   src/tests/count_down_latch_tests.cpp				\
   src/tests/decoder_tests.cpp					\
   src/tests/encoder_tests.cpp					\
+  src/tests/grpc_tests.cpp					\
+  src/tests/grpc_tests.proto					\
   src/tests/future_tests.cpp					\
   src/tests/http_tests.cpp					\
   src/tests/io_tests.cpp					\
@@ -282,7 +309,9 @@ libprocess_tests_CPPFLAGS =		\
   $(libprocess_la_CPPFLAGS)
 
 libprocess_tests_LDADD =		\
+  $(GRPC_LIBS)				\
   $(LIB_GMOCK)				\
+  $(LIB_PROTOBUF)			\
   libprocess.la
 
 if ENABLE_SSL
@@ -333,7 +362,28 @@ libprocess_tests_LDADD +=		\
   $(LIB_EV)
 endif
 
-BUILT_SOURCES = $(BUNDLED_DEPS)
+GRPC_TESTS_GENERATED_SOURCES =					\
+  grpc_tests.pb.h						\
+  grpc_tests.pb.cc						\
+  grpc_tests.grpc.pb.h						\
+  grpc_tests.grpc.pb.cc
+
+$(GRPC_TESTS_GENERATED_SOURCES): src/tests/grpc_tests.proto
+	$(PROTOC) -I$(srcdir)/src/tests				\
+	    --cpp_out=$(builddir)				\
+	    --grpc_out=$(builddir)				\
+	    --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN)		\
+	    $^
+
+BUILT_SOURCES =				\
+  $(BUNDLED_DEPS)			\
+  $(GRPC_TESTS_GENERATED_SOURCES)
+
+nodist_libprocess_tests_SOURCES =	\
+  $(GRPC_TESTS_GENERATED_SOURCES)
+
+CLEANFILES =				\
+  $(GRPC_TESTS_GENERATED_SOURCES)
 
 # We use a check-local target for now to avoid the parallel test
 # runner that ships with newer versions of autotools.
