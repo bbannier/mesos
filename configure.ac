@@ -2393,10 +2393,7 @@ AM_CONDITIONAL([ENABLE_PYTHON_DEPENDENCY_INSTALL],
 # Configure args to be passed to 3rdparty libraries.
 ###############################################################################
 
-CONFIGURE_ARGS="$CONFIGURE_ARGS		\
-                CPPFLAGS='$CPPFLAGS'	\
-                CXXFLAGS='$CXXFLAGS'	\
-                LDFLAGS='$LDFLAGS'"
+CONFIGURE_ARGS="$CONFIGURE_ARGS CXXFLAGS='$CXXFLAGS'"
 
 
 ###############################################################################
