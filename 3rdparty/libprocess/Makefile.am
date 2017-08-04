@@ -123,7 +123,7 @@ BUNDLED_DEPS += $(GRPC)-build-stamp
 GRPC_CPP_PLUGIN = $(GRPC)/bins/opt/grpc_cpp_plugin
 else
 GRPC_LIBS = -lgrpc++ -lgrpc -lgpr -lssl -lcrypto
-GRPC_CPP_PLUGIN = @GRPCPLUGIN@
+GRPC_CPP_PLUGIN = @GRPC_CPP_PLUGIN@
 endif
 
 if WITH_BUNDLED_HTTP_PARSER

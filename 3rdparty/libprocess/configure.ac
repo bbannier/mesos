@@ -1146,13 +1146,13 @@ if test "x$without_bundled_grpc" = "xyes" || \
   if test "x$found_grpc" = "xyes"; then
     with_bundled_grpc=no
 
-    AC_CHECK_TOOL([GRPCPLUGIN_TEST], [grpc_cpp_plugin], [], [$GRPCPREFIX/bin])
+    AC_CHECK_TOOL([GRPC_CPP_PLUGIN_TEST], [grpc_cpp_plugin], [], [$GRPCPREFIX/bin])
 
-    if test -z "`echo $GRPCPLUGIN_TEST`"; then
+    if test -z "`echo $GRPC_CPP_PLUGIN_TEST`"; then
       AC_MSG_ERROR([grpc_cpp_plugin not found in PATH])
     fi
 
-    GRPCPLUGIN="$GRPCPREFIX/bin/grpc_cpp_plugin"
+    GRPC_CPP_PLUGIN="$GRPCPREFIX/bin/grpc_cpp_plugin"
 
   else
     AC_MSG_ERROR([cannot find grpc
@@ -1173,7 +1173,7 @@ fi
 AM_CONDITIONAL([WITH_BUNDLED_GRPC],
                [test "x$with_bundled_grpc" = "xyes"])
 
-AC_SUBST([GRPCPLUGIN])
+AC_SUBST([GRPC_CPP_PLUGIN])
 
 
 # Once all CXXFLAGS are completely assembled, make sure the we are not
