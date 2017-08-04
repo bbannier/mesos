@@ -1468,10 +1468,6 @@ AM_CONDITIONAL([WITH_BUNDLED_NVML],
 if test -n "`echo $with_protobuf`"; then
   CPPFLAGS="$CPPFLAGS -isystem ${with_protobuf}/include"
   LDFLAGS="$LDFLAGS -L${with_protobuf}/lib"
-
-  # Set up variables for gRPC compilation.
-  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_protobuf}/include"
-  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_protobuf}/lib -Wl,-R${with_protobuf}/lib"
 fi
 
 # Check if user has asked us to use a preinstalled protobuf, or if
@@ -1736,11 +1732,7 @@ fi
 
 if test -n "`echo $with_ssl`"; then
   CPPFLAGS="-isystem ${with_ssl}/include $CPPFLAGS"
-  LDFLAGS="-L${with_ssl}/lib -Wl,-R${with_ssl}/lib $LDFLAGS"
-
-  # Set up variables for gRPC compilation.
-  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_ssl}/include"
-  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_ssl}/lib"
+  LDFLAGS="-L${with_ssl}/lib"
 fi
 
 AC_CHECK_LIB([crypto], [RAND_poll], [], [AC_MSG_ERROR([cannot find libcrypto
@@ -1913,10 +1905,6 @@ AM_CONDITIONAL([ENABLE_XFS_DISK_ISOLATOR], [test "x$enable_xfs_disk_isolator" = 
 if test -n "`echo $with_zlib`" ; then
   CPPFLAGS="-isystem ${with_zlib}/include $CPPFLAGS"
   LDFLAGS="-L${with_zlib}/lib $LDFLAGS"
-
-  # Set up variables for gRPC compilation.
-  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_zlib}/include"
-  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_zlib}/lib"
 fi
 
 AC_CHECK_LIB([z], [gzread], [],
@@ -1943,7 +1931,7 @@ location of protobuf used by grpc by providing a prefix path via
   fi
 
   CPPFLAGS="$CPPFLAGS -I${with_grpc}/include"
-  LDFLAGS="$LDFLAGS -L${with_grpc}/lib -Wl,-R${with_grpc}/lib"
+  LDFLAGS="$LDFLAGS -L${with_grpc}/lib"
 fi
 
 # Check if user has asked us to use a preinstalled grpc, or if they
@@ -1974,13 +1962,13 @@ if test "x$without_bundled_grpc" = "xyes" || \
   if test "x$found_grpc" = "xyes"; then
     with_bundled_grpc=no
 
-    AC_CHECK_TOOL([GRPCPLUGIN_TEST], [grpc_cpp_plugin], [], [$GRPCPREFIX/bin])
+    AC_CHECK_TOOL([GRPC_CPP_PLUGIN_TEST], [grpc_cpp_plugin], [], [$GRPCPREFIX/bin])
 
-    if test -z "`echo $GRPCPLUGIN_TEST`"; then
+    if test -z "`echo $GRPC_CPP_PLUGIN_TEST`"; then
       AC_MSG_ERROR([grpc_cpp_plugin not found in PATH])
     fi
 
-    GRPCPLUGIN="$GRPCPREFIX/bin/grpc_cpp_plugin"
+    GRPC_CPP_PLUGIN="$GRPCPREFIX/bin/grpc_cpp_plugin"
 
   else
     AC_MSG_ERROR([cannot find grpc
@@ -2000,12 +1988,6 @@ fi
 
 AM_CONDITIONAL([WITH_BUNDLED_GRPC],
                [test "x$with_bundled_grpc" = "xyes"])
-
-# NOTE: We export variables related to grpc compilation here after its
-# dependent libraries (protobuf, ssl and zlib) are checked.
-AC_SUBST([GRPC_CPPFLAGS])
-AC_SUBST([GRPC_LDFLAGS])
-AC_SUBST([GRPCPLUGIN])
 
 
 # Check if ZooKeeper prefix path was supplied and if so, add it to

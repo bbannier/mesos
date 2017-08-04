@@ -272,9 +272,8 @@ $(PROTOBUF)-build-stamp: $(PROTOBUF)-stamp
 ALL_LOCAL += $(PROTOBUF)/src/libprotobuf.la
 ALL_LOCAL += $(PROTOBUF)/src/protoc
 
-# Set up variables for gRPC compilation.
-GRPC_CPPFLAGS += -I$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src
-GRPC_LDFLAGS += -L$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src/.libs
+PROTOBUF_CPPFLAGS = -I$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src
+PROTOBUF_LINKERFLAGS = -L$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src/.libs
 PROTOC = $(abs_top_builddir)/3rdparty/$(PROTOBUF)/src/protoc
 else
 $(PROTOBUF)-build-stamp:
@@ -290,14 +289,14 @@ GRPC_LIBS = $(GRPC)/libs/opt/libgrpc++.a		\
 
 $(GRPC_LIBS): $(GRPC)-build-stamp
 
-$(GRPC)-build-stamp: $(GRPC)-stamp			\
+$(GRPC)-build-stamp: $(GRPC)-stamp				\
                      $(PROTOBUF)-build-stamp
-	cd $(GRPC) && \
-	  CPPFLAGS="$(GRPC_CPPFLAGS)" \
-	  LDFLAGS="$(GRPC_LDFLAGS)" \
-	  $(MAKE) $(AM_MAKEFLAGS) \
-	  HAS_PKG_CONFIG=false \
-	  NO_PROTOC=false \
+	cd $(GRPC) && 								\
+	  CPPFLAGS="$(PROTOBUF_CPPFLAGS)" 			\
+	  LDFLAGS="$(PROTOBUF_LINKERFLAGS)"			\
+	  $(MAKE) $(AM_MAKEFLAGS) 					\
+	  HAS_PKG_CONFIG=false 						\
+	  NO_PROTOC=false 							\
 	  PROTOC=$(PROTOC)
 	touch $@
 
