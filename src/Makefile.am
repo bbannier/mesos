@@ -39,6 +39,7 @@ GLOG = 3rdparty/glog-$(GLOG_VERSION)
 GOOGLETEST = 3rdparty/googletest-release-$(GOOGLETEST_VERSION)
 GMOCK = $(GOOGLETEST)/googlemock
 GTEST = $(GOOGLETEST)/googletest
+GRPC = 3rdparty/grpc-$(GRPC_VERSION)
 PROTOBUF = 3rdparty/protobuf-$(PROTOBUF_VERSION)
 PICOJSON = 3rdparty/picojson-$(PICOJSON_VERSION)
 NVML = 3rdparty/nvml-$(NVML_VERSION)
@@ -171,6 +172,16 @@ LIB_GLOG = ../$(GLOG)/libglog.la
 else
 LIB_GLOG = -lglog
 LDADD += -lglog
+endif
+
+if WITH_BUNDLED_GRPC
+GRPC_LIBS = ../$(GRPC)/libs/opt/libgrpc++.a	\
+            ../$(GRPC)/libs/opt/libgrpc.a	\
+            ../$(GRPC)/libs/opt/libgpr.a	\
+            -lssl -lcrypto
+else
+GRPC_LIBS = -lgrpc++ -lgrpc -lgpr -lssl -lcrypto
+LDADD += $(GRPC_LIBS)
 endif
 
 if WITH_BUNDLED_LEVELDB
@@ -1508,6 +1519,7 @@ libmesos_la_LIBTOOLFLAGS = --tag=CXX
 # Add the convenience library.
 libmesos_la_LIBADD =							\
   libmesos_no_3rdparty.la						\
+  $(GRPC_LIBS)								\
   $(LIB_GLOG)								\
   $(LIB_LEVELDB)							\
   $(LIB_PROCESS)							\

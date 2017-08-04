@@ -49,6 +49,7 @@ GLOG = glog-$(GLOG_VERSION)
 GOOGLETEST = googletest-release-$(GOOGLETEST_VERSION)
 GMOCK = $(GOOGLETEST)/googlemock
 GPERFTOOLS = gperftools-$(GPERFTOOLS_VERSION)
+GRPC = grpc-$(GRPC_VERSION)
 GTEST = $(GOOGLETEST)/googletest
 HTTP_PARSER = http-parser-$(HTTP_PARSER_VERSION)
 LEVELDB = leveldb-$(LEVELDB_VERSION)
@@ -68,6 +69,7 @@ EXTRA_DIST =			\
   $(GLOG).tar.gz		\
   $(GOOGLETEST).tar.gz		\
   $(GPERFTOOLS).tar.gz		\
+  $(GRPC).tar.gz		\
   $(HTTP_PARSER).tar.gz		\
   $(LEVELDB).tar.gz		\
   $(LIBEV).tar.gz		\
@@ -104,6 +106,7 @@ CLEAN_EXTRACTED =		\
   $(GLOG)			\
   $(GOOGLETEST)			\
   $(GPERFTOOLS)			\
+  $(GRPC)			\
   $(HTTP_PARSER)		\
   $(LEVELDB)			\
   $(LIBEV)			\
@@ -223,7 +226,6 @@ $(GPERFTOOLS)-build-stamp: $(GPERFTOOLS)-stamp
 ALL_LOCAL += $(LIB_GPERFTOOLS)
 endif
 
-
 if WITH_BUNDLED_HTTP_PARSER
 # Convenience library for nodejs/http-parser.
 noinst_LTLIBRARIES = libry_http_parser.la
@@ -269,6 +271,37 @@ $(PROTOBUF)-build-stamp: $(PROTOBUF)-stamp
 	touch $@
 ALL_LOCAL += $(PROTOBUF)/src/libprotobuf.la
 ALL_LOCAL += $(PROTOBUF)/src/protoc
+
+# Set up variables for gRPC compilation.
+GRPC_CPPFLAGS += -I$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src
+GRPC_LDFLAGS += -L$(abs_top_builddir)/3rdparty/$(PROTOBUF)/src/.libs
+PROTOC = $(abs_top_builddir)/3rdparty/$(PROTOBUF)/src/protoc
+else
+$(PROTOBUF)-build-stamp:
+	touch $@
+
+PROTOC = @PROTOCOMPILER@
+endif
+
+if WITH_BUNDLED_GRPC
+GRPC_LIBS = $(GRPC)/libs/opt/libgrpc++.a		\
+            $(GRPC)/libs/opt/libgrpc.a			\
+            $(GRPC)/libs/opt/libgpr.a
+
+$(GRPC_LIBS): $(GRPC)-build-stamp
+
+$(GRPC)-build-stamp: $(GRPC)-stamp			\
+                     $(PROTOBUF)-build-stamp
+	cd $(GRPC) && \
+	  CPPFLAGS="$(GRPC_CPPFLAGS)" \
+	  LDFLAGS="$(GRPC_LDFLAGS)" \
+	  $(MAKE) $(AM_MAKEFLAGS) \
+	  HAS_PKG_CONFIG=false \
+	  NO_PROTOC=false \
+	  PROTOC=$(PROTOC)
+	touch $@
+
+ALL_LOCAL += $(GRPC_LIBS)
 endif
 
 # Convenience library for gmock/gtest.

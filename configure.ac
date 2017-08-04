@@ -333,6 +333,13 @@ AC_ARG_WITH([gmock],
                             location prefixed by the given path]),
             [without_bundled_gmock=yes], [])
 
+AC_ARG_WITH([grpc],
+            AS_HELP_STRING([--with-grpc@<:@=DIR@:>@],
+                           [excludes building and uses the bundled grpc
+                            package in lieu of an installed version at a
+                            location prefixed by the given path]),
+            [without_bundled_grpc=yes], [])
+
 AC_ARG_WITH([http-parser],
             AS_HELP_STRING([--with-http-parser@<:@=DIR@:>@],
                            [excludes building and using the bundled http-parser
@@ -694,13 +701,6 @@ if test "x$found_gflags" = "xyes"; then
 else
   GFLAGS_LIBS=""
 fi
-
-AC_CHECK_LIB([z], [gzread], [],
-             [AC_MSG_ERROR([cannot find libz
--------------------------------------------------------------------
-libz is required for mesos to build.
--------------------------------------------------------------------
-])])
 
 AC_CHECK_TOOL([PATCHCOMMAND_TEST], [patch], [], [$PATH])
 if test -z "`echo $PATCHCOMMAND_TEST`"; then
@@ -1468,6 +1468,10 @@ AM_CONDITIONAL([WITH_BUNDLED_NVML],
 if test -n "`echo $with_protobuf`"; then
   CPPFLAGS="$CPPFLAGS -isystem ${with_protobuf}/include"
   LDFLAGS="$LDFLAGS -L${with_protobuf}/lib"
+
+  # Set up variables for gRPC compilation.
+  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_protobuf}/include"
+  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_protobuf}/lib -Wl,-R${with_protobuf}/lib"
 fi
 
 # Check if user has asked us to use a preinstalled protobuf, or if
@@ -1732,31 +1736,35 @@ fi
 
 if test -n "`echo $with_ssl`"; then
   CPPFLAGS="-isystem ${with_ssl}/include $CPPFLAGS"
-  LDFLAGS="-L${with_ssl}/lib $LDFLAGS"
+  LDFLAGS="-L${with_ssl}/lib -Wl,-R${with_ssl}/lib $LDFLAGS"
+
+  # Set up variables for gRPC compilation.
+  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_ssl}/include"
+  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_ssl}/lib"
 fi
 
+AC_CHECK_LIB([crypto], [RAND_poll], [], [AC_MSG_ERROR([cannot find libcrypto
+-------------------------------------------------------------------
+libcrypto is required for mesos to build.
+-------------------------------------------------------------------
+])])
+
+AC_CHECK_HEADERS([openssl/ssl.h],
+                 [AC_CHECK_LIB([ssl],
+                               [SSL_CTX_new],
+                               [],
+                               [AC_MSG_ERROR([cannot find libssl
+-------------------------------------------------------------------
+libssl is required for mesos to build.
+-------------------------------------------------------------------
+                               ])])],
+                 [AC_MSG_ERROR([cannot find libssl headers
+-------------------------------------------------------------------
+libssl is required for an SSL-enabled build.
+-------------------------------------------------------------------
+])])
+
 if test "x$enable_ssl" = "xyes"; then
-  AC_CHECK_HEADERS([openssl/ssl.h],
-                   [AC_CHECK_LIB([ssl],
-                                 [SSL_CTX_new],
-                                 [],
-                                 [AC_MSG_ERROR([cannot find libssl
--------------------------------------------------------------------
-libssl is required for an SSL-enabled build.
--------------------------------------------------------------------
-                                 ])])],
-                   [AC_MSG_ERROR([cannot find libssl headers
--------------------------------------------------------------------
-libssl is required for an SSL-enabled build.
--------------------------------------------------------------------
-  ])])
-
-  AC_CHECK_LIB([crypto], [RAND_poll], [], [AC_MSG_ERROR([cannot find libcrypto
--------------------------------------------------------------------
-libcrypto is required for an SSL-enabled build.
--------------------------------------------------------------------
-  ])])
-
   if test "x$enable_libevent" = "xyes"; then
     AC_CHECK_HEADERS([event2/bufferevent_ssl.h],
                      [AC_CHECK_LIB([event_openssl],
@@ -1903,21 +1911,101 @@ AM_CONDITIONAL([ENABLE_XFS_DISK_ISOLATOR], [test "x$enable_xfs_disk_isolator" = 
 # the CPPFLAGS and LDFLAGS with respective /include and /lib path
 # suffixes.
 if test -n "`echo $with_zlib`" ; then
-    CPPFLAGS="-isystem ${with_zlib}/include $CPPFLAGS"
-    LDFLAGS="-L${with_zlib}/lib $LDFLAGS"
+  CPPFLAGS="-isystem ${with_zlib}/include $CPPFLAGS"
+  LDFLAGS="-L${with_zlib}/lib $LDFLAGS"
+
+  # Set up variables for gRPC compilation.
+  GRPC_CPPFLAGS="$GRPC_CPPFLAGS -I${with_zlib}/include"
+  GRPC_LDFLAGS="$GRPC_LDFLAGS -L${with_zlib}/lib"
 fi
 
-# Check if we should/can build with libz.
-if test "x$enable_zlib" = "xyes"; then
-  AC_CHECK_LIB([z], [deflate, gzread, gzwrite, inflate], [],
-               [AC_MSG_ERROR([cannot find libz
+AC_CHECK_LIB([z], [gzread], [],
+             [AC_MSG_ERROR([cannot find libz
 -------------------------------------------------------------------
-This means HTTP responses will be slower because we cannot use
-compression; you probably want to download and install zlib, but
-you can get away without it by doing --disable-zlib.
+libz is required for mesos to build.
 -------------------------------------------------------------------
-  ])])
+])])
+
+
+# Check if grpc prefix path was supplied and if so, add it to the
+# CPPFLAGS and LDFLAGS with respective /include and /lib path suffixes.
+if test -n "`echo $with_grpc`"; then
+  if test "x$without_bundled_protobuf" != "xyes"; then
+    AC_MSG_ERROR([protobuf not specified
+-------------------------------------------------------------------
+You have requested the use of a non-bundled grpc without specifying
+the protobuf library it uses. This is prohibited to avoid using
+conflicting versions of protobuf libraries. Please specify the
+location of protobuf used by grpc by providing a prefix path via
+--with-protobuf=DIR.
+-------------------------------------------------------------------
+    ])
+  fi
+
+  CPPFLAGS="$CPPFLAGS -I${with_grpc}/include"
+  LDFLAGS="$LDFLAGS -L${with_grpc}/lib -Wl,-R${with_grpc}/lib"
 fi
+
+# Check if user has asked us to use a preinstalled grpc, or if they
+# asked us to ignore all bundled libraries while compiling and linking.
+if test "x$without_bundled_grpc" = "xyes" || \
+   test "x$enable_bundled" != "xyes"; then
+  # Use the system default prefix if not specified.
+  if test -n "`echo $with_grpc`"; then
+    GRPCPREFIX="${with_grpc}"
+  elif test "x$enable_bundled" != "xyes"; then
+    GRPCPREFIX="/usr"
+  fi
+
+  # Check if headers and library were located.
+  saved_LIBS="$LIBS"
+  LIBS="-lgrpc++ -lgrpc -lgpr $LIBS"
+  AC_LANG_PUSH([C++])
+  AC_CHECK_HEADERS(
+      [grpc++/grpc++.h],
+      [AC_LINK_IFELSE(
+          [AC_LANG_PROGRAM([#include <grpc++/grpc++.h>], [ grpc::Version(); ])],
+          [ found_grpc=yes ],
+          [ found_grpc=no ])],
+      [ found_grpc=no ])
+  AC_LANG_POP()
+  LIBS="$saved_LIBS"
+
+  if test "x$found_grpc" = "xyes"; then
+    with_bundled_grpc=no
+
+    AC_CHECK_TOOL([GRPCPLUGIN_TEST], [grpc_cpp_plugin], [], [$GRPCPREFIX/bin])
+
+    if test -z "`echo $GRPCPLUGIN_TEST`"; then
+      AC_MSG_ERROR([grpc_cpp_plugin not found in PATH])
+    fi
+
+    GRPCPLUGIN="$GRPCPREFIX/bin/grpc_cpp_plugin"
+
+  else
+    AC_MSG_ERROR([cannot find grpc
+-------------------------------------------------------------------
+You have requested the use of a non-bundled grpc but no suitable
+grpc could be found.
+
+You may want specify the location of grpc by providing a prefix
+path via --with-grpc=DIR, or check that the path you provided is
+correct if you're already doing this.
+-------------------------------------------------------------------
+    ])
+  fi
+else
+  with_bundled_grpc=yes
+fi
+
+AM_CONDITIONAL([WITH_BUNDLED_GRPC],
+               [test "x$with_bundled_grpc" = "xyes"])
+
+# NOTE: We export variables related to grpc compilation here after its
+# dependent libraries (protobuf, ssl and zlib) are checked.
+AC_SUBST([GRPC_CPPFLAGS])
+AC_SUBST([GRPC_LDFLAGS])
+AC_SUBST([GRPCPLUGIN])
 
 
 # Check if ZooKeeper prefix path was supplied and if so, add it to
@@ -2323,7 +2411,10 @@ AM_CONDITIONAL([ENABLE_PYTHON_DEPENDENCY_INSTALL],
 # Configure args to be passed to 3rdparty libraries.
 ###############################################################################
 
-CONFIGURE_ARGS="$CONFIGURE_ARGS CXXFLAGS='$CXXFLAGS'"
+CONFIGURE_ARGS="$CONFIGURE_ARGS		\
+                CPPFLAGS='$CPPFLAGS'	\
+                CXXFLAGS='$CXXFLAGS'	\
+                LDFLAGS='$LDFLAGS'"
 
 
 ###############################################################################
