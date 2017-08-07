@@ -440,7 +440,6 @@ private:
             registry->resource_providers().begin(),
             registry->resource_providers().end(),
             [this](const Registry::ResourceProvider& resourceProvider) {
-              // FIXME(bbannier): use proper op.
               return resourceProvider.id() == this->id_;
             }) != registry->resource_providers().end()) {
       return Error("Resource provider already admitted");
@@ -448,13 +447,47 @@ private:
 
     Registry::ResourceProvider resourceProvider;
     resourceProvider.mutable_id()->CopyFrom(id_);
-    registry->add_resource_providers()->CopyFrom(resourceProvider);
 
+    registry->add_resource_providers()->CopyFrom(resourceProvider);
 
     return true; // Mutation.
   }
 
   const ResourceProviderID id_;
+};
+
+
+class RemoveResourceProvider : public master::Operation
+{
+public:
+  explicit RemoveResourceProvider(const ResourceProviderID& id) : id_(id) {}
+  RemoveResourceProvider(const RemoveResourceProvider&) = default;
+
+private:
+  Try<bool> perform(Registry* registry, hashset<SlaveID>*) override
+  {
+    Registry::ResourceProvider resourceProvider;
+    resourceProvider.mutable_id()->CopyFrom(id_);
+
+    auto pos = std::find_if(
+        registry->resource_providers().begin(),
+        registry->resource_providers().end(),
+        [this](const Registry::ResourceProvider& resourceProvider) {
+          return resourceProvider.id() == this->id_;
+        });
+
+    if (pos == registry->resource_providers().end()) {
+      return false; // No mutation.
+    }
+
+    registry->mutable_resource_providers()->erase(pos);
+
+    return true; // Mutation.
+  }
+
+
+  const ResourceProviderID id_;
+
 };
 
 namespace slave {
@@ -540,41 +573,100 @@ inline Try<Nothing> checkpoint(
 } // namespace slave {
 
 
+namespace resource_provider {
+struct Registrar : master::Registrar
+{
+};
+struct State
+{
+  struct ResourceProvider
+  {
+    ResourceProviderID id;
+  };
+
+  virtual ~State() = default;
+
+  virtual void add(const ResourceProvider& provider) = 0; // {}
+  virtual void drop(const ResourceProvider& provider) = 0; // {}
+  virtual hashset<ResourceProvider> get() const = 0; // {}
+};
+
+struct MasterState : State
+{
+  MasterState(master::Registrar*, const MasterInfo&);
+};
+
+struct AgentState : State
+{
+  AgentState(const Path& agentWorkdir);
+  void add(const ResourceProvider& provider) override {}
+  void drop(const ResourceProvider& provider) override {}
+  // hashset<ResourceProvider> get() const override { return {}; }
+};
+};
+
 class NOPE: public tests::MesosTest {};
 
 TEST_F(NOPE, Master)
 {
-  std::unique_ptr<mesos::state::Storage> storage{
-    new mesos::state::InMemoryStorage{}};
-  auto state = mesos::state::protobuf::State(storage.get());
-  auto registrar = master::Registrar{
-    CreateMasterFlags(), &state, master::READONLY_HTTP_AUTHENTICATION_REALM};
+  // auto masterFlags = CreateMasterFlags();
 
-  MasterInfo masterInfo;
-  masterInfo.set_id("master_id");
-  masterInfo.set_ip(0);
-  masterInfo.set_port(0);
+  // std::unique_ptr<mesos::state::Storage> storage{
+  //   new mesos::state::InMemoryStorage{}};
+  // auto state = mesos::state::protobuf::State(storage.get());
+  // auto registrar = master::Registrar{
+  //   masterFlags, &state, master::READONLY_HTTP_AUTHENTICATION_REALM};
 
-  registrar.recover(masterInfo);
+  // auto master = StartMaster(masterFlags);
+  // ASSERT_SOME(master);
 
-  ResourceProviderID resourceProviderId;
-  resourceProviderId.set_value("foo");
+  // const auto masterInfo = protobuf::createMasterInfo(master.get()->pid);
 
-  {
-    auto apply = registrar.apply(Owned<master::Operation>{
-      new AdmitResourceProvider{resourceProviderId}});
+  // registrar.recover(masterInfo);
 
-    AWAIT_ASSERT_READY(apply);
-    EXPECT_TRUE(apply.get());
-  }
+  // ResourceProviderID resourceProviderId;
+  // resourceProviderId.set_value("foo");
 
-  {
-    auto apply = registrar.apply(Owned<master::Operation>{
-      new AdmitResourceProvider{resourceProviderId}});
+  // {
+  //   auto registry = registrar.recover(masterInfo);
+  //   AWAIT_READY(registry);
+  //   EXPECT_EQ(0, registry->resource_providers().size());
+  // }
 
-    AWAIT_READY(apply);
-    EXPECT_FALSE(apply.get());
-  }
+  // {
+  //   auto apply = registrar.apply(Owned<master::Operation>{
+  //     new AdmitResourceProvider{resourceProviderId}});
+
+  //   AWAIT_ASSERT_READY(apply);
+  //   EXPECT_TRUE(apply.get());
+
+  //   auto registry = registrar.recover(masterInfo);
+  //   AWAIT_READY(registry);
+  //   EXPECT_EQ(1, registry->resource_providers().size());
+  // }
+
+  // {
+  //   auto apply = registrar.apply(Owned<master::Operation>{
+  //     new AdmitResourceProvider{resourceProviderId}});
+
+  //   AWAIT_READY(apply);
+  //   EXPECT_FALSE(apply.get());
+
+  //   auto registry = registrar.recover(masterInfo);
+  //   AWAIT_READY(registry);
+  //   EXPECT_EQ(1, registry->resource_providers().size());
+  // }
+
+  // {
+  //   auto apply = registrar.apply(Owned<master::Operation>{
+  //     new RemoveResourceProvider{resourceProviderId}});
+  //   AWAIT_READY(apply);
+  //   EXPECT_TRUE(apply.get());
+
+  //   auto registry = registrar.recover(masterInfo);
+  //   AWAIT_READY(registry);
+  //   EXPECT_EQ(0, registry->resource_providers().size());
+  // }
 }
 
 
@@ -610,6 +702,80 @@ TEST_F(NOPE, Agent)
     EXPECT_EQ(resourceProviderIds, state->ids);
   }
 }
+
+
+TEST_F(NOPE, State)
+{
+  // std::unique_ptr<resource_provider::State> state{
+  //   new resource_provider::AgentState{Path{os::getcwd()}}};
+
+  // resource_provider::State::ResourceProvider provider;
+  // provider.id.set_value("1");
+
+  // {
+  //   state->add(provider);
+
+  //   auto providers = state->get();
+
+  //   const auto expected =
+  //     hashset<resource_provider::State::ResourceProvider>({provider});
+
+  //   EXPECT_EQ(expected, providers);
+  // }
+
+  // {
+  //   state->add(provider);
+
+  //   auto providers = state->get();
+
+  //   const auto expected =
+  //     hashset<resource_provider::State::ResourceProvider>({provider});
+
+  //   EXPECT_EQ(expected, providers);
+  // }
+
+  // {
+  //   state->drop(provider);
+  // }
+}
+
+}
+}
+
+
+namespace mesos {
+namespace internal {
+namespace resource_provider {
+class ResourceProvider {};
+using ResourceProviders = std::vector<ResourceProvider>; // hashset
+}
+}
+}
+
+
+namespace mesos {
+namespace internal {
+
+namespace resource_provider {
+TEST(NOPE, UH)
+{
+  std::unique_ptr<mesos::state::Storage> storage{
+    new mesos::state::InMemoryStorage{}};
+  auto state = mesos::state::State(storage.get());
+
+  state.fetch(
+
+  using mesos::state::protobuf::Variable;
+  const auto resource_providers =
+    state.fetch<Variable<ResourceProviders>>("resource_providers");
+
+  AWAIT_READY(resource_providers);
+
+  auto rps = resource_providers->get().get();
+  EXPECT_TRUE(rps.empty());
+}
+
+} // namespace resource_provider {
 
 } // namespace internal {
 } // namespace mesos {
