@@ -118,7 +118,7 @@ private:
 
   static process::Future<Option<Variable>> _store(
       const internal::state::Entry& entry,
-      const bool& b); // TODO(benh): Remove 'const &' after fixing libprocess.
+      bool b);
 
   Storage* storage;
 };
@@ -168,7 +168,7 @@ inline process::Future<Option<Variable>> State::store(const Variable& variable)
 
 inline process::Future<Option<Variable>> State::_store(
     const internal::state::Entry& entry,
-    const bool& b) // TODO(benh): Remove 'const &' after fixing libprocess.
+    bool b)
 {
   if (b) {
     return Some(Variable(entry));
