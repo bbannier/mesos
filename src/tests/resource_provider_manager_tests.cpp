@@ -620,6 +620,20 @@ TEST(NOPE, NOPE)
 
     EXPECT_EQ(registry, get.get());
   }
+
+  registry.clear_resource_providers();
+
+  {
+    auto set = reg.set(registry);
+    AWAIT_READY(set);
+  }
+
+  {
+    auto get = reg.get();
+    AWAIT_READY(get);
+
+    EXPECT_EQ(registry, get.get());
+  }
 }
 
 } // namespace resource_provider {
