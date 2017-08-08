@@ -521,11 +521,17 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
 
   std::unique_ptr<mesos::state::Variable> variable_;
 
+  bool updating = false;
+
   explicit RegistrarProcess(std::unique_ptr<mesos::state::State> state)
     : state_(std::move(state)) {}
 
   Future<mesos::resource_provider::State> get()
   {
+    if (updating) {
+      return process::Failure("'get' calling while updating");
+    }
+
     // FIXME(bbannier): handle `after`.
     return state_->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
       .then(defer(
@@ -555,8 +561,19 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
 
     auto variable = variable_->mutate(serialize.get());
 
+    if (updating) {
+      return process::Failure("'set' called while updating");
+    }
+
+    updating = true;
+
     // FIXME(bbannier): handle `after`.
     return state_->store(variable)
+      .onAny(defer(
+          self(),
+          [this](const Future<Option<mesos::state::Variable>>&) {
+            updating = false;
+          }))
       .then(defer(
           self(),
           [this](const Future<Option<mesos::state::Variable>>& variable)
@@ -564,6 +581,8 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
             CHECK_SOME(variable.get());
 
             variable_.reset(new mesos::state::Variable(variable->get()));
+
+            updating = false;
 
             return Nothing();
           }));
