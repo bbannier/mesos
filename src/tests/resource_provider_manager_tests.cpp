@@ -539,7 +539,7 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
               return process::Failure(deserialize.error());
             }
 
-            *variable_ = variable.get();
+            variable_.reset(new mesos::state::Variable(variable.get()));
 
             return deserialize.get();
           }));
@@ -563,7 +563,7 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
             -> Future<Nothing> {
             CHECK_SOME(variable.get());
 
-            *variable_ = variable->get();
+            variable_.reset(new mesos::state::Variable(variable->get()));
 
             return Nothing();
           }));
