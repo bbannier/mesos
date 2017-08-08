@@ -423,3 +423,187 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 } // namespace tests {
 } // namespace internal {
 } // namespace mesos {
+
+namespace mesos {
+namespace resource_provider {
+
+struct NOPE : internal::tests::MesosTest {};
+
+TEST_F(NOPE, NOPE)
+{
+  std::unique_ptr<mesos::state::Storage> storage{
+    new mesos::state::InMemoryStorage{}};
+
+  std::unique_ptr<mesos::state::State> state{
+    new mesos::state::protobuf::State{storage.get()}};
+
+  // state.fetch<state::protobuf::Variable<State>>("resource_provider_manager");
+
+  const auto& fetch = state->fetch("resource_provider_manager");
+
+  AWAIT_READY(fetch);
+  Try<State> deserialize = protobuf::deserialize<State>(fetch->value());
+
+  ASSERT_SOME(deserialize);
+  EXPECT_TRUE(deserialize->resource_providers().empty());
+
+  State deserialize_ = deserialize.get();
+  deserialize_.add_resource_providers()->mutable_id()->set_value(
+      "test_resource_provider");
+
+  auto serialize = protobuf::serialize(deserialize_);
+  ASSERT_SOME(serialize);
+
+  auto fetch_ = fetch.get();
+  fetch_.mutate(serialize.get());
+
+  auto store = state->store(fetch_);
+
+  AWAIT_READY(store);
+  ASSERT_SOME(store.get());
+  EXPECT_EQ(fetch_.value(), store.get()->value());
+}
+
+bool operator==(
+    const State::ResourceProvider& lhs,
+    const State::ResourceProvider& rhs)
+{
+  if (lhs.id() != rhs.id()) {
+    return false;
+  }
+
+  return true;
+}
+bool operator!=(
+    const State::ResourceProvider& lhs,
+    const State::ResourceProvider& rhs)
+{
+  return !(lhs == rhs);
+}
+
+bool operator==(const State& lhs, const State& rhs)
+{
+  if (lhs.resource_providers_size() != rhs.resource_providers_size()) {
+    return false;
+  }
+
+  for (int i = 0; i < lhs.resource_providers_size(); ++i) {
+    if (lhs.resource_providers(i) != rhs.resource_providers(i)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+bool operator!=(const State& lhs, const State& rhs) { return !(lhs == rhs); }
+
+std::ostream& operator<<(
+    std::ostream& stream,
+    const State::ResourceProvider& resourceProvider)
+{
+  return stream << resourceProvider.id();
+}
+
+std::ostream& operator<<(std::ostream& stream, const State& state)
+{
+  std::string join = strings::join(", ", state.resource_providers());
+
+  return stream << "{" << join << "}";
+}
+
+namespace state {
+
+constexpr char RESOURCE_PROVIDER_MANAGER_STATE[] = "resource_provider_manager";
+
+std::unique_ptr<mesos::state::Variable> _variable;
+
+Future<mesos::resource_provider::State> get(
+    mesos::state::State* state)
+{
+  // FIXME(bbannier): handle `after`.
+  return state->fetch(RESOURCE_PROVIDER_MANAGER_STATE).then(
+        [](const process::Future<mesos::state::Variable>& variable)
+          -> Future<mesos::resource_provider::State> {
+          Try<State> deserialize =
+            protobuf::deserialize<State>(variable->value());
+
+          if (deserialize.isError()) {
+            return process::Failure(deserialize.error());
+          }
+
+          LOG(INFO) << "got " << deserialize.get();
+
+          _variable.reset(new mesos::state::Variable(variable.get()));
+
+          return deserialize.get();
+        });
+}
+
+Future<Nothing> set(mesos::state::State* state, const State& state_) {
+  LOG(INFO) << "set " << state_;
+  Try<string> serialize = protobuf::serialize(state_);
+
+  if (serialize.isError()) {
+    return process::Failure(serialize.error());
+  }
+
+  auto variable_ = _variable->mutate(serialize.get());
+
+  // FIXME(bbannier): handle `after`.
+  return state->store(variable_).then(
+      [](const Future<Option<mesos::state::Variable>>& variable)
+        -> Future<Nothing> {
+        if (variable->isNone()) {
+          return process::Failure(
+              "Stored value has changed after the value to update has been "
+              "read");
+        }
+
+        LOG(INFO)
+          << "set "
+         << protobuf::deserialize<State>(variable->get().value()).get();
+
+        _variable.reset(new mesos::state::Variable(variable->get()));
+
+        return Nothing();
+      });
+}
+
+} // namespace state {
+
+
+TEST_F(NOPE, NOPE2)
+{
+  std::unique_ptr<mesos::state::Storage> storage{
+    new mesos::state::InMemoryStorage{}};
+    // new mesos::state::LevelDBStorage{os::getcwd()}};
+
+  std::unique_ptr<mesos::state::State> state_{
+    new mesos::state::protobuf::State{storage.get()}};
+
+  {
+    auto get = state::get(state_.get());
+    AWAIT_READY(get);
+
+    EXPECT_TRUE(get->resource_providers().empty());
+  }
+
+  mesos::resource_provider::State state;
+  state.add_resource_providers()->mutable_id()->set_value("foo");
+  ASSERT_FALSE(state.resource_providers().empty());
+
+  {
+    auto set = state::set(state_.get(), state);
+    AWAIT_READY(set);
+  }
+
+  {
+    auto get = state::get(state_.get());
+    AWAIT_READY(get);
+
+    EXPECT_EQ(state, get.get());
+  }
+}
+
+} // namespace resource_provider {
+} // namespace mesos {

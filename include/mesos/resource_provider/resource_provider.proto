@@ -103,3 +103,11 @@ message Call {
   optional Subscribe subscribe = 3;
   optional Update update = 4;
 }
+
+message State {
+  message ResourceProvider {
+    required ResourceProviderID id = 1;
+  }
+
+  repeated ResourceProvider resource_providers = 1;
+}
