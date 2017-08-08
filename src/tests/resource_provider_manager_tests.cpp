@@ -427,46 +427,9 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 namespace mesos {
 namespace resource_provider {
 
-struct NOPE : internal::tests::MesosTest {};
-
-TEST_F(NOPE, NOPE)
-{
-  std::unique_ptr<mesos::state::Storage> storage{
-    new mesos::state::InMemoryStorage{}};
-
-  std::unique_ptr<mesos::state::State> state{
-    new mesos::state::protobuf::State{storage.get()}};
-
-  // state.fetch<state::protobuf::Variable<State>>("resource_provider_manager");
-
-  const auto& fetch = state->fetch("resource_provider_manager");
-
-  AWAIT_READY(fetch);
-  Try<State> deserialize = protobuf::deserialize<State>(fetch->value());
-
-  ASSERT_SOME(deserialize);
-  EXPECT_TRUE(deserialize->resource_providers().empty());
-
-  State deserialize_ = deserialize.get();
-  deserialize_.add_resource_providers()->mutable_id()->set_value(
-      "test_resource_provider");
-
-  auto serialize = protobuf::serialize(deserialize_);
-  ASSERT_SOME(serialize);
-
-  auto fetch_ = fetch.get();
-  fetch_.mutate(serialize.get());
-
-  auto store = state->store(fetch_);
-
-  AWAIT_READY(store);
-  ASSERT_SOME(store.get());
-  EXPECT_EQ(fetch_.value(), store.get()->value());
-}
-
 bool operator==(
-    const State::ResourceProvider& lhs,
-    const State::ResourceProvider& rhs)
+    const Registry::ResourceProvider& lhs,
+    const Registry::ResourceProvider& rhs)
 {
   if (lhs.id() != rhs.id()) {
     return false;
@@ -475,13 +438,13 @@ bool operator==(
   return true;
 }
 bool operator!=(
-    const State::ResourceProvider& lhs,
-    const State::ResourceProvider& rhs)
+    const Registry::ResourceProvider& lhs,
+    const Registry::ResourceProvider& rhs)
 {
   return !(lhs == rhs);
 }
 
-bool operator==(const State& lhs, const State& rhs)
+bool operator==(const Registry& lhs, const Registry& rhs)
 {
   if (lhs.resource_providers_size() != rhs.resource_providers_size()) {
     return false;
@@ -495,18 +458,21 @@ bool operator==(const State& lhs, const State& rhs)
 
   return true;
 }
-bool operator!=(const State& lhs, const State& rhs) { return !(lhs == rhs); }
+bool operator!=(const Registry& lhs, const Registry& rhs)
+{
+  return !(lhs == rhs);
+}
 
 std::ostream& operator<<(
     std::ostream& stream,
-    const State::ResourceProvider& resourceProvider)
+    const Registry::ResourceProvider& resourceProvider)
 {
   return stream << resourceProvider.id();
 }
 
-std::ostream& operator<<(std::ostream& stream, const State& state)
+std::ostream& operator<<(std::ostream& stream, const Registry& registry)
 {
-  std::string join = strings::join(", ", state.resource_providers());
+  std::string join = strings::join(", ", registry.resource_providers());
 
   return stream << "{" << join << "}";
 }
@@ -526,7 +492,7 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
   explicit RegistrarProcess(std::unique_ptr<mesos::state::State> state)
     : state_(std::move(state)) {}
 
-  Future<mesos::resource_provider::State> get()
+  Future<mesos::resource_provider::Registry> get()
   {
     if (updating) {
       return process::Failure("'get' calling while updating");
@@ -536,9 +502,9 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
       .then(defer(
           self(),
           [this](const process::Future<mesos::state::Variable>& variable)
-            -> Future<mesos::resource_provider::State> {
-            Try<State> deserialize =
-              protobuf::deserialize<State>(variable->value());
+            -> Future<mesos::resource_provider::Registry> {
+            Try<Registry> deserialize =
+              protobuf::deserialize<Registry>(variable->value());
 
             if (deserialize.isError()) {
               return process::Failure(deserialize.error());
@@ -550,7 +516,7 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
           }));
   }
 
-  Future<Nothing> set(const State& registry)
+  Future<Nothing> set(const Registry& registry)
   {
     Try<string> serialize = protobuf::serialize(registry);
 
@@ -589,8 +555,8 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
 
 struct Registrar
 {
-  Registrar(std::unique_ptr<mesos::state::State> state)
-    : registrarProcess_(new RegistrarProcess{std::move(state)})
+  Registrar(std::unique_ptr<mesos::state::State> registry)
+    : registrarProcess_(new RegistrarProcess{std::move(registry)})
   {
     process::spawn(*registrarProcess_, false);
   }
@@ -605,15 +571,15 @@ struct Registrar
     process::wait(pid);
   }
 
-  Future<mesos::resource_provider::State> get()
+  Future<mesos::resource_provider::Registry> get()
   {
     return process::dispatch(*registrarProcess_, &RegistrarProcess::get);
   }
 
-  Future<Nothing> set(const State& state_)
+  Future<Nothing> set(const Registry& registry)
   {
     return process::dispatch(
-        *registrarProcess_, &RegistrarProcess::set, state_);
+        *registrarProcess_, &RegistrarProcess::set, registry);
   }
 
   std::unique_ptr<RegistrarProcess> registrarProcess_;
@@ -622,7 +588,7 @@ struct Registrar
 } // namespace state {
 
 
-TEST_F(NOPE, NOPE2)
+TEST(NOPE, NOPE)
 {
   std::unique_ptr<mesos::state::Storage> storage{
     new mesos::state::InMemoryStorage{}};
@@ -639,12 +605,12 @@ TEST_F(NOPE, NOPE2)
     EXPECT_TRUE(get->resource_providers().empty());
   }
 
-  mesos::resource_provider::State state;
-  state.add_resource_providers()->mutable_id()->set_value("foo");
-  ASSERT_FALSE(state.resource_providers().empty());
+  mesos::resource_provider::Registry registry;
+  registry.add_resource_providers()->mutable_id()->set_value("foo");
+  ASSERT_FALSE(registry.resource_providers().empty());
 
   {
-    auto set = reg.set(state);
+    auto set = reg.set(registry);
     AWAIT_READY(set);
   }
 
@@ -652,7 +618,7 @@ TEST_F(NOPE, NOPE2)
     auto get = reg.get();
     AWAIT_READY(get);
 
-    EXPECT_EQ(state, get.get());
+    EXPECT_EQ(registry, get.get());
   }
 }
 

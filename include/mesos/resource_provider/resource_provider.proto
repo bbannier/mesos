@@ -104,7 +104,7 @@ message Call {
   optional Update update = 4;
 }
 
-message State {
+message Registry {
   message ResourceProvider {
     required ResourceProviderID id = 1;
   }
