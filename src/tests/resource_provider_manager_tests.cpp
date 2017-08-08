@@ -532,7 +532,6 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
       return process::Failure("'get' calling while updating");
     }
 
-    // FIXME(bbannier): handle `after`.
     return state_->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
       .then(defer(
           self(),
@@ -567,7 +566,6 @@ struct RegistrarProcess : process::Process<RegistrarProcess>
 
     updating = true;
 
-    // FIXME(bbannier): handle `after`.
     return state_->store(variable)
       .onAny(defer(
           self(),
