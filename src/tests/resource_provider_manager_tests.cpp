@@ -515,19 +515,19 @@ namespace state {
 
 constexpr char RESOURCE_PROVIDER_MANAGER_STATE[] = "resource_provider_manager";
 
-struct RegistryProcess : process::Process<RegistryProcess>
+struct RegistrarProcess : process::Process<RegistrarProcess>
 {
-  std::unique_ptr<mesos::state::State> _state;
+  std::unique_ptr<mesos::state::State> state_;
 
-  std::unique_ptr<mesos::state::Variable> _variable;
+  std::unique_ptr<mesos::state::Variable> variable_;
 
-  explicit RegistryProcess(std::unique_ptr<mesos::state::State> state)
-    : _state(std::move(state)) {}
+  explicit RegistrarProcess(std::unique_ptr<mesos::state::State> state)
+    : state_(std::move(state)) {}
 
   Future<mesos::resource_provider::State> get()
   {
     // FIXME(bbannier): handle `after`.
-    return _state->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
+    return state_->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
       .then(defer(
           self(),
           [this](const process::Future<mesos::state::Variable>& variable)
@@ -539,49 +539,50 @@ struct RegistryProcess : process::Process<RegistryProcess>
               return process::Failure(deserialize.error());
             }
 
-            _variable.reset(new mesos::state::Variable(variable.get()));
+            *variable_ = variable.get();
 
             return deserialize.get();
           }));
   }
 
-  Future<Nothing> set(const State& state_)
+  Future<Nothing> set(const State& registry)
   {
-    Try<string> serialize = protobuf::serialize(state_);
+    Try<string> serialize = protobuf::serialize(registry);
 
     if (serialize.isError()) {
       return process::Failure(serialize.error());
     }
 
-    auto variable_ = _variable->mutate(serialize.get());
+    auto variable = variable_->mutate(serialize.get());
 
     // FIXME(bbannier): handle `after`.
-    return _state->store(variable_)
+    return state_->store(variable)
       .then(defer(
           self(),
           [this](const Future<Option<mesos::state::Variable>>& variable)
             -> Future<Nothing> {
             CHECK_SOME(variable.get());
-            _variable.reset(new mesos::state::Variable(variable->get()));
+
+            *variable_ = variable->get();
 
             return Nothing();
           }));
   }
 };
 
-struct Registry
+struct Registrar
 {
-  Registry(std::unique_ptr<mesos::state::State> state)
-    : registryProcess(new RegistryProcess{std::move(state)})
+  Registrar(std::unique_ptr<mesos::state::State> state)
+    : registrarProcess_(new RegistrarProcess{std::move(state)})
   {
-    process::spawn(*registryProcess, false);
+    process::spawn(*registrarProcess_, false);
   }
 
-  Registry(Registry&&) = default;
+  Registrar(Registrar&&) = default;
 
-  ~Registry()
+  ~Registrar()
   {
-    auto pid = registryProcess->self();
+    auto pid = registrarProcess_->self();
 
     process::terminate(pid);
     process::wait(pid);
@@ -589,15 +590,16 @@ struct Registry
 
   Future<mesos::resource_provider::State> get()
   {
-    return process::dispatch(*registryProcess, &RegistryProcess::get);
+    return process::dispatch(*registrarProcess_, &RegistrarProcess::get);
   }
 
   Future<Nothing> set(const State& state_)
   {
-    return process::dispatch(*registryProcess, &RegistryProcess::set, state_);
+    return process::dispatch(
+        *registrarProcess_, &RegistrarProcess::set, state_);
   }
 
-  std::unique_ptr<RegistryProcess> registryProcess;
+  std::unique_ptr<RegistrarProcess> registrarProcess_;
 };
 
 } // namespace state {
@@ -611,7 +613,7 @@ TEST_F(NOPE, NOPE2)
   std::unique_ptr<mesos::state::State> state_{
     new mesos::state::protobuf::State{storage.get()}};
 
-  state::Registry reg{std::move(state_)};
+  state::Registrar reg{std::move(state_)};
 
   {
     auto get = reg.get();
