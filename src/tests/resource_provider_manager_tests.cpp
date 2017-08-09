@@ -430,10 +430,10 @@ TEST(NOPE, NOPE)
   std::unique_ptr<mesos::state::State> state_{
     new mesos::state::protobuf::State{storage.get()}};
 
-  mesos::resource_provider::Registrar reg{std::move(state_)};
+  mesos::resource_provider::Registrar registrar{std::move(state_)};
 
   {
-    Future<mesos::resource_provider::Registry> get = reg.get();
+    Future<mesos::resource_provider::Registry> get = registrar.get();
     AWAIT_READY(get);
 
     EXPECT_TRUE(get->resource_providers().empty());
@@ -444,12 +444,12 @@ TEST(NOPE, NOPE)
   ASSERT_FALSE(registry.resource_providers().empty());
 
   {
-    Future<Nothing> set = reg.set(registry);
+    Future<Nothing> set = registrar.set(registry);
     AWAIT_READY(set);
   }
 
   {
-    Future<mesos::resource_provider::Registry> get = reg.get();
+    Future<mesos::resource_provider::Registry> get = registrar.get();
     AWAIT_READY(get);
 
     EXPECT_EQ(registry, get.get());
@@ -458,12 +458,12 @@ TEST(NOPE, NOPE)
   registry.clear_resource_providers();
 
   {
-    Future<Nothing> set = reg.set(registry);
+    Future<Nothing> set = registrar.set(registry);
     AWAIT_READY(set);
   }
 
   {
-    Future<mesos::resource_provider::Registry> get = reg.get();
+    Future<mesos::resource_provider::Registry> get = registrar.get();
     AWAIT_READY(get);
 
     EXPECT_EQ(registry, get.get());
