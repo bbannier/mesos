@@ -21,7 +21,7 @@
 
 #include <mesos/resource_provider/resource_provider.hpp>
 
-#include <mesos/state/state.hpp>
+#include <mesos/state/protobuf.hpp>
 
 #include <process/future.hpp>
 
@@ -35,7 +35,7 @@ class RegistrarProcess;
 class Registrar
 {
 public:
-  explicit Registrar(std::unique_ptr<mesos::state::State> registry);
+  explicit Registrar(std::unique_ptr<mesos::state::protobuf::State> registry);
 
   Registrar(Registrar&&) = default;
 

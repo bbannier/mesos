@@ -32,8 +32,8 @@
 
 using std::string;
 
-using mesos::state::State;
-using mesos::state::Variable;
+using mesos::state::protobuf::State;
+using mesos::state::protobuf::Variable;
 
 using mesos::resource_provider::Registry;
 
@@ -63,7 +63,7 @@ public:
 private:
   std::unique_ptr<State> state_;
 
-  std::unique_ptr<Variable> variable_;
+  Option<Variable<Registry>> variable_;
 
   bool updating_ = false;
 };
@@ -75,32 +75,19 @@ Future<Registry> RegistrarProcess::recover()
     return Failure("'get' calling while updating");
   }
 
-  return state_->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
+  return state_->fetch<Registry>(RESOURCE_PROVIDER_MANAGER_STATE)
     .then(defer(
         self(),
-        [this](const Future<Variable>& variable) -> Future<Registry> {
-          Try<Registry> deserialize =
-            protobuf::deserialize<Registry>(variable->value());
+        [this](const Future<Variable<Registry>>& variable) -> Future<Registry> {
+          variable_ = variable.get();
 
-          if (deserialize.isError()) {
-            return Failure(deserialize.error());
-          }
-
-          variable_.reset(new Variable(variable.get()));
-
-          return deserialize.get();
+          return variable->get();
         }));
 }
 
 Future<Nothing> RegistrarProcess::store(const Registry& registry)
 {
-  Try<string> serialize = protobuf::serialize(registry);
-
-  if (serialize.isError()) {
-    return Failure(serialize.error());
-  }
-
-  const Variable variable = variable_->mutate(serialize.get());
+  const Variable<Registry> variable = variable_->mutate(registry);
 
   if (updating_) {
     return Failure("'set' called while updating");
@@ -111,15 +98,16 @@ Future<Nothing> RegistrarProcess::store(const Registry& registry)
   return state_->store(variable)
     .onAny(defer(
         self(),
-        [this](const Future<Option<Variable>>&) {
+        [this](const Future<Option<Variable<Registry>>>&) {
           updating_ = false;
         }))
     .then(defer(
         self(),
-        [this](const Future<Option<Variable>>& variable) -> Future<Nothing> {
+        [this](const Future<Option<Variable<Registry>>>& variable)
+          -> Future<Nothing> {
           CHECK_SOME(variable.get());
 
-          variable_.reset(new Variable(variable->get()));
+          variable_ = variable->get();
 
           updating_ = false;
 
