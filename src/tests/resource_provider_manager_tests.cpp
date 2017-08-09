@@ -421,63 +421,6 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
   EXPECT_EQ(expectedResources, message->updateTotalResources->total);
 }
 
-} // namespace tests {
-} // namespace internal {
-} // namespace mesos {
-
-namespace mesos {
-namespace resource_provider {
-
-bool operator==(
-    const Registry::ResourceProvider& lhs,
-    const Registry::ResourceProvider& rhs)
-{
-  if (lhs.id() != rhs.id()) {
-    return false;
-  }
-
-  return true;
-}
-bool operator!=(
-    const Registry::ResourceProvider& lhs,
-    const Registry::ResourceProvider& rhs)
-{
-  return !(lhs == rhs);
-}
-
-bool operator==(const Registry& lhs, const Registry& rhs)
-{
-  if (lhs.resource_providers_size() != rhs.resource_providers_size()) {
-    return false;
-  }
-
-  for (int i = 0; i < lhs.resource_providers_size(); ++i) {
-    if (lhs.resource_providers(i) != rhs.resource_providers(i)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-bool operator!=(const Registry& lhs, const Registry& rhs)
-{
-  return !(lhs == rhs);
-}
-
-std::ostream& operator<<(
-    std::ostream& stream,
-    const Registry::ResourceProvider& resourceProvider)
-{
-  return stream << resourceProvider.id();
-}
-
-std::ostream& operator<<(std::ostream& stream, const Registry& registry)
-{
-  std::string join = strings::join(", ", registry.resource_providers());
-
-  return stream << "{" << join << "}";
-}
-
 
 TEST(NOPE, NOPE)
 {
@@ -487,10 +430,11 @@ TEST(NOPE, NOPE)
   std::unique_ptr<mesos::state::State> state_{
     new mesos::state::protobuf::State{storage.get()}};
 
-  state::Registrar reg{std::move(state_)};
+  // FIXME(bbannier): remove state?
+  mesos::resource_provider::state::Registrar reg{std::move(state_)};
 
   {
-    auto get = reg.get();
+    Future<mesos::resource_provider::Registry> get = reg.get();
     AWAIT_READY(get);
 
     EXPECT_TRUE(get->resource_providers().empty());
@@ -501,12 +445,12 @@ TEST(NOPE, NOPE)
   ASSERT_FALSE(registry.resource_providers().empty());
 
   {
-    auto set = reg.set(registry);
+    Future<Nothing> set = reg.set(registry);
     AWAIT_READY(set);
   }
 
   {
-    auto get = reg.get();
+    Future<mesos::resource_provider::Registry> get = reg.get();
     AWAIT_READY(get);
 
     EXPECT_EQ(registry, get.get());
@@ -515,17 +459,18 @@ TEST(NOPE, NOPE)
   registry.clear_resource_providers();
 
   {
-    auto set = reg.set(registry);
+    Future<Nothing> set = reg.set(registry);
     AWAIT_READY(set);
   }
 
   {
-    auto get = reg.get();
+    Future<mesos::resource_provider::Registry> get = reg.get();
     AWAIT_READY(get);
 
     EXPECT_EQ(registry, get.get());
   }
 }
 
-} // namespace resource_provider {
+} // namespace tests {
+} // namespace internal {
 } // namespace mesos {
