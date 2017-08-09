@@ -440,15 +440,19 @@ TEST(ResourceProviderRegistrarTest, Registrar)
     Future<mesos::resource_provider::Registry> recover = registrar.recover();
     AWAIT_READY(recover);
 
-    EXPECT_TRUE(recover->resource_providers().empty());
+    EXPECT_TRUE(recover->resource_providers().resource_providers().empty());
 
     registry = recover.get();
   }
 
   // Add a single resource provider to the registry. We expect to be
   // able to store this state in the registrar and recover that state.
-  registry.add_resource_providers()->mutable_id()->set_value("foo");
-  ASSERT_FALSE(registry.resource_providers().empty());
+  mesos::resource_provider::Registry::ResourceProvider* resourceProvider =
+    registry.mutable_resource_providers()->add_resource_providers();
+
+  resourceProvider->mutable_id()->set_value("foo");
+
+  ASSERT_FALSE(registry.resource_providers().resource_providers().empty());
 
   {
     Future<Nothing> store = registrar.store(registry);

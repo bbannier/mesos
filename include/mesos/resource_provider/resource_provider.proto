@@ -115,5 +115,9 @@ message Registry {
     required ResourceProviderID id = 1;
   }
 
-  repeated ResourceProvider resource_providers = 1;
+  message ResourceProviders {
+    repeated ResourceProvider resource_providers = 1;
+  }
+
+  optional ResourceProviders resource_providers = 1;
 }

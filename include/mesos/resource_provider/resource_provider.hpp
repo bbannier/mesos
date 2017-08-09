@@ -22,6 +22,7 @@
 
 // FIXME(bbannier): move this where it belongs.
 
+#include <algorithm>
 #include <string>
 
 #include <mesos/type_utils.hpp>
@@ -51,16 +52,37 @@ inline bool operator!=(
 }
 
 
-inline bool operator==(const Registry& lhs, const Registry& rhs)
+inline bool operator==(
+    const Registry::ResourceProviders& lhs,
+    const Registry::ResourceProviders& rhs)
 {
   if (lhs.resource_providers_size() != rhs.resource_providers_size()) {
     return false;
   }
 
-  for (int i = 0; i < lhs.resource_providers_size(); ++i) {
-    if (lhs.resource_providers(i) != rhs.resource_providers(i)) {
-      return false;
-    }
+  if (!std::equal(
+          lhs.resource_providers().begin(),
+          lhs.resource_providers().end(),
+          rhs.resource_providers().begin())) {
+    return false;
+  }
+
+  return true;
+}
+
+
+inline bool operator!=(
+    const Registry::ResourceProviders& lhs,
+    const Registry::ResourceProviders& rhs)
+{
+  return !(lhs == rhs);
+}
+
+
+inline bool operator==(const Registry& lhs, const Registry& rhs)
+{
+  if (lhs.resource_providers() != rhs.resource_providers()) {
+    return false;
   }
 
   return true;
@@ -83,7 +105,9 @@ inline std::ostream& operator<<(
 
 inline std::ostream& operator<<(std::ostream& stream, const Registry& registry)
 {
-  std::string join = strings::join(", ", registry.resource_providers());
+  std::string join = strings::join(
+      ", ",
+      registry.resource_providers().resource_providers());
 
   return stream << "{" << join << "}";
 }
