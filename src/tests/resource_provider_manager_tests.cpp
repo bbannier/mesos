@@ -50,6 +50,7 @@
 #include "internal/devolve.hpp"
 
 #include "resource_provider/manager.hpp"
+#include "resource_provider/state.hpp"
 
 #include "slave/slave.hpp"
 
@@ -476,116 +477,6 @@ std::ostream& operator<<(std::ostream& stream, const Registry& registry)
 
   return stream << "{" << join << "}";
 }
-
-namespace state {
-
-constexpr char RESOURCE_PROVIDER_MANAGER_STATE[] = "resource_provider_manager";
-
-struct RegistrarProcess : process::Process<RegistrarProcess>
-{
-  std::unique_ptr<mesos::state::State> state_;
-
-  std::unique_ptr<mesos::state::Variable> variable_;
-
-  bool updating = false;
-
-  explicit RegistrarProcess(std::unique_ptr<mesos::state::State> state)
-    : state_(std::move(state)) {}
-
-  Future<mesos::resource_provider::Registry> get()
-  {
-    if (updating) {
-      return process::Failure("'get' calling while updating");
-    }
-
-    return state_->fetch(RESOURCE_PROVIDER_MANAGER_STATE)
-      .then(defer(
-          self(),
-          [this](const process::Future<mesos::state::Variable>& variable)
-            -> Future<mesos::resource_provider::Registry> {
-            Try<Registry> deserialize =
-              protobuf::deserialize<Registry>(variable->value());
-
-            if (deserialize.isError()) {
-              return process::Failure(deserialize.error());
-            }
-
-            variable_.reset(new mesos::state::Variable(variable.get()));
-
-            return deserialize.get();
-          }));
-  }
-
-  Future<Nothing> set(const Registry& registry)
-  {
-    Try<string> serialize = protobuf::serialize(registry);
-
-    if (serialize.isError()) {
-      return process::Failure(serialize.error());
-    }
-
-    auto variable = variable_->mutate(serialize.get());
-
-    if (updating) {
-      return process::Failure("'set' called while updating");
-    }
-
-    updating = true;
-
-    return state_->store(variable)
-      .onAny(defer(
-          self(),
-          [this](const Future<Option<mesos::state::Variable>>&) {
-            updating = false;
-          }))
-      .then(defer(
-          self(),
-          [this](const Future<Option<mesos::state::Variable>>& variable)
-            -> Future<Nothing> {
-            CHECK_SOME(variable.get());
-
-            variable_.reset(new mesos::state::Variable(variable->get()));
-
-            updating = false;
-
-            return Nothing();
-          }));
-  }
-};
-
-struct Registrar
-{
-  Registrar(std::unique_ptr<mesos::state::State> registry)
-    : registrarProcess_(new RegistrarProcess{std::move(registry)})
-  {
-    process::spawn(*registrarProcess_, false);
-  }
-
-  Registrar(Registrar&&) = default;
-
-  ~Registrar()
-  {
-    auto pid = registrarProcess_->self();
-
-    process::terminate(pid);
-    process::wait(pid);
-  }
-
-  Future<mesos::resource_provider::Registry> get()
-  {
-    return process::dispatch(*registrarProcess_, &RegistrarProcess::get);
-  }
-
-  Future<Nothing> set(const Registry& registry)
-  {
-    return process::dispatch(
-        *registrarProcess_, &RegistrarProcess::set, registry);
-  }
-
-  std::unique_ptr<RegistrarProcess> registrarProcess_;
-};
-
-} // namespace state {
 
 
 TEST(NOPE, NOPE)
