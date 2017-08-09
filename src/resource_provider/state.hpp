@@ -41,9 +41,9 @@ public:
 
   ~Registrar();
 
-  process::Future<mesos::resource_provider::Registry> get();
+  process::Future<mesos::resource_provider::Registry> recover();
 
-  process::Future<Nothing> set(const Registry& registry);
+  process::Future<Nothing> store(const Registry& registry);
 
 private:
   std::unique_ptr<RegistrarProcess> registrarProcess_;

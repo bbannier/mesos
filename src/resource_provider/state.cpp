@@ -56,9 +56,9 @@ public:
   explicit RegistrarProcess(std::unique_ptr<State> state)
     : state_(std::move(state)) {}
 
-  Future<Registry> get();
+  Future<Registry> recover();
 
-  Future<Nothing> set(const Registry& registry);
+  Future<Nothing> store(const Registry& registry);
 
 private:
   std::unique_ptr<State> state_;
@@ -69,7 +69,7 @@ private:
 };
 
 
-Future<Registry> RegistrarProcess::get()
+Future<Registry> RegistrarProcess::recover()
 {
   if (updating_) {
     return Failure("'get' calling while updating");
@@ -92,7 +92,7 @@ Future<Registry> RegistrarProcess::get()
         }));
 }
 
-Future<Nothing> RegistrarProcess::set(const Registry& registry)
+Future<Nothing> RegistrarProcess::store(const Registry& registry)
 {
   Try<string> serialize = protobuf::serialize(registry);
 
@@ -144,15 +144,15 @@ Registrar::~Registrar()
 }
 
 
-Future<Registry> Registrar::get()
+Future<Registry> Registrar::recover()
 {
-  return dispatch(*registrarProcess_, &RegistrarProcess::get);
+  return dispatch(*registrarProcess_, &RegistrarProcess::recover);
 }
 
 
-Future<Nothing> Registrar::set(const Registry& registry)
+Future<Nothing> Registrar::store(const Registry& registry)
 {
-  return dispatch(*registrarProcess_, &RegistrarProcess::set, registry);
+  return dispatch(*registrarProcess_, &RegistrarProcess::store, registry);
 }
 
 } // namespace resource_provider {

@@ -433,10 +433,10 @@ TEST(NOPE, NOPE)
   mesos::resource_provider::Registrar registrar{std::move(state_)};
 
   {
-    Future<mesos::resource_provider::Registry> get = registrar.get();
-    AWAIT_READY(get);
+    Future<mesos::resource_provider::Registry> recover = registrar.recover();
+    AWAIT_READY(recover);
 
-    EXPECT_TRUE(get->resource_providers().empty());
+    EXPECT_TRUE(recover->resource_providers().empty());
   }
 
   mesos::resource_provider::Registry registry;
@@ -444,29 +444,29 @@ TEST(NOPE, NOPE)
   ASSERT_FALSE(registry.resource_providers().empty());
 
   {
-    Future<Nothing> set = registrar.set(registry);
-    AWAIT_READY(set);
+    Future<Nothing> store = registrar.store(registry);
+    AWAIT_READY(store);
   }
 
   {
-    Future<mesos::resource_provider::Registry> get = registrar.get();
-    AWAIT_READY(get);
+    Future<mesos::resource_provider::Registry> recover = registrar.recover();
+    AWAIT_READY(recover);
 
-    EXPECT_EQ(registry, get.get());
+    EXPECT_EQ(registry, recover.get());
   }
 
   registry.clear_resource_providers();
 
   {
-    Future<Nothing> set = registrar.set(registry);
-    AWAIT_READY(set);
+    Future<Nothing> store = registrar.store(registry);
+    AWAIT_READY(store);
   }
 
   {
-    Future<mesos::resource_provider::Registry> get = registrar.get();
-    AWAIT_READY(get);
+    Future<mesos::resource_provider::Registry> recover = registrar.recover();
+    AWAIT_READY(recover);
 
-    EXPECT_EQ(registry, get.get());
+    EXPECT_EQ(registry, recover.get());
   }
 }
 
