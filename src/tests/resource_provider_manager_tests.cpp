@@ -430,8 +430,7 @@ TEST(NOPE, NOPE)
   std::unique_ptr<mesos::state::State> state_{
     new mesos::state::protobuf::State{storage.get()}};
 
-  // FIXME(bbannier): remove state?
-  mesos::resource_provider::state::Registrar reg{std::move(state_)};
+  mesos::resource_provider::Registrar reg{std::move(state_)};
 
   {
     Future<mesos::resource_provider::Registry> get = reg.get();

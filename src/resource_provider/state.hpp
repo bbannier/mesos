@@ -29,7 +29,6 @@
 
 namespace mesos {
 namespace resource_provider {
-namespace state {
 
 class RegistrarProcess;
 
@@ -50,7 +49,6 @@ private:
   std::unique_ptr<RegistrarProcess> registrarProcess_;
 };
 
-} // namespace state {
 } // namespace resource_provider {
 } // namespace mesos {
 

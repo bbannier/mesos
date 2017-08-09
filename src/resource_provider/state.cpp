@@ -46,7 +46,6 @@ using process::Process;
 
 namespace mesos {
 namespace resource_provider {
-namespace state {
 
 constexpr char RESOURCE_PROVIDER_MANAGER_STATE[] = "resource_provider_manager";
 
@@ -156,6 +155,5 @@ Future<Nothing> Registrar::set(const Registry& registry)
   return dispatch(*registrarProcess_, &RegistrarProcess::set, registry);
 }
 
-} // namespace state {
 } // namespace resource_provider {
 } // namespace mesos {
