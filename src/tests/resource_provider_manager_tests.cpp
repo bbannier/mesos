@@ -422,7 +422,8 @@ TEST_F(ResourceProviderManagerTest, Subscribe)
 }
 
 
-TEST(NOPE, NOPE)
+// Test that the resource provider registrar works as expected.
+TEST(ResourceProviderRegistrarTest, Registrar)
 {
   std::unique_ptr<mesos::state::Storage> storage{
     new mesos::state::InMemoryStorage{}};
@@ -432,30 +433,22 @@ TEST(NOPE, NOPE)
 
   mesos::resource_provider::Registrar registrar{std::move(state_)};
 
+  mesos::resource_provider::Registry registry;
+
+  // We expect the registry to contain no resource providers initially.
   {
     Future<mesos::resource_provider::Registry> recover = registrar.recover();
     AWAIT_READY(recover);
 
     EXPECT_TRUE(recover->resource_providers().empty());
+
+    registry = recover.get();
   }
 
-  mesos::resource_provider::Registry registry;
+  // Add a single resource provider to the registry. We expect to be
+  // able to store this state in the registrar and recover that state.
   registry.add_resource_providers()->mutable_id()->set_value("foo");
   ASSERT_FALSE(registry.resource_providers().empty());
-
-  {
-    Future<Nothing> store = registrar.store(registry);
-    AWAIT_READY(store);
-  }
-
-  {
-    Future<mesos::resource_provider::Registry> recover = registrar.recover();
-    AWAIT_READY(recover);
-
-    EXPECT_EQ(registry, recover.get());
-  }
-
-  registry.clear_resource_providers();
 
   {
     Future<Nothing> store = registrar.store(registry);
