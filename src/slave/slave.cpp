@@ -178,16 +178,17 @@ static CommandInfo defaultExecutorCommandInfo(
     const Option<std::string>& user);
 
 
-Slave::Slave(const string& id,
-             const slave::Flags& _flags,
-             MasterDetector* _detector,
-             Containerizer* _containerizer,
-             Files* _files,
-             GarbageCollector* _gc,
-             StatusUpdateManager* _statusUpdateManager,
-             ResourceEstimator* _resourceEstimator,
-             QoSController* _qosController,
-             const Option<Authorizer*>& _authorizer)
+Slave::Slave(
+    const string& id,
+    const slave::Flags& _flags,
+    MasterDetector* _detector,
+    Containerizer* _containerizer,
+    Files* _files,
+    GarbageCollector* _gc,
+    StatusUpdateManager* _statusUpdateManager,
+    ResourceEstimator* _resourceEstimator,
+    QoSController* _qosController,
+    const Option<Authorizer*>& _authorizer)
   : ProcessBase(id),
     state(RECOVERING),
     flags(_flags),
@@ -212,6 +213,9 @@ Slave::Slave(const string& id,
     resourceEstimator(_resourceEstimator),
     qosController(_qosController),
     authorizer(_authorizer),
+    storage(new mesos::state::LevelDBStorage(
+        paths::getLatestSlavePath(_flags.work_dir))),
+    resourceProviderManager(storage.get()),
     secretGenerator(nullptr) {}
 
 

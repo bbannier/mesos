@@ -44,6 +44,8 @@
 #include <mesos/slave/qos_controller.hpp>
 #include <mesos/slave/resource_estimator.hpp>
 
+#include <mesos/state/leveldb.hpp>
+
 #include <mesos/v1/executor/executor.hpp>
 
 #include <process/http.hpp>
@@ -647,6 +649,7 @@ private:
   // (allocated and oversubscribable) resources.
   Option<Resources> oversubscribedResources;
 
+  process::Owned<mesos::state::LevelDBStorage> storage;
   ResourceProviderManager resourceProviderManager;
   Option<Resources> resourceProviderResources;
 

@@ -101,7 +101,8 @@ TEST_F(ResourceProviderManagerHttpApiTest, NoContentType)
   request.method = "POST";
   request.headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
-  ResourceProviderManager manager;
+  mesos::state::InMemoryStorage storage;
+  ResourceProviderManager manager(&storage);
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -126,7 +127,8 @@ TEST_F(ResourceProviderManagerHttpApiTest, ValidJsonButInvalidProtobuf)
   request.headers["Content-Type"] = APPLICATION_JSON;
   request.body = stringify(object);
 
-  ResourceProviderManager manager;
+  mesos::state::InMemoryStorage storage;
+  ResourceProviderManager manager(&storage);
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -149,7 +151,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, MalformedContent)
   request.headers["Content-Type"] = stringify(contentType);
   request.body = "MALFORMED_CONTENT";
 
-  ResourceProviderManager manager;
+  mesos::state::InMemoryStorage storage;
+  ResourceProviderManager manager(&storage);
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -195,7 +198,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, UnsupportedContentMediaType)
   request.headers["Content-Type"] = unknownMediaType;
   request.body = serialize(contentType, call);
 
-  ResourceProviderManager manager;
+  mesos::state::InMemoryStorage storage;
+  ResourceProviderManager manager(&storage);
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -226,7 +230,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, Subscribe)
   request.headers["Content-Type"] = stringify(contentType);
   request.body = serialize(contentType, call);
 
-  ResourceProviderManager manager;
+  mesos::state::InMemoryStorage storage;
+  ResourceProviderManager manager(&storage);
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -320,7 +325,8 @@ class ResourceProviderManagerTest : public ::testing::Test
 {
 public:
   ResourceProviderManagerTest()
-    : endpointProcess(&resourceProviderManager),
+    : resourceProviderManager(&storage),
+      endpointProcess(&resourceProviderManager),
       pid(process::spawn(endpointProcess, false)) {}
 
   ~ResourceProviderManagerTest()
@@ -347,6 +353,7 @@ public:
     ResourceProviderManager* resourceProviderManager;
   };
 
+  mesos::state::InMemoryStorage storage;
   ResourceProviderManager resourceProviderManager;
   EndpointProcess endpointProcess;
   const PID<EndpointProcess> pid;

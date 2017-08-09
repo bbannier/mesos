@@ -26,6 +26,14 @@
 #include "resource_provider/message.hpp"
 
 namespace mesos {
+
+namespace state {
+
+// Forward declarations.
+class Storage;
+
+} // namespace state {
+
 namespace internal {
 
 // Forward declarations.
@@ -35,7 +43,7 @@ class ResourceProviderManagerProcess;
 class ResourceProviderManager
 {
 public:
-  ResourceProviderManager();
+  ResourceProviderManager(mesos::state::Storage* storage);
   ~ResourceProviderManager();
 
   ResourceProviderManager(

@@ -32,6 +32,7 @@
 #include <process/process.hpp>
 
 #include <stout/hashmap.hpp>
+#include <stout/nothing.hpp>
 #include <stout/protobuf.hpp>
 #include <stout/uuid.hpp>
 
@@ -41,6 +42,7 @@
 #include "internal/devolve.hpp"
 #include "internal/evolve.hpp"
 
+#include "resource_provider/registrar.hpp"
 #include "resource_provider/validation.hpp"
 
 namespace http = process::http;
@@ -64,10 +66,11 @@ using process::wait;
 
 using process::http::Accepted;
 using process::http::BadRequest;
-using process::http::OK;
+using process::http::InternalServerError;
 using process::http::MethodNotAllowed;
 using process::http::NotAcceptable;
 using process::http::NotImplemented;
+using process::http::OK;
 using process::http::Pipe;
 using process::http::UnsupportedMediaType;
 
@@ -133,7 +136,7 @@ class ResourceProviderManagerProcess
   : public Process<ResourceProviderManagerProcess>
 {
 public:
-  ResourceProviderManagerProcess();
+  ResourceProviderManagerProcess(mesos::state::Storage* storage);
 
   Future<http::Response> api(
       const http::Request& request,
@@ -152,13 +155,31 @@ private:
       ResourceProvider* resourceProvider,
       const Call::Update& update);
 
+  void initialize() override;
+
   ResourceProviderID newResourceProviderId();
+
+  mesos::resource_provider::Registrar registrar;
+  Option<mesos::resource_provider::Registry> registry;
 };
 
 
-ResourceProviderManagerProcess::ResourceProviderManagerProcess()
-  : ProcessBase(process::ID::generate("resource-provider-manager"))
+ResourceProviderManagerProcess::ResourceProviderManagerProcess(
+    mesos::state::Storage* storage)
+  : ProcessBase(process::ID::generate("resource-provider-manager")),
+    registrar(storage) {}
+
+
+void ResourceProviderManagerProcess::initialize()
 {
+  registrar.recover()
+    .then(defer(
+        self(),
+        [this](const mesos::resource_provider::Registry& registry_)
+          -> Future<Nothing> {
+          registry = registry_;
+          return Nothing();
+        }));
 }
 
 
@@ -221,6 +242,11 @@ Future<http::Response> ResourceProviderManagerProcess::api(
     return NotAcceptable(
         string("Expecting 'Accept' to allow ") +
         "'" + APPLICATION_PROTOBUF + "' or '" + APPLICATION_JSON + "'");
+  }
+
+  if (registry.isNone()) {
+    return InternalServerError(
+        "Resource provider manager is not recovered yet");
   }
 
   switch(call.type()) {
@@ -317,8 +343,8 @@ ResourceProviderID ResourceProviderManagerProcess::newResourceProviderId()
 }
 
 
-ResourceProviderManager::ResourceProviderManager()
-  : process(new ResourceProviderManagerProcess())
+ResourceProviderManager::ResourceProviderManager(mesos::state::Storage* storage)
+  : process(new ResourceProviderManagerProcess(storage))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }
