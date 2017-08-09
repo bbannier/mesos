@@ -35,7 +35,7 @@ class RegistrarProcess;
 class Registrar
 {
 public:
-  explicit Registrar(std::unique_ptr<mesos::state::protobuf::State> registry);
+  explicit Registrar(mesos::state::Storage* storage);
 
   Registrar(Registrar&&) = default;
 

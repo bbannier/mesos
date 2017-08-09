@@ -428,10 +428,7 @@ TEST(ResourceProviderRegistrarTest, Registrar)
   std::unique_ptr<mesos::state::Storage> storage{
     new mesos::state::InMemoryStorage{}};
 
-  std::unique_ptr<mesos::state::protobuf::State> state{
-    new mesos::state::protobuf::State{storage.get()}};
-
-  mesos::resource_provider::Registrar registrar{std::move(state)};
+  mesos::resource_provider::Registrar registrar{storage.get()};
 
   mesos::resource_provider::Registry registry;
 

@@ -53,15 +53,15 @@ constexpr char RESOURCE_PROVIDER_MANAGER_STATE[] = "resource_provider_manager";
 class RegistrarProcess : public Process<RegistrarProcess>
 {
 public:
-  explicit RegistrarProcess(std::unique_ptr<State> state)
-    : state_(std::move(state)) {}
+  explicit RegistrarProcess(mesos::state::Storage* storage)
+    : state_(storage) {}
 
   Future<Registry> recover();
 
   Future<Nothing> store(const Registry& registry);
 
 private:
-  std::unique_ptr<State> state_;
+  State state_;
 
   Option<Variable<Registry>> variable_;
 
@@ -75,7 +75,7 @@ Future<Registry> RegistrarProcess::recover()
     return Failure("'get' calling while updating");
   }
 
-  return state_->fetch<Registry>(RESOURCE_PROVIDER_MANAGER_STATE)
+  return state_.fetch<Registry>(RESOURCE_PROVIDER_MANAGER_STATE)
     .then(defer(
         self(),
         [this](const Future<Variable<Registry>>& variable) -> Future<Registry> {
@@ -95,7 +95,7 @@ Future<Nothing> RegistrarProcess::store(const Registry& registry)
 
   updating_ = true;
 
-  return state_->store(variable)
+  return state_.store(variable)
     .onAny(defer(
         self(),
         [this](const Future<Option<Variable<Registry>>>&) {
@@ -116,8 +116,8 @@ Future<Nothing> RegistrarProcess::store(const Registry& registry)
 }
 
 
-Registrar::Registrar(std::unique_ptr<State> registry)
-  : registrarProcess_(new RegistrarProcess{std::move(registry)})
+Registrar::Registrar(mesos::state::Storage* storage)
+  : registrarProcess_(new RegistrarProcess{storage})
 {
   process::spawn(*registrarProcess_, false);
 }
