@@ -85,6 +85,7 @@ Future<Registry> RegistrarProcess::recover()
         }));
 }
 
+
 Future<Nothing> RegistrarProcess::store(const Registry& registry)
 {
   const Variable<Registry> variable = variable_->mutate(registry);
