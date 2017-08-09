@@ -104,7 +104,13 @@ message Call {
   optional Update update = 4;
 }
 
+
+// A top level object that is managed by the Registrar and persisted.
 message Registry {
+  // NOTE: This object defines wrappers around existing objects in case
+  // the Registry wishes to store more information about the wrapped objects
+  // in the future.
+
   message ResourceProvider {
     required ResourceProviderID id = 1;
   }
