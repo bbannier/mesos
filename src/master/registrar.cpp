@@ -97,7 +97,7 @@ public:
   virtual ~RegistrarProcess() {}
 
   // Registrar implementation.
-  Future<Registry> recover(const MasterInfo& info);
+  Future<Registry> recover(const Option<MasterInfo>& info);
   Future<bool> apply(Owned<Operation> operation);
 
 protected:
@@ -196,7 +196,7 @@ private:
 
   // Continuations.
   void _recover(
-      const MasterInfo& info,
+      const Option<MasterInfo>& info,
       const Future<Variable>& recovery);
   void __recover(const Future<bool>& recover);
   Future<bool> _apply(Owned<Operation> operation);
@@ -243,6 +243,13 @@ private:
   // The authentication realm, if any, into which this process'
   // endpoints will be installed.
   Option<string> authenticationRealm;
+};
+
+
+class NoOp : public Operation
+{
+public:
+  Try<bool> perform(Registry*, hashset<SlaveID>*) override { return false; }
 };
 
 
@@ -339,7 +346,7 @@ string RegistrarProcess::registryHelp()
 }
 
 
-Future<Registry> RegistrarProcess::recover(const MasterInfo& info)
+Future<Registry> RegistrarProcess::recover(const Option<MasterInfo>& info)
 {
   if (recovered.isNone()) {
     VLOG(1) << "Recovering registrar";
@@ -362,7 +369,7 @@ Future<Registry> RegistrarProcess::recover(const MasterInfo& info)
 
 
 void RegistrarProcess::_recover(
-    const MasterInfo& info,
+    const Option<MasterInfo>& info,
     const Future<Variable>& recovery)
 {
   updating = false;
@@ -398,9 +405,16 @@ void RegistrarProcess::_recover(
   registry->Swap(&deserialized.get());
 
   // Perform the Recover operation to add the new MasterInfo.
-  Owned<Operation> operation(new Recover(info));
+  Owned<Operation> operation;
+
+  if (info.isNone()) {
+    operation.reset(new NoOp());
+  } else {
+    operation.reset(new Recover(info.get()));
+  }
+
   operations.push_back(operation);
-  operation->future()
+  operations.back()->future()
     .onAny(defer(self(), &Self::__recover, lambda::_1));
 
   update();
@@ -594,7 +608,7 @@ Registrar::~Registrar()
 }
 
 
-Future<Registry> Registrar::recover(const MasterInfo& info)
+Future<Registry> Registrar::recover(const Option<MasterInfo>& info)
 {
   return dispatch(process, &RegistrarProcess::recover, info);
 }
