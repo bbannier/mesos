@@ -26,6 +26,7 @@
 #include <process/pid.hpp>
 
 #include <stout/hashset.hpp>
+#include <stout/option.hpp>
 
 #include "master/flags.hpp"
 #include "master/registry.hpp"
@@ -103,7 +104,7 @@ public:
   // Registrar, to eliminate the need for passing 'MasterInfo'.
   // This is required as the Registrar is injected into the Master,
   // and therefore MasterInfo is unknown during construction.
-  process::Future<Registry> recover(const MasterInfo& info);
+  process::Future<Registry> recover(const Option<MasterInfo>& info);
 
   // Applies an operation on the Registry.
   // Returns:
