@@ -470,7 +470,8 @@ TEST(ResourceProviderRegistrarTest, Registrar)
 namespace mesos {
 namespace internal {
 
-class AdmitResourceProvider : public master::Operation {
+class AdmitResourceProvider : public master::Operation
+{
 public:
   explicit AdmitResourceProvider(const ResourceProviderID& id) : id_(id) {}
   AdmitResourceProvider(const AdmitResourceProvider&) = default;
@@ -478,26 +479,80 @@ public:
 private:
   Try<bool> perform(Registry* registry, hashset<SlaveID>*) override
   {
-    if (std::find_if(
-            registry->resource_providers().begin(),
-            registry->resource_providers().end(),
-            [this](const Registry::ResourceProvider& resourceProvider) {
-              // FIXME(bbannier): use proper op.
-              return resourceProvider.id() == this->id_;
-            }) != registry->resource_providers().end()) {
-      return Error("Resource provider already admitted");
+    if (registry->has_resource_providers()) {
+      const auto& resourceProviders =
+        registry->resource_providers().resource_providers();
+
+      if (std::find_if(
+              resourceProviders.begin(),
+              resourceProviders.end(),
+              [this](const Registry::ResourceProvider& resourceProvider) {
+                return resourceProvider.id() == this->id_;
+              }) != resourceProviders.end()) {
+        return Error("Resource provider already admitted");
+      }
     }
 
     Registry::ResourceProvider resourceProvider;
     resourceProvider.mutable_id()->CopyFrom(id_);
-    registry->add_resource_providers()->CopyFrom(resourceProvider);
 
+    registry->mutable_resource_providers()->add_resource_providers()->CopyFrom(
+        resourceProvider);
 
     return true; // Mutation.
   }
 
   const ResourceProviderID id_;
 };
+
+
+class RemoveResourceProvider : public master::Operation
+{
+public:
+  explicit RemoveResourceProvider(const ResourceProviderID& id) : id_(id) {}
+  RemoveResourceProvider(const RemoveResourceProvider&) = default;
+
+private:
+  Try<bool> perform(Registry* registry, hashset<SlaveID>*) override
+  {
+    mesos::resource_provider::registry::ResourceProvider resourceProvider;
+    resourceProvider.mutable_id()->CopyFrom(id_);
+
+    if (!registry->has_resource_providers()) {
+      return Error("Attempted to remove an unknown resource provider");
+    }
+
+    const auto& resourceProviders =
+      registry->resource_providers().resource_providers();
+
+    auto pos = std::find_if(
+        resourceProviders.begin(),
+        resourceProviders.end(),
+        [this](const mesos::resource_provider::registry::ResourceProvider&
+                 resourceProvider) {
+          return resourceProvider.id() == this->id_;
+        });
+
+    if (pos == resourceProviders.end()) {
+      return Error("Attempted to remove an unknown resource provider");
+    }
+
+    registry->mutable_resource_providers()->mutable_resource_providers()->erase(
+        pos);
+
+    // If this operation removed the last resource provider, also clear the
+    // registry field instead of leaving an empty field behind.
+    if (resourceProviders.empty()) {
+      registry->clear_resource_providers();
+    }
+
+    return true; // Mutation.
+  }
+
+private:
+  const ResourceProviderID id_;
+};
+
 
 namespace slave {
 namespace paths {
@@ -507,7 +562,7 @@ string getResourcesProviderInfoPath(const string& rootDir)
 {
   return path::join(rootDir, "resource_providers", RESOURCE_PROVIDER_INFO_FILE);
 }
-} // namespace paths
+} // namespace paths {
 
 namespace state {
 // FIXME(bbannier): Add this to slave::state::State.
@@ -580,6 +635,91 @@ inline Try<Nothing> checkpoint(
 
 } // namespace state {
 } // namespace slave {
+
+
+class Registrar
+{
+public:
+  class Operation
+  {
+    virtual ~Operation() = default;
+
+    virtual Try<bool> perform(resource_provider::Registry* registry) = 0;
+  };
+
+  static Try<Owned<Registrar>> create(master::Registrar* masterRegistrar);
+  static Try<Owned<Registrar>> create(const slave::Flags& slaveFlags);
+
+  virtual ~Registrar() = default;
+
+  virtual Future<resource_provider::Registry> recover() = 0;
+  virtual Future<bool> apply(Owned<Operation> operation) = 0;
+};
+
+class MasterRegistrar : public Registrar {
+public:
+  explicit MasterRegistrar(master::Registrar* masterRegistrar)
+    : masterRegistrar_(masterRegistrar) {}
+
+  Future<resource_provider::Registry> recover() override
+  {
+    // FIXME(bbannier): support opt to not run Recover op.
+    auto p = masterRegistrar_->recover({});
+    return masterRegistrar_->recover(MasterInfo{})
+      .then(
+          [](const mesos::internal::Registry& registry)
+            -> resource_provider::Registry {
+            resource_provider::Registry registry_;
+
+            registry_.mutable_resource_providers()->CopyFrom(
+                registry.resource_providers());
+
+            return registry_;
+          });
+  }
+
+  Future<bool> apply(Owned<Operation> operation) override { UNIMPLEMENTED; }
+
+private:
+  master::Registrar* masterRegistrar_ = nullptr;
+};
+
+
+class AgentRegistrar : public Registrar {
+public:
+  explicit AgentRegistrar(const slave::Flags& slaveFlags) {}
+
+  Future<resource_provider::Registry> recover() override
+  {
+    UNIMPLEMENTED;
+  }
+
+  Future<bool> apply(Owned<Operation> operation) override { UNIMPLEMENTED; }
+};
+
+
+Try<Owned<Registrar>> create(master::Registrar* masterRegistrar)
+{
+  return new MasterRegistrar(masterRegistrar);
+}
+
+Try<Owned<Registrar>> create(const slave::Flags& slaveFlags)
+{
+  return new AgentRegistrar(slaveFlags);
+}
+
+
+TEST(NOPE, FOO)
+{
+  {
+    master::Registrar* masterRegistrar = nullptr;
+    auto mreg = Registrar::create(masterRegistrar);
+  }
+
+  {
+    auto sreg = Registrar::create({});
+  }
+}
 
 
 class NOPE: public tests::MesosTest {};

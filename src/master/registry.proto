@@ -17,8 +17,12 @@
 syntax = "proto2";
 
 import "mesos/mesos.proto";
+
 import "mesos/maintenance/maintenance.proto";
+
 import "mesos/quota/quota.proto";
+
+import "mesos/resource_provider/registry.proto";
 
 package mesos.internal;
 
@@ -110,5 +114,5 @@ message Registry {
   repeated Weight weights = 6;
 
 // All known resource providers.
-  repeated ResourceProvider resource_providers = 8;
+  optional resource_provider.registry.ResourceProviders resource_providers = 8;
 }
