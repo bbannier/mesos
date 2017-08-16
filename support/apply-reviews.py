@@ -260,7 +260,7 @@ def commit_patch(options):
     with open(message_file, 'w') as message:
         message.write(data['message'])
 
-    cmd = u'git commit --author \"{author}\" {_amend} -aF \"{message}\"'.format(
+    cmd = u'git commit -n --author \"{author}\" {_amend} -aF \"{message}\"'.format(
         author=quote(data['author']),
         _amend=amend,
         message=message_file)
