@@ -304,6 +304,8 @@ CXX_PROTOS =								\
   ../include/mesos/oci/spec.pb.h					\
   ../include/mesos/quota/quota.pb.cc					\
   ../include/mesos/quota/quota.pb.h					\
+  ../include/mesos/resource_provider/registry.pb.cc			\
+  ../include/mesos/resource_provider/registry.pb.h			\
   ../include/mesos/resource_provider/resource_provider.pb.cc		\
   ../include/mesos/resource_provider/resource_provider.pb.h		\
   ../include/mesos/scheduler/scheduler.pb.cc				\
@@ -712,6 +714,8 @@ resourceproviderdir = $(pkgincludedir)/resource_provider
 
 resourceprovider_HEADERS =						\
   $(top_srcdir)/include/mesos/resource_provider/resource_provider.hpp	\
+  $(top_srcdir)/include/mesos/resource_provider/registry.hpp		\
+  $(top_srcdir)/include/mesos/resource_provider/registry.proto		\
   $(top_srcdir)/include/mesos/resource_provider/resource_provider.proto
 
 nodist_resourceprovider_HEADERS =					\
@@ -956,7 +960,6 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   resource_provider/driver.cpp						\
   resource_provider/local.cpp						\
   resource_provider/manager.cpp						\
-  resource_provider/registrar.cpp					\
   resource_provider/validation.cpp					\
   resource_provider/storage/provider.cpp				\
   sched/sched.cpp							\
@@ -1097,7 +1100,6 @@ libmesos_no_3rdparty_la_SOURCES +=					\
   resource_provider/local.hpp						\
   resource_provider/manager.hpp						\
   resource_provider/message.hpp						\
-  resource_provider/registrar.hpp					\
   resource_provider/validation.hpp					\
   resource_provider/storage/provider.hpp				\
   sched/constants.hpp							\
