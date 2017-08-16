@@ -656,7 +656,8 @@ public:
   virtual Future<bool> apply(Owned<Operation> operation) = 0;
 };
 
-class MasterRegistrar : public Registrar {
+class MasterRegistrar : public Registrar
+{
 public:
   explicit MasterRegistrar(master::Registrar* masterRegistrar)
     : masterRegistrar_(masterRegistrar) {}
@@ -667,6 +668,7 @@ public:
     auto p = masterRegistrar_->recover({});
     return masterRegistrar_->recover(MasterInfo{})
       .then(
+          // FIXME(bbannier): defer to process.
           [](const mesos::internal::Registry& registry)
             -> resource_provider::Registry {
             resource_provider::Registry registry_;
@@ -678,14 +680,20 @@ public:
           });
   }
 
-  Future<bool> apply(Owned<Operation> operation) override { UNIMPLEMENTED; }
+  Future<bool> apply(Owned<Operation> operation) override
+  {
+    // master::Operation operation_; // FIXME(bbannier)
+
+    UNIMPLEMENTED;
+  }
 
 private:
   master::Registrar* masterRegistrar_ = nullptr;
 };
 
 
-class AgentRegistrar : public Registrar {
+class AgentRegistrar : public Registrar
+{
 public:
   explicit AgentRegistrar(const slave::Flags& slaveFlags) {}
 
