@@ -24,6 +24,8 @@
 
 #include <stout/try.hpp>
 
+#include "master/registrar.hpp"
+
 #include "resource_provider/registry.hpp"
 
 #include "slave/flags.hpp"
@@ -62,6 +64,9 @@ public:
   private:
     bool success = false;
   };
+
+  static Try<process::Owned<Registrar>> create(
+      mesos::internal::master::Registrar* masterRegistrar);
 
   static Try<process::Owned<Registrar>> create(
       const mesos::internal::slave::Flags& slaveFlags);
@@ -113,6 +118,24 @@ public:
 
 private:
   std::unique_ptr<AgentRegistrarProcess> process_;
+};
+
+
+class MasterRegistrarProcess;
+
+
+class MasterRegistrar : public Registrar {
+public:
+  explicit MasterRegistrar(internal::master::Registrar* masterRegistrar);
+
+  ~MasterRegistrar() override;
+
+  process::Future<registry::Registry> recover() override;
+
+  process::Future<bool> apply(process::Owned<Operation> operation) override;
+
+private:
+  std::unique_ptr<MasterRegistrarProcess> process_;
 };
 
 } // namespace resource_provider {

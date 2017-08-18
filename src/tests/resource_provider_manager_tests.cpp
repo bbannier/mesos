@@ -459,6 +459,35 @@ TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
           new RemoveResourceProvider(resourceProviderId))));
 }
 
+
+// Test that the master resource provider registrar works as expected.
+TEST_F(ResourceProviderRegistrarTest, MasterRegistrar)
+{
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value("foo");
+
+  mesos::state::InMemoryStorage storage;
+  mesos::state::State state(&storage);
+  master::Registrar masterRegistrar(CreateMasterFlags(), &state);
+
+  Try<Owned<Registrar>> registrar = Registrar::create(&masterRegistrar);
+
+  ASSERT_SOME(registrar);
+  ASSERT_NE(nullptr, registrar->get());
+
+  // Applying operations on a not yet recovered registrar fails.
+  AWAIT_FAILED(registrar.get()->apply(Owned<Registrar::Operation>(
+          new AdmitResourceProvider(resourceProviderId))));
+
+  AWAIT_READY(registrar.get()->recover());
+
+  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
+          new AdmitResourceProvider(resourceProviderId))));
+
+  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
+          new RemoveResourceProvider(resourceProviderId))));
+}
+
 } // namespace tests {
 } // namespace internal {
 } // namespace mesos {

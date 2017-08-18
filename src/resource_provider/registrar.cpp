@@ -54,6 +54,7 @@ using process::Process;
 using process::Promise;
 
 
+namespace master = mesos::internal::master;
 namespace slave = mesos::internal::slave;
 
 namespace mesos {
@@ -140,6 +141,12 @@ Try<bool> RemoveResourceProvider::perform(Registry* registry)
 bool Registrar::Operation::set()
 {
   return Promise<bool>::set(success);
+}
+
+
+Try<Owned<Registrar>> Registrar::create(master::Registrar* masterRegistrar)
+{
+  return new MasterRegistrar(masterRegistrar);
 }
 
 
@@ -348,6 +355,116 @@ Future<bool> AgentRegistrar::apply(Owned<Operation> operation)
   return dispatch(
       process_.get(),
       &AgentRegistrarProcess::apply,
+      std::move(operation));
+}
+
+
+class MasterRegistrarProcess : public Process<MasterRegistrarProcess>
+{
+  // A helper class for adapting operations on the resource provider
+  // registry to the master registry.
+  class AdaptedOperation : public master::Operation
+  {
+  public:
+    AdaptedOperation(unique_ptr<Registrar::Operation> operation);
+
+  private:
+    Try<bool> perform(internal::Registry* registry, hashset<SlaveID>*) override;
+
+    unique_ptr<Registrar::Operation> operation_;
+  };
+
+public:
+  explicit MasterRegistrarProcess(master::Registrar* masterRegistrar);
+
+  Future<Registry> recover();
+
+  Future<bool> apply(Owned<Registrar::Operation> operation);
+
+private:
+  master::Registrar* registrar_;
+  Option<Promise<Registry>> recovered_;
+};
+
+
+MasterRegistrarProcess::AdaptedOperation::AdaptedOperation(
+    unique_ptr<Registrar::Operation> operation)
+  : operation_(std::move(operation)) {}
+
+
+Try<bool> MasterRegistrarProcess::AdaptedOperation::perform(
+    internal::Registry* registry, hashset<SlaveID>*)
+{
+  return (*operation_)(registry->mutable_resource_provider_registry());
+}
+
+
+MasterRegistrarProcess::MasterRegistrarProcess(
+    master::Registrar* masterRegistrar)
+  : ProcessBase(process::ID::generate("resource-provider-agent-registrar")),
+    registrar_(masterRegistrar) {}
+
+
+Future<Registry> MasterRegistrarProcess::recover()
+{
+  recovered_ = Promise<Registry>();
+
+  registrar_->recover(None()).then(
+      defer(self(), [this](const internal::Registry& recovered) {
+        Registry registry;
+
+        if (recovered.has_resource_provider_registry()) {
+          registry.CopyFrom(recovered.resource_provider_registry());
+        }
+
+        recovered_->set(registry);
+
+        return Nothing();
+      }));
+
+  return recovered_->future();
+}
+
+
+Future<bool> MasterRegistrarProcess::apply(
+    Owned<Registrar::Operation> operation)
+{
+  if (recovered_.isNone()) {
+    return Failure("Attempted to apply the operation before recovering");
+  }
+
+  auto adaptedOperation = Owned<master::Operation>(new AdaptedOperation(
+      unique_ptr<Registrar::Operation>(operation.release())));
+
+  return registrar_->apply(std::move(adaptedOperation));
+}
+
+
+MasterRegistrar::MasterRegistrar(master::Registrar* masterRegistrar)
+  : process_(new MasterRegistrarProcess(masterRegistrar))
+{
+  process::spawn(process_.get(), false);
+}
+
+
+MasterRegistrar::~MasterRegistrar()
+{
+  process::terminate(*process_);
+  process::wait(*process_);
+}
+
+
+Future<Registry> MasterRegistrar::recover()
+{
+  return dispatch(process_.get(), &MasterRegistrarProcess::recover);
+}
+
+
+Future<bool> MasterRegistrar::apply(Owned<Operation> operation)
+{
+  return dispatch(
+      process_.get(),
+      &MasterRegistrarProcess::apply,
       std::move(operation));
 }
 
