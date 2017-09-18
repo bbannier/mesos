@@ -81,6 +81,8 @@
 #include "master/detector/standalone.hpp"
 #include "master/detector/zookeeper.hpp"
 
+#include "resource_provider/registrar.hpp"
+
 #include "slave/flags.hpp"
 #include "slave/gc.hpp"
 #include "slave/slave.hpp"

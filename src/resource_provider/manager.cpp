@@ -16,6 +16,8 @@
 
 #include "resource_provider/manager.hpp"
 
+#include <utility>
+
 #include <glog/logging.h>
 
 #include <string>
@@ -41,14 +43,20 @@
 #include "internal/devolve.hpp"
 #include "internal/evolve.hpp"
 
+#include "resource_provider/registrar.hpp"
 #include "resource_provider/validation.hpp"
 
 namespace http = process::http;
 
 using mesos::internal::resource_provider::validation::call::validate;
 
+using mesos::resource_provider::AdmitResourceProvider;
 using mesos::resource_provider::Call;
 using mesos::resource_provider::Event;
+using mesos::resource_provider::Registrar;
+using mesos::resource_provider::Registrar;
+
+using mesos::resource_provider::registry::Registry;
 
 using process::Failure;
 using process::Future;
@@ -136,7 +144,7 @@ class ResourceProviderManagerProcess
   : public Process<ResourceProviderManagerProcess>
 {
 public:
-  ResourceProviderManagerProcess();
+  ResourceProviderManagerProcess(Registrar* registrar);
 
   Future<http::Response> api(
       const http::Request& request,
@@ -156,12 +164,18 @@ private:
       const Call::UpdateOperationStatus& update);
 
   ResourceProviderID newResourceProviderId();
+
+  Registrar* registrar;
+  Option<mesos::resource_provider::registry::Registry> registry;
 };
 
 
-ResourceProviderManagerProcess::ResourceProviderManagerProcess()
-  : ProcessBase(process::ID::generate("resource-provider-manager"))
+ResourceProviderManagerProcess::ResourceProviderManagerProcess(
+    Registrar* registrar_)
+  : ProcessBase(process::ID::generate("resource-provider-manager")),
+    registrar(registrar_)
 {
+  registrar_->recover();
 }
 
 
@@ -321,6 +335,8 @@ void ResourceProviderManagerProcess::subscribe(
   }
 
   resourceProviders.put(resourceProviderInfo.id(), std::move(resourceProvider));
+  registrar->apply(Owned<Registrar::Operation>(
+      new AdmitResourceProvider(resourceProviderInfo.id())));
 
   ResourceProviderMessage message;
   message.type = ResourceProviderMessage::Type::UPDATE_TOTAL_RESOURCES;
@@ -351,8 +367,8 @@ ResourceProviderID ResourceProviderManagerProcess::newResourceProviderId()
 }
 
 
-ResourceProviderManager::ResourceProviderManager()
-  : process(new ResourceProviderManagerProcess())
+ResourceProviderManager::ResourceProviderManager(Registrar* registrar)
+  : process(new ResourceProviderManagerProcess(registrar))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

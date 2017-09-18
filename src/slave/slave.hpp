@@ -96,6 +96,11 @@
 
 namespace mesos {
 
+namespace resource_provider {
+// Forward declarations.
+class Registrar;
+} // resource_provider {
+
 // Forward declarations.
 class Authorizer;
 
@@ -655,7 +660,9 @@ private:
   // (allocated and oversubscribable) resources.
   Option<Resources> oversubscribedResources;
 
-  ResourceProviderManager resourceProviderManager;
+  process::Owned<resource_provider::Registrar> resourceProviderRegistrar;
+  process::Owned<ResourceProviderManager> resourceProviderManager;
+
   process::Owned<LocalResourceProviderDaemon> localResourceProviderDaemon;
 
   TimeInfo agentLogicalClock;

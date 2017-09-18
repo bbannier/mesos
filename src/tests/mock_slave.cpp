@@ -28,6 +28,8 @@
 
 #include <stout/option.hpp>
 
+#include "resource_provider/registrar.hpp"
+
 #include "slave/slave.hpp"
 #include "slave/status_update_manager.hpp"
 

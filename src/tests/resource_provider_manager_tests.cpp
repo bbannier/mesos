@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include <gmock/gmock.h>
+
 #include <gtest/gtest.h>
 
 #include <mesos/http.hpp>
@@ -37,6 +39,7 @@
 #include <stout/error.hpp>
 #include <stout/gtest.hpp>
 #include <stout/lambda.hpp>
+#include <stout/nothing.hpp>
 #include <stout/option.hpp>
 #include <stout/protobuf.hpp>
 #include <stout/recordio.hpp>
@@ -49,8 +52,11 @@
 
 #include "internal/devolve.hpp"
 
+#include "master/detector/standalone.hpp"
+
 #include "resource_provider/manager.hpp"
 #include "resource_provider/registrar.hpp"
+#include "resource_provider/registry.hpp"
 
 #include "slave/slave.hpp"
 
@@ -61,6 +67,7 @@ namespace http = process::http;
 using mesos::internal::slave::Slave;
 
 using mesos::master::detector::MasterDetector;
+using mesos::master::detector::StandaloneMasterDetector;
 
 using mesos::state::InMemoryStorage;
 using mesos::state::State;
@@ -95,6 +102,31 @@ class ResourceProviderManagerHttpApiTest
     public WithParamInterface<ContentType> {};
 
 
+class MockResourceProviderRegistrar : public mesos::resource_provider::Registrar
+{
+public:
+  MOCK_METHOD0(recover, process::Future<Nothing>());
+
+  MOCK_METHOD1(
+      apply,
+      process::Future<bool>(
+          process::Owned<mesos::resource_provider::Registrar::Operation>));
+
+  MockResourceProviderRegistrar()
+  {
+    ON_CALL(*this, recover())
+      .WillByDefault(Return(Nothing()));
+    EXPECT_CALL(*this, recover())
+      .WillRepeatedly(DoDefault());
+
+    ON_CALL(*this, apply(_))
+      .WillByDefault(Return(true));
+    EXPECT_CALL(*this, apply(_))
+      .WillRepeatedly(DoDefault());
+  }
+};
+
+
 // The tests are parameterized by the content type of the request.
 INSTANTIATE_TEST_CASE_P(
     ContentType,
@@ -108,7 +140,8 @@ TEST_F(ResourceProviderManagerHttpApiTest, NoContentType)
   request.method = "POST";
   request.headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
 
-  ResourceProviderManager manager;
+  MockResourceProviderRegistrar registrar;
+  ResourceProviderManager manager{&registrar};
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -133,7 +166,8 @@ TEST_F(ResourceProviderManagerHttpApiTest, ValidJsonButInvalidProtobuf)
   request.headers["Content-Type"] = APPLICATION_JSON;
   request.body = stringify(object);
 
-  ResourceProviderManager manager;
+  MockResourceProviderRegistrar registrar;
+  ResourceProviderManager manager{&registrar};
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -156,7 +190,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, MalformedContent)
   request.headers["Content-Type"] = stringify(contentType);
   request.body = "MALFORMED_CONTENT";
 
-  ResourceProviderManager manager;
+  MockResourceProviderRegistrar registrar;
+  ResourceProviderManager manager{&registrar};
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -202,7 +237,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, UnsupportedContentMediaType)
   request.headers["Content-Type"] = unknownMediaType;
   request.body = serialize(contentType, call);
 
-  ResourceProviderManager manager;
+  MockResourceProviderRegistrar registrar;
+  ResourceProviderManager manager{&registrar};
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -236,7 +272,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, Subscribe)
   request.headers["Content-Type"] = stringify(contentType);
   request.body = serialize(contentType, call);
 
-  ResourceProviderManager manager;
+  MockResourceProviderRegistrar registrar;
+  ResourceProviderManager manager{&registrar};
 
   Future<http::Response> response = manager.api(request, None());
 
@@ -293,18 +330,16 @@ TEST_P(ResourceProviderManagerHttpApiTest, AgentEndpoint)
   Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
 
-  Future<Nothing> __recover = FUTURE_DISPATCH(_, &Slave::__recover);
-
   Owned<MasterDetector> detector = master.get()->createDetector();
+
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
 
   Try<Owned<cluster::Slave>> agent = StartSlave(detector.get());
   ASSERT_SOME(agent);
 
-  AWAIT_READY(__recover);
-
-  // Wait for recovery to be complete.
-  Clock::pause();
-  Clock::settle();
+  // Wait for the agent to be registered before registering a resource provider.
+  AWAIT_READY(slaveRegisteredMessage);
 
   Call call;
   call.set_type(Call::SUBSCRIBE);

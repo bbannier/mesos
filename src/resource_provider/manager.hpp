@@ -26,6 +26,12 @@
 #include "resource_provider/message.hpp"
 
 namespace mesos {
+
+namespace resource_provider {
+// Forward declarations.
+class Registrar;
+}
+
 namespace internal {
 
 // Forward declarations.
@@ -35,7 +41,8 @@ class ResourceProviderManagerProcess;
 class ResourceProviderManager
 {
 public:
-  ResourceProviderManager();
+  ResourceProviderManager(resource_provider::Registrar* registrar);
+
   ~ResourceProviderManager();
 
   ResourceProviderManager(

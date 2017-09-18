@@ -92,6 +92,8 @@
 
 #include "module/manager.hpp"
 
+#include "resource_provider/registrar.hpp"
+
 #include "slave/constants.hpp"
 #include "slave/flags.hpp"
 #include "slave/paths.hpp"
@@ -737,9 +739,14 @@ void Slave::initialize()
         READWRITE_HTTP_AUTHENTICATION_REALM,
         Http::RESOURCE_PROVIDER_HELP(),
         [this](const http::Request& request,
-               const Option<Principal>& principal) {
+               const Option<Principal>& principal) -> Future<http::Response> {
           logRequest(request);
-          return resourceProviderManager.api(request, principal);
+          if (resourceProviderManager.get() != nullptr) {
+            return resourceProviderManager->api(request, principal);
+          } else {
+            return http::ServiceUnavailable(
+                "Resource providers are not available yet");
+          }
         });
 
   // TODO(ijimenez): Remove this endpoint at the end of the
@@ -1256,6 +1263,26 @@ void Slave::registered(
     default:
       LOG(FATAL) << "Unexpected agent state " << state;
       break;
+  }
+
+  {
+    Try<Owned<resource_provider::Registrar>> registrar =
+      resource_provider::Registrar::create(this->flags, slaveId);
+
+    if (registrar.isError()) {
+      LOG(FATAL)
+        << "Could not set up registrar for resource provider information: "
+        << registrar.error();
+    }
+
+    resourceProviderRegistrar = std::move(registrar.get());
+
+    resourceProviderManager = Owned<ResourceProviderManager>(
+        new ResourceProviderManager(resourceProviderRegistrar.get()));
+
+    // Start listening for messages from the resource provider manager.
+    resourceProviderManager->messages().get().onAny(
+        defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
   }
 
   // Send the latest total, including resources from resource providers. We send
@@ -6402,10 +6429,6 @@ void Slave::__recover(const Future<Nothing>& future)
     detection = detector->detect()
       .onAny(defer(self(), &Slave::detected, lambda::_1));
 
-    // Start listening for messages from the resource provider manager.
-    resourceProviderManager.messages().get().onAny(
-        defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
-
     // Forward oversubscribed resources.
     forwardOversubscribed();
 
@@ -6612,7 +6635,7 @@ void Slave::handleResourceProviderMessage(
                << (message.isFailed() ? message.failure() : "future discarded");
 
     // Wait for the next message.
-    resourceProviderManager.messages().get()
+    resourceProviderManager->messages().get()
       .onAny(defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
 
     return;
@@ -6677,7 +6700,7 @@ void Slave::handleResourceProviderMessage(
   }
 
   // Wait for the next message.
-  resourceProviderManager.messages().get()
+  resourceProviderManager->messages().get()
     .onAny(defer(self(), &Self::handleResourceProviderMessage, lambda::_1));
 }
 
