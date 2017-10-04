@@ -615,6 +615,9 @@ message UpdateSlaveMessage {
   // categories in `resource_categories` to denote which fields should
   // be examined. For backwards compatibility we interpret an unset
   // `category` field as if only oversubscribed was set.
+  //
+  // Oversubscribed resources must be revocable, while total resources
+  // must be non-revocable.
   message ResourceCategories {
     optional bool total = 1;
     optional bool oversubscribed = 2;
