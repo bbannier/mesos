@@ -6820,17 +6820,17 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
     newOversubscribed = oversubscribedResources;
   }
 
-  const Resources newAgentResources =
+  const Resources newSlaveResources =
     newTotal.getOrElse(slave->totalResources.nonRevocable()) +
     newOversubscribed.getOrElse(slave->totalResources.revocable());
 
-  if (newAgentResources == slave->totalResources) {
+  if (newSlaveResources == slave->totalResources) {
     LOG(INFO) << "Ignoring update on agent " << *slave
               << " as it reports no changes";
     return;
   }
 
-  slave->totalResources = newAgentResources;
+  slave->totalResources = newSlaveResources;
 
   // Now update the agent's resources in the allocator.
   allocator->updateSlave(slaveId, slave->totalResources);
