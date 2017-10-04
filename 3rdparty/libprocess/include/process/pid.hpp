@@ -24,6 +24,8 @@
 
 #include <stout/ip.hpp>
 
+#include <atomic>
+
 namespace process {
 
 // Forward declaration to break cyclic dependencies.
@@ -115,6 +117,8 @@ struct UPID
 
     ID() = default;
 
+    ID(const ID& other) { atomic_store(&id, other.id); }
+
     ID(const std::string& s)
       : id(std::make_shared<std::string>(s)) {}
 
@@ -123,7 +127,7 @@ struct UPID
 
     ID& operator=(std::string&& that)
     {
-      id = std::make_shared<std::string>(std::move(that));
+      std::atomic_store(&id, std::make_shared<std::string>(std::move(that)));
       return *this;
     }
 

@@ -460,7 +460,7 @@ private:
     void clearAllCallbacks();
 
     std::atomic_flag lock = ATOMIC_FLAG_INIT;
-    State state;
+    std::atomic<State> state;
     bool discard;
     bool associated;
 

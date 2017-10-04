@@ -12,6 +12,7 @@
 
 #include <glog/logging.h>
 
+#include <atomic>
 #include <list>
 #include <map>
 #include <mutex>
@@ -59,16 +60,16 @@ Time* current = new Time(Time::epoch());
 
 Duration* advanced = new Duration(Duration::zero());
 
-bool paused = false;
+std::atomic_bool paused(false);
 
 // For supporting Clock::settled(), false if we're not currently
 // settling (or we're not paused), true if we're currently attempting
 // to settle (and we're paused).
-bool settling = false;
+std::atomic_bool settling(false);
 
 // Lambda function to invoke when timers have expired.
-lambda::function<void(const list<Timer>&)>* callback =
-    new lambda::function<void(const list<Timer>&)>();
+std::atomic<lambda::function<void(const list<Timer>&)>*> callback(
+    new lambda::function<void(const list<Timer>&)>());
 
 // Keep track of 'ticks' that have been scheduled. To reduce the
 // number of outstanding delays on the EventLoop system, we only
