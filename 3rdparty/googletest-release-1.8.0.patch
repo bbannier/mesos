@@ -1,0 +1,31 @@
+From 16ec0217a15e6d4b5e61283fdfa58454bd4c9810 Mon Sep 17 00:00:00 2001
+From: Benjamin Bannier <bbannier@gmail.com>
+Date: Sat, 7 Oct 2017 01:02:12 +0200
+Subject: [PATCH] Prevented display GTest from printing names of suppressed
+ tests.
+
+---
+ googletest/src/gtest.cc | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/googletest/src/gtest.cc b/googletest/src/gtest.cc
+index d882ab2..8ad75ac 100644
+--- a/googletest/src/gtest.cc
++++ b/googletest/src/gtest.cc
+@@ -3060,13 +3060,6 @@ void PrettyUnitTestResultPrinter::OnTestIterationStart(
+ 
+   const char* const filter = GTEST_FLAG(filter).c_str();
+ 
+-  // Prints the filter if it's not *.  This reminds the user that some
+-  // tests may be skipped.
+-  if (!String::CStringEquals(filter, kUniversalFilter)) {
+-    ColoredPrintf(COLOR_YELLOW,
+-                  "Note: %s filter = %s\n", GTEST_NAME_, filter);
+-  }
+-
+   if (internal::ShouldShard(kTestTotalShards, kTestShardIndex, false)) {
+     const Int32 shard_index = Int32FromEnvOrDie(kTestShardIndex, -1);
+     ColoredPrintf(COLOR_YELLOW,
+-- 
+2.14.2
+
