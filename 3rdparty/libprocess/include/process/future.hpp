@@ -470,11 +470,16 @@ private:
     //   3. Error, the state is FAILED; 'error()' stores the message.
     Result<T> result;
 
-    std::vector<DiscardCallback> onDiscardCallbacks;
-    std::vector<ReadyCallback> onReadyCallbacks;
-    std::vector<FailedCallback> onFailedCallbacks;
-    std::vector<DiscardedCallback> onDiscardedCallbacks;
-    std::vector<AnyCallback> onAnyCallbacks;
+    std::shared_ptr<std::vector<DiscardCallback>> onDiscardCallbacks{
+      new std::vector<DiscardCallback>()};
+    std::shared_ptr<std::vector<ReadyCallback>> onReadyCallbacks{
+      new std::vector<ReadyCallback>()};
+    std::shared_ptr<std::vector<FailedCallback>> onFailedCallbacks{
+      new std::vector<FailedCallback>()};
+    std::shared_ptr<std::vector<DiscardedCallback>> onDiscardedCallbacks{
+      new std::vector<DiscardedCallback>()};
+    std::shared_ptr<std::vector<AnyCallback>> onAnyCallbacks{
+      new std::vector<AnyCallback>()};
   };
 
   // Sets the value for this future, unless the future is already set,
@@ -898,8 +903,8 @@ bool Promise<T>::discard(Future<T> future)
     // ourselves from one of the callbacks erroneously deleting the
     // future. In `Future::_set()` and `Future::fail()` we have to
     // explicitly take a copy to protect ourselves.
-    internal::run(future.data->onDiscardedCallbacks);
-    internal::run(future.data->onAnyCallbacks, future);
+    internal::run(*future.data->onDiscardedCallbacks);
+    internal::run(*future.data->onAnyCallbacks, future);
 
     future.data->clearAllCallbacks();
   }
@@ -928,11 +933,31 @@ Future<T>::Data::Data()
 template <typename T>
 void Future<T>::Data::clearAllCallbacks()
 {
-  onAnyCallbacks.clear();
-  onDiscardCallbacks.clear();
-  onDiscardedCallbacks.clear();
-  onFailedCallbacks.clear();
-  onReadyCallbacks.clear();
+  {
+    auto empty =
+      std::shared_ptr<std::vector<AnyCallback>>{new std::vector<AnyCallback>()};
+    std::atomic_store(&onAnyCallbacks, empty);
+  }
+  {
+    auto empty = std::shared_ptr<std::vector<DiscardCallback>>{
+      new std::vector<DiscardCallback>()};
+    std::atomic_store(&onDiscardCallbacks, empty);
+  }
+  {
+    auto empty = std::shared_ptr<std::vector<DiscardedCallback>>{
+      new std::vector<DiscardedCallback>()};
+    std::atomic_store(&onDiscardedCallbacks, empty);
+  }
+  {
+    auto empty = std::shared_ptr<std::vector<FailedCallback>>{
+      new std::vector<FailedCallback>()};
+    std::atomic_store(&onFailedCallbacks, empty);
+  }
+  {
+    auto empty = std::shared_ptr<std::vector<ReadyCallback>>{
+      new std::vector<ReadyCallback>()};
+    std::atomic_store(&onReadyCallbacks, empty);
+  }
 }
 
 
@@ -1037,7 +1062,7 @@ bool Future<T>::discard()
     if (!data->discard && data->state == PENDING) {
       result = data->discard = true;
 
-      callbacks.swap(data->onDiscardCallbacks);
+      callbacks.swap(*data->onDiscardCallbacks);
     }
   }
 
@@ -1119,7 +1144,7 @@ bool Future<T>::await(const Duration& duration) const
   synchronized (data->lock) {
     if (data->state == PENDING) {
       pending = true;
-      data->onAnyCallbacks.push_back(lambda::bind(&internal::awaited, latch));
+      data->onAnyCallbacks->push_back(lambda::bind(&internal::awaited, latch));
     }
   }
 
@@ -1178,7 +1203,7 @@ const Future<T>& Future<T>::onDiscard(DiscardCallback&& callback) const
     if (data->discard) {
       run = true;
     } else if (data->state == PENDING) {
-      data->onDiscardCallbacks.emplace_back(std::move(callback));
+      data->onDiscardCallbacks->emplace_back(std::move(callback));
     }
   }
 
@@ -1200,7 +1225,7 @@ const Future<T>& Future<T>::onReady(ReadyCallback&& callback) const
     if (data->state == READY) {
       run = true;
     } else if (data->state == PENDING) {
-      data->onReadyCallbacks.emplace_back(std::move(callback));
+      data->onReadyCallbacks->emplace_back(std::move(callback));
     }
   }
 
@@ -1222,7 +1247,7 @@ const Future<T>& Future<T>::onFailed(FailedCallback&& callback) const
     if (data->state == FAILED) {
       run = true;
     } else if (data->state == PENDING) {
-      data->onFailedCallbacks.emplace_back(std::move(callback));
+      data->onFailedCallbacks->emplace_back(std::move(callback));
     }
   }
 
@@ -1244,7 +1269,7 @@ const Future<T>& Future<T>::onDiscarded(DiscardedCallback&& callback) const
     if (data->state == DISCARDED) {
       run = true;
     } else if (data->state == PENDING) {
-      data->onDiscardedCallbacks.emplace_back(std::move(callback));
+      data->onDiscardedCallbacks->emplace_back(std::move(callback));
     }
   }
 
@@ -1264,7 +1289,7 @@ const Future<T>& Future<T>::onAny(AnyCallback&& callback) const
 
   synchronized (data->lock) {
     if (data->state == PENDING) {
-      data->onAnyCallbacks.emplace_back(std::move(callback));
+      data->onAnyCallbacks->emplace_back(std::move(callback));
     } else {
       run = true;
     }
@@ -1533,8 +1558,8 @@ bool Future<T>::_set(U&& u)
     // Grab a copy of `data` just in case invoking the callbacks
     // erroneously attempts to delete this future.
     std::shared_ptr<typename Future<T>::Data> copy = data;
-    internal::run(copy->onReadyCallbacks, copy->result.get());
-    internal::run(copy->onAnyCallbacks, *this);
+    internal::run(*copy->onReadyCallbacks, copy->result.get());
+    internal::run(*copy->onAnyCallbacks, *this);
 
     copy->clearAllCallbacks();
   }
@@ -1563,8 +1588,8 @@ bool Future<T>::fail(const std::string& _message)
     // Grab a copy of `data` just in case invoking the callbacks
     // erroneously attempts to delete this future.
     std::shared_ptr<typename Future<T>::Data> copy = data;
-    internal::run(copy->onFailedCallbacks, copy->result.error());
-    internal::run(copy->onAnyCallbacks, *this);
+    internal::run(*copy->onFailedCallbacks, copy->result.error());
+    internal::run(*copy->onAnyCallbacks, *this);
 
     copy->clearAllCallbacks();
   }
