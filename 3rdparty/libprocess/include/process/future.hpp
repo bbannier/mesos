@@ -461,8 +461,8 @@ private:
 
     std::atomic_flag lock = ATOMIC_FLAG_INIT;
     std::atomic<State> state;
-    bool discard;
-    bool associated;
+    std::atomic_bool discard;
+    std::atomic_bool associated;
 
     // One of:
     //   1. None, the state is PENDING or DISCARDED.
