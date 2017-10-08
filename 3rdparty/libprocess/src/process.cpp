@@ -434,7 +434,7 @@ public:
 
   void close(int_fd s);
 
-  void exited(const Address& address);
+  void exited(Address address);
   void exited(ProcessBase* process);
 
 private:
@@ -2609,7 +2609,7 @@ void SocketManager::close(int_fd s)
 }
 
 
-void SocketManager::exited(const Address& address)
+void SocketManager::exited(Address address)
 {
   // TODO(benh): It would be cleaner if this routine could call back
   // into ProcessManager ... then we wouldn't have to convince
