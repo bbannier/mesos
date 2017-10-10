@@ -207,6 +207,9 @@ struct Capabilities
         case SlaveInfo::Capability::RESERVATION_REFINEMENT:
           reservationRefinement = true;
           break;
+        case SlaveInfo::Capability::RESOURCE_PROVIDER:
+          resourceProvider = true;
+          break;
         // If adding another case here be sure to update the
         // equality operator.
       }
@@ -217,6 +220,7 @@ struct Capabilities
   bool multiRole = false;
   bool hierarchicalRole = false;
   bool reservationRefinement = false;
+  bool resourceProvider = false;
 
   google::protobuf::RepeatedPtrField<SlaveInfo::Capability>
   toRepeatedPtrField() const
@@ -230,6 +234,9 @@ struct Capabilities
     }
     if (reservationRefinement) {
       result.Add()->set_type(SlaveInfo::Capability::RESERVATION_REFINEMENT);
+    }
+    if (resourceProvider) {
+      result.Add()->set_type(SlaveInfo::Capability::RESOURCE_PROVIDER);
     }
 
     return result;
