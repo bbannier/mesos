@@ -107,6 +107,15 @@ message ResourceProviderID {
 
 
 /**
+ * A framework-generated ID to distinguish an offer operation. The ID
+ * must be unique.
+ */
+message OfferOperationID {
+  required string value = 1;
+}
+
+
+/**
  * Represents time since the epoch, in nanoseconds.
  */
 message TimeInfo {
@@ -2126,6 +2135,48 @@ enum TaskState {
   // its metadata about the task. The task may or may not still be
   // running.
   TASK_UNKNOWN = 13;
+}
+
+
+/**
+ * Describes an offer operation, similar to `Offer.Operation`, with
+ * some additional informations.
+ */
+message OfferOperation {
+  required FrameworkID framework_id = 3;
+  required Offer.Operation operation_info = 2;
+  required OfferOperationState state = 6; // Latest state.
+  repeated OfferOperationStatus statuses = 8;
+}
+
+
+/**
+ * Describes possible offer operation states.
+ */
+enum OfferOperationState {
+  // Initial state.
+  OPERATION_PENDING = 1;
+
+  // The operation was successfully applied.
+  // This state is terminal.
+  OPERATION_FINISHED = 2;
+
+  // The operation failed to apply.
+  // This state is terminal.
+  OPERATION_FAILED = 3;
+
+  // The operation description contains an error.
+  OPERATION_ERROR = 4;
+}
+
+
+/**
+ * Describes the current status of an offer operation.
+ */
+message OfferOperationStatus {
+  required OfferOperationID operation_id = 1;
+  required OfferOperationState state = 2;
+  optional string message = 3;
 }
 
 
