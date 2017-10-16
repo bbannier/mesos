@@ -375,11 +375,13 @@ void ResourceProviderManagerProcess::subscribe(
   registrar
     ->apply(Owned<Registrar::Operation>(
         new AdmitResourceProvider(resourceProviderInfo.id())))
-    .onAny(defer(self(), [this](const Future<bool>& result) {
-      CHECK_READY(result) << "Admitting resource provider interrupted";
-      CHECK(result.get())
-        << "Assigned resource provider id collided with existing id.";
-    }));
+    .onAny(
+        defer(self(), [this, resourceProviderInfo](const Future<bool>& result) {
+          CHECK_READY(result) << "Admitting resource provider interrupted";
+          CHECK(result.get())
+            << "Resource provider ID " << resourceProviderInfo.id()
+            << " collides with existing ID.";
+        }));
 
   ResourceProviderMessage message;
   message.type = ResourceProviderMessage::Type::UPDATE_TOTAL_RESOURCES;
