@@ -29,6 +29,7 @@
 
 #include <mesos/v1/resource_provider/resource_provider.hpp>
 
+#include <process/check.hpp>
 #include <process/dispatch.hpp>
 #include <process/id.hpp>
 #include <process/process.hpp>
@@ -55,6 +56,7 @@ using mesos::resource_provider::Call;
 using mesos::resource_provider::Event;
 using mesos::resource_provider::Registrar;
 using mesos::resource_provider::Registrar;
+using mesos::resource_provider::RemoveResourceProvider;
 
 using mesos::resource_provider::registry::Registry;
 
@@ -333,6 +335,34 @@ void ResourceProviderManagerProcess::subscribe(
                  << stringify(resourceProvider.info.id())
                  << ": connection closed";
   }
+
+  resourceProvider.http.closed().onAny(
+      defer(self(), [this, resourceProviderInfo](const Future<Nothing>&) {
+        // If the resource provider was never added
+        // we do not need to clean it up.
+        if (!resourceProviders.contains(resourceProviderInfo.id())) {
+          return;
+        }
+
+        // FIXME(bbannier): Should we examine e.g., discarded or failed states?
+        registrar
+          ->apply(Owned<Registrar::Operation>(
+              new RemoveResourceProvider(resourceProviderInfo.id())))
+          .onAny(defer(
+              self(), [this, resourceProviderInfo](const Future<bool>& result) {
+                CHECK_READY(result)
+                  << "Removal of resource provider from registrar interrupted";
+
+                CHECK(result.get())
+                  << "Could remove resource provider from registrar";
+
+                CHECK(resourceProviders.contains(resourceProviderInfo.id()))
+                  << "Resource provider already removed";
+
+                resourceProviders.erase(resourceProviderInfo.id());
+                return true;
+              }));
+      }));
 
   resourceProviders.put(resourceProviderInfo.id(), std::move(resourceProvider));
   registrar->apply(Owned<Registrar::Operation>(
