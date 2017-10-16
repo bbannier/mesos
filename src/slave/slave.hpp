@@ -658,6 +658,8 @@ private:
   ResourceProviderManager resourceProviderManager;
   process::Owned<LocalResourceProviderDaemon> localResourceProviderDaemon;
 
+  TimeInfo agentLogicalClock;
+
 protected:
   // Made protected for testing purposes.
   mesos::SecretGenerator* secretGenerator;

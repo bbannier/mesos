@@ -216,6 +216,7 @@ Slave::Slave(const string& id,
     resourceEstimator(_resourceEstimator),
     qosController(_qosController),
     authorizer(_authorizer),
+    agentLogicalClock(protobuf::getCurrentTime()),
     secretGenerator(nullptr) {}
 
 
@@ -1262,10 +1263,13 @@ void Slave::registered(
   // agent between recovery completion and agent registration.
   LOG(INFO) << "Forwarding total resources " << totalResources;
 
+  agentLogicalClock = protobuf::getCurrentTime();
+
   UpdateSlaveMessage message;
   message.mutable_slave_id()->CopyFrom(info.id());
   message.mutable_resource_categories()->set_total(true);
   message.mutable_total_resources()->CopyFrom(totalResources);
+  message.mutable_clock()->CopyFrom(agentLogicalClock);
 
   // Send the latest estimate for oversubscribed resources.
   if (oversubscribedResources.isSome()) {
@@ -1350,10 +1354,13 @@ void Slave::reregistered(
   // agent between recovery completion and agent registration.
   LOG(INFO) << "Forwarding total resources " << totalResources;
 
+  agentLogicalClock = protobuf::getCurrentTime();
+
   UpdateSlaveMessage message;
   message.mutable_slave_id()->CopyFrom(info.id());
   message.mutable_resource_categories()->set_total(true);
   message.mutable_total_resources()->CopyFrom(totalResources);
+  message.mutable_clock()->CopyFrom(agentLogicalClock);
 
   // Send the latest estimate for oversubscribed resources.
   if (oversubscribedResources.isSome()) {
@@ -6572,10 +6579,13 @@ void Slave::_forwardOversubscribed(const Future<Resources>& oversubscribable)
       LOG(INFO) << "Forwarding total oversubscribed resources "
                 << oversubscribed;
 
+      agentLogicalClock = protobuf::getCurrentTime();
+
       UpdateSlaveMessage message;
       message.mutable_slave_id()->CopyFrom(info.id());
       message.mutable_resource_categories()->set_oversubscribed(true);
       message.mutable_oversubscribed_resources()->CopyFrom(oversubscribed);
+      message.mutable_clock()->CopyFrom(agentLogicalClock);
 
       CHECK_SOME(master);
       send(master.get(), message);
@@ -6646,6 +6656,8 @@ void Slave::handleResourceProviderMessage(
         case RUNNING: {
           LOG(INFO) << "Forwarding new total resources " << totalResources;
 
+          agentLogicalClock = protobuf::getCurrentTime();
+
           // Inform the master that the total capacity of this agent has
           // changed.
           UpdateSlaveMessage updateSlaveMessage;
@@ -6653,6 +6665,7 @@ void Slave::handleResourceProviderMessage(
           updateSlaveMessage.mutable_resource_categories()->set_total(true);
           updateSlaveMessage.mutable_total_resources()->CopyFrom(
               totalResources);
+          updateSlaveMessage.mutable_clock()->CopyFrom(agentLogicalClock);
 
           send(master.get(), updateSlaveMessage);
 

@@ -255,6 +255,8 @@ struct Slave
 
   SlaveObserver* observer;
 
+  TimeInfo logicalClock;
+
 private:
   Slave(const Slave&);              // No copying.
   Slave& operator=(const Slave&); // No assigning.

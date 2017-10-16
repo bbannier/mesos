@@ -6829,6 +6829,11 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
     newTotal.getOrElse(slave->totalResources.nonRevocable()) +
     newOversubscribed.getOrElse(slave->totalResources.revocable());
 
+  if (slave->capabilities.resourceProvider) {
+    CHECK(message.has_clock());
+    slave->logicalClock = message.clock();
+  }
+
   if (newSlaveResources == slave->totalResources) {
     LOG(INFO) << "Ignoring update on agent " << *slave
               << " as it reports no changes";
@@ -10073,7 +10078,8 @@ Slave::Slave(
           &_checkpointedResources, POST_RESERVATION_REFINEMENT);
       return _checkpointedResources;
     }()),
-    observer(nullptr)
+    observer(nullptr),
+    logicalClock(protobuf::getCurrentTime())
 {
   CHECK(_info.has_id());
 

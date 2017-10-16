@@ -631,6 +631,7 @@ message UpdateSlaveMessage {
   repeated Resource total_resources = 4;
 
   repeated OfferOperation offer_operations = 6;
+  optional TimeInfo clock = 7;
 }
 
 
