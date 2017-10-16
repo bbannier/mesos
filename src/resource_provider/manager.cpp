@@ -314,7 +314,14 @@ void ResourceProviderManagerProcess::subscribe(
 {
   ResourceProviderInfo resourceProviderInfo =
     subscribe.resource_provider_info();
-  resourceProviderInfo.mutable_id()->CopyFrom(newResourceProviderId());
+
+  if (resourceProviderInfo.has_id()) {
+    LOG(INFO) << "Resubscribing resource provider "
+              << resourceProviderInfo.id();
+  } else {
+    resourceProviderInfo.mutable_id()->CopyFrom(newResourceProviderId());
+    LOG(INFO) << "Subscribing resource provider " << resourceProviderInfo.id();
+  }
 
   // Inject the `ResourceProviderID` for all subscribed resources.
   Resources resources;
