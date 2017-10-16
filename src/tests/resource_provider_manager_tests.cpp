@@ -392,9 +392,6 @@ class ResourceProviderRegistrarTest : public tests::MesosTest {};
 // Test that the agent resource provider registrar works as expected.
 TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
 {
-  ResourceProviderID resourceProviderId;
-  resourceProviderId.set_value("foo");
-
   Try<Owned<cluster::Master>> master = StartMaster();
   ASSERT_SOME(master);
 
@@ -416,26 +413,52 @@ TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
   ASSERT_SOME(registrar);
   ASSERT_NE(nullptr, registrar->get());
 
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value("foo");
+
   // Applying operations on a not yet recovered registrar fails.
   AWAIT_FAILED(registrar.get()->apply(Owned<Registrar::Operation>(
       new AdmitResourceProvider(resourceProviderId))));
 
   AWAIT_READY(registrar.get()->recover());
 
-  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
-      new AdmitResourceProvider(resourceProviderId))));
+  Future<bool> result;
 
-  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
-      new RemoveResourceProvider(resourceProviderId))));
+  // Adding a resource provider succeeds.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new AdmitResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_TRUE(result.get());
+
+  // Adding the same resource provider again fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new AdmitResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
+
+  // Removing an unknown resource provider fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(ResourceProviderID())));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
+
+  // Removing an existing resource provider succeeds.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_TRUE(result.get());
+
+  // Removing a removed resource provider fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
 }
 
 
 // Test that the master resource provider registrar works as expected.
 TEST_F(ResourceProviderRegistrarTest, MasterRegistrar)
 {
-  ResourceProviderID resourceProviderId;
-  resourceProviderId.set_value("foo");
-
   InMemoryStorage storage;
   State state(&storage);
   master::Registrar masterRegistrar(CreateMasterFlags(), &state);
@@ -447,17 +470,46 @@ TEST_F(ResourceProviderRegistrarTest, MasterRegistrar)
   ASSERT_SOME(registrar);
   ASSERT_NE(nullptr, registrar->get());
 
+  ResourceProviderID resourceProviderId;
+  resourceProviderId.set_value("foo");
+
   // Applying operations on a not yet recovered registrar fails.
   AWAIT_FAILED(registrar.get()->apply(Owned<Registrar::Operation>(
       new AdmitResourceProvider(resourceProviderId))));
 
   AWAIT_READY(masterRegistrar.recover(masterInfo));
 
-  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
-      new AdmitResourceProvider(resourceProviderId))));
+  Future<bool> result;
 
-  AWAIT_READY(registrar.get()->apply(Owned<Registrar::Operation>(
-      new RemoveResourceProvider(resourceProviderId))));
+  // Adding a resource provider succeeds.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new AdmitResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_TRUE(result.get());
+
+  // Adding the same resource provider again fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new AdmitResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
+
+  // Removing an unknown resource provider fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(ResourceProviderID())));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
+
+  // Removing an existing resource provider succeeds.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_TRUE(result.get());
+
+  // Removing a removed resource provider fails.
+  result = registrar.get()->apply(Owned<Registrar::Operation>(
+      new RemoveResourceProvider(resourceProviderId)));
+  AWAIT_READY(result);
+  EXPECT_FALSE(result.get());
 }
 
 } // namespace tests {
