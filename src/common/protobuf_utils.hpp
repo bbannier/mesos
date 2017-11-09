@@ -149,6 +149,9 @@ Option<CheckStatusInfo> getTaskCheckStatus(const Task& task);
 Option<ContainerStatus> getTaskContainerStatus(const Task& task);
 
 
+bool isFailedState(const OfferOperationState& state);
+
+
 bool isTerminalState(const OfferOperationState& state);
 
 

@@ -394,6 +394,23 @@ Option<ContainerStatus> getTaskContainerStatus(const Task& task)
 }
 
 
+bool isFailedState(const OfferOperationState& state)
+{
+  switch (state) {
+    case OfferOperationState::OFFER_OPERATION_FAILED:
+    case OfferOperationState::OFFER_OPERATION_ERROR:
+      return true;
+    case OfferOperationState::OFFER_OPERATION_PENDING:
+    case OfferOperationState::OFFER_OPERATION_FINISHED:
+      return false;
+    case OfferOperationState::OFFER_OPERATION_UNSUPPORTED:
+      UNREACHABLE();
+  }
+
+  UNREACHABLE();
+}
+
+
 bool isTerminalState(const OfferOperationState& state)
 {
   switch (state) {
