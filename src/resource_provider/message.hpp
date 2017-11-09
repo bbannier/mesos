@@ -26,6 +26,8 @@
 #include <stout/option.hpp>
 #include <stout/unreachable.hpp>
 
+#include "messages/messages.hpp"
+
 namespace mesos {
 namespace internal {
 
@@ -33,7 +35,8 @@ struct ResourceProviderMessage
 {
   enum class Type
   {
-    UPDATE_TOTAL_RESOURCES
+    UPDATE_TOTAL_RESOURCES,
+    UPDATE_OFFER_OPERATION_STATUS
   };
 
   struct UpdateTotalResources
@@ -43,9 +46,15 @@ struct ResourceProviderMessage
     Resources total;
   };
 
+  struct UpdateOfferOperationStatus {
+    ResourceProviderID id;
+    OfferOperationStatusUpdate update;
+  };
+
   Type type;
 
   Option<UpdateTotalResources> updateTotalResources;
+  Option<UpdateOfferOperationStatus> updateOfferOperationStatus;
 };
 
 
@@ -54,7 +63,7 @@ inline std::ostream& operator<<(
     const ResourceProviderMessage& resourceProviderMessage)
 {
   switch (resourceProviderMessage.type) {
-    case ResourceProviderMessage::Type::UPDATE_TOTAL_RESOURCES:
+    case ResourceProviderMessage::Type::UPDATE_TOTAL_RESOURCES: {
       const Option<ResourceProviderMessage::UpdateTotalResources>&
         updateTotalResources = resourceProviderMessage.updateTotalResources;
 
@@ -64,6 +73,20 @@ inline std::ostream& operator<<(
           << "UPDATE_TOTAL_RESOURCES: "
           << updateTotalResources->id << " "
           << updateTotalResources->total;
+    }
+
+    case ResourceProviderMessage::Type::UPDATE_OFFER_OPERATION_STATUS: {
+      const Option<ResourceProviderMessage::UpdateOfferOperationStatus>&
+        updateOfferOperationStatus =
+          resourceProviderMessage.updateOfferOperationStatus;
+
+      CHECK_SOME(updateOfferOperationStatus);
+
+      return stream
+          << "UPDATE_OFFER_OPERATION_STATUS: "
+          << updateOfferOperationStatus->id << " "
+          << updateOfferOperationStatus->update.DebugString();
+    }
   }
 
   UNREACHABLE();

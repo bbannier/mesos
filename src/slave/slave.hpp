@@ -533,6 +533,12 @@ private:
   void handleResourceProviderMessage(
       const process::Future<ResourceProviderMessage>& message);
 
+  void addOfferOperation(OfferOperation* operation);
+
+  void removeOfferOperation(OfferOperation* operation);
+
+  OfferOperation* getOfferOperation(const UUID& uuid) const;
+
   // Gauge methods.
   double _frameworks_active()
   {
@@ -666,6 +672,10 @@ private:
   ResourceProviderManager resourceProviderManager;
   process::Owned<LocalResourceProviderDaemon> localResourceProviderDaemon;
   hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
+
+  // Pending operations or terminal operations that have
+  // unacknowledged status updates.
+  hashmap<UUID, OfferOperation*> offerOperations;
 
 protected:
   // Made protected for testing purposes.
