@@ -7466,6 +7466,37 @@ void Master::offerOperationStatusUpdate(
     return;
   }
 
+  Result<ResourceProviderID> _resourceProviderId =
+    getResourceProviderId(operation->info());
+
+  if (_resourceProviderId.isError()) {
+    LOG(ERROR) << "Failed to extract resource provider id from operation "
+               << "'" << update.status().operation_id() << "' for "
+               << (frameworkId.isSome()
+                     ? "framework " + stringify(frameworkId.get())
+                     : "an operator API call")
+               << " from agent " << slaveId << ": "
+               << _resourceProviderId.error();
+    return;
+  }
+
+  Option<ResourceProviderID> resourceProviderId =
+    _resourceProviderId.isSome() ? _resourceProviderId.get()
+                                 : Option<ResourceProviderID>::none();
+
+  if (!slave->resourceVersions.contains(resourceProviderId)) {
+    LOG(ERROR)
+      << "Received operation update for unknown resource provider in operation"
+      << "'" << update.status().operation_id() << "' for "
+      << (frameworkId.isSome() ? "framework " + stringify(frameworkId.get())
+                               : "an operator API call")
+      << " from agent " << slaveId << ": " << _resourceProviderId.error();
+    return;
+  }
+
+  slave->resourceVersions =
+    protobuf::parseResourceVersions(update.resource_version_uuids());
+
   // Forward the status update to the framework if needed.
   if (frameworkId.isSome()) {
     Framework* framework = getFramework(frameworkId.get());
