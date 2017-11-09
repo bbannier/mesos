@@ -6800,6 +6800,42 @@ void Slave::handleResourceProviderMessage(
         return;
       }
 
+      // Update the resource version seen in this update.
+      CHECK_EQ(
+          1u,
+          message->updateOfferOperationStatus->update
+            .resource_version_uuids_size());
+
+      const ResourceVersionUUID& resourceVersionUuid =
+        message->updateOfferOperationStatus->update.resource_version_uuids(0);
+
+      CHECK(resourceVersionUuid.has_resource_provider_id());
+
+      const ResourceProviderID& resourceProviderId =
+        resourceVersionUuid.resource_provider_id();
+
+      const Try<UUID>& uuid =
+        UUID::fromBytes(resourceVersionUuid.uuid());
+
+      CHECK_SOME(uuid)
+        << "Could not deserialize version of resource provider "
+        << resourceProviderId << ": " << uuid.error();
+
+      CHECK(resourceVersions.contains(resourceProviderId))
+        << "Received operation status update from unknown resource provider "
+        << resourceProviderId;
+
+      UUID& storedResourceVersionUuid =
+        resourceVersions.at(resourceProviderId);
+
+      if (protobuf::isFailedState(operation->latest_status().state())) {
+        CHECK_NE(storedResourceVersionUuid, uuid.get());
+      } else {
+        CHECK_EQ(storedResourceVersionUuid, uuid.get());
+      }
+
+      storedResourceVersionUuid = uuid.get();
+
       const OfferOperationStatus& status = update.status();
 
       Option<OfferOperationStatus> latestStatus;
@@ -6928,6 +6964,11 @@ void Slave::handleResourceProviderMessage(
           OfferOperationStatusUpdate update_;
           update_.CopyFrom(update);
           update_.mutable_slave_id()->CopyFrom(info.id());
+
+          // Resource providers will only send their own resource version
+          // while the agent should send its full set of resource versions.
+          update_.mutable_resource_version_uuids()->CopyFrom(
+              protobuf::createResourceVersions(resourceVersions));
 
           send(master.get(), update_);
           break;
