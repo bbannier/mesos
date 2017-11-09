@@ -151,11 +151,11 @@ private:
 
   void updateOfferOperationStatus(
       ResourceProvider* resourceProvider,
-      const Call::UpdateOfferOperationStatus& update);
+      const Call& call);
 
   void updateState(
       ResourceProvider* resourceProvider,
-      const Call::UpdateState& update);
+      const Call& call);
 
   ResourceProviderID newResourceProviderId();
 
@@ -293,13 +293,13 @@ Future<http::Response> ResourceProviderManagerProcess::api(
     case Call::UPDATE_OFFER_OPERATION_STATUS: {
       updateOfferOperationStatus(
           &resourceProvider,
-          call.update_offer_operation_status());
+          call);
 
       return Accepted();
     }
 
     case Call::UPDATE_STATE: {
-      updateState(&resourceProvider, call.update_state());
+      updateState(&resourceProvider, call);
       return Accepted();
     }
   }
@@ -413,8 +413,12 @@ void ResourceProviderManagerProcess::subscribe(
 
 void ResourceProviderManagerProcess::updateOfferOperationStatus(
     ResourceProvider* resourceProvider,
-    const Call::UpdateOfferOperationStatus& update)
+    const Call& call)
 {
+  CHECK(call.has_update_offer_operation_status());
+  const Call::UpdateOfferOperationStatus& update =
+    call.update_offer_operation_status();
+
   OfferOperationStatusUpdate offerOperationStatusUpdate;
   offerOperationStatusUpdate.mutable_framework_id()->CopyFrom(
       update.framework_id());
@@ -438,8 +442,11 @@ void ResourceProviderManagerProcess::updateOfferOperationStatus(
 
 void ResourceProviderManagerProcess::updateState(
     ResourceProvider* resourceProvider,
-    const Call::UpdateState& update)
+    const Call& call)
 {
+  CHECK(call.has_update_state());
+  const Call::UpdateState& update = call.update_state();
+
   Resources resources;
 
   foreach (const Resource& resource, update.resources()) {
