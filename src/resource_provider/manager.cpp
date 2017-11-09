@@ -427,6 +427,12 @@ void ResourceProviderManagerProcess::updateOfferOperationStatus(
       update.latest_status());
   offerOperationStatusUpdate.set_operation_uuid(update.operation_uuid());
 
+  ResourceVersionUUID* resourceVersionUuid =
+    offerOperationStatusUpdate.add_resource_version_uuids();
+  resourceVersionUuid->set_uuid(update.resource_version_uuid());
+  resourceVersionUuid->mutable_resource_provider_id()->CopyFrom(
+      call.resource_provider_id());
+
   ResourceProviderMessage::UpdateOfferOperationStatus
     updateOfferOperationStatus{
         resourceProvider->info.id(),
