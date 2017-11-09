@@ -119,7 +119,8 @@ public:
   Future<Nothing> updateState(
       v1::MockResourceProvider* resourceProvider,
       const mesos::v1::ResourceProviderID& resourceProviderId,
-      const v1::Resources& resources)
+      const v1::Resources& resources,
+      const UUID& resourceVersionUuid)
   {
     Call call;
     call.set_type(Call::UPDATE_STATE);
@@ -128,7 +129,7 @@ public:
     Call::UpdateState* updateState = call.mutable_update_state();
     updateState->mutable_resources()->CopyFrom(resources);
 
-    updateState->set_resource_version_uuid(UUID::random().toBytes());
+    updateState->set_resource_version_uuid(resourceVersionUuid.toBytes());
 
     return resourceProvider->send(call);
   }
@@ -138,7 +139,8 @@ public:
       const mesos::v1::ResourceProviderID& resourceProviderId,
       const mesos::v1::FrameworkID& frameworkId,
       const UUID& operationUUID,
-      const v1::Resources& convertedResources)
+      const v1::Resources& convertedResources,
+      const UUID& resourceVersionUuid)
   {
     Call call;
     call.set_type(Call::UPDATE_OFFER_OPERATION_STATUS);
@@ -157,6 +159,8 @@ public:
     updateOfferOperationStatus->mutable_latest_status()->CopyFrom(*status);
 
     updateOfferOperationStatus->set_operation_uuid(operationUUID.toBytes());
+    updateOfferOperationStatus->set_resource_version_uuid(
+        resourceVersionUuid.toBytes());
 
     return resourceProvider->send(call);
   }
@@ -462,6 +466,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, UpdateOfferOperationStatus)
     updateOfferOperationStatus->mutable_framework_id()->CopyFrom(frameworkId);
     updateOfferOperationStatus->mutable_status()->CopyFrom(status);
     updateOfferOperationStatus->set_operation_uuid(operationUUID.toBytes());
+    updateOfferOperationStatus->set_resource_version_uuid(
+        UUID::random().toBytes());
 
     http::Request request;
     request.method = "POST";
@@ -746,11 +752,17 @@ TEST_P(ResourceProviderManagerHttpApiTest, ConvertResources)
       v1::createDiskSourceRaw());
   disk.mutable_provider_id()->CopyFrom(resourceProviderId.get());
 
+  UUID resourceVersionUuid = UUID::random();
+
   {
     Future<UpdateSlaveMessage> updateSlaveMessage =
       FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-    AWAIT_READY(updateState(&resourceProvider, resourceProviderId.get(), disk));
+    AWAIT_READY(updateState(
+        &resourceProvider,
+        resourceProviderId.get(),
+        disk,
+        resourceVersionUuid));
 
     // Wait until the agent's resources have been updated to include the
     // resource provider resources.
@@ -843,7 +855,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, ConvertResources)
         resourceProviderId.get(),
         operation->framework_id(),
         operationUUID.get(),
-        convertedResource));
+        convertedResource,
+        resourceVersionUuid));
 
     Clock::advance(flags.allocation_interval);
     Clock::settle();

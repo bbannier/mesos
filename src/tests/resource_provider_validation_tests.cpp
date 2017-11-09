@@ -75,6 +75,7 @@ TEST(ResourceProviderCallValidationTest, UpdateOfferOperationStatus)
 
   update->mutable_framework_id()->set_value(UUID::random().toString());
   update->set_operation_uuid(UUID::random().toBytes());
+  update->set_resource_version_uuid(UUID::random().toBytes());
 
   OfferOperationStatus* status = update->mutable_status();
   status->mutable_operation_id()->set_value(UUID::random().toString());
