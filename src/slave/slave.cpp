@@ -3847,10 +3847,30 @@ void Slave::statusUpdateAcknowledgement(
 }
 
 
-// TODO(greggomann): Implement offer operation update acknowledgement.
 void Slave::offerOperationUpdateAcknowledgement(
     const UPID& from,
-    const OfferOperationUpdateAcknowledgementMessage& acknowledgement) {}
+    const OfferOperationUpdateAcknowledgementMessage& acknowledgement)
+{
+  // TODO(greggomann): Implement offer operation update acknowledgement.
+
+  // Now remove this offer from our tracking assuming the
+  // acknowledgement was successfully processed by the agent or the
+  // resource provider; if a resource provider did not receive the
+  // acknowledgement the agent would receive the operation again in
+  // reconciliation.
+  Try<UUID> operationUuid = UUID::fromBytes(acknowledgement.operation_uuid());
+  CHECK_SOME(operationUuid);
+
+  OfferOperation* operation = getOfferOperation(operationUuid.get());
+  if (operation == nullptr) {
+    LOG(WARNING)
+      << "Received acknowledgement for unknown operation "
+      << operationUuid.get() << " from " << from;
+    return;
+  }
+
+  removeOfferOperation(operation);
+}
 
 
 void Slave::_statusUpdateAcknowledgement(
