@@ -77,6 +77,7 @@ inline std::ostream& operator<<(
       return stream
           << "UPDATE_STATE: "
           << updateState->id << " "
+          << updateState->resourceVersionUuid.toString() << " "
           << updateState->total;
     }
 
