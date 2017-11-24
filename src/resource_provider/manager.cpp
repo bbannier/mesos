@@ -416,6 +416,18 @@ void ResourceProviderManagerProcess::subscribe(
 }
 
 
+std::ostream& printOn(
+    std::ostream& stream,
+    const ResourceProviderMessage::UpdateOfferOperationStatus&
+      updateOfferOperationStatus)
+{
+  return stream << JSON::Object(
+             {{"type", "UPDATE_OFFER_OPERATION_STATUS"},
+              {"update_offer_operation_status",
+               stringify(updateOfferOperationStatus.update)}});
+}
+
+
 void ResourceProviderManagerProcess::updateOfferOperationStatus(
     ResourceProvider* resourceProvider,
     const Call::UpdateOfferOperationStatus& update)
@@ -427,6 +439,8 @@ void ResourceProviderManagerProcess::updateOfferOperationStatus(
   if (update.has_latest_status()) {
     body.update.mutable_latest_status()->CopyFrom(update.latest_status());
   }
+
+  printOn(LOG(INFO), body);
 
   ResourceProviderMessage message;
   message.type = ResourceProviderMessage::Type::UPDATE_OFFER_OPERATION_STATUS;

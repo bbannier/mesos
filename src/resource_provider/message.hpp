@@ -24,6 +24,7 @@
 #include <mesos/resources.hpp>
 
 #include <stout/check.hpp>
+#include <stout/json.hpp>
 #include <stout/jsonify.hpp>
 #include <stout/option.hpp>
 #include <stout/protobuf.hpp>
@@ -65,6 +66,38 @@ struct ResourceProviderMessage
 
 inline std::ostream& operator<<(
     std::ostream& stream,
+    const ResourceProviderMessage::UpdateState& updateState)
+{
+  JSON::Object data({{"resource_provider_id", stringify(updateState.id)},
+                     {"version", updateState.resourceVersionUuid.toString()},
+                     {"total", stringify(updateState.total)}});
+  return stream << JSON::Object(
+             {{"type", "UPDATE_STATE"}, {"update_state", data}});
+}
+
+
+inline std::ostream& operator<<(
+    std::ostream& stream,
+    const ResourceProviderMessage::UpdateOfferOperationStatus&
+      updateOfferOperationStatus)
+{
+  Try<UUID> operationUUID =
+    UUID::fromBytes(updateOfferOperationStatus.update.operation_uuid());
+
+  CHECK_SOME(operationUUID);
+
+  return stream
+         << operationUUID.get() << ") for framework "
+         << updateOfferOperationStatus.update.framework_id()
+         << " (latest state: "
+         << updateOfferOperationStatus.update.latest_status().state()
+         << ", status update state: "
+         << updateOfferOperationStatus.update.status().state() << ")";
+}
+
+
+inline std::ostream& operator<<(
+    std::ostream& stream,
     const ResourceProviderMessage& resourceProviderMessage)
 {
   switch (resourceProviderMessage.type) {
@@ -75,10 +108,7 @@ inline std::ostream& operator<<(
       CHECK_SOME(updateState);
 
       return stream
-          << "UPDATE_STATE: "
-          << updateState->id << " "
-          << updateState->resourceVersionUuid.toString() << " "
-          << updateState->total;
+          << "UPDATE_STATE: " << updateState.get();
     }
 
     case ResourceProviderMessage::Type::UPDATE_OFFER_OPERATION_STATUS: {
@@ -88,18 +118,8 @@ inline std::ostream& operator<<(
 
       CHECK_SOME(updateOfferOperationStatus);
 
-      Try<UUID> operationUUID =
-        UUID::fromBytes(updateOfferOperationStatus->update.operation_uuid());
-      CHECK_SOME(operationUUID);
-
-      return stream
-          << "UPDATE_OFFER_OPERATION_STATUS: (uuid: " << operationUUID.get()
-          << ") for framework "
-          << updateOfferOperationStatus->update.framework_id()
-          << " (latest state: "
-          << updateOfferOperationStatus->update.latest_status().state()
-          << ", status update state: "
-          << updateOfferOperationStatus->update.status().state() << ")";
+      return stream << "UPDATE_OFFER_OPERATION_STATUS: "
+                    << updateOfferOperationStatus.get();
     }
   }
 
