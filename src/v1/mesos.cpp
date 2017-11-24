@@ -552,6 +552,12 @@ ostream& operator<<(ostream& stream, const OfferID& offerId)
 }
 
 
+ostream& operator<<(ostream& stream, const OfferOperation& offerOperation)
+{
+  return stream << JSON::protobuf(offerOperation);
+}
+
+
 ostream& operator<<(ostream& stream, const OfferOperationID& offerOperationId)
 {
   return stream << offerOperationId.value();

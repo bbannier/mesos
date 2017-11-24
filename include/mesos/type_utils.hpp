@@ -382,6 +382,11 @@ std::ostream& operator<<(std::ostream& stream, const OfferID& offerId);
 
 std::ostream& operator<<(
     std::ostream& stream,
+    const OfferOperation& offerOperation);
+
+
+std::ostream& operator<<(
+    std::ostream& stream,
     const OfferOperationID& offerOperationId);
 
 
