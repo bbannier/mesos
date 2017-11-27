@@ -21,6 +21,8 @@
 #include <mesos/resources.hpp>
 #include <mesos/type_utils.hpp>
 
+#include <stout/protobuf.hpp>
+
 using std::ostream;
 
 namespace mesos {
@@ -52,6 +54,12 @@ bool operator!=(
     const ResourceVersionUUID& right)
 {
   return !(left == right);
+}
+
+
+ostream& operator<<(ostream& stream, const OfferOperationStatusUpdate& update)
+{
+  return stream << JSON::protobuf(update);
 }
 
 

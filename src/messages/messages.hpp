@@ -45,6 +45,11 @@ bool operator!=(
     const ResourceVersionUUID& right);
 
 
+std::ostream& operator<<(
+    std::ostream& stream,
+    const OfferOperationStatusUpdate& update);
+
+
 std::ostream& operator<<(std::ostream& stream, const StatusUpdate& update);
 
 
