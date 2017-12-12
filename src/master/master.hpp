@@ -277,7 +277,15 @@ struct Slave
 
   SlaveObserver* observer;
 
-  hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
+  struct ResourceProvider {
+    ResourceProviderInfo info;
+    UUID resourceVersion;
+  };
+
+  hashmap<ResourceProviderID, ResourceProvider> resourceProviders_;
+
+  Option<UUID> resourceVersion;
+
   hashmap<ResourceProviderID, ResourceProviderInfo> resourceProviders;
 
 private:

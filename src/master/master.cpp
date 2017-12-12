@@ -4985,8 +4985,25 @@ void Master::_accept(
             RunTaskMessage message;
             message.mutable_framework()->MergeFrom(framework->info);
 
-            message.mutable_resource_version_uuids()->CopyFrom(
-                protobuf::createResourceVersions(slave->resourceVersions));
+            // FIXME(bbannier): make this smarter.
+            if (slave->capabilities.resourceProvider) {
+              ResourceVersionUUID* resourceVersion =
+                message.add_resource_version_uuids();
+              CHECK_SOME(slave->resourceVersion);
+              resourceVersion->set_uuid(slave->resourceVersion->toBytes());
+
+              foreachpair (
+                  auto&& resourceProviderId,
+                  auto&& resourceProvider,
+                  slave->resourceProviders_) {
+                ResourceVersionUUID* resourceVersion =
+                  message.add_resource_version_uuids();
+                resourceVersion->set_uuid(
+                    resourceProvider.resourceVersion.toBytes());
+                resourceVersion->mutable_resource_provider_id()->CopyFrom(
+                    resourceProviderId);
+              }
+            }
 
             // TODO(anand): We set 'pid' to UPID() for http frameworks
             // as 'pid' was made optional in 0.24.0. In 0.25.0, we
@@ -5177,8 +5194,25 @@ void Master::_accept(
         message.mutable_executor()->CopyFrom(executor);
         message.mutable_task_group()->CopyFrom(taskGroup);
 
-        message.mutable_resource_version_uuids()->CopyFrom(
-            protobuf::createResourceVersions(slave->resourceVersions));
+        // FIXME(bbannier): make this smarter.
+        if (slave->capabilities.resourceProvider) {
+          ResourceVersionUUID* resourceVersion =
+            message.add_resource_version_uuids();
+          CHECK_SOME(slave->resourceVersion);
+          resourceVersion->set_uuid(slave->resourceVersion->toBytes());
+
+          foreachpair (
+              auto&& resourceProviderId,
+              auto&& resourceProvider,
+              slave->resourceProviders_) {
+            ResourceVersionUUID* resourceVersion =
+              message.add_resource_version_uuids();
+            resourceVersion->set_uuid(
+                resourceProvider.resourceVersion.toBytes());
+            resourceVersion->mutable_resource_provider_id()->CopyFrom(
+                resourceProviderId);
+          }
+        }
 
         set<TaskID> taskIds;
         Resources totalResources;
@@ -7250,6 +7284,7 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
     }
   }
 
+  // FIXME(bbannier): check if this is still needed later.
   auto agentResources = [](const Resource& resource) {
     return !resource.has_provider_id();
   };
@@ -7269,23 +7304,32 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
   // Agents which can support resource providers always update the
   // master on their resource versions uuid via `UpdateSlaveMessage`.
   if (slave->capabilities.resourceProvider) {
+    // Check whether the resource version of the agent changed.
     CHECK(message.has_resource_version_uuid());
 
-    hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
-
-    const Try<UUID> slaveResourceVersion =
+    const Try<UUID> resourceVersion =
       UUID::fromBytes(message.resource_version_uuid());
 
-    CHECK_SOME(slaveResourceVersion);
-    resourceVersions.insert({None(), slaveResourceVersion.get()});
+    CHECK_SOME(resourceVersion);
+
+    updated =
+      updated || slave->resourceVersion != Option<UUID>(resourceVersion.get());
+
+
+    hashmap<ResourceProviderID, UUID> resourceVersions;
+    foreachpair (
+        const ResourceProviderID& resourceProviderId,
+        const Slave::ResourceProvider& resourceProvider,
+        slave->resourceProviders_) {
+      resourceVersions.put(
+          resourceProviderId, resourceProvider.resourceVersion);
+    }
+
+    hashmap<ResourceProviderID, UUID> newResourceVersions;
 
     foreach (
         const UpdateSlaveMessage::ResourceProvider& resourceProvider,
         message.resource_providers().providers()) {
-      if (!resourceProvider.has_info()) {
-        continue;
-      }
-
       Try<UUID> resourceVersion =
         UUID::fromBytes(resourceProvider.resource_version_uuid());
 
@@ -7296,12 +7340,11 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
       const ResourceProviderID& resourceProviderId =
         resourceProvider.info().id();
 
-      CHECK(!resourceVersions.contains(resourceProviderId));
-      resourceVersions.insert({resourceProviderId, resourceVersion.get()});
+      CHECK(!newResourceVersions.contains(resourceProviderId));
+      newResourceVersions.put(resourceProviderId, resourceVersion.get());
     }
 
-    updated = updated || slave->resourceVersions != resourceVersions;
-    slave->resourceVersions = resourceVersions;
+    updated = updated || resourceVersions != newResourceVersions;
   }
 
   // Check if the known offer operations for this agent changed.
@@ -7345,6 +7388,7 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
     Option<hashmap<UUID, OfferOperation>> oldOfferOperations;
     Option<hashmap<UUID, OfferOperation>> newOfferOperations;
     Option<ResourceProviderInfo> info;
+    Option<UUID> resourceVersion;
   };
 
   // We store information on the different `ResourceProvider`s on this agent in
@@ -7356,6 +7400,18 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
 
   // Group the resources and operation updates by resource provider.
   {
+    // Process known resource providers.
+    foreachpair (
+        const ResourceProviderID& resourceProviderId,
+        const Slave::ResourceProvider& resourceProvider,
+        slave->resourceProviders_) {
+      ResourceProvider& resourceProvider_ =
+        resourceProviders[resourceProviderId];
+
+      resourceProvider_.info = resourceProvider.info;
+      resourceProvider_.resourceVersion = resourceProvider.resourceVersion;
+    }
+
     // Process known resources.
     auto groupResourcesByProviderId = [](const Resources& resources) {
       hashmap<Option<ResourceProviderID>, Resources> result;
@@ -7438,6 +7494,15 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
           resourceProviders[resourceProvider.info().id()];
 
         provider.info = resourceProvider.info();
+
+        Try<UUID> resourceVersion =
+          UUID::fromBytes(resourceProvider.resource_version_uuid());
+
+        CHECK_SOME(resourceVersion)
+          << "Could not deserialize resource provider id when reconciling "
+             "resource providers";
+
+        provider.resourceVersion = resourceVersion.get();
 
         provider.newTotal = resourceProvider.total_resources();
         if (provider.newOfferOperations.isNone()) {
@@ -7644,6 +7709,21 @@ void Master::updateSlave(const UpdateSlaveMessage& message)
       if (provider.newTotal.isSome()) {
         slave->totalResources += provider.newTotal.get();
       }
+    }
+
+    if (providerId.isSome()) {
+      CHECK_SOME(provider.info);
+      CHECK_SOME(provider.resourceVersion);
+
+      Slave::ResourceProvider resourceProvider{
+        provider.info.get(),
+        provider.resourceVersion.get()};
+
+      slave->resourceProviders_.erase(providerId.get());
+
+      slave->resourceProviders_.put(
+          providerId.get(),
+          std::move(resourceProvider));
     }
   }
 
@@ -10481,9 +10561,25 @@ void Master::_apply(
     // This must have been validated by the caller.
     CHECK(!resourceProviderId.isError());
 
-    Option<UUID> resourceVersion = resourceProviderId.isSome()
-      ? slave->resourceVersions.get(resourceProviderId.get())
-      : slave->resourceVersions.get(None());
+    Option<UUID> resourceVersion = None();
+
+    if (resourceProviderId.isNone()) {
+      resourceVersion = slave->resourceVersion;
+    } else {
+      if (!slave->resourceProviders_.contains(resourceProviderId.get())) {
+        LOG(INFO)
+          << "Dropping operation " << operation.id()
+          << " since it operates on resources from unknown resource provider "
+          << resourceProviderId.get();
+
+        return;
+      }
+
+      const Slave::ResourceProvider& resourceProvider =
+        slave->resourceProviders_.at(resourceProviderId.get());
+
+      resourceVersion = resourceProvider.resourceVersion;
+    }
 
     CHECK_SOME(resourceVersion)
       << "Resource version of "
@@ -11300,7 +11396,7 @@ Slave::Slave(
     vector<SlaveInfo::Capability> _capabilites,
     const Time& _registeredTime,
     vector<Resource> _checkpointedResources,
-    const Option<UUID>& resourceVersion,
+    const Option<UUID>& _resourceVersion,
     vector<ExecutorInfo> executorInfos,
     vector<Task> tasks)
   : master(_master),
@@ -11314,7 +11410,8 @@ Slave::Slave(
     connected(true),
     active(true),
     checkpointedResources(std::move(_checkpointedResources)),
-    observer(nullptr)
+    observer(nullptr),
+    resourceVersion(_resourceVersion)
 {
   CHECK(info.has_id());
 
@@ -11325,10 +11422,6 @@ Slave::Slave(
   // NOTE: This should be validated during slave recovery.
   CHECK_SOME(resources);
   totalResources = resources.get();
-
-  if (resourceVersion.isSome()) {
-    resourceVersions.put(None(), resourceVersion.get());
-  }
 
   foreach (ExecutorInfo& executorInfo, executorInfos) {
     CHECK(executorInfo.has_framework_id());
@@ -11610,7 +11703,7 @@ Try<Nothing> Slave::update(
     const SlaveInfo& _info,
     const string& _version,
     const vector<SlaveInfo::Capability>& _capabilities,
-    const Option<UUID>& resourceVersion)
+    const Option<UUID>& _resourceVersion)
 {
   Try<Resources> resources = applyCheckpointedResources(
       _info.resources(),
@@ -11631,9 +11724,7 @@ Try<Nothing> Slave::update(
   // re-registering in this case.
   totalResources = resources.get();
 
-  if (resourceVersion.isSome()) {
-    resourceVersions.put(None(), resourceVersion.get());
-  }
+  resourceVersion = _resourceVersion;
 
   return Nothing();
 }
