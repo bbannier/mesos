@@ -231,6 +231,20 @@ if (LINUX)
 endif ()
 
 
+# FIXME(bbannier): make conditional.
+list(APPEND MESOS_TESTS_SRC
+  agent_resource_provider_config_api_tests.cpp
+  storage_local_resource_provider_tests.cpp
+  csi_client_tests.cpp
+  mock_csi_plugin.cpp)
+
+
+# FIXME(bbannier): make conditional.
+list(APPEND MESOS_TESTS_SRC
+  agent_resource_provider_config_api_tests.cpp
+  storage_local_resource_provider_tests.cpp)
+
+
 # THE TEST AND HELPER EXECUTABLES.
 ##################################
 add_library(mesos-tests-interface INTERFACE)

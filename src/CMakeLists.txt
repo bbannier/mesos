@@ -347,6 +347,7 @@ set(RESOURCE_PROVIDER_SRC
   resource_provider/local.cpp
   resource_provider/manager.cpp
   resource_provider/registrar.cpp
+  resource_provider/storage/provider.cpp # FIXME(bbannier): make conditional.
   resource_provider/validation.cpp)
 
 set(SCHEDULER_SRC
@@ -492,6 +493,7 @@ target_include_directories(
 
 target_link_libraries(
   mesos PUBLIC
+  csi
   process
   sasl2
   zookeeper
@@ -517,6 +519,7 @@ endif ()
 ##############################
 add_subdirectory(checks)
 add_subdirectory(cli)
+add_subdirectory(csi)
 add_subdirectory(docker)
 add_subdirectory(examples)
 add_subdirectory(launcher)

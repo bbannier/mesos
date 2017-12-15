@@ -94,12 +94,18 @@ if (ENABLE_SSL)
   endif ()
 endif ()
 
+# FIXME(bbannier): make conditional.
+list(APPEND PROCESS_SRC
+  grpc.cpp)
+
 add_library(process ${PROCESS_SRC})
 
+# FIXME(bbannier): make conditional.
 target_link_libraries(
   process PUBLIC
   stout
   http_parser
+  grpc
   $<$<BOOL:${ENABLE_SSL}>:OpenSSL::SSL>
   $<$<BOOL:${ENABLE_SSL}>:OpenSSL::Crypto>)
 

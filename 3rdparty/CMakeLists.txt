@@ -25,9 +25,11 @@ endif ()
 # TODO(andschwa): Move each URL to the dependency itself.
 set(BOOST_URL           ${FETCH_URL}/boost-${BOOST_VERSION}.tar.gz)
 set(CONCURRENTQUEUE_URL ${FETCH_URL}/concurrentqueue-${CONCURRENTQUEUE_VERSION}.tar.gz)
+set(CSI_URL             ${FETCH_URL}/csi-${CSI_VERSION}.tar.gz)
 set(ELFIO_URL           ${FETCH_URL}/elfio-${ELFIO_VERSION}.tar.gz)
 set(GLOG_URL            ${FETCH_URL}/glog-${GLOG_VERSION}.tar.gz)
 set(GOOGLETEST_URL      ${FETCH_URL}/googletest-release-${GOOGLETEST_VERSION}.tar.gz)
+set(GRPC_URL            ${FETCH_URL}/grpc-${GRPC_VERSION}.tar.gz)
 set(HTTP_PARSER_URL     ${FETCH_URL}/http-parser-${HTTP_PARSER_VERSION}.tar.gz)
 set(PICOJSON_URL        ${FETCH_URL}/picojson-${PICOJSON_VERSION}.tar.gz)
 set(PROTOBUF_URL        ${FETCH_URL}/protobuf-${PROTOBUF_VERSION}.tar.gz)
@@ -818,6 +820,69 @@ ExternalProject_Add(
   INSTALL_COMMAND   ${CMAKE_NOOP}
   URL               ${PROTOBUF_URL}
   URL_HASH          ${PROTOBUF_HASH})
+
+
+# GRPC: FIXME(bbannier)
+#######################
+# FIXME(bbannier): make conditional.
+EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(grpc SHARED IMPORTED)
+add_dependencies(grpc ${GRPC_TARGET})
+# FIXME(bbannier): make archive type dynamic.
+set_target_properties(grpc PROPERTIES
+  INTERFACE_INCLUDE_DIRECTORIES ${GRPC_ROOT}/include
+  IMPORTED_LOCATION ${GRPC_ROOT}/libgrpc++.so)
+  # IMPORTED_LOCATION ${GRPC_ROOT}/libgrpc.so # FIXME(bbannier)
+  # IMPORTED_LOCATION ${GRPC_ROOT}/libgpr.so)
+
+PATCH_CMD(GRPC_PATCH_CMD grpc-${GRPC_VERSION}.patch)
+
+MAKE_INCLUDE_DIR(grpc)
+GET_BYPRODUCTS(grpc)
+
+# FIXME(bbannier): grpc requires ssl
+ExternalProject_Add(
+  ${GRPC_TARGET}
+  PREFIX ${GRPC_CMAKE_ROOT}
+  BUILD_IN_SOURCE 1
+  PATCH_COMMAND ${GRPC_PATCH_CMD}
+  BUILD_BYPRODUCTS ${GRPC_BYPRODUCTS}
+  CMAKE_ARGS ${CMAKE_FORWARD_ARGS};-DPROTOBUF_ROOT_DIR=${PROTOBUF_ROOT};-DgRPC_SSL_PROVIDER=package;-DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+  INSTALL_COMMAND ${CMAKE_NOOP} # FIXME(bbannier): we should probably install to have proper rpats
+  DEPENDS ${PROTOBUF_TARGET}
+  URL ${GRPC_URL})
+
+
+# CSI: FIXME(bbannier)
+######################
+# FIXME(bbannier): make conditional.
+EXTERNAL(CSI ${CSI_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
+add_library(csi-interface ${LIBRARY_LINKAGE} ${CSI_ROOT}/csi.pb.cc ${CSI_ROOT}/csi.grpc.pb.cc)
+add_dependencies(csi-interface ${CSI_TARGET})
+target_link_libraries(csi-interface PUBLIC protobuf grpc)
+target_include_directories(csi-interface PUBLIC ${CSI_ROOT})
+target_include_directories(csi-interface PUBLIC ${CSI_ROOT}/..)
+
+# FIXME(bbannier): what have I done?! Maybe reuse include dir at caller?
+set(CSI_PATH ${CSI_ROOT} PARENT_SCOPE)
+
+# FIXME(bbannier): make conditional.
+ExternalProject_Add(
+  ${CSI_TARGET}
+  PREFIX ${CSI_CMAKE_ROOT}
+  BUILD_BYPRODUCTS ${CSI_BYPRODUCTS}
+  CONFIGURE_COMMAND ${CMAKE_NOOP}
+
+  BUILD_IN_SOURCE 1
+
+  BUILD_COMMAND
+  protoc -I${CSI_ROOT} --cpp_out=${CSI_ROOT} ${CSI_ROOT}/csi.proto &&
+  protoc -I${CSI_ROOT} --grpc_out=${CSI_ROOT} --plugin=protoc-gen-grpc=${GRPC_ROOT}/grpc_cpp_plugin ${CSI_ROOT}/csi.proto
+
+  INSTALL_COMMAND ${CMAKE_NOOP}
+  DEPENDS protobuf grpc
+  URL ${CSI_URL})
 
 
 # Apache ZooKeeper: C Client Library to ZooKeeper.

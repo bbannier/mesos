@@ -55,12 +55,42 @@ if (ENABLE_SSL)
     ssl_tests.cpp)
 endif ()
 
+# FIXME(bbannier): make conditional.
+list(APPEND PROCESS_TESTS_SRC
+  grpc_tests.cpp
+  grpc_tests.proto
+  grpc_tests.pb.h
+  grpc_tests.pb.cc
+  grpc_tests.grpc.pb.h
+  grpc_tests.grpc.pb.cc)
+# THE C++ PROTOCOL BUFFER CODE (grpc_tests.pb.h and grpc_tests.pb.cc).
+######################################################################
+add_custom_command(
+  OUTPUT grpc_tests.pb.h grpc_tests.pb.cc
+  COMMAND protoc
+    -I${CMAKE_CURRENT_SOURCE_DIR}
+    --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto)
+# THE C++ PROTOCOL BUFFER CODE (grpc_tests.grpc.pb.h and grpc_tests.grpc.pb.cc).
+################################################################################
+add_custom_command(
+  OUTPUT grpc_tests.grpc.pb.h grpc_tests.grpc.pb.cc
+  COMMAND protoc
+    -I${CMAKE_CURRENT_SOURCE_DIR}
+    --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
+    --plugin=protoc-gen-grpc=${GRPC_ROOT}/grpc_cpp_plugin
+    ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto)
+
 add_library(process-interface INTERFACE)
 target_link_libraries(process-interface INTERFACE process googletest)
 target_include_directories(process-interface INTERFACE ..)
 
 add_executable(libprocess-tests EXCLUDE_FROM_ALL ${PROCESS_TESTS_SRC})
-target_link_libraries(libprocess-tests PRIVATE process-interface)
+# FIXME(bbannier): make conditional.
+target_link_libraries(libprocess-tests PRIVATE process-interface grpc)
+target_include_directories(libprocess-tests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 target_compile_definitions(
   libprocess-tests PRIVATE
