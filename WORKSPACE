@@ -1,15 +1,3 @@
-# git_repository(
-#     name = "com_google_glog",
-#     remote = "https://github.com/google/glog.git",
-#     commit = "0a9f71036f5617ecd3549abff78a8d9a09c7e56e",
-# )
-
-# git_repository(
-#     name = "com_github_gflags_gflags",
-#     remote = "https://github.com/gflags/gflags.git",
-#     commit = "77592648e3f3be87d6c7123eb81cbad75f9aef5a",
-# )
-
 new_http_archive(
     name = "boost",
     urls = ["file:3rdparty/boost-1.53.0.tar.gz"],
@@ -18,7 +6,8 @@ new_http_archive(
 """
 cc_library(
     name = "headers",
-    includes = ["boost/version.hpp"],
+    hdrs = glob(["boost/**"]),
+    includes = ["."],
     visibility = ["//visibility:public"],
 )
 """
@@ -41,7 +30,7 @@ cc_library(
     name = "gtest",
     srcs = ["libgtest.a"],
     hdrs = glob(["googletest/include/**/*.h*"]),
-    includes = glob(["googletest/include/**/*.h*"]),
+    includes = ["googletest/include"],
     strip_include_prefix = "googletest/include",
     visibility = ["//visibility:public"],
 )
@@ -65,7 +54,7 @@ cc_library(
     name = "gmock",
     srcs = ["libgmock.a"],
     hdrs = glob(["googlemock/include/gmock/**/*.h*"]),
-    includes = glob(["googlemock/include/gmock/**/*.h*"]),
+    includes = ["googlemock/include"],
     strip_include_prefix = "googlemock/include",
     visibility = ["//visibility:public"],
 )
@@ -75,20 +64,22 @@ cc_library(
 new_http_archive(
     name = "glog",
     urls = ["file:3rdparty/glog-0.3.3.tar.gz"],
+    strip_prefix = "glog-0.3.3",
     build_file_content =
 """
 genrule(
     name = "glog_genrule",
-    srcs = glob(["**/*"]),
+    srcs = glob(["*", "**/*"]),
     outs = ["libglog.a"],
-    cmd = "echo $$PWD &&  $(location libglog.a)/configure && make libglog.a && cp .libs/libglog.a $@",
+    cmd = "external/glog/configure GTEST_CONFIG=false --prefix=$$PWD/PREFIX && make install && cp .libs/libglog.a libglog.a",
 )
 
 cc_library(
     name = "glog",
     srcs = ["libglog.a"],
-    includes = glob(["src/glog/**/*.h*"]),
-    strip_include_prefix = "src",
+    hdrs = glob(["PREFIX/include/**"]),
+    includes = ["PREFIX/include"],
+    strip_include_prefix = "PREFIX/include",
     visibility = ["//visibility:public"],
 )
 """

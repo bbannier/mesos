@@ -20,6 +20,9 @@ cc_test(
     name = "bazel_test",
     srcs = ["tests/bazel_test.cpp"],
     deps = [
+        "@gtest//:gtest",
+        "@gmock//:gmock",
         "@boost//:headers",
+        "@glog//:glog",
     ],
 )
