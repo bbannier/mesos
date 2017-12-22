@@ -63,7 +63,7 @@ cc_library(
 
 new_http_archive(
     name = "glog",
-    urls = ["file:3rdparty/glog-0.3.3.tar.gz"],
+    urls = ["file:3rdparty/glog-0.3.3_patched.tar.gz"],
     strip_prefix = "glog-0.3.3",
     build_file_content =
 """
