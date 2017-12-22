@@ -1,6 +1,7 @@
 cc_library(
     name = "stout",
-    includes = glob(["include/stout/**/*.hpp"]),
+    hdrs = glob(["include/stout/**/*.hpp"]),
+    includes = glob(["include/stout"]),
     strip_include_prefix = "include",
 )
 

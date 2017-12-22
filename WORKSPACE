@@ -70,16 +70,29 @@ new_http_archive(
 genrule(
     name = "glog_genrule",
     srcs = glob(["*", "**/*"]),
-    outs = ["libglog.a"],
-    cmd = "external/glog/configure GTEST_CONFIG=false --prefix=$$PWD/PREFIX && make install && cp .libs/libglog.a libglog.a",
+    outs = [
+      "libglog.a",
+      "src/glog/logging.h",
+      "src/glog/raw_logging.h",
+      "src/glog/stl_logging.h",
+      "src/glog/vlog_is_on.h",
+    ],
+    tools = ["configure"],
+    cmd = "$(location :configure) GTEST_CONFIG=no" +
+      "&& make install" +
+      "&& cp -v .libs/libglog.a $(location libglog.a)" +
+      "&& cp -v src/glog/logging.h $(location src/glog/logging.h)" +
+      "&& cp -v src/glog/raw_logging.h $(location src/glog/raw_logging.h)" +
+      "&& cp -v src/glog/stl_logging.h $(location src/glog/stl_logging.h)" +
+      "&& cp -v src/glog/vlog_is_on.h $(location src/glog/vlog_is_on.h)",
 )
 
 cc_library(
     name = "glog",
     srcs = ["libglog.a"],
-    hdrs = glob(["PREFIX/include/**"]),
-    includes = ["PREFIX/include"],
-    strip_include_prefix = "PREFIX/include",
+    hdrs = ["src/glog/logging.h"],
+    includes = ["src/glog"],
+    strip_include_prefix = "src",
     visibility = ["//visibility:public"],
 )
 """
