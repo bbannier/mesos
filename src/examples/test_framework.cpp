@@ -221,7 +221,7 @@ public:
   }
 
   string role;
-  Option<string> master;
+  string master;
 };
 
 
@@ -248,11 +248,6 @@ int main(int argc, char** argv)
 
   if (load.isError()) {
     cerr << flags.usage(load.error()) << endl;
-    return EXIT_FAILURE;
-  }
-
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing --master") << endl;
     return EXIT_FAILURE;
   }
 
@@ -317,7 +312,7 @@ int main(int argc, char** argv)
     driver = new MesosSchedulerDriver(
         &scheduler,
         framework,
-        flags.master.get(),
+        flags.master,
         implicitAcknowledgements,
         credential);
   } else {
@@ -326,7 +321,7 @@ int main(int argc, char** argv)
     driver = new MesosSchedulerDriver(
         &scheduler,
         framework,
-        flags.master.get(),
+        flags.master,
         implicitAcknowledgements);
   }
 

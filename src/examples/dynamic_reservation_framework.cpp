@@ -355,8 +355,8 @@ public:
         "echo hello");
   }
 
-  Option<string> master;
-  Option<string> role;
+  string master;
+  string role;
   string principal;
   string command;
 };
@@ -376,13 +376,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing --master") << endl;
-    return EXIT_FAILURE;
-  } else if (flags.role.isNone()) {
-    cerr << flags.usage("Missing --role") << endl;
-    return EXIT_FAILURE;
-  } else if (flags.role.get() == "*") {
+  if (flags.role == "*") {
     cerr << flags.usage(
                 "Role is incorrect; the default '*' role cannot be used")
          << endl;
@@ -399,7 +393,7 @@ int main(int argc, char** argv)
   FrameworkInfo framework;
   framework.set_user(""); // Mesos'll fill in the current user.
   framework.set_name(FRAMEWORK_NAME);
-  framework.add_roles(flags.role.get());
+  framework.add_roles(flags.role);
   framework.add_capabilities()->set_type(
       FrameworkInfo::Capability::MULTI_ROLE);
   framework.set_principal(flags.principal);
@@ -408,24 +402,24 @@ int main(int argc, char** argv)
 
   DynamicReservationScheduler scheduler(
       flags.command,
-      flags.role.get(),
+      flags.role,
       flags.principal);
 
-  if (flags.master.get() == "local") {
+  if (flags.master == "local") {
     // Configure master.
     os::setenv("MESOS_AUTHENTICATE_FRAMEWORKS", "false");
 
     ACLs acls;
     ACL::RegisterFramework* acl = acls.add_register_frameworks();
     acl->mutable_principals()->set_type(ACL::Entity::ANY);
-    acl->mutable_roles()->add_values(flags.role.get());
+    acl->mutable_roles()->add_values(flags.role);
     os::setenv("MESOS_ACLS", stringify(JSON::protobuf(acls)));
   }
 
   MesosSchedulerDriver* driver = new MesosSchedulerDriver(
       &scheduler,
       framework,
-      flags.master.get());
+      flags.master);
 
   int status = driver->run() == DRIVER_STOPPED ? 0 : 1;
 

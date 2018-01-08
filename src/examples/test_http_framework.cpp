@@ -406,7 +406,7 @@ public:
   }
 
   string role;
-  Option<string> master;
+  string master;
 };
 
 
@@ -433,11 +433,6 @@ int main(int argc, char** argv)
 
   if (load.isError()) {
     cerr << flags.usage(load.error()) << endl;
-    return EXIT_FAILURE;
-  }
-
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing --master") << endl;
     return EXIT_FAILURE;
   }
 
@@ -480,7 +475,7 @@ int main(int argc, char** argv)
   framework.set_principal(value.get());
 
   process::Owned<HTTPScheduler> scheduler(
-      new HTTPScheduler(framework, executor, flags.master.get()));
+      new HTTPScheduler(framework, executor, flags.master));
 
   process::spawn(scheduler.get());
   process::wait(scheduler.get());

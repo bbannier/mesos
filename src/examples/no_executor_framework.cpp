@@ -278,7 +278,7 @@ public:
         "If unset, as many tasks as possible will be launched.");
   }
 
-  Option<string> master;
+  string master;
   bool checkpoint;
   Option<string> principal;
   Option<string> secret;
@@ -301,11 +301,6 @@ int main(int argc, char** argv)
 
   if (load.isError()) {
     cerr << flags.usage(load.error()) << endl;
-    return EXIT_FAILURE;
-  }
-
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing required option --master") << endl;
     return EXIT_FAILURE;
   }
 
@@ -383,10 +378,10 @@ int main(int argc, char** argv)
     credential.set_secret(flags.secret.get());
 
     driver = new MesosSchedulerDriver(
-        &scheduler, framework, flags.master.get(), credential);
+        &scheduler, framework, flags.master, credential);
   } else {
     driver = new MesosSchedulerDriver(
-        &scheduler, framework, flags.master.get());
+        &scheduler, framework, flags.master);
   }
 
   int status = driver->run() == DRIVER_STOPPED ? 0 : 1;

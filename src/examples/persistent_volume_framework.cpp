@@ -529,7 +529,7 @@ public:
         2);
   }
 
-  Option<string> master;
+  string master;
   string role;
   string principal;
   size_t num_shards;
@@ -553,11 +553,6 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing required option --master") << endl;
-    return EXIT_FAILURE;
-  }
-
   logging::initialize(argv[0], true, flags); // Catch signals.
 
   // Log any flag warnings (after logging is initialized).
@@ -578,7 +573,7 @@ int main(int argc, char** argv)
   framework.add_capabilities()->set_type(
       FrameworkInfo::Capability::RESERVATION_REFINEMENT);
 
-  if (flags.master.get() == "local") {
+  if (flags.master == "local") {
     // Configure master.
     os::setenv("MESOS_ROLES", flags.role);
     os::setenv("MESOS_AUTHENTICATE_FRAMEWORKS", "false");
@@ -603,7 +598,7 @@ int main(int argc, char** argv)
   MesosSchedulerDriver* driver = new MesosSchedulerDriver(
       &scheduler,
       framework,
-      flags.master.get());
+      flags.master);
 
   int status = driver->run() == DRIVER_STOPPED ? EXIT_SUCCESS : EXIT_FAILURE;
 

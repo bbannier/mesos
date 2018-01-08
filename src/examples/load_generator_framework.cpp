@@ -259,12 +259,21 @@ public:
     add(&Flags::qps,
         "qps",
         "Required. Generate load at this specified rate (queries per second).\n"
+        "The specified load needs to be positive.\n"
         "Note that this rate is an upper bound and the real rate may be less.\n"
         "Also, setting the qps too high can cause the local machine to run\n"
         "out of ephemeral ports during master failover (if scheduler driver\n"
         "fails to detect master change soon enough after the old master exits\n"
         "and the scheduler keeps trying to connect to the dead master. See\n"
-        "MESOS-1560 for more details)");
+        "MESOS-1560 for more details)",
+        0.,
+        [](double qps) -> Option<Error> {
+          if (qps <= 0) {
+            return Error("--qps needs to be greater than zero");
+          }
+
+          return None();
+        });
 
     add(&Flags::duration,
         "duration",
@@ -273,11 +282,11 @@ public:
         "forever as long as it is connected to the master");
   }
 
-  Option<string> master;
+  string master;
   string principal;
   Option<string> secret;
   bool authenticate;
-  Option<double> qps;
+  double qps;
   Option<Duration> duration;
 };
 
@@ -297,21 +306,6 @@ int main(int argc, char** argv)
     return EXIT_SUCCESS;
   }
 
-  if (flags.master.isNone()) {
-    cerr << flags.usage("Missing required option --master") << endl;
-    return EXIT_FAILURE;
-  }
-
-  if (flags.qps.isNone()) {
-    cerr << flags.usage("Missing required option --qps") << endl;
-    return EXIT_FAILURE;
-  }
-
-  if (flags.qps.get() <= 0) {
-    cerr << flags.usage("--qps needs to be greater than zero") << endl;
-    return EXIT_FAILURE;
-  }
-
   // We want the logger to catch failure signals.
   mesos::internal::logging::initialize(argv[0], true, flags);
 
@@ -320,7 +314,7 @@ int main(int argc, char** argv)
     LOG(WARNING) << warning.message;
   }
 
-  LoadGeneratorScheduler scheduler(flags.qps.get(), flags.duration);
+  LoadGeneratorScheduler scheduler(flags.qps, flags.duration);
 
   FrameworkInfo framework;
   framework.set_user(""); // Have Mesos fill in the current user.
@@ -352,12 +346,11 @@ int main(int argc, char** argv)
     framework.set_principal(flags.principal);
 
     driver = new MesosSchedulerDriver(
-        &scheduler, framework, flags.master.get(), credential);
+        &scheduler, framework, flags.master, credential);
   } else {
     framework.set_principal(flags.principal);
 
-    driver = new MesosSchedulerDriver(
-        &scheduler, framework, flags.master.get());
+    driver = new MesosSchedulerDriver(&scheduler, framework, flags.master);
   }
 
   int status = driver->run() == DRIVER_STOPPED ? EXIT_SUCCESS : EXIT_FAILURE;
