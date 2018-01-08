@@ -329,7 +329,7 @@ public:
       const process::Future<bool>& future,
       const TaskID& taskId,
       const FrameworkID& frameworkId,
-      const id::UUID& uuid);
+      const UUID& uuid);
 
   void operationStatusAcknowledgement(
       const process::UPID& from,
@@ -610,7 +610,7 @@ private:
 
   void removeOperation(Operation* operation);
 
-  Operation* getOperation(const id::UUID& uuid) const;
+  Operation* getOperation(const UUID& uuid) const;
 
   void addResourceProvider(ResourceProvider* resourceProvider);
   ResourceProvider* getResourceProvider(const ResourceProviderID& id) const;
@@ -785,14 +785,14 @@ private:
   // different resource version UUID than that it maintains, because
   // this means the operation is operating on resources that might
   // have already been invalidated.
-  id::UUID resourceVersion;
+  UUID resourceVersion;
 
   // Keeps track of the following:
   // (1) Pending operations for resources from the agent.
   // (2) Pending operations or terminal operations that have
   //     unacknowledged status updates for resource provider
   //     provided resources.
-  hashmap<id::UUID, Operation*> operations;
+  hashmap<UUID, Operation*> operations;
 };
 
 
@@ -1121,7 +1121,7 @@ struct ResourceProvider
   ResourceProvider(
       const ResourceProviderInfo& _info,
       const Resources& _totalResources,
-      const id::UUID& _resourceVersion)
+      const UUID& _resourceVersion)
     : info(_info),
       totalResources(_totalResources),
       resourceVersion(_resourceVersion) {}
@@ -1143,11 +1143,11 @@ struct ResourceProvider
   // different resource version UUID than that it maintains, because
   // this means the operation is operating on resources that might
   // have already been invalidated.
-  id::UUID resourceVersion;
+  UUID resourceVersion;
 
   // Pending operations or terminal operations that have
   // unacknowledged status updates.
-  hashmap<id::UUID, Operation*> operations;
+  hashmap<UUID, Operation*> operations;
 };
 
 
