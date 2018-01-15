@@ -606,7 +606,7 @@ TYPED_TEST(SlaveAuthorizerTest, AuthorizeRunTaskOnAgent)
   AWAIT_READY(frameworkId);
 
   AWAIT_READY(offers);
-  ASSERT_FALSE(offers.get().empty());
+  ASSERT_FALSE(offers->empty());
 
   Offer offer = offers.get()[0];
 
@@ -715,7 +715,7 @@ TEST_F(ExecutorAuthorizationTest, RunTaskGroup)
   AWAIT_READY(frameworkId);
 
   AWAIT_READY(offers);
-  ASSERT_FALSE(offers.get().empty());
+  ASSERT_FALSE(offers->empty());
 
   Offer offer = offers.get()[0];
 
@@ -1078,8 +1078,7 @@ TEST_F(ExecutorAuthorizationTest, FailedApiCalls)
   containerId.mutable_parent()->CopyFrom(executorSubscribed->container_id());
 
   http::Headers headers;
-  headers["Authorization"] =
-    "Bearer " + authenticationToken.get().value().data();
+  headers["Authorization"] = "Bearer " + authenticationToken->value().data();
 
   // Since the executor library has already been initialized with a valid
   // authentication token, we use an HTTP helper function to send the

@@ -137,7 +137,7 @@ Try<Launcher*> LinuxLauncher::create(const Flags& flags)
     return Error(
         "Failed to get the list of attached subsystems for hierarchy " +
         freezerHierarchy.get());
-  } else if (subsystems.get().size() != 1) {
+  } else if (subsystems->size() != 1) {
     return Error(
         "Unexpected subsystems found attached to the hierarchy " +
         freezerHierarchy.get());
@@ -357,7 +357,7 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
           continue;
         }
 
-        if (mesosExecutorSlicePids.get().count(container.pid.get()) != 0) {
+        if (mesosExecutorSlicePids->count(container.pid.get()) != 0) {
           // TODO(jmlvanre): Add a flag that enforces this rather
           // than just logs a warning (i.e., we exit if a pid was
           // found in the freezer but not in the
@@ -501,7 +501,7 @@ Try<pid_t> LinuxLauncherProcess::fork(
 
   Container container;
   container.id = containerId;
-  container.pid = child.get().pid();
+  container.pid = child->pid();
 
   containers.put(container.id, container);
 

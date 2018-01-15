@@ -336,7 +336,7 @@ Master::Master(
   // TODO(marco): The ip, port, hostname fields above are
   //     being deprecated; the code should be removed once
   //     the deprecation cycle is complete.
-  info_.set_ip(self().address.ip.in().get().s_addr);
+  info_.set_ip(self().address.ip.in()->s_addr);
 
   info_.set_port(self().address.port);
   info_.set_pid(self());
@@ -645,7 +645,7 @@ void Master::initialize()
 
   if (flags.rate_limits.isSome()) {
     // Add framework rate limiters.
-    foreach (const RateLimit& limit_, flags.rate_limits.get().limits()) {
+    foreach (const RateLimit& limit_, flags.rate_limits->limits()) {
       if (frameworks.limiters.contains(limit_.principal())) {
         EXIT(EXIT_FAILURE)
           << "Duplicate principal " << limit_.principal()
@@ -672,22 +672,22 @@ void Master::initialize()
       }
     }
 
-    if (flags.rate_limits.get().has_aggregate_default_qps() &&
-        flags.rate_limits.get().aggregate_default_qps() <= 0) {
+    if (flags.rate_limits->has_aggregate_default_qps() &&
+        flags.rate_limits->aggregate_default_qps() <= 0) {
       EXIT(EXIT_FAILURE)
         << "Invalid aggregate_default_qps: "
-        << flags.rate_limits.get().aggregate_default_qps()
+        << flags.rate_limits->aggregate_default_qps()
         << ". It must be a positive number";
     }
 
-    if (flags.rate_limits.get().has_aggregate_default_qps()) {
+    if (flags.rate_limits->has_aggregate_default_qps()) {
       Option<uint64_t> capacity;
-      if (flags.rate_limits.get().has_aggregate_default_capacity()) {
-        capacity = flags.rate_limits.get().aggregate_default_capacity();
+      if (flags.rate_limits->has_aggregate_default_capacity()) {
+        capacity = flags.rate_limits->aggregate_default_capacity();
       }
-      frameworks.defaultLimiter = Owned<BoundedRateLimiter>(
-          new BoundedRateLimiter(
-              flags.rate_limits.get().aggregate_default_qps(), capacity));
+      frameworks.defaultLimiter =
+        Owned<BoundedRateLimiter>(new BoundedRateLimiter(
+            flags.rate_limits->aggregate_default_qps(), capacity));
     }
 
     LOG(INFO) << "Framework rate limiting enabled";
@@ -714,15 +714,15 @@ void Master::initialize()
 
     roleWhitelist = hashset<string>();
     foreach (const string& role, roles.get()) {
-      roleWhitelist.get().insert(role);
+      roleWhitelist->insert(role);
     }
 
-    if (roleWhitelist.get().size() < roles.get().size()) {
+    if (roleWhitelist->size() < roles->size()) {
       LOG(WARNING) << "Duplicate values in '--roles': " << flags.roles.get();
     }
 
     // The default role is always allowed.
-    roleWhitelist.get().insert("*");
+    roleWhitelist->insert("*");
   }
 
   // Add role weights.
@@ -1269,8 +1269,7 @@ void Master::finalize()
 void Master::exited(const FrameworkID& frameworkId, const HttpConnection& http)
 {
   foreachvalue (Framework* framework, frameworks.registered) {
-    if (framework->http.isSome() &&
-        framework->http.get().writer == http.writer) {
+    if (framework->http.isSome() && framework->http->writer == http.writer) {
       CHECK_EQ(frameworkId, framework->id());
       _exited(framework);
       return;
@@ -1510,7 +1509,7 @@ void Master::consume(MessageEvent&& event)
   // through recover(). What are the performance implications of
   // the additional queueing delay and the accumulated backlog
   // of messages post-recovery?
-  if (!recovered.get().isReady()) {
+  if (!recovered->isReady()) {
     VLOG(1) << "Dropping '" << event.message.name << "' message since "
             << "not recovered yet";
     ++metrics->dropped_messages;
@@ -2089,8 +2088,8 @@ void Master::contended(const Future<Future<Nothing>>& candidacy)
   }
 
   // Watch for candidacy change.
-  candidacy.get()
-    .onAny(defer(self(), &Master::lostCandidacy, lambda::_1));
+  candidacy
+    ->onAny(defer(self(), &Master::lostCandidacy, lambda::_1));
 }
 
 
@@ -2603,10 +2602,10 @@ void Master::subscribe(
   if (validationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "': "
-              << validationError.get().message;
+              << validationError->message;
 
     FrameworkErrorMessage message;
-    message.set_message(validationError.get().message);
+    message.set_message(validationError->message);
 
     http.send(message);
     http.close();
@@ -2655,10 +2654,10 @@ void Master::_subscribe(
   if (authorizationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "'"
-              << ": " << authorizationError.get().message;
+              << ": " << authorizationError->message;
 
     FrameworkErrorMessage message;
-    message.set_message(authorizationError.get().message);
+    message.set_message(authorizationError->message);
     http.send(message);
     http.close();
     return;
@@ -2869,10 +2868,10 @@ void Master::subscribe(
   if (validationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "' at " << from << ": "
-              << validationError.get().message;
+              << validationError->message;
 
     FrameworkErrorMessage message;
-    message.set_message(validationError.get().message);
+    message.set_message(validationError->message);
     send(from, message);
     return;
   }
@@ -2935,10 +2934,10 @@ void Master::_subscribe(
   if (authorizationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "' at " << from
-              << ": " << authorizationError.get().message;
+              << ": " << authorizationError->message;
 
     FrameworkErrorMessage message;
-    message.set_message(authorizationError.get().message);
+    message.set_message(authorizationError->message);
 
     send(from, message);
     return;
@@ -2953,7 +2952,7 @@ void Master::_subscribe(
   if (authenticationError.isSome()) {
     LOG(INFO) << "Dropping SUBSCRIBE call for framework"
               << " '" << frameworkInfo.name() << "' at " << from
-              << ": " << authenticationError.get().message;
+              << ": " << authenticationError->message;
     return;
   }
 
@@ -3237,7 +3236,7 @@ void Master::disconnect(Framework* framework)
 
     // Close the HTTP connection, which may already have
     // been closed due to scheduler disconnection.
-    framework->http.get().close();
+    framework->http->close();
   }
 }
 
@@ -3427,7 +3426,7 @@ bool Master::isWhitelistedRole(const string& name) const
     return true;
   }
 
-  return roleWhitelist.get().contains(name);
+  return roleWhitelist->contains(name);
 }
 
 
@@ -7716,7 +7715,7 @@ void Master::updateUnavailability(
         // TODO(jmlvanre): Add stream operator for unavailability.
         LOG(INFO) << "Updating unavailability of agent " << *slave
                   << ", starting at "
-                  << Nanoseconds(unavailability.get().start().nanoseconds());
+                  << Nanoseconds(unavailability->start().nanoseconds());
       } else {
         LOG(INFO) << "Removing unavailability of agent " << *slave;
       }
@@ -8543,8 +8542,8 @@ void Master::_reconcileTasks(
 
     if (update.isSome()) {
       VLOG(1) << "Sending explicit reconciliation state "
-              << update.get().status().state()
-              << " for task " << update.get().status().task_id()
+              << update->status().state()
+              << " for task " << update->status().task_id()
               << " of framework " << *framework;
 
       // TODO(bmahler): Consider using forward(); might lead to too
@@ -8949,7 +8948,7 @@ void Master::_authenticate(
     const UPID& pid,
     const Future<Option<string>>& future)
 {
-  if (!future.isReady() || future.get().isNone()) {
+  if (!future.isReady() || future->isNone()) {
     const string& error = future.isReady()
         ? "Refused authentication"
         : (future.isFailed() ? future.failure() : "future discarded");
@@ -8957,10 +8956,10 @@ void Master::_authenticate(
     LOG(WARNING) << "Failed to authenticate " << pid
                  << ": " << error;
   } else {
-    LOG(INFO) << "Successfully authenticated principal '" << future.get().get()
+    LOG(INFO) << "Successfully authenticated principal '" << future->get()
               << "' at " << pid;
 
-    authenticated.put(pid, future.get().get());
+    authenticated.put(pid, future->get());
   }
 
   CHECK(authenticating.contains(pid));
@@ -11594,7 +11593,7 @@ bool Slave::hasExecutor(const FrameworkID& frameworkId,
                         const ExecutorID& executorId) const
 {
   return executors.contains(frameworkId) &&
-    executors.get(frameworkId).get().contains(executorId);
+    executors.get(frameworkId)->contains(executorId);
 }
 
 

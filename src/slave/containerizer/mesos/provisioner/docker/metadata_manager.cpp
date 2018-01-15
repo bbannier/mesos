@@ -262,7 +262,7 @@ Future<Nothing> MetadataManagerProcess::recover()
                    images.error());
   }
 
-  foreach (const Image& image, images.get().images()) {
+  foreach (const Image& image, images->images()) {
     const string imageReference = stringify(image.reference());
 
     if (storedImages.contains(imageReference)) {

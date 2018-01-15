@@ -378,10 +378,10 @@ int main(int argc, char** argv)
       log = new Log(
           flags.quorum.get(),
           path::join(flags.work_dir.get(), "replicated_log"),
-          url.get().servers,
+          url->servers,
           flags.zk_session_timeout,
-          path::join(url.get().path, "log_replicas"),
-          url.get().authentication,
+          path::join(url->path, "log_replicas"),
+          url->authentication,
           flags.log_auto_initialize,
           "registrar/");
     } else {
