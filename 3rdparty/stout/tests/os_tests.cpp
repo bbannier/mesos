@@ -300,11 +300,11 @@ TEST_F(OsTest, Sysctl)
 
   Try<string> release = os::sysctl(CTL_KERN, KERN_OSRELEASE).string();
 
-  EXPECT_SOME_EQ(uname.get().release, release);
+  EXPECT_SOME_EQ(uname->release, release);
 
   Try<string> type = os::sysctl(CTL_KERN, KERN_OSTYPE).string();
 
-  EXPECT_SOME_EQ(uname.get().sysname, type);
+  EXPECT_SOME_EQ(uname->sysname, type);
 
   // Integer test.
   Try<int> maxproc = os::sysctl(CTL_KERN, KERN_MAXPROC).integer();
@@ -336,8 +336,8 @@ TEST_F(OsTest, Sysctl)
   timeval time;
   gettimeofday(&time, nullptr);
 
-  EXPECT_GT(Seconds(bootTime.get().tv_sec), Seconds(0));
-  EXPECT_LT(Seconds(bootTime.get().tv_sec), Seconds(time.tv_sec));
+  EXPECT_GT(Seconds(bootTime->tv_sec), Seconds(0));
+  EXPECT_LT(Seconds(bootTime->tv_sec), Seconds(time.tv_sec));
 }
 #endif // __APPLE__ || __FreeBSD__
 
