@@ -2251,7 +2251,7 @@ Future<Response> Master::Http::getMaster(
 
   getMaster->set_start_time(master->startTime.secs());
   if (master->electedTime.isSome()) {
-    getMaster->set_elected_time(master->electedTime.get().secs());
+    getMaster->set_elected_time(master->electedTime->secs());
   }
 
   return OK(serialize(contentType, evolve(response)),
