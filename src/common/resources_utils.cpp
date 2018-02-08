@@ -285,6 +285,50 @@ Result<ResourceProviderID> getResourceProviderId(
 }
 
 
+Result<ResourceProviderID> getResourceProviderId(
+    const ResourceConversion& conversion) {
+  vector<Option<ResourceProviderID>> providerIds;
+  providerIds.reserve(conversion.consumed.size());
+
+  foreach (const Resource& resource, conversion.consumed) {
+    if (resource.has_provider_id()) {
+      providerIds.push_back(resource.provider_id());
+    } else {
+      providerIds.push_back(None());
+    }
+    if (!resource.has_provider_id()) {
+      continue;
+    }
+  }
+
+  foreach (auto&& providerId, providerIds) {
+    if (providerId != providerIds.front()) {
+      return Error("Conversion works on multiple resource providers");
+    }
+  }
+
+  const Option<ResourceProviderID> providerId =
+    !providerIds.empty() ? providerIds.front() : None();
+
+  // Perform a sanitiy check that the conversion did not change the
+  // provider ID.
+  foreach (const Resource& resource, conversion.converted) {
+    Option<ResourceProviderID> providerId_ =
+      resource.has_provider_id() ? resource.provider_id()
+                                 : Option<ResourceProviderID>::none();
+
+    if (providerId_ != providerId) {
+      return Error(
+          "Provider ID of conversion result (" +
+          (providerId_.isSome() ? stringify(providerId_.get()) : "") + ")" +
+          " is inconsistent with consumed resources (" +
+          (providerId.isSome() ? stringify(providerId.get()) : "") + ")");
+    }
+  }
+
+  return providerId;
+}
+
 void convertResourceFormat(Resource* resource, ResourceFormat format)
 {
   switch (format) {
