@@ -1507,6 +1507,137 @@ TEST_F(OversubscriptionTest, LoadQoSController)
 }
 
 
+// FIXME(bbannier): document me.
+TEST_F(OversubscriptionTest, NOPE_ResourceProviderResources)
+{
+  Clock::pause();
+
+  auto masterFlags = CreateMasterFlags();
+  auto master = StartMaster(masterFlags);
+  ASSERT_SOME(master);
+
+  Future<UpdateSlaveMessage> updateSlaveMessage =
+    FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+
+  MockResourceEstimator resourceEstimator;
+  EXPECT_CALL(resourceEstimator, initialize(_));
+
+  Queue<Resources> estimations;
+  EXPECT_CALL(resourceEstimator, oversubscribable())
+    .WillRepeatedly(InvokeWithoutArgs(&estimations, &Queue<Resources>::get));
+
+  auto slaveFlags = CreateSlaveFlags();
+
+  // Disable HTTP authentication to simplify resource provider interactions.
+  slaveFlags.authenticate_http_readwrite = false;
+
+  // Set the resource provider capability.
+  vector<SlaveInfo::Capability> capabilities = slave::AGENT_CAPABILITIES();
+  SlaveInfo::Capability capability;
+  capability.set_type(SlaveInfo::Capability::RESOURCE_PROVIDER);
+  capabilities.push_back(capability);
+
+  slaveFlags.agent_features = SlaveCapabilities();
+  slaveFlags.agent_features->mutable_capabilities()->CopyFrom(
+      {capabilities.begin(), capabilities.end()});
+
+  StandaloneMasterDetector detector(master.get()->pid);
+  auto slave = StartSlave(&detector, &resourceEstimator, slaveFlags);
+  ASSERT_SOME(slave);
+
+  Clock::advance(slaveFlags.registration_backoff_factor);
+  Clock::advance(slaveFlags.authentication_backoff_factor);
+  Clock::settle();
+  AWAIT_READY(updateSlaveMessage);
+
+  // Register a local resource provider with the agent.
+  mesos::v1::ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.set_type("org.apache.mesos.resource_provider.test");
+  resourceProviderInfo.set_name("test");
+
+  v1::MockResourceProvider resourceProvider(
+      resourceProviderInfo, v1::Resources::parse("mem", "100", "*").get());
+
+  Owned<EndpointDetector> endpointDetector(
+      resource_provider::createEndpointDetector(slave.get()->pid));
+
+  updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+
+  resourceProvider.start(
+      endpointDetector,
+      ContentType::PROTOBUF,
+      v1::DEFAULT_CREDENTIAL);
+
+  AWAIT_READY(updateSlaveMessage);
+
+  ASSERT_TRUE(updateSlaveMessage->has_resource_providers());
+  ASSERT_EQ(1, updateSlaveMessage->resource_providers().providers_size());
+
+  const UpdateSlaveMessage::ResourceProvider& resourceProvider_ =
+    updateSlaveMessage->resource_providers().providers(0);
+
+  Resources resourceProviderResources = resourceProvider_.total_resources();
+
+  // Subscribe a framework consuming resources.
+  auto framework = DEFAULT_FRAMEWORK_INFO;
+  framework.add_capabilities()->set_type(
+      FrameworkInfo::Capability::REVOCABLE_RESOURCES);
+
+  MockScheduler sched;
+  MesosSchedulerDriver driver(
+      &sched, framework, master.get()->pid, DEFAULT_CREDENTIAL);
+
+  EXPECT_CALL(sched, registered(_, _, _));
+
+  Future<vector<Offer>> offers1;
+  EXPECT_CALL(sched, resourceOffers(&driver, _))
+    .WillOnce(FutureArg<1>(&offers1));
+
+  driver.start();
+
+  // The framework will be offered resource provider resources.
+  auto providerResources = [](const Resource& resource) {
+    return resource.has_provider_id();
+  };
+
+  AWAIT_READY(offers1);
+  ASSERT_FALSE(offers1->empty());
+  const Offer& offer1 = offers1->at(0);
+  Resources resources1 =
+    Resources(offer1.resources()).filter(providerResources);
+  EXPECT_FALSE(resources1.empty());
+
+  // Oversubscribe resource from the provider resources.
+  EXPECT_CALL(sched, offerRescinded(&driver, _))
+    .Times(AtMost(1));
+
+  Future<vector<Offer>> offers2;
+  EXPECT_CALL(sched, resourceOffers(&driver, _))
+    .WillOnce(FutureArg<1>(&offers2));
+
+  ASSERT_TRUE(resourceProvider_.has_info());
+  ASSERT_TRUE(resourceProvider_.info().has_id());
+  const ResourceProviderID& resourceProviderId = resourceProvider_.info().id();
+
+  Resource oversubscribed = Resources::parse("mem", "100", "*").get();
+  oversubscribed.mutable_revocable();
+  oversubscribed.mutable_provider_id()->CopyFrom(resourceProviderId);
+  estimations.put(oversubscribed);
+
+  // In the next offer cycle the framework should
+  // receive revocable resource provider resources.
+  Clock::advance(masterFlags.allocation_interval);
+  Clock::advance(slaveFlags.oversubscribed_resources_interval);
+  Clock::settle();
+
+  AWAIT_READY(offers2);
+  ASSERT_FALSE(offers2->empty());
+  const Offer& offer2 = offers2->at(0);
+  Resources resources2 =
+    Resources(offer1.resources()).filter(providerResources);
+  EXPECT_FALSE(resources2.nonRevocable().empty());
+}
+
 } // namespace tests {
 } // namespace internal {
 } // namespace mesos {
