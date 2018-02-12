@@ -1032,7 +1032,7 @@ Future<Nothing> DockerContainerizerProcess::_recover(
         // by another process or two processes respectively after the agent
         // host reboots we will still reap an irrelevant process, but that
         // should be highly unlikely.
-        pid_t pid = run.get().forkedPid.get();
+        pid_t pid = run->forkedPid.get();
         pid_t pid = run->forkedPid.get();
 
         // Create a TCP socket.
@@ -1045,7 +1045,7 @@ Future<Nothing> DockerContainerizerProcess::_recover(
 
         Try<Nothing, SocketError> connect = process::network::connect(
             socket,
-            run.get().libprocessPid->address);
+            run->libprocessPid->address);
 
         if (connect.isSome()) {
           container->status.set(process::reap(pid));

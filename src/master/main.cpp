@@ -370,7 +370,7 @@ int main(int argc, char** argv)
           << " registry when using ZooKeeper";
       }
 
-      Try<zookeeper::URL> url = zookeeper::URL::parse(flags.zk.get().value);
+      Try<zookeeper::URL> url = zookeeper::URL::parse(flags.zk->value);
       if (url.isError()) {
         EXIT(EXIT_FAILURE) << "Error parsing ZooKeeper URL: " << url.error();
       }
