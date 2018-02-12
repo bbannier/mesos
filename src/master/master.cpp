@@ -7437,20 +7437,67 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
         CHECK(!slave->operations.contains(uuid))
           << "New operation " << uuid << " is already known";
 
-        Framework* framework = nullptr;
-        if (operation.has_framework_id()) {
-          framework = getFramework(operation.framework_id());
+        Try<Resources> consumedResources =
+          protobuf::getConsumedResources(operation.info());
+
+        CHECK_SOME(consumedResources)
+          << "Could not extract resources consumed by operation "
+          << operation.uuid() << ": " << consumedResources.error();
+
+        CHECK(operation.has_framework_id())
+          << "Only operations triggered by frameworks are supported";
+
+        Framework* framework = getFramework(operation.framework_id());
+
+        // We had a master failover and learned about an operation
+        // of an unknown framework. We create dummy framework
+        // information so we are able to track this framework and its
+        // resource usage. When we will
+        // eventually learn the full `FrameworkInfo` of the framework,
+        // this master can update most fields, but not the frameworks
+        // `user`, see MESOS-703. This means the framework might not
+        // be able to run tasks or access its data with this master.
+        // Only a newly elected master will allow the framework to
+        // register with its desired user.
+        //
+        // TODO(bbannier): Transport a full `FrameworkInfo` with
+        // operations so we can avoid having to create fake information.
+        if (framework == nullptr) {
+          LOG(WARNING)
+
+            << "Learn about an unknown framework " << operation.framework_id()
+            << " from operation " << operation.uuid()
+            << " on agent " << slaveId
+            << ". This framework will likely not be able to run tasks via this "
+               "master. Fail over this master when the operation has "
+               "terminated";
+
+          FrameworkInfo frameworkInfo;
+
+          // Set required fieds.
+          frameworkInfo.set_name("");
+          frameworkInfo.set_user("nobody");
+
+          frameworkInfo.mutable_id()->CopyFrom(operation.framework_id());
+
+          foreachkey (const string& role, consumedResources->allocations()) {
+            frameworkInfo.add_roles(role);
+          }
+
+          framework = new Framework(this, flags, frameworkInfo);
+
+          addFramework(
+              framework,
+              {frameworkInfo.roles().begin(), frameworkInfo.roles().end()});
         }
 
         // Add the new operation and update the operation in the
         // provider to point to the master-maintained one.
         Operation* operation_ = new Operation(operation);
         addOperation(framework, slave, operation_);
-        operations.put(uuid, operation_);
-      }
 
-      // FIXME(bbannier): Include fix for MESOS-8356
-      // (https://reviews.apache.org/r/65482) here.
+        usedByOperations[operation.framework_id()] += consumedResources.get();
+      }
 
       slave->resourceProviders.put(
           providerId,
