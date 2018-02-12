@@ -2308,7 +2308,7 @@ struct Framework
     }
 
     if (http.isSome()) {
-      if (!http.get().send(message)) {
+      if (!http->send(message)) {
         LOG(WARNING) << "Unable to send event to framework " << *this << ":"
                      << " connection closed";
       }
@@ -2747,7 +2747,7 @@ struct Framework
   {
     CHECK_SOME(http);
 
-    if (connected() && !http.get().close()) {
+    if (connected() && !http->close()) {
       LOG(WARNING) << "Failed to close HTTP pipe for " << *this;
     }
 
@@ -2755,8 +2755,8 @@ struct Framework
 
     CHECK_SOME(heartbeater);
 
-    terminate(heartbeater.get().get());
-    wait(heartbeater.get().get());
+    terminate(heartbeater->get());
+    wait(heartbeater->get());
 
     heartbeater = None();
   }
@@ -2778,7 +2778,7 @@ struct Framework
           http.get(),
           DEFAULT_HEARTBEAT_INTERVAL);
 
-    process::spawn(heartbeater.get().get());
+    process::spawn(heartbeater->get());
   }
 
   bool active() const    { return state == ACTIVE; }

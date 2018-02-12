@@ -815,7 +815,7 @@ TEST_P(MasterAPITest, SetLoggingLevel)
 
   {
     // Default principal 2 is not allowed to set the logging level.
-    mesos::ACL::SetLogLevel* acl = flags.acls.get().add_set_log_level();
+    mesos::ACL::SetLogLevel* acl = flags.acls->add_set_log_level();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_level()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1251,7 +1251,7 @@ TEST_P(MasterAPITest, UpdateAndGetMaintenanceSchedule)
   {
     // Default principal 2 is not allowed to update any maintenance schedule.
     mesos::ACL::UpdateMaintenanceSchedule* acl =
-      flags.acls.get().add_update_maintenance_schedules();
+      flags.acls->add_update_maintenance_schedules();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_machines()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1259,7 +1259,7 @@ TEST_P(MasterAPITest, UpdateAndGetMaintenanceSchedule)
   {
     // Default principal 2 is not allowed to view any maintenance schedule.
     mesos::ACL::GetMaintenanceSchedule* acl =
-      flags.acls.get().add_get_maintenance_schedules();
+      flags.acls->add_get_maintenance_schedules();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_machines()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1370,7 +1370,7 @@ TEST_P(MasterAPITest, GetMaintenanceStatus)
   {
     // Default principal 2 is not allowed to view any maintenance status.
     mesos::ACL::GetMaintenanceStatus* acl =
-      flags.acls.get().add_get_maintenance_statuses();
+      flags.acls->add_get_maintenance_statuses();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_machines()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1461,16 +1461,14 @@ TEST_P(MasterAPITest, StartAndStopMaintenance)
 
   {
     // Default principal 2 is not allowed to start maintenance in any machine.
-    mesos::ACL::StartMaintenance* acl =
-      flags.acls.get().add_start_maintenances();
+    mesos::ACL::StartMaintenance* acl = flags.acls->add_start_maintenances();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_machines()->set_type(mesos::ACL::Entity::NONE);
   }
 
   {
     // Default principal 2 is not allowed to stop maintenance in any machine.
-    mesos::ACL::StopMaintenance* acl =
-      flags.acls.get().add_stop_maintenances();
+    mesos::ACL::StopMaintenance* acl = flags.acls->add_stop_maintenances();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_machines()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1720,21 +1718,21 @@ TEST_P(MasterAPITest, GetAgentsFiltering)
   const string roleMuggle = "muggle";
 
   {
-    mesos::ACL::ViewRole* acl = flags.acls.get().add_view_roles();
+    mesos::ACL::ViewRole* acl = flags.acls->add_view_roles();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL.principal());
     acl->mutable_roles()->add_values(roleSuperhero);
 
-    acl = flags.acls.get().add_view_roles();
+    acl = flags.acls->add_view_roles();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL.principal());
     acl->mutable_roles()->set_type(mesos::ACL::Entity::NONE);
   }
 
   {
-    mesos::ACL::ViewRole* acl = flags.acls.get().add_view_roles();
+    mesos::ACL::ViewRole* acl = flags.acls->add_view_roles();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_roles()->add_values(roleMuggle);
 
-    acl = flags.acls.get().add_view_roles();
+    acl = flags.acls->add_view_roles();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL_2.principal());
     acl->mutable_roles()->set_type(mesos::ACL::Entity::NONE);
   }
@@ -1935,7 +1933,7 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(MasterAPITest, GetRecoveredAgents)
 
   // This forces the authorizer to be initialized.
   {
-    mesos::ACL::ViewRole* acl = masterFlags.acls.get().add_view_roles();
+    mesos::ACL::ViewRole* acl = masterFlags.acls->add_view_roles();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL.principal());
     acl->mutable_roles()->set_type(mesos::ACL::Entity::ANY);
   }
@@ -2901,10 +2899,10 @@ TEST_P(MasterAPITest, FrameworksEvent)
   AWAIT_READY(event);
 
   {
-    EXPECT_EQ(v1::master::Event::FRAMEWORK_ADDED, event.get().get().type());
+    EXPECT_EQ(v1::master::Event::FRAMEWORK_ADDED, event.get()->type());
 
     const v1::master::Response::GetFrameworks::Framework& framework =
-      event.get().get().framework_added().framework();
+      event.get()->framework_added().framework();
 
     EXPECT_EQ(frameworkInfo, framework.framework_info());
     EXPECT_TRUE(framework.active());
@@ -2937,10 +2935,10 @@ TEST_P(MasterAPITest, FrameworksEvent)
   AWAIT_READY(event);
 
   {
-    EXPECT_EQ(v1::master::Event::FRAMEWORK_UPDATED, event.get().get().type());
+    EXPECT_EQ(v1::master::Event::FRAMEWORK_UPDATED, event.get()->type());
 
     const v1::master::Response::GetFrameworks::Framework& framework =
-      event.get().get().framework_updated().framework();
+      event.get()->framework_updated().framework();
 
     EXPECT_EQ(frameworkInfo, framework.framework_info());
   }
@@ -2967,10 +2965,10 @@ TEST_P(MasterAPITest, FrameworksEvent)
   AWAIT_READY(event);
 
   {
-    EXPECT_EQ(v1::master::Event::FRAMEWORK_REMOVED, event.get().get().type());
+    EXPECT_EQ(v1::master::Event::FRAMEWORK_REMOVED, event.get()->type());
 
     const v1::FrameworkID& frameworkId_ =
-      event.get().get().framework_removed().framework_info().id();
+      event.get()->framework_removed().framework_info().id();
 
     EXPECT_EQ(frameworkId, frameworkId_);
   }
@@ -3848,8 +3846,7 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(MasterAPITest,
 
   {
     // Default principal is not allowed to mark agents as gone.
-    mesos::ACL::MarkAgentGone* acl =
-      masterFlags.acls.get().add_mark_agents_gone();
+    mesos::ACL::MarkAgentGone* acl = masterFlags.acls->add_mark_agents_gone();
 
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL.principal());
     acl->mutable_agents()->set_type(mesos::ACL::Entity::NONE);
@@ -5432,8 +5429,7 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
   {
     // Default principal is not allowed to launch nested container sessions.
     mesos::ACL::LaunchNestedContainerSessionUnderParentWithUser* acl =
-      flags.acls.get()
-        .add_launch_nested_container_sessions_under_parent_with_user();
+      flags.acls->add_launch_nested_container_sessions_under_parent_with_user();
     acl->mutable_principals()->add_values(DEFAULT_CREDENTIAL.principal());
     acl->mutable_users()->set_type(mesos::ACL::Entity::NONE);
   }
