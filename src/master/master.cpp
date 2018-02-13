@@ -4933,8 +4933,21 @@ void Master::_accept(
             RunTaskMessage message;
             message.mutable_framework()->MergeFrom(framework->info);
 
+            hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
+            if (slave->resourceVersion.isSome()) {
+              resourceVersions.put(None(), slave->resourceVersion.get());
+            }
+
+            foreachpair (
+                const ResourceProviderID& resourceProviderId,
+                const Slave::ResourceProvider& resourceProvider,
+                slave->resourceProviders) {
+              resourceVersions.put(
+                  resourceProviderId, resourceProvider.resourceVersion);
+            }
+
             message.mutable_resource_version_uuids()->CopyFrom(
-                protobuf::createResourceVersions(slave->resourceVersions));
+                protobuf::createResourceVersions(resourceVersions));
 
             // TODO(anand): We set 'pid' to UPID() for http frameworks
             // as 'pid' was made optional in 0.24.0. In 0.25.0, we
@@ -5118,8 +5131,21 @@ void Master::_accept(
         message.mutable_executor()->CopyFrom(executor);
         message.mutable_task_group()->CopyFrom(taskGroup);
 
+        hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
+        if (slave->resourceVersion.isSome()) {
+          resourceVersions.put(None(), slave->resourceVersion.get());
+        }
+
+        foreachpair (
+            const ResourceProviderID& resourceProviderId,
+            const Slave::ResourceProvider& resourceProvider,
+            slave->resourceProviders) {
+          resourceVersions.put(
+              resourceProviderId, resourceProvider.resourceVersion);
+        }
+
         message.mutable_resource_version_uuids()->CopyFrom(
-            protobuf::createResourceVersions(slave->resourceVersions));
+            protobuf::createResourceVersions(resourceVersions));
 
         set<TaskID> taskIds;
         Resources totalResources;
@@ -7248,56 +7274,70 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
 
   // TODO(bbannier): We only need to update if any changes from
   // resource providers are reported.
-  bool updated =
-    slave->totalResources != newSlaveResources ||
-    message.has_resource_providers();
+  bool updated = slave->totalResources != newSlaveResources ||
+                 message.has_resource_providers();
 
-  if (message.has_resource_version_uuid()) {
-    hashmap<Option<ResourceProviderID>, UUID> resourceVersions;
+  // Check if the agent's resource version changed.
+  if (!updated && message.has_resource_version_uuid() &&
+      (slave->resourceVersion.isNone() ||
+       (slave->resourceVersion.isSome() &&
+        message.resource_version_uuid() != slave->resourceVersion.get()))) {
+    updated = true;
+  }
 
-    resourceVersions.insert({None(), message.resource_version_uuid()});
+  // Check if the known operations for this agent changed.
+  if (!updated) {
+    foreach (const Operation& operation, message.operations().operations()) {
+      if (!slave->operations.contains(operation.uuid())) {
+        updated = true;
+        break;
+      }
+    }
+  }
 
+  // Check if resource provider information changed.
+  if (!updated && message.has_resource_providers()) {
     foreach (
         const UpdateSlaveMessage::ResourceProvider& resourceProvider,
         message.resource_providers().providers()) {
-      if (!resourceProvider.has_info()) {
+      if (!resourceProvider.has_info() || !resourceProvider.info().has_id()) {
         continue;
       }
-
-      CHECK(resourceProvider.info().has_id());
 
       const ResourceProviderID& resourceProviderId =
         resourceProvider.info().id();
 
-      CHECK(!resourceVersions.contains(resourceProviderId));
-      resourceVersions.insert(
-          {resourceProviderId, resourceProvider.resource_version_uuid()});
-    }
+      if (!slave->resourceProviders.contains(resourceProviderId)) {
+        updated = true;
+        break;
+      }
 
-    updated = updated || slave->resourceVersions != resourceVersions;
-    slave->resourceVersions = resourceVersions;
-  }
+      const Slave::ResourceProvider& provider =
+        slave->resourceProviders.at(resourceProviderId);
 
-  // Check if the known operations for this agent changed.
-  const hashset<UUID> knownOperations = slave->operations.keys();
-  hashset<UUID> receivedOperations;
+      if (provider.info != resourceProvider.info() ||
+          provider.totalResources != resourceProvider.total_resources() ||
+          provider.resourceVersion !=
+            resourceProvider.resource_version_uuid()) {
+        updated = true;
+        break;
+      }
 
-  foreach (const Operation& operation, message.operations().operations()) {
-    receivedOperations.insert(operation.uuid());
-  }
+      foreach (
+          const Operation& operation,
+          resourceProvider.operations().operations()) {
+        if (provider.operations.contains(operation.uuid())) {
+          updated = true;
+          break;
+        }
 
-  if (message.has_resource_providers()) {
-    foreach (
-        const UpdateSlaveMessage::ResourceProvider& resourceProvider,
-        message.resource_providers().providers()) {
-      foreach (const Operation& operation,
-               resourceProvider.operations().operations()) {
-        receivedOperations.insert(operation.uuid());
+        if (*provider.operations.at(operation.uuid()) != operation) {
+          updated = true;
+          break;
+        }
       }
     }
   }
-
-  updated = updated || knownOperations != receivedOperations;
 
   if (!updated) {
     LOG(INFO) << "Ignoring update on agent " << *slave
@@ -7305,121 +7345,19 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
     return;
   }
 
-  struct ResourceProvider
-  {
-    Option<Resources> oldTotal;
-    Option<Resources> newTotal;
-    Option<hashmap<UUID, Operation>> oldOperations;
-    Option<hashmap<UUID, Operation>> newOperations;
-    Option<ResourceProviderInfo> info;
-  };
-
-  // We store information on the different `ResourceProvider`s on this agent in
-  // a map, indexed by an optional provider id. Since the provider ID field for
-  // resources is only set for resources from true resource providers and is not
-  // set for agent default resources, the value for the key `None` points to
-  // information about the agent itself, not its resource providers.
-  hashmap<Option<ResourceProviderID>, ResourceProvider> resourceProviders;
-
-  // Group the resources and operation updates by resource provider.
-  {
-    // Process known resources.
-    auto groupResourcesByProviderId = [](const Resources& resources) {
-      hashmap<Option<ResourceProviderID>, Resources> result;
-
-      foreach (const Resource& resource, resources) {
-        Option<ResourceProviderID> providerId =
-          Resources::hasResourceProvider(resource)
-            ? resource.provider_id()
-            : Option<ResourceProviderID>::none();
-
-        result[std::move(providerId)] += resource;
-      }
-
-      return result;
-    };
-
-    foreachpair (
-        const Option<ResourceProviderID>& providerId,
-        const Resources& resources,
-        groupResourcesByProviderId(slave->totalResources)) {
-      resourceProviders[providerId].oldTotal = resources;
-    }
-
-    // Process known operations.
-    foreachpair (const UUID& uuid,
-                 Operation* operation,
-                 slave->operations) {
-      Result<ResourceProviderID> providerId_ =
-        getResourceProviderId(operation->info());
-
-      CHECK(!providerId_.isError())
-        << "Failed to extract resource provider id from known operation: "
-        << providerId_.error();
-
-      Option<ResourceProviderID> providerId =
-        providerId_.isSome()
-          ? providerId_.get()
-          : Option<ResourceProviderID>::none();
-
-      // Set up an init empty list of existing operations. We might
-      // create a record for this resource provider if needed.
-      if (resourceProviders[providerId].oldOperations.isNone()) {
-        resourceProviders.at(providerId).oldOperations =
-          hashmap<UUID, Operation>();
-      }
-
-      resourceProviders.at(providerId)
-        .oldOperations->emplace(uuid, *operation);
-    }
-
-    // Explicitly add an entry for received agent resources.
-    resourceProviders[None()].newTotal =
-      newSlaveResources.filter(agentResources);
-
-    // Process received agent operations.
-    resourceProviders[None()].newOperations =
-      hashmap<UUID, Operation>();
-
-    foreach (const Operation& operation, message.operations().operations()) {
-      resourceProviders.at(None())
-        .newOperations->emplace(operation.uuid(), operation);
-    }
-
-    // Process explicitly received resource provider information.
-    if (message.has_resource_providers()) {
-      foreach (
-          const UpdateSlaveMessage::ResourceProvider& resourceProvider,
-          message.resource_providers().providers()) {
-        CHECK(resourceProvider.has_info());
-        CHECK(resourceProvider.info().has_id());
-
-        ResourceProvider& provider =
-          resourceProviders[resourceProvider.info().id()];
-
-        provider.info = resourceProvider.info();
-
-        provider.newTotal = resourceProvider.total_resources();
-        if (provider.newOperations.isNone()) {
-          provider.newOperations = hashmap<UUID, Operation>();
-        }
-
-        foreach (const Operation& operation,
-                 resourceProvider.operations().operations()) {
-          provider.newOperations->emplace(operation.uuid(), operation);
-        }
-      }
-    }
-  }
-
   // Check invariants of the received update.
   {
-    foreachpair (
-        const Option<ResourceProviderID>& providerId,
-        const ResourceProvider& provider,
-        resourceProviders) {
-      if (providerId.isSome() &&
-          slave->resourceProviders.contains(providerId.get())) {
+    foreach (
+        const UpdateSlaveMessage::ResourceProvider& provider,
+        message.resource_providers().providers()) {
+      CHECK(provider.has_info());
+      CHECK(provider.info().has_id());
+      const ResourceProviderID& providerId = provider.info().id();
+
+      const Option<Slave::ResourceProvider>& oldProvider =
+        slave->resourceProviders.get(providerId);
+
+      if (oldProvider.isSome()) {
         // For known resource providers the master should always know at least
         // as many non-terminal operations as the agent. While an
         // operation might get lost on the way to the agent or resource
@@ -7433,75 +7371,36 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
         // to the agent, but the agent fails over before it can process the
         // acknowledgement, or the agent initiates an unrelated
         // `UpdateSlaveMessage`.
-        auto extractPendingOperations =
-          [](const hashmap<UUID, Operation>& source,
-             hashset<UUID>* target) {
-            foreachpair (const UUID& uuid,
-                         const Operation& operation,
-                         source) {
-              if (!protobuf::isTerminalState(
-                      operation.latest_status().state())) {
-                target->insert(uuid);
-              }
-            }
-          };
-
-        hashset<UUID> oldPendingOperations;
-        hashset<UUID> newPendingOperations;
-
-        if (provider.oldOperations.isSome()) {
-          extractPendingOperations(
-              provider.oldOperations.get(), &oldPendingOperations);
-        }
-
-        if (provider.newOperations.isSome()) {
-          extractPendingOperations(
-              provider.newOperations.get(), &newPendingOperations);
-        }
-
-        foreach (const UUID& uuid, newPendingOperations) {
-          CHECK(oldPendingOperations.contains(uuid))
+        foreach (
+            const Operation& operation, provider.operations().operations()) {
+          if (!protobuf::isTerminalState(operation.latest_status().state())) {
+            CHECK(oldProvider->operations.contains(operation.uuid()))
             << "Agent tried to reconcile unknown non-terminal operation "
-            << uuid;
-        }
-      }
-
-      if (providerId.isNone()) {
-        // We do not permit changes to agent (i.e., non-resource
-        // provider) non-revocable resources.
-        CHECK_SOME(provider.oldTotal);
-        CHECK_SOME(provider.newTotal);
-
-        Resources oldNonRevocable =
-          provider.oldTotal->nonRevocable().createStrippedScalarQuantity();
-        Resources newNonRevocable =
-          provider.newTotal->nonRevocable().createStrippedScalarQuantity();
-        CHECK_EQ(
-            provider.oldTotal->nonRevocable(),
-            provider.newTotal->nonRevocable());
-
-        // For agents only speculative operations can be reconciled.
-        //
-        // TODO(bbannier): Reconcile agent operations in
-        // `ReregisterSlaveMessage` in which case we expect agents to
-        // send the already known operations again here (possibly with
-        // changed status).
-        if (provider.newOperations.isSome()) {
-          foreachvalue (const Operation& operation,
-                        provider.newOperations.get()) {
-            CHECK(protobuf::isSpeculativeOperation(operation.info()));
+            << operation.uuid();
           }
         }
       }
     }
   }
 
+  // Update master and allocator state.
+  if (hasOversubscribed) {
+    slave->totalResources -= slave->totalResources.revocable();
+    slave->totalResources += message.oversubscribed_resources();
+
+    // TODO(bbannier): Track oversubscribed resources for resource
+    // providers as well.
+  }
+
   ReconcileOperationsMessage reconcile;
 
-  // Update master and allocator state.
-  foreachpair (const Option<ResourceProviderID>& providerId,
-               const ResourceProvider& provider,
-               resourceProviders) {
+  foreach (
+      const UpdateSlaveMessage::ResourceProvider& provider,
+      message.resource_providers().providers()) {
+    CHECK(provider.has_info());
+    CHECK(provider.info().has_id());
+    const ResourceProviderID& providerId = provider.info().id();
+
     // Below we only add operations to our state from resource
     // providers which are unknown, or possibly remove them for known
     // resource providers.  This works since the master should always
@@ -7521,111 +7420,122 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
     // TODO(bbannier): We might want to consider to also learn about
     // new (terminal) operations when observing messages from status
     // update managers to frameworks.
-
-    if (providerId.isSome() &&
-        !slave->resourceProviders.contains(providerId.get())) {
+    if (!slave->resourceProviders.contains(providerId)) {
       // If this is a not previously seen resource provider we had a master
       // failover. Add the resources and operations to our state.
-      CHECK_SOME(provider.newTotal);
       CHECK(
-          provider.newTotal->empty() ||
-          !slave->totalResources.contains(provider.newTotal.get()));
+          provider.total_resources().empty() ||
+          !slave->totalResources.contains(provider.total_resources()));
 
-      CHECK_SOME(provider.info);
-      slave->resourceProviders.insert({providerId.get(), provider.info.get()});
-
-      slave->totalResources += provider.newTotal.get();
+      hashmap<UUID, Operation*> operations;
 
       hashmap<FrameworkID, Resources> usedByOperations;
 
-      if (provider.newOperations.isSome()) {
-        foreachpair (const UUID& uuid,
-                     const Operation& operation,
-                     provider.newOperations.get()) {
-          // Update to bookkeeping of operations.
-          CHECK(!slave->operations.contains(uuid))
-            << "New operation " << uuid << " is already known";
+      foreach (const Operation& operation, provider.operations().operations()) {
+        const UUID& uuid = operation.uuid();
+        // Update to bookkeeping of operations.
+        CHECK(!slave->operations.contains(uuid))
+          << "New operation " << uuid << " is already known";
 
-          Framework* framework = nullptr;
-          if (operation.has_framework_id()) {
-            framework = getFramework(operation.framework_id());
-          }
-
-          addOperation(framework, slave, new Operation(operation));
+        Framework* framework = nullptr;
+        if (operation.has_framework_id()) {
+          framework = getFramework(operation.framework_id());
         }
+
+        // Add the new operation and update the operation in the
+        // provider to point to the master-maintained one.
+        Operation* operation_ = new Operation(operation);
+        addOperation(framework, slave, operation_);
+        operations.put(uuid, operation_);
       }
 
+      // FIXME(bbannier): Include fix for MESOS-8356
+      // (https://reviews.apache.org/r/65482) here.
+
+      slave->resourceProviders.put(
+          providerId,
+          {provider.info(),
+           provider.total_resources(),
+           provider.resource_version_uuid(),
+           operations});
+
+      slave->totalResources += provider.total_resources();
+
       allocator->addResourceProvider(
-          slaveId,
-          provider.newTotal.get(),
-          usedByOperations);
+          slaveId, provider.total_resources(), usedByOperations);
     } else {
-      // If this is a known resource provider or agent its total
-      // capacity cannot have changed, and it would not know about any
-      // non-terminal operations not already known to the master.
-      // However, it might not have received an operation for a couple
-      // different reasons:
+      // If this is a known resource provider its total capacity cannot have
+      // changed, and it would not know about any non-terminal operations not
+      // already known to the master.  However, it might not have received an
+      // operation for a couple different reasons:
+      //
       //   - The resource provider or agent could have failed over
       //     before the operation's `ApplyOperationMessage` could be
       //     received.
       //   - The operation's `ApplyOperationMessage` could have raced
       //     with this `UpdateSlaveMessage`.
       //
-      // In both of these cases, we need to reconcile such operations
-      // explicitly with the agent. For operations which the agent or
-      // resource provider does not recognize, an OPERATION_DROPPED
-      // status update will be generated and the master will remove
-      // the operation from its state upon receipt of that update.
-      if (provider.oldOperations.isSome()) {
-        foreachkey (const UUID& uuid, provider.oldOperations.get()) {
-          if (provider.newOperations.isNone() ||
-              !provider.newOperations->contains(uuid)) {
-            LOG(WARNING) << "Performing explicit reconciliation with agent for"
-                         << " known operation " << uuid
-                         << " since it was not present in original"
-                         << " reconciliation message from agent";
+      // In both of these cases, we need to reconcile such operations explicitly
+      // with the agent. For operations which the agent or resource provider
+      // does not recognize, an OPERATION_DROPPED status update will be
+      // generated and the master will remove the operation from its state upon
+      // receipt of that update.
+      CHECK(slave->resourceProviders.contains(providerId));
 
-            ReconcileOperationsMessage::Operation* reconcileOperation =
-              reconcile.add_operations();
-            reconcileOperation->mutable_operation_uuid()->CopyFrom(uuid);
+      Slave::ResourceProvider& oldProvider =
+        slave->resourceProviders.at(providerId);
 
-            if (providerId.isSome()) {
-              reconcileOperation->mutable_resource_provider_id()
-                ->CopyFrom(providerId.get());
-            }
-          }
+      hashmap<UUID, Operation> newOperations;
+      foreach (const Operation& operation, provider.operations().operations()) {
+        newOperations.put(operation.uuid(), operation);
+      }
 
+      foreachkey (const UUID& uuid, oldProvider.operations) {
+        if (!newOperations.contains(uuid)) {
+          LOG(WARNING) << "Performing explicit reconciliation with agent for"
+                       << " known operation " << uuid
+                       << " since it was not present in original"
+                       << " reconciliation message from agent";
+
+          ReconcileOperationsMessage::Operation* reconcileOperation =
+            reconcile.add_operations();
+
+          reconcileOperation->mutable_operation_uuid()->CopyFrom(uuid);
+
+          reconcileOperation->mutable_resource_provider_id()->CopyFrom(
+              providerId);
+        } else {
           // If a known operation became terminal between any previous offer
           // operation status update and this `UpdateSlaveMessage`, the total
           // resources we were sent already had the operation applied. We need
           // to update the state of the operation to terminal here so that any
           // update sent by the agent later does not cause us to apply the
           // operation again.
-          if (provider.newOperations.isSome() &&
-              provider.newOperations->contains(uuid)) {
-            Option<Operation> oldOperation = provider.oldOperations->get(uuid);
-            Option<Operation> newOperation = provider.newOperations->get(uuid);
 
-            CHECK_SOME(oldOperation);
-            CHECK_SOME(newOperation);
 
-            if (!protobuf::isTerminalState(
-                    oldOperation->latest_status().state()) &&
-                protobuf::isTerminalState(
-                    newOperation->latest_status().state())) {
-              Operation* operation = CHECK_NOTNULL(slave->getOperation(uuid));
+          CHECK(oldProvider.operations.contains(uuid));
+          Operation* oldOperation =
+            CHECK_NOTNULL(oldProvider.operations.at(uuid));
 
-              UpdateOperationStatusMessage update =
-                protobuf::createUpdateOperationStatusMessage(
-                    uuid,
-                    newOperation->latest_status(),
-                    newOperation->latest_status(),
-                    operation->framework_id(),
-                    operation->slave_id());
+          CHECK(newOperations.contains(uuid));
+          const Operation& newOperation = newOperations.at(uuid);
 
-              updateOperation(
-                  operation, update, false); // Do not update resources.
-            }
+          if (!protobuf::isTerminalState(
+                  oldOperation->latest_status().state()) &&
+              protobuf::isTerminalState(
+                  newOperation.latest_status().state())) {
+            Operation* operation = CHECK_NOTNULL(slave->getOperation(uuid));
+
+            UpdateOperationStatusMessage update =
+              protobuf::createUpdateOperationStatusMessage(
+                  uuid,
+                  newOperation.latest_status(),
+                  newOperation.latest_status(),
+                  operation->framework_id(),
+                  operation->slave_id());
+
+            updateOperation(
+                operation, update, false); // Do not update resources.
           }
         }
       }
@@ -7634,14 +7544,14 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
       // speculated operations which are only visible in the total,
       // but never in the used resources. We explicitly allow for
       // resource providers to change from or to zero capacity.
-      if (provider.oldTotal.isSome()) {
-        CHECK(slave->totalResources.contains(provider.oldTotal.get()));
-        slave->totalResources -= provider.oldTotal.get();
-      }
+      CHECK(
+          oldProvider.totalResources.empty() ||
+          slave->totalResources.contains(oldProvider.totalResources));
 
-      if (provider.newTotal.isSome()) {
-        slave->totalResources += provider.newTotal.get();
-      }
+      slave->totalResources -= oldProvider.totalResources;
+      slave->totalResources += provider.total_resources();
+
+      oldProvider.totalResources = provider.total_resources();
     }
   }
 
@@ -7674,9 +7584,13 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
     //
     // TODO(bbannier): Only rescind offers possibly containing
     // affected resources.
-    if (message.has_resource_providers()) {
-      LOG(INFO) << "Removing offer " << offer->id() << " with resources "
-                << offered << " on agent " << *slave;
+    const Resources offeredResourceProviderResources = offered.filter(
+        [](const Resource& resource) { return resource.has_provider_id(); });
+    if (message.has_resource_providers() &&
+        !offeredResourceProviderResources.empty()) {
+      LOG(INFO)
+        << "Removing offer " << offer->id()
+        << " with resources " << offered << " on agent " << *slave;
 
       rescind = true;
     }
@@ -10516,16 +10430,17 @@ void Master::_apply(
     // This must have been validated by the caller.
     CHECK(!resourceProviderId.isError());
 
-    Option<UUID> resourceVersion = resourceProviderId.isSome()
-      ? slave->resourceVersions.get(resourceProviderId.get())
-      : slave->resourceVersions.get(None());
+    CHECK(
+        resourceProviderId.isNone() ||
+        slave->resourceProviders.contains(resourceProviderId.get()))
+      << "Resource provider " + stringify(resourceProviderId.get()) +
+           " is unknown";
 
-    CHECK_SOME(resourceVersion)
-      << "Resource version of "
-      << (resourceProviderId.isSome()
-           ? "resource provider " + stringify(resourceProviderId.get())
-           : "agent " + stringify(*slave))
-      << " is unknown";
+    CHECK_SOME(slave->resourceVersion);
+
+    const UUID resourceVersion = resourceProviderId.isNone()
+      ? slave->resourceVersion.get()
+      : slave->resourceProviders.get(resourceProviderId.get())->resourceVersion;
 
     Operation* operation = new Operation(
         protobuf::createOperation(
@@ -10563,7 +10478,7 @@ void Master::_apply(
     }
 
     message.mutable_resource_version_uuid()->mutable_uuid()->CopyFrom(
-        resourceVersion.get());
+        resourceVersion);
 
     LOG(INFO) << "Sending operation '" << operation->info().id()
               << "' (uuid: " << operation->uuid() << ") "
@@ -11375,7 +11290,7 @@ Slave::Slave(
     vector<SlaveInfo::Capability> _capabilites,
     const Time& _registeredTime,
     vector<Resource> _checkpointedResources,
-    const Option<UUID>& resourceVersion,
+    const Option<UUID>& _resourceVersion,
     vector<ExecutorInfo> executorInfos,
     vector<Task> tasks)
   : master(_master),
@@ -11389,6 +11304,7 @@ Slave::Slave(
     connected(true),
     active(true),
     checkpointedResources(std::move(_checkpointedResources)),
+    resourceVersion(_resourceVersion),
     observer(nullptr)
 {
   CHECK(info.has_id());
@@ -11400,10 +11316,6 @@ Slave::Slave(
   // NOTE: This should be validated during slave recovery.
   CHECK_SOME(resources);
   totalResources = resources.get();
-
-  if (resourceVersion.isSome()) {
-    resourceVersions.put(None(), resourceVersion.get());
-  }
 
   foreach (ExecutorInfo& executorInfo, executorInfos) {
     CHECK(executorInfo.has_framework_id());
@@ -11545,6 +11457,19 @@ void Slave::addOperation(Operation* operation)
 
     usedResources[operation->framework_id()] += consumed.get();
   }
+
+  Result<ResourceProviderID> resourceProviderId =
+    getResourceProviderId(operation->info());
+
+  CHECK(!resourceProviderId.isError()) << resourceProviderId.error();
+
+  if (resourceProviderId.isSome() &&
+      resourceProviders.contains(resourceProviderId.get())) {
+    ResourceProvider& resourceProvider =
+      resourceProviders.at(resourceProviderId.get());
+
+    resourceProvider.operations.put(operation->uuid(), operation);
+  }
 }
 
 
@@ -11591,6 +11516,17 @@ void Slave::removeOperation(Operation* operation)
   }
 
   operations.erase(uuid);
+
+  Result<ResourceProviderID> resourceProviderId =
+    getResourceProviderId(operation->info());
+
+  if (resourceProviderId.isSome() &&
+      resourceProviders.contains(resourceProviderId.get())) {
+    ResourceProvider& resourceProvider =
+      resourceProviders.at(resourceProviderId.get());
+
+    resourceProvider.operations.erase(uuid);
+  }
 }
 
 
@@ -11692,6 +11628,24 @@ void Slave::apply(const vector<ResourceConversion>& conversions)
   totalResources = resources.get();
 
   checkpointedResources = totalResources.filter(needCheckpointing);
+
+  // Also apply the conversion to the explicitly maintained resource
+  // provider resources.
+  foreach (const ResourceConversion& conversion, conversions) {
+    Result<ResourceProviderID> providerId = getResourceProviderId(conversion);
+
+    if (providerId.isNone()) {
+      continue;
+    }
+
+    CHECK_SOME(providerId);
+    CHECK(resourceProviders.contains(providerId.get()));
+    ResourceProvider& provider = resourceProviders.at(providerId.get());
+
+    CHECK(provider.totalResources.contains(conversion.consumed));
+    provider.totalResources -= conversion.consumed;
+    provider.totalResources += conversion.converted;
+  }
 }
 
 
@@ -11700,7 +11654,7 @@ Try<Nothing> Slave::update(
     const string& _version,
     const vector<SlaveInfo::Capability>& _capabilities,
     const Resources& _checkpointedResources,
-    const Option<UUID>& resourceVersion)
+    const Option<UUID>& _resourceVersion)
 {
   Try<Resources> resources = applyCheckpointedResources(
       _info.resources(),
@@ -11722,9 +11676,7 @@ Try<Nothing> Slave::update(
   // re-registering in this case.
   totalResources = resources.get();
 
-  if (resourceVersion.isSome()) {
-    resourceVersions.put(None(), resourceVersion.get());
-  }
+  resourceVersion = _resourceVersion;
 
   return Nothing();
 }
