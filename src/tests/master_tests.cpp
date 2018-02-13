@@ -8567,6 +8567,7 @@ TEST_F(MasterTest, RegistryGcByCount)
   // of gone agents, a 'TASK_UNKNOWN' update should be received for it.
 
   FrameworkInfo frameworkInfo = DEFAULT_FRAMEWORK_INFO;
+  frameworkInfo.set_failover_timeout(Weeks(1).secs());
   frameworkInfo.add_capabilities()->set_type(
       FrameworkInfo::Capability::PARTITION_AWARE);
 
@@ -8575,7 +8576,7 @@ TEST_F(MasterTest, RegistryGcByCount)
       &sched, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
 
   Future<Nothing> registered;
-  EXPECT_CALL(sched, registered(&driver, _, _))
+  EXPECT_CALL(sched, reregistered(&driver, _))
     .WillOnce(FutureSatisfy(&registered));
 
   driver.start();
@@ -8743,9 +8744,9 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
 }
 
 
-// Tests that the master correctly handles resource provider operations
-// that finished during a master failover.
-TEST_F(MasterTest, OperationUpdateDuringFailover)
+// Tests that the master can correctly infer an unknown framework from
+// an operation.
+TEST_F(MasterTest, InferFrameworkInfoFromOperation)
 {
   Clock::pause();
 
@@ -8808,18 +8809,21 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
   AWAIT_READY(updateSlaveMessage);
 
   // Start a framework to operate on offers.
-  MockScheduler sched;
-  TestingMesosSchedulerDriver driver(&sched, &detector);
+  FrameworkInfo frameworkInfo = DEFAULT_FRAMEWORK_INFO;
+  MockScheduler sched1;
+  MesosSchedulerDriver driver1(
+      &sched1, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
 
-  EXPECT_CALL(sched, registered(&driver, _, _))
-    .Times(2);
+  Future<FrameworkID> frameworkId;
+  EXPECT_CALL(sched1, registered(&driver1, _, _))
+    .WillOnce(FutureArg<1>(&frameworkId));
 
   Future<vector<Offer>> offers;
-  EXPECT_CALL(sched, resourceOffers(&driver, _))
+  EXPECT_CALL(sched1, resourceOffers(&driver1, _))
     .WillOnce(FutureArg<1>(&offers))
     .WillRepeatedly(Return()); // Ignore subsequent offers.
 
-  driver.start();
+  driver1.start();
 
   AWAIT_READY(offers);
   ASSERT_FALSE(offers->empty());
@@ -8843,42 +8847,11 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
   EXPECT_CALL(resourceProvider, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
-  driver.acceptOffers(
+  driver1.acceptOffers(
       {offer.id()},
       {CREATE_VOLUME(rawDisk.get(), Resource::DiskInfo::Source::MOUNT)});
 
   AWAIT_READY(operation);
-
-  {
-    v1::master::Call call;
-    call.set_type(v1::master::Call::GET_OPERATIONS);
-
-    process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
-    headers["Accept"] = stringify(ContentType::PROTOBUF);
-
-    Future<Response> response = process::http::post(
-        master.get()->pid,
-        "api/v1",
-        headers,
-        serialize(ContentType::PROTOBUF, call),
-        stringify(ContentType::PROTOBUF));
-
-    AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
-
-    Try<v1::master::Response> response_ =
-      deserialize<v1::master::Response>(ContentType::PROTOBUF, response->body);
-
-    ASSERT_SOME(response_);
-    v1::master::Response::GetOperations operations =
-      response_->get_operations();
-
-    ASSERT_EQ(1, operations.operations_size());
-    EXPECT_EQ(
-        mesos::v1::OperationState::OPERATION_PENDING,
-        operations.operations(0).latest_status().state());
-  }
-
-  EXPECT_CALL(sched, disconnected(&driver));
 
   // Drop the operation update for the finished operation.
   // As we fail over the master immediately afterwards, we expect
@@ -8892,16 +8865,17 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 
   AWAIT_READY(updateOperationStatusMessage);
 
+  driver1.stop(true); // Failover.
+  driver1.join();
+
   // Fail over the master.
   master->reset();
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  EXPECT_CALL(sched, offerRescinded(&driver, _))
-    .WillRepeatedly(Return());
-
-  // Start a new master and have agent and framework reconnect.
-  // The reconnected agent should report the converted resources.
+  // Start a new master and have the agent reconnect. The reconnected agent
+  // should report the converted resources. The master will infer some
+  // information about the framework from the pending operation.
   master = StartMaster(masterFlags);
   detector.appoint(master.get()->pid);
 
@@ -8910,15 +8884,16 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 
   AWAIT_READY(updateSlaveMessage);
 
-  {
+  auto getFrameworks = [](const process::UPID& pid)
+    -> Try<v1::master::Response::GetFrameworks> {
     v1::master::Call call;
-    call.set_type(v1::master::Call::GET_OPERATIONS);
+    call.set_type(v1::master::Call::GET_FRAMEWORKS);
 
     process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
     headers["Accept"] = stringify(ContentType::PROTOBUF);
 
     Future<Response> response = process::http::post(
-        master.get()->pid,
+        pid,
         "api/v1",
         headers,
         serialize(ContentType::PROTOBUF, call),
@@ -8929,18 +8904,63 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
     Try<v1::master::Response> response_ =
       deserialize<v1::master::Response>(ContentType::PROTOBUF, response->body);
 
-    ASSERT_SOME(response_);
-    v1::master::Response::GetOperations operations =
-      response_->get_operations();
+    if (response_.isError()) {
+      return Error(response_.error());
+    }
 
-    ASSERT_EQ(1, operations.operations_size());
-    EXPECT_EQ(
-        mesos::v1::OperationState::OPERATION_FINISHED,
-        operations.operations(0).latest_status().state());
+    return response_->get_frameworks();
+  };
+
+  {
+    Try<v1::master::Response::GetFrameworks> frameworks =
+      getFrameworks(master.get()->pid);
+    ASSERT_SOME(frameworks);
+
+    // We expect to see one framework with correct ID and placeholder
+    // variables created by the master.
+    ASSERT_EQ(1, frameworks->frameworks_size());
+
+    const v1::FrameworkInfo& frameworkInfo_ =
+      frameworks->frameworks(0).framework_info();
+
+    EXPECT_EQ(evolve(frameworkId.get()), frameworkInfo_.id());
+    EXPECT_EQ("", frameworkInfo_.name());
+    EXPECT_EQ("", frameworkInfo_.user());
   }
 
-  driver.stop();
-  driver.join();
+  frameworkInfo.mutable_id()->CopyFrom(frameworkId.get());
+  MockScheduler sched2;
+  MesosSchedulerDriver driver2(
+      &sched2, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
+
+  Future<Nothing> registered;
+  EXPECT_CALL(sched2, registered(&driver2, _, _))
+    .WillOnce(FutureSatisfy(&registered));
+
+  EXPECT_CALL(sched2, resourceOffers(&driver2, _));
+
+  driver2.start();
+
+  AWAIT_READY(registered);
+
+  {
+    Try<v1::master::Response::GetFrameworks> frameworks =
+      getFrameworks(master.get()->pid);
+    ASSERT_SOME(frameworks);
+
+    ASSERT_EQ(1, frameworks->frameworks_size());
+    const v1::FrameworkInfo& frameworkInfo_ =
+      frameworks->frameworks(0).framework_info();
+
+    EXPECT_EQ(evolve(frameworkId.get()), frameworkInfo_.id());
+    EXPECT_EQ(frameworkInfo.name(), frameworkInfo_.name());
+
+    // The framework is unable to change its user, see MESOS-703.
+    EXPECT_EQ("", frameworkInfo_.user());
+  }
+
+  driver2.stop();
+  driver2.join();
 }
 
 
