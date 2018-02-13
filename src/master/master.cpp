@@ -7588,21 +7588,6 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
             framework = getFramework(operation.framework_id());
           }
 
-          // Framework information is only stored on agents if the framework
-          // launched a task there , but e.g., not if it only performed
-          // operations. If the agent reregisters with the new master before the
-          // framework we cannot count allocations from pending operations
-          // learnt from the agent towards the originating framework if the new
-          // master did not yet know about the framework.
-          if (framework != nullptr) {
-            Try<Resources> consumed =
-              protobuf::getConsumedResources(operation.info());
-
-            CHECK_SOME(consumed);
-
-            usedByOperations[operation.framework_id()] += consumed.get();
-          }
-
           addOperation(framework, slave, new Operation(operation));
         }
       }
