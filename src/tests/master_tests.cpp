@@ -8812,7 +8812,7 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
   TestingMesosSchedulerDriver driver(&sched, &detector);
 
   EXPECT_CALL(sched, registered(&driver, _, _))
-    .Times(1);
+    .Times(2);
 
   Future<vector<Offer>> offers;
   EXPECT_CALL(sched, resourceOffers(&driver, _))
@@ -8878,7 +8878,19 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
         operations.operations(0).latest_status().state());
   }
 
-  driver.stop(); // FIXME(bbannier)
+  EXPECT_CALL(sched, disconnected(&driver));
+
+  // Drop the operation update for the finished operation.
+  // As we fail over the master immediately afterwards, we expect
+  // that the operation update will be part of the agent's
+  // `UPDATE_STATE` message when re-registering with the master.
+  Future<UpdateOperationStatusMessage> updateOperationStatusMessage =
+    DROP_PROTOBUF(UpdateOperationStatusMessage(), _, _);
+
+  // Finish the pending operation.
+  resourceProvider.operationDefault(operation.get());
+
+  AWAIT_READY(updateOperationStatusMessage);
 
   // Fail over the master.
   master->reset();
@@ -8898,13 +8910,34 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 
   AWAIT_READY(updateSlaveMessage);
 
-  Future<UpdateOperationStatusMessage> updateOperationStatusMessage =
-    FUTURE_PROTOBUF(UpdateOperationStatusMessage(), _, _);
+  {
+    v1::master::Call call;
+    call.set_type(v1::master::Call::GET_OPERATIONS);
 
-  // Finish the pending operation.
-  resourceProvider.operationDefault(operation.get());
+    process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
+    headers["Accept"] = stringify(ContentType::PROTOBUF);
 
-  AWAIT_READY(updateOperationStatusMessage);
+    Future<Response> response = process::http::post(
+        master.get()->pid,
+        "api/v1",
+        headers,
+        serialize(ContentType::PROTOBUF, call),
+        stringify(ContentType::PROTOBUF));
+
+    AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
+
+    Try<v1::master::Response> response_ =
+      deserialize<v1::master::Response>(ContentType::PROTOBUF, response->body);
+
+    ASSERT_SOME(response_);
+    v1::master::Response::GetOperations operations =
+      response_->get_operations();
+
+    ASSERT_EQ(1, operations.operations_size());
+    EXPECT_EQ(
+        mesos::v1::OperationState::OPERATION_FINISHED,
+        operations.operations(0).latest_status().state());
+  }
 
   driver.stop();
   driver.join();
