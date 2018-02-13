@@ -848,11 +848,13 @@ void HierarchicalAllocatorProcess::updateAllocation(
   slave.allocated += updatedOfferedResources;
 
   // Update the allocation in the framework sorter.
-  frameworkSorter->update(
-      frameworkId.value(),
-      slaveId,
-      offeredResources,
-      updatedOfferedResources);
+  if (frameworkSorter->contains(frameworkId.value())) {
+    frameworkSorter->update(
+        frameworkId.value(),
+        slaveId,
+        offeredResources,
+        updatedOfferedResources);
+  }
 
   // Update the allocation in the role sorter.
   roleSorter->update(
