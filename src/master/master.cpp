@@ -7453,10 +7453,14 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
         if (framework == nullptr) {
           FrameworkInfo frameworkInfo;
           frameworkInfo.mutable_id()->CopyFrom(operation.framework_id());
+          frameworkInfo.set_user("");
+          frameworkInfo.set_name("");
 
           foreachkey (const string& role, consumedResources->allocations()) {
             frameworkInfo.add_roles(role);
           }
+
+          CHECK(frameworkInfo.IsInitialized()) << "oh noes!";
 
           framework = new Framework(this, flags, frameworkInfo);
 
