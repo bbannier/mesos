@@ -7437,20 +7437,41 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
         CHECK(!slave->operations.contains(uuid))
           << "New operation " << uuid << " is already known";
 
-        Framework* framework = nullptr;
-        if (operation.has_framework_id()) {
-          framework = getFramework(operation.framework_id());
+        Try<Resources> consumedResources =
+          protobuf::getConsumedResources(operation.info());
+
+        CHECK_SOME(consumedResources)
+          << "Could not extract resources consumed by operation "
+          << operation.uuid() << ": " << consumedResources.error();
+
+        CHECK(operation.has_framework_id())
+          << "Only operations triggered by frameworks are supported";
+
+        Framework* framework = getFramework(operation.framework_id());
+
+        // FIXME(bbannier): explain this.
+        if (framework == nullptr) {
+          FrameworkInfo frameworkInfo;
+          frameworkInfo.mutable_id()->CopyFrom(operation.framework_id());
+
+          foreachkey (const string& role, consumedResources->allocations()) {
+            frameworkInfo.add_roles(role);
+          }
+
+          framework = new Framework(this, flags, frameworkInfo);
+
+          addFramework(
+              framework,
+              {frameworkInfo.roles().begin(), frameworkInfo.roles().end()});
         }
 
         // Add the new operation and update the operation in the
         // provider to point to the master-maintained one.
         Operation* operation_ = new Operation(operation);
         addOperation(framework, slave, operation_);
-        operations.put(uuid, operation_);
-      }
 
-      // FIXME(bbannier): Include fix for MESOS-8356
-      // (https://reviews.apache.org/r/65482) here.
+        usedByOperations[operation.framework_id()] += consumedResources.get();
+      }
 
       slave->resourceProviders.put(
           providerId,
