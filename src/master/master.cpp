@@ -7449,18 +7449,40 @@ void Master::updateSlave(UpdateSlaveMessage&& message)
 
         Framework* framework = getFramework(operation.framework_id());
 
-        // FIXME(bbannier): explain this.
+        // We had a master failover and learned about an operation
+        // of an unknown framework. We create dummy framework
+        // information so we are able to track this framework and its
+        // resource usage. When we will
+        // eventually learn the full `FrameworkInfo` of the framework,
+        // this master can update most fields, but not the frameworks
+        // `user`, see MESOS-703. This means the framework might not
+        // be able to run tasks or access its data with this master.
+        // Only a newly elected master will allow the framework to
+        // register with its desired user.
+        //
+        // TODO(bbannier): Transport a full `FrameworkInfo` with
+        // operations so we can avoid having to create fake information.
         if (framework == nullptr) {
+          LOG(WARNING)
+
+            << "Learn about an unknown framework " << operation.framework_id()
+            << " from operation " << operation.uuid() << " on agent "
+            << slave.id()
+            << ". This framework will likely not be able to run tasks via this "
+               "master. Fail over this master when the operation has "
+               "terminated";
+
           FrameworkInfo frameworkInfo;
-          frameworkInfo.mutable_id()->CopyFrom(operation.framework_id());
-          frameworkInfo.set_user("");
+
+          // Set required fieds.
           frameworkInfo.set_name("");
+          frameworkInfo.set_user("nobody");
+
+          frameworkInfo.mutable_id()->CopyFrom(operation.framework_id());
 
           foreachkey (const string& role, consumedResources->allocations()) {
             frameworkInfo.add_roles(role);
           }
-
-          CHECK(frameworkInfo.IsInitialized()) << "oh noes!";
 
           framework = new Framework(this, flags, frameworkInfo);
 
