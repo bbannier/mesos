@@ -8944,6 +8944,189 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 }
 
 
+// FIXME(bbannier)
+TEST_F(MasterTest, NOPE)
+{
+  Clock::pause();
+
+  master::Flags masterFlags = CreateMasterFlags();
+
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
+  ASSERT_SOME(master);
+
+  slave::Flags slaveFlags = CreateSlaveFlags();
+
+  // TODO(nfnt): Remove this once 'MockResourceProvider' supports
+  // authentication.
+  slaveFlags.authenticate_http_readwrite = false;
+
+  // Set the resource provider capability.
+  vector<SlaveInfo::Capability> capabilities = slave::AGENT_CAPABILITIES();
+  SlaveInfo::Capability capability;
+  capability.set_type(SlaveInfo::Capability::RESOURCE_PROVIDER);
+  capabilities.push_back(capability);
+
+  slaveFlags.agent_features = SlaveCapabilities();
+  slaveFlags.agent_features->mutable_capabilities()->CopyFrom(
+      {capabilities.begin(), capabilities.end()});
+
+  Future<UpdateSlaveMessage> updateSlaveMessage =
+    FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+
+  StandaloneMasterDetector detector(master.get()->pid);
+  Try<Owned<cluster::Slave>> slave = StartSlave(&detector, slaveFlags);
+  ASSERT_SOME(slave);
+
+  Clock::advance(slaveFlags.registration_backoff_factor);
+
+  AWAIT_READY(updateSlaveMessage);
+
+  // Register a resource provider with the agent.
+  mesos::v1::ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.set_type("org.apache.mesos.resource_provider.test");
+  resourceProviderInfo.set_name("test");
+
+  v1::Resource resourceProviderResources = v1::createDiskResource(
+      "200",
+      "*",
+      None(),
+      None(),
+      v1::createDiskSourceRaw());
+
+  v1::MockResourceProvider resourceProvider(
+      resourceProviderInfo,
+      resourceProviderResources);
+
+  Owned<EndpointDetector> endpointDetector(
+      resource_provider::createEndpointDetector(slave.get()->pid));
+
+  updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+
+  resourceProvider.start(
+      endpointDetector, ContentType::PROTOBUF, v1::DEFAULT_CREDENTIAL);
+
+  AWAIT_READY(updateSlaveMessage);
+
+  ASSERT_TRUE(resourceProvider.info.has_id());
+  resourceProviderResources.mutable_provider_id()->CopyFrom(
+      resourceProvider.info.id());
+
+  // Start a framework to operate on offers.
+  FrameworkInfo frameworkInfo = DEFAULT_FRAMEWORK_INFO;
+  MockScheduler sched1;
+  MesosSchedulerDriver driver1(
+      &sched1, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
+
+  Future<FrameworkID> frameworkId;
+  EXPECT_CALL(sched1, registered(&driver1, _, _))
+    .WillOnce(FutureArg<1>(&frameworkId));
+
+  Future<vector<Offer>> offers1;
+  EXPECT_CALL(sched1, resourceOffers(&driver1, _))
+    .WillOnce(FutureArg<1>(&offers1))
+    .WillRepeatedly(Return()); // Ignore subsequent offers.
+
+  driver1.start();
+
+  AWAIT_READY(offers1);
+  ASSERT_FALSE(offers1->empty());
+  const Offer& offer = offers1->front(); // FIXME(bbannier): rename to `offer1`.
+
+  Option<Resource> rawDisk;
+
+  foreach (const Resource& resource, offer.resources()) {
+    if (resource.has_provider_id()
+        && resource.has_disk() &&
+        resource.disk().has_source() &&
+        resource.disk().source().type() == Resource::DiskInfo::Source::RAW) {
+      rawDisk = resource;
+      break;
+    }
+  }
+
+  ASSERT_SOME(rawDisk);
+
+  Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
+  EXPECT_CALL(resourceProvider, applyOperation(_))
+    .WillOnce(FutureArg<0>(&operation));
+
+  driver1.acceptOffers(
+      {offer.id()},
+      {CREATE_VOLUME(rawDisk.get(), Resource::DiskInfo::Source::MOUNT)});
+
+  AWAIT_READY(operation);
+
+  Future<UpdateOperationStatusMessage> updateOperationStatusMessage =
+    DROP_PROTOBUF(UpdateOperationStatusMessage(), _, _);
+
+  // Fail the pending operation.
+  {
+    // resourceProvider.operationDefault(operation.get());
+
+    v1::resource_provider::Call call;
+    call.set_type(v1::resource_provider::Call::UPDATE_OPERATION_STATUS);
+    call.mutable_resource_provider_id()->CopyFrom(resourceProvider.info.id());
+
+    auto&& update = call.mutable_update_operation_status();
+    update->mutable_framework_id()->CopyFrom(operation->framework_id());
+    update->mutable_operation_uuid()->CopyFrom(operation->operation_uuid());
+
+    using mesos::v1::OperationState;
+    update->mutable_status()->set_state(OperationState::OPERATION_FAILED);
+    update->mutable_latest_status()->CopyFrom(update->status());
+
+    resourceProvider.send(call);
+  }
+
+  AWAIT_READY(updateOperationStatusMessage);
+
+  driver1.stop(true); // Failover.
+  driver1.join();
+
+  // Fail over the master.
+  master->reset();
+
+  updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+
+  // Start a new master and have the agent reconnect. The reconnected agent
+  // should report the converted resources. The master will infer some
+  // information about the framework from the pending operation.
+  master = StartMaster(masterFlags);
+  detector.appoint(master.get()->pid);
+
+  Clock::advance(slaveFlags.registration_backoff_factor);
+  Clock::settle();
+
+  AWAIT_READY(updateSlaveMessage);
+
+  frameworkInfo.mutable_id()->CopyFrom(frameworkId.get());
+  MockScheduler sched2;
+  MesosSchedulerDriver driver2(
+      &sched2, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
+
+  EXPECT_CALL(sched2, registered(&driver2, _, _));
+
+  Future<vector<Offer>> offers2;
+  EXPECT_CALL(sched2, resourceOffers(&driver2, _))
+    .WillOnce(FutureArg<1>(&offers2));
+
+  driver2.start();
+
+  AWAIT_READY(offers2);
+  ASSERT_FALSE(offers2->empty());
+  EXPECT_EQ(1u, offers2->size());
+
+  const Offer& offer2 = offers2->front();
+  Resources resources = offer2.resources();
+  resources.unallocate();
+
+  EXPECT_TRUE(resources.contains(devolve(resourceProviderResources)));
+
+  driver2.stop();
+  driver2.join();
+}
+
+
 class MasterTestPrePostReservationRefinement
   : public MasterTest,
     public WithParamInterface<bool> {
