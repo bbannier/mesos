@@ -438,7 +438,7 @@ OperationStatus createOperationStatus(
   }
 
   if (uuid.isSome()) {
-    status.mutable_uuid()->set_value(uuid->toBytes());
+    status.mutable_uuid()->CopyFrom(protobuf::createUUID(uuid.get()));
   }
 
   return status;
@@ -464,7 +464,7 @@ Operation createOperation(
   if (operationUUID.isSome()) {
     operation.mutable_uuid()->CopyFrom(operationUUID.get());
   } else {
-    operation.mutable_uuid()->set_value(id::UUID::random().toBytes());
+    operation.mutable_uuid()->CopyFrom(protobuf::createUUID());
   }
 
   return operation;
@@ -492,6 +492,20 @@ UpdateOperationStatusMessage createUpdateOperationStatusMessage(
   update.mutable_operation_uuid()->CopyFrom(operationUUID);
 
   return update;
+}
+
+
+UUID createUUID(const Option<id::UUID>& uuid)
+{
+  UUID uuid_;
+
+  if (uuid.isSome()) {
+    uuid_.set_value(uuid->toBytes());
+  } else {
+    uuid_.set_value(id::UUID::random().toBytes());
+  }
+
+  return uuid_;
 }
 
 
