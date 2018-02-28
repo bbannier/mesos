@@ -1292,6 +1292,8 @@ mesos::master::Response::GetAgents::Agent createAgentResponse(
       agent.add_resource_providers();
 
     provider->mutable_resource_provider_info()->CopyFrom(resourceProvider.info);
+    provider->mutable_total_resources()->CopyFrom(
+        resourceProvider.totalResources);
   }
 
   return agent;
