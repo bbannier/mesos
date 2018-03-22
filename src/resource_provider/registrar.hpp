@@ -66,17 +66,18 @@ public:
     bool success = false;
   };
 
-  // Create a registry on top of a master's persistent state.
+  // Create a registry on top of some general storage.
   static Try<process::Owned<Registrar>> create(
       process::Owned<state::Storage> storage);
 
   // Create a registry on top of a master's persistent state.
   static Try<process::Owned<Registrar>> create(
-      mesos::internal::master::Registrar* registrar);
+      mesos::internal::master::Registrar* registrar,
+      registry::Registry registry);
 
   virtual ~Registrar() = default;
 
-  virtual process::Future<Nothing> recover() = 0;
+  virtual process::Future<registry::Registry> recover() = 0;
   virtual process::Future<bool> apply(process::Owned<Operation> operation) = 0;
 };
 
@@ -115,7 +116,7 @@ public:
 
   ~GenericRegistrar() override;
 
-  process::Future<Nothing> recover() override;
+  process::Future<registry::Registry> recover() override;
 
   process::Future<bool> apply(process::Owned<Operation> operation) override;
 
@@ -130,13 +131,15 @@ class MasterRegistrarProcess;
 class MasterRegistrar : public Registrar
 {
 public:
-  explicit MasterRegistrar(mesos::internal::master::Registrar* Registrar);
+  explicit MasterRegistrar(
+      mesos::internal::master::Registrar* registrar,
+      registry::Registry registry);
 
   ~MasterRegistrar() override;
 
   // This registrar performs no recovery; instead to recover
   // the underlying master registrar needs to be recovered.
-  process::Future<Nothing> recover() override;
+  process::Future<registry::Registry> recover() override;
 
   process::Future<bool> apply(process::Owned<Operation> operation) override;
 
