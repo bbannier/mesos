@@ -38,6 +38,9 @@
 
 #include <mesos/module/authenticatee.hpp>
 
+#include <mesos/state/leveldb.hpp>
+#include <mesos/state/in_memory.hpp>
+
 #ifdef ENABLE_GRPC
 #include <mesos/resource_provider/storage/disk_profile_adaptor.hpp>
 #endif
@@ -8826,9 +8829,30 @@ void Slave::initializeResourceProviderManager(
     return;
   }
 
-  // FIXME(bbannier): add comment.
+  // The registrar uses LevelDB as underlying storage. Since LevelDB
+  // is currently not supported on Windows (see MESOS-5932), we fall
+  // back to in-memory storage there.
+  //
+  // TODO(bbannier): Remove this Windows workaround once MESOS-5932 is fixed.
+#ifndef __WINDOWS__
+  Owned<mesos::state::Storage> storage(new mesos::state::LevelDBStorage(
+      paths::getResourceProviderRegistryPath(flags.work_dir, slaveId)));
+#else
+  LOG(WARNING)
+    << "Persisting resource provider manager state is not supported on Windows";
+  Owned<mesos::state::Storage> storage(new mesos::state::InMemoryStorage());
+#endif // __WINDOWS__
 
-  resourceProviderManager.reset(new ResourceProviderManager());
+  Try<Owned<resource_provider::Registrar>> resourceProviderRegistrar =
+    resource_provider::Registrar::create(std::move(storage));
+
+  CHECK_SOME(resourceProviderRegistrar)
+    << "Could not construct resource provider registrar: "
+    << resourceProviderRegistrar.error();
+
+  CHECK(!resourceProviderManager.get());
+  resourceProviderManager.reset(
+      new ResourceProviderManager(std::move(resourceProviderRegistrar.get())));
 
   route(
       "/api/v1/resource_provider",
