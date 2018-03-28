@@ -7921,6 +7921,22 @@ void Slave::handleResourceProviderMessage(
       }
       break;
     }
+    case ResourceProviderMessage::Type::INFO: {
+      CHECK_SOME(message->info);
+
+      LOG(INFO) << "Received updated resource provider information: "
+                << message->info->resourceProviders;
+
+      // FIXME(bbannier):
+      //   foreachpair (
+      //       const ResourceProviderID& resourceProviderId,
+      //       const ResourceProviderMessage::Info::ResourceProvider&
+      //         resourceProviderInfo,
+      //       message->info->resourceProviders) {
+      //   }
+
+      break;
+    }
   }
 
   // Wait for the next message.

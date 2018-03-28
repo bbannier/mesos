@@ -42,7 +42,8 @@ struct ResourceProviderMessage
   {
     UPDATE_STATE,
     UPDATE_OPERATION_STATUS,
-    DISCONNECT
+    DISCONNECT,
+    INFO
   };
 
   friend std::ostream& operator<<(std::ostream& stream, const Type& type) {
@@ -53,6 +54,8 @@ struct ResourceProviderMessage
         return stream << "UPDATE_OPERATION_STATUS";
       case Type::DISCONNECT:
         return stream << "DISCONNECT";
+      case Type::INFO:
+        return stream << "INFO";
     }
 
     UNREACHABLE();
@@ -76,11 +79,55 @@ struct ResourceProviderMessage
     ResourceProviderID resourceProviderId;
   };
 
+  struct Info
+  {
+    struct ResourceProvider
+    {
+      enum class State
+      {
+        CONNECTED,
+        DISCONNECTED,
+        REMOVED
+      };
+
+      State state;
+      ResourceProviderInfo info;
+
+      friend std::ostream& operator<<(std::ostream& stream, const State& state)
+      {
+        switch (state) {
+          case State::CONNECTED:
+            return stream << "CONNECTED";
+          case State::DISCONNECTED:
+            return stream << "DISCONNECTED";
+          case State::REMOVED:
+            return stream << "REMOVED";
+        }
+
+        UNREACHABLE();
+      }
+
+      friend std::ostream& operator<<(
+          std::ostream& stream,
+          const ResourceProvider& resourceProvider)
+      {
+        return stream
+          << "{"
+          << "info: " << resourceProvider.info << ", "
+          << "state: " << resourceProvider.state
+          << "}";
+      }
+    };
+
+    hashmap<ResourceProviderID, ResourceProvider> resourceProviders;
+  };
+
   Type type;
 
   Option<UpdateState> updateState;
   Option<UpdateOperationStatus> updateOperationStatus;
   Option<Disconnect> disconnect;
+  Option<Info> info;
 };
 
 
@@ -129,6 +176,15 @@ inline std::ostream& operator<<(
       return stream
           << "resource provider "
           << disconnect->resourceProviderId;
+    }
+
+    case ResourceProviderMessage::Type::INFO: {
+      const Option<ResourceProviderMessage::Info>& info =
+        resourceProviderMessage.info;
+
+      CHECK_SOME(info);
+
+      return stream << info->resourceProviders;
     }
   }
 
