@@ -290,6 +290,27 @@ TEST_P(ResourceProviderManagerHttpApiTest, UpdateState)
     resourceProviderId = event->get().subscribed().provider_id();
 
     EXPECT_FALSE(resourceProviderId->value().empty());
+    info->mutable_id()->CopyFrom(resourceProviderId.get());
+
+    // The manager will send out a message informing its subscriber
+    // about the newly added resource provider.
+    Future<ResourceProviderMessage> message = manager.messages().get();
+
+    ASSERT_EQ(ResourceProviderMessage::Type::INFO, message->type);
+    ASSERT_SOME(message->info);
+    ASSERT_EQ(1u, message->info->resourceProviders.size());
+
+    ResourceProviderID resourceProviderId_ = devolve(resourceProviderId.get());
+
+    ASSERT_TRUE(message->info->resourceProviders.contains(resourceProviderId_));
+
+    const ResourceProviderMessage::Info::ResourceProvider& resourceProvider =
+      message->info->resourceProviders.at(resourceProviderId_);
+
+    EXPECT_EQ(devolve(*info), resourceProvider.info);
+    EXPECT_EQ(
+        ResourceProviderMessage::Info::ResourceProvider::State::CONNECTED,
+        resourceProvider.state);
   }
 
   // Then, update the total resources to the manager.
@@ -328,7 +349,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, UpdateState)
 
     AWAIT_READY(message);
 
-    EXPECT_EQ(ResourceProviderMessage::Type::UPDATE_STATE, message->type);
+    ASSERT_EQ(ResourceProviderMessage::Type::UPDATE_STATE, message->type);
     ASSERT_TRUE(message->updateState->info.has_id());
     EXPECT_EQ(
         devolve(resourceProviderId.get()),
@@ -368,6 +389,13 @@ TEST_P(ResourceProviderManagerHttpApiTest, UpdateOperationStatus)
     request.body = serialize(contentType, call);
 
     Future<http::Response> response = manager.api(request, None());
+
+    // The manager will send out a message informing its subscriber
+    // about the added resource provider.
+    Future<ResourceProviderMessage> message = manager.messages().get();
+
+    AWAIT_READY(message);
+    ASSERT_EQ(ResourceProviderMessage::Type::INFO, message->type);
 
     AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
     ASSERT_EQ(http::Response::PIPE, response->type);

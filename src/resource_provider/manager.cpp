@@ -761,6 +761,29 @@ void ResourceProviderManagerProcess::_subscribe(
         resourceProviderId,
         std::move(resourceProvider_));
   }
+
+  ResourceProviderMessage::Info info;
+
+  foreachvalue (
+      const mesos::resource_provider::registry::ResourceProvider&
+        resourceProvider,
+      resourceProviders.known) {
+    using State = ResourceProviderMessage::Info::ResourceProvider::State;
+
+    State state =
+      resourceProviders.subscribed.contains(resourceProvider.id())
+        ? State::CONNECTED
+        : State::DISCONNECTED;
+
+    info.resourceProviders.put(
+        resourceProvider.id(), {state, resourceProvider.info()});
+  }
+
+  ResourceProviderMessage message;
+  message.type = ResourceProviderMessage::Type::INFO;
+  message.info = std::move(info);
+
+  messages.put(std::move(message));
 }
 
 
