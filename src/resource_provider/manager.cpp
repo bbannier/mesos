@@ -186,6 +186,10 @@ private:
       const HttpConnection& http,
       const Call::Subscribe& subscribe);
 
+  void _subscribe(
+      const Future<bool>& admitResourceProvider,
+      Owned<ResourceProvider> resourceProvider);
+
   void updateOperationStatus(
       ResourceProvider* resourceProvider,
       const Call::UpdateOperationStatus& update);
@@ -650,16 +654,51 @@ void ResourceProviderManagerProcess::subscribe(
   Owned<ResourceProvider> resourceProvider(
       new ResourceProvider(resourceProviderInfo, http));
 
+  Future<bool> admitResourceProvider;
   if (!resourceProviderInfo.has_id()) {
     // The resource provider is subscribing for the first time.
     resourceProvider->info.mutable_id()->CopyFrom(newResourceProviderId());
+
+    if (registrar.get() != nullptr) {
+      admitResourceProvider =
+        registrar->apply(Owned<mesos::resource_provider::Registrar::Operation>(
+            new AdmitResourceProvider(
+                resourceProvider->info.id(), resourceProvider->info)));
+    } else {
+      admitResourceProvider = true;
+    }
   } else {
     // TODO(chhsiao): The resource provider is resubscribing after being
     // restarted or an agent failover. The 'ResourceProviderInfo' might
     // have been updated, but its type and name should remain the same.
     // We should checkpoint its 'type', 'name' and ID, then check if the
     // resubscribption is consistent with the checkpointed record.
+    admitResourceProvider = true;
   }
+
+  admitResourceProvider.onAny(defer(
+      self(),
+      &ResourceProviderManagerProcess::_subscribe,
+      lambda::_1,
+      std::move(resourceProvider)));
+}
+
+
+void ResourceProviderManagerProcess::_subscribe(
+    const Future<bool>& admitResourceProvider,
+    Owned<ResourceProvider> resourceProvider)
+{
+  if (admitResourceProvider.isFailed()) {
+    LOG(INFO)
+      << "Not subscribing resource provider " << resourceProvider->info.id()
+      << " as registry update failed: " << admitResourceProvider.failure();
+
+    return;
+  }
+
+  CHECK(admitResourceProvider.get())
+    << "Could not admit resource provider " << resourceProvider->info.id()
+    << " as registry update was rejected";
 
   const ResourceProviderID& resourceProviderId = resourceProvider->info.id();
 
@@ -674,7 +713,7 @@ void ResourceProviderManagerProcess::subscribe(
     return;
   }
 
-  http.closed()
+  resourceProvider->http.closed()
     .onAny(defer(self(), [=](const Future<Nothing>& future) {
       // Iff the remote side closes the HTTP connection, the future will be
       // ready. We will remove the resource provider in that case.
@@ -705,12 +744,11 @@ void ResourceProviderManagerProcess::subscribe(
   if (!resourceProviders.known.contains(resourceProviderId)) {
     mesos::resource_provider::registry::ResourceProvider resourceProvider_;
     resourceProvider_.mutable_id()->CopyFrom(resourceProviderId);
+    resourceProvider_.mutable_info()->CopyFrom(resourceProvider->info);
 
     resourceProviders.known.put(
         resourceProviderId,
         std::move(resourceProvider_));
-
-    // TODO(bbannier): Persist this information in the registry.
   }
 }
 

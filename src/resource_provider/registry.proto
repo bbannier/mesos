@@ -29,10 +29,12 @@ option java_outer_classname = "Protos";
 
 message ResourceProvider {
   required ResourceProviderID id = 1;
+  required ResourceProviderInfo info = 2;
 }
 
 
 // A top level object that is managed by the Registrar and persisted.
 message Registry {
   repeated ResourceProvider resource_providers = 1;
+  repeated ResourceProvider removed_resource_providers = 2;
 }

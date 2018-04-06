@@ -85,12 +85,15 @@ public:
 class AdmitResourceProvider : public Registrar::Operation
 {
 public:
-  explicit AdmitResourceProvider(const ResourceProviderID& id);
+  AdmitResourceProvider(
+      const ResourceProviderID& id,
+      const ResourceProviderInfo& info);
 
 private:
   Try<bool> perform(registry::Registry* registry) override;
 
   ResourceProviderID id;
+  ResourceProviderInfo info;
 };
 
 

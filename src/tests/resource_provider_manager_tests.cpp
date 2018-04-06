@@ -825,6 +825,9 @@ TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
   ResourceProviderID resourceProviderId;
   resourceProviderId.set_value("foo");
 
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->CopyFrom(resourceProviderId);
+
   Owned<mesos::state::Storage> storage(new mesos::state::InMemoryStorage());
   Try<Owned<Registrar>> registrar = Registrar::create(std::move(storage));
 
@@ -833,21 +836,28 @@ TEST_F(ResourceProviderRegistrarTest, AgentRegistrar)
 
   // Applying operations on a not yet recovered registrar fails.
   AWAIT_FAILED(registrar.get()->apply(Owned<Registrar::Operation>(
-      new AdmitResourceProvider(resourceProviderId))));
+      new AdmitResourceProvider(resourceProviderId, resourceProviderInfo))));
 
   AWAIT_READY(registrar.get()->recover());
 
-  Future<bool> admitResourceProvider =
+  Future<bool> admitResourceProvider1 =
     registrar.get()->apply(Owned<Registrar::Operation>(
-        new AdmitResourceProvider(resourceProviderId)));
-  AWAIT_READY(admitResourceProvider);
-  EXPECT_TRUE(admitResourceProvider.get());
+        new AdmitResourceProvider(resourceProviderId, resourceProviderInfo)));
+  AWAIT_READY(admitResourceProvider1);
+  EXPECT_TRUE(admitResourceProvider1.get());
 
   Future<bool> removeResourceProvider =
     registrar.get()->apply(Owned<Registrar::Operation>(
         new RemoveResourceProvider(resourceProviderId)));
   AWAIT_READY(removeResourceProvider);
   EXPECT_TRUE(removeResourceProvider.get());
+
+  // A removed resource provider cannot be admitted again.
+  Future<bool> admitResourceProvider2 =
+    registrar.get()->apply(Owned<Registrar::Operation>(
+        new AdmitResourceProvider(resourceProviderId, resourceProviderInfo)));
+  AWAIT_READY(admitResourceProvider2);
+  EXPECT_FALSE(admitResourceProvider2.get());
 }
 
 
@@ -856,6 +866,9 @@ TEST_F(ResourceProviderRegistrarTest, MasterRegistrar)
 {
   ResourceProviderID resourceProviderId;
   resourceProviderId.set_value("foo");
+
+  ResourceProviderInfo resourceProviderInfo;
+  resourceProviderInfo.mutable_id()->CopyFrom(resourceProviderId);
 
   InMemoryStorage storage;
   State state(&storage);
@@ -873,19 +886,24 @@ TEST_F(ResourceProviderRegistrarTest, MasterRegistrar)
   ASSERT_SOME(registrar);
   ASSERT_NE(nullptr, registrar->get());
 
-  AWAIT_READY(masterRegistrar.recover(masterInfo));
-
-  Future<bool> admitResourceProvider =
+  Future<bool> admitResourceProvider1 =
     registrar.get()->apply(Owned<Registrar::Operation>(
-        new AdmitResourceProvider(resourceProviderId)));
-  AWAIT_READY(admitResourceProvider);
-  EXPECT_TRUE(admitResourceProvider.get());
+        new AdmitResourceProvider(resourceProviderId, resourceProviderInfo)));
+  AWAIT_READY(admitResourceProvider1);
+  EXPECT_TRUE(admitResourceProvider1.get());
 
   Future<bool> removeResourceProvider =
     registrar.get()->apply(Owned<Registrar::Operation>(
         new RemoveResourceProvider(resourceProviderId)));
   AWAIT_READY(removeResourceProvider);
   EXPECT_TRUE(removeResourceProvider.get());
+
+  // A removed resource provider cannot be admitted again.
+  Future<bool> admitResourceProvider2 =
+    registrar.get()->apply(Owned<Registrar::Operation>(
+        new AdmitResourceProvider(resourceProviderId, resourceProviderInfo)));
+  AWAIT_READY(admitResourceProvider2);
+  EXPECT_FALSE(admitResourceProvider2.get());
 }
 
 
