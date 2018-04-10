@@ -673,6 +673,17 @@ void ResourceProviderManagerProcess::subscribe(
     // have been updated, but its type and name should remain the same.
     // We should checkpoint its 'type', 'name' and ID, then check if the
     // resubscribption is consistent with the checkpointed record.
+    const ResourceProviderID& resourceProviderId = resourceProviderInfo.id();
+
+    if (!resourceProviders.known.contains(resourceProviderId)) {
+      LOG(INFO)
+        << "Dropping resubscription attempt of resource provider with ID "
+        << resourceProviderId
+        << " since it is unknown";
+
+      return;
+    }
+
     admitResourceProvider = true;
   }
 
