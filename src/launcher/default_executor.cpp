@@ -299,6 +299,7 @@ protected:
   {
     mesos.reset(new Mesos(
         contentType,
+        os::environment(),
         defer(self(), &Self::connected),
         defer(self(), &Self::disconnected),
         defer(self(), [this](queue<v1::executor::Event> events) {

@@ -24,6 +24,7 @@
 
 #include <stout/check.hpp>
 #include <stout/exit.hpp>
+#include <stout/os/environment.hpp>
 
 #include "executor/v0_v1executor.hpp"
 
@@ -283,7 +284,7 @@ V0ToV1Adapter::V0ToV1Adapter(
     const function<void(void)>& disconnected,
     const function<void(const queue<Event>&)>& received)
   : process(new V0ToV1AdapterProcess(connected, disconnected, received)),
-    driver(this)
+    driver(this, os::environment()) // FIXME(bbannier): pass in?
 {
   spawn(process.get());
   driver.start();

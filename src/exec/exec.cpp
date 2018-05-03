@@ -632,18 +632,21 @@ private:
 // Implementation of C++ API.
 
 
-MesosExecutorDriver::MesosExecutorDriver(mesos::Executor* _executor)
+MesosExecutorDriver::MesosExecutorDriver(
+    mesos::Executor* _executor, const std::map<string, string>& _environment)
   : executor(_executor),
     process(nullptr),
     latch(nullptr),
-    status(DRIVER_NOT_STARTED)
+    status(DRIVER_NOT_STARTED),
+    environment(_environment)
 {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Load any logging flags from the environment.
   logging::Flags flags;
 
-  Try<flags::Warnings> load = flags.load("MESOS_");
+  // FIXME(bbannier):
+  Try<flags::Warnings> load = flags.load(_environment, "MESOS_");
 
   if (load.isError()) {
     status = DRIVER_ABORTED;
@@ -721,10 +724,11 @@ Status MesosExecutorDriver::start()
     std::istringstream iss;
 
     // Check if this is local (for example, for testing).
-    local = os::getenv("MESOS_LOCAL").isSome();
+    local = environment.contains("MESOS_LOCAL");
 
     // Get slave PID from environment.
-    value = os::getenv("MESOS_SLAVE_PID");
+    value = environment.get("MESOS_SLAVE_PID");
+
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_SLAVE_PID' to be set in the environment";
@@ -734,7 +738,7 @@ Status MesosExecutorDriver::start()
     CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
 
     // Get slave ID from environment.
-    value = os::getenv("MESOS_SLAVE_ID");
+    value = environment.get("MESOS_SLAVE_ID");
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_SLAVE_ID' to be set in the environment";
@@ -742,7 +746,7 @@ Status MesosExecutorDriver::start()
     slaveId.set_value(value.get());
 
     // Get framework ID from environment.
-    value = os::getenv("MESOS_FRAMEWORK_ID");
+    value = environment.get("MESOS_FRAMEWORK_ID");
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_FRAMEWORK_ID' to be set in the environment";
@@ -750,7 +754,7 @@ Status MesosExecutorDriver::start()
     frameworkId.set_value(value.get());
 
     // Get executor ID from environment.
-    value = os::getenv("MESOS_EXECUTOR_ID");
+    value = environment.get("MESOS_EXECUTOR_ID");
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_EXECUTOR_ID' to be set in the environment";
@@ -758,7 +762,7 @@ Status MesosExecutorDriver::start()
     executorId.set_value(value.get());
 
     // Get working directory from environment.
-    value = os::getenv("MESOS_DIRECTORY");
+    value = environment.get("MESOS_DIRECTORY");
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_DIRECTORY' to be set in the environment";
@@ -771,7 +775,7 @@ Status MesosExecutorDriver::start()
     // (in contrast to the others above) for backwards
     // compatibility: agents < 0.28.0 do not set it.
     Duration shutdownGracePeriod = DEFAULT_EXECUTOR_SHUTDOWN_GRACE_PERIOD;
-    value = os::getenv("MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD");
+    value = environment.get("MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD");
     if (value.isSome()) {
       Try<Duration> parse = Duration::parse(value.get());
       if (parse.isError()) {
@@ -784,14 +788,14 @@ Status MesosExecutorDriver::start()
     }
 
     // Get checkpointing status from environment.
-    value = os::getenv("MESOS_CHECKPOINT");
+    value = environment.get("MESOS_CHECKPOINT");
     checkpoint = value.isSome() && value.get() == "1";
 
     Duration recoveryTimeout = RECOVERY_TIMEOUT;
 
     // Get the recovery timeout if checkpointing is enabled.
     if (checkpoint) {
-      value = os::getenv("MESOS_RECOVERY_TIMEOUT");
+      value = environment.get("MESOS_RECOVERY_TIMEOUT");
 
       if (value.isSome()) {
         Try<Duration> parse = Duration::parse(value.get());

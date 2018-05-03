@@ -22,6 +22,8 @@
 
 #include <mesos/mesos.hpp>
 
+#include <stout/hashmap.hpp>
+
 // Mesos executor interface and executor driver. An executor is
 // responsible for launching tasks in a framework specific way (i.e.,
 // creating new threads, new processes, etc). One or more executors
@@ -213,7 +215,9 @@ class MesosExecutorDriver : public ExecutorDriver
 public:
   // Creates a new driver that uses the specified Executor. Note, the
   // executor pointer must outlive the driver.
-  explicit MesosExecutorDriver(Executor* executor);
+  explicit MesosExecutorDriver(
+      Executor* executor,
+      const std::map<std::string, std::string>& environment);
 
   // This destructor will block indefinitely if
   // MesosExecutorDriver::start was invoked successfully (possibly via
@@ -246,6 +250,8 @@ private:
 
   // Current status of the driver.
   Status status;
+
+  hashmap<std::string, std::string> environment;
 };
 
 } // namespace mesos {

@@ -1050,7 +1050,7 @@ int main(int argc, char** argv)
           flags.cgroups_enable_cfs));
 
   Owned<mesos::MesosExecutorDriver> driver(
-      new mesos::MesosExecutorDriver(executor.get()));
+      new mesos::MesosExecutorDriver(executor.get(), os::environment())); // FIXME(bbannier):
 
   bool success = driver->run() == mesos::DRIVER_STOPPED;
 

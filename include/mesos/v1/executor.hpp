@@ -54,10 +54,12 @@ public:
 class Mesos : public MesosBase
 {
 public:
-  Mesos(ContentType contentType,
-        const std::function<void(void)>& connected,
-        const std::function<void(void)>& disconnected,
-        const std::function<void(const std::queue<Event>&)>& received);
+  Mesos(
+      ContentType contentType,
+      const hashmap<std::string, std::string>& environment,
+      const std::function<void(void)>& connected,
+      const std::function<void(void)>& disconnected,
+      const std::function<void(const std::queue<Event>&)>& received);
 
   // Delete copy constructor.
   Mesos(const Mesos& other) = delete;

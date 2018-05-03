@@ -268,6 +268,7 @@ protected:
     if (value.isSome() && value.get() == "1") {
       mesos.reset(new Mesos(
           ContentType::PROTOBUF,
+          os::environment(),
           defer(self(), &Self::connected),
           defer(self(), &Self::disconnected),
           defer(self(), [this](queue<v1::executor::Event> events) {

@@ -90,7 +90,7 @@ public:
   Future<slave::Containerizer::LaunchResult> launch(
       const ContainerID& containerId,
       const ContainerConfig& containerConfig,
-      const map<string, string>& environment,
+      map<string, string> environment,
       const Option<string>& pidCheckpointPath)
   {
     CHECK(!terminatedContainers.contains(containerId))
@@ -147,13 +147,8 @@ public:
       slave::Flags flags;
       flags.recovery_timeout = Duration::zero();
 
-      // We need to save the original set of environment variables so we
-      // can reset the environment after calling 'driver->start()' below.
-      hashmap<string, string> original = os::environment();
-
-      foreachpair (const string& name, const string& variable, environment) {
-        os::setenv(name, variable);
-      }
+      map<string, string> processEnvironment = os::environment();
+      environment.insert(processEnvironment.begin(), processEnvironment.end());
 
       // TODO(benh): Can this be removed and done exclusively in the
       // 'executorEnvironment()' function? There are other places in the
@@ -162,38 +157,24 @@ public:
       foreach (const Environment::Variable& variable,
                containerConfig.executor_info()
                  .command().environment().variables()) {
-        os::setenv(variable.name(), variable.value());
+        environment.insert({variable.name(), variable.value()});
       }
 
-      os::setenv("MESOS_LOCAL", "1");
+      environment.insert({"MESOS_LOCAL", "1"});
 
       const Owned<ExecutorData>& executorData =
         executors.at(containerConfig.executor_info().executor_id());
 
       if (executorData->executor != nullptr) {
         executorData->driver = Owned<MesosExecutorDriver>(
-            new MesosExecutorDriver(executorData->executor));
+            new MesosExecutorDriver(executorData->executor, environment));
         executorData->driver->start();
       } else {
         shared_ptr<v1::MockHTTPExecutor> executor =
           executorData->v1ExecutorMock;
-        executorData->v1Library = Owned<v1::executor::TestMesos>(
-          new v1::executor::TestMesos(ContentType::PROTOBUF, executor));
-      }
-
-      os::unsetenv("MESOS_LOCAL");
-
-      // Unset the environment variables we set by resetting them to their
-      // original values and also removing any that were not part of the
-      // original environment.
-      foreachpair (const string& name, const string& value, original) {
-        os::setenv(name, value);
-      }
-
-      foreachkey (const string& name, environment) {
-        if (!original.contains(name)) {
-          os::unsetenv(name);
-        }
+        executorData->v1Library =
+          Owned<v1::executor::TestMesos>(new v1::executor::TestMesos(
+              ContentType::PROTOBUF, environment, executor));
       }
     }
 

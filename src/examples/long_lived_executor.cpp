@@ -72,6 +72,7 @@ protected:
     // after the process has spawned.
     mesos.reset(new Mesos(
         mesos::ContentType::PROTOBUF,
+        os::environment(),
         process::defer(self(), &Self::connected),
         process::defer(self(), &Self::disconnected),
         process::defer(self(), &Self::received, lambda::_1)));

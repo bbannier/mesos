@@ -2777,9 +2777,11 @@ class TestMesos : public Mesos
 public:
   TestMesos(
       ContentType contentType,
+      const hashmap<std::string, std::string>& environment,
       const std::shared_ptr<MockHTTPExecutor<Mesos, Event>>& executor)
     : Mesos(
           contentType,
+          environment,
           lambda::bind(&MockHTTPExecutor<Mesos, Event>::connected,
                        executor,
                        this),

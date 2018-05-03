@@ -155,6 +155,7 @@ class MesosProcess : public ProtobufProcess<MesosProcess>
 public:
   MesosProcess(
       ContentType _contentType,
+      const hashmap<string, string>& environment,
       const lambda::function<void(void)>& connected,
       const lambda::function<void(void)>& disconnected,
       const lambda::function<void(const queue<Event>&)>& received)
@@ -168,11 +169,20 @@ public:
     // Load any logging flags from the environment.
     logging::Flags flags;
 
-    Try<flags::Warnings> load = flags.load("MESOS_");
-
-    if (load.isError()) {
-      EXIT(EXIT_FAILURE) << "Failed to load flags: " << load.error();
+    // FIXME(bbannier):
+    std::map<string, string> env;
+    foreachpair (auto&& key, auto&& value, environment) {
+      if (strings::startsWith(key, "MESOS_")) {
+        env.insert({key, value});
+      }
     }
+
+    Try<flags::Warnings> load = flags.load(env, "MESOS_");
+
+    // FIXME(bbannier):
+    // if (load.isError()) {
+    //   EXIT(EXIT_FAILURE) << "Failed to load flags: " << load.error();
+    // }
 
     // Initialize libprocess.
     process::initialize();
@@ -194,12 +204,12 @@ public:
     spawn(new VersionProcess(), true);
 
     // Check if this is local (for example, for testing).
-    local = os::getenv("MESOS_LOCAL").isSome();
+    local = environment.get("MESOS_LOCAL").isSome();
 
     Option<string> value;
 
     // Get agent PID from environment.
-    value = os::getenv("MESOS_SLAVE_PID");
+    value = environment.get("MESOS_SLAVE_PID");
     if (value.isNone()) {
       EXIT(EXIT_FAILURE)
         << "Expecting 'MESOS_SLAVE_PID' to be set in the environment";
@@ -223,7 +233,7 @@ public:
         upid.id +
         "/api/v1/executor");
 
-    value = os::getenv("MESOS_EXECUTOR_AUTHENTICATION_TOKEN");
+    value = environment.get("MESOS_EXECUTOR_AUTHENTICATION_TOKEN");
     if (value.isSome()) {
       authenticationToken = value.get();
     }
@@ -233,12 +243,12 @@ public:
     os::eraseenv("MESOS_EXECUTOR_AUTHENTICATION_TOKEN");
 
     // Get checkpointing status from environment.
-    value = os::getenv("MESOS_CHECKPOINT");
+    value = environment.get("MESOS_CHECKPOINT");
     checkpoint = value.isSome() && value.get() == "1";
 
     if (checkpoint) {
       // Get recovery timeout from environment.
-      value = os::getenv("MESOS_RECOVERY_TIMEOUT");
+      value = environment.get("MESOS_RECOVERY_TIMEOUT");
       if (value.isSome()) {
         Try<Duration> _recoveryTimeout = Duration::parse(value.get());
 
@@ -253,7 +263,7 @@ public:
       }
 
       // Get maximum backoff factor from environment.
-      value = os::getenv("MESOS_SUBSCRIPTION_BACKOFF_MAX");
+      value = environment.get("MESOS_SUBSCRIPTION_BACKOFF_MAX");
       if (value.isSome()) {
         Try<Duration> _maxBackoff = Duration::parse(value.get());
 
@@ -270,7 +280,7 @@ public:
     }
 
     // Get executor shutdown grace period from the environment.
-    value = os::getenv("MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD");
+    value = environment.get("MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD");
     if (value.isSome()) {
       Try<Duration> _shutdownGracePeriod = Duration::parse(value.get());
 
@@ -830,10 +840,12 @@ private:
 
 Mesos::Mesos(
     ContentType contentType,
+    const hashmap<string, string>& environment,
     const lambda::function<void(void)>& connected,
     const lambda::function<void(void)>& disconnected,
     const lambda::function<void(const queue<Event>&)>& received)
-  : process(new MesosProcess(contentType, connected, disconnected, received))
+  : process(new MesosProcess(
+        contentType, environment, connected, disconnected, received))
 {
   spawn(process.get());
 }

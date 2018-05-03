@@ -79,6 +79,6 @@ public:
 int main(int argc, char** argv)
 {
   TestExecutor executor;
-  MesosExecutorDriver driver(&executor);
+  MesosExecutorDriver driver(&executor, os::environment());
   return driver.run() == DRIVER_STOPPED ? 0 : 1;
 }
