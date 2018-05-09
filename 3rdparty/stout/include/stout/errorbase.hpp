@@ -15,6 +15,7 @@
 
 #include <errno.h>
 
+#include <ostream>
 #include <string>
 
 #include <stout/os/strerror.hpp>
@@ -42,6 +43,19 @@ public:
     return message == that.message;
   }
 
+  // We explicitly provide explicit support to stream `Error` instances.
+  friend std::ostream& operator<<(std::ostream& stream, const Error& error)
+  {
+    return stream << error.message;
+  }
+
+  // We provide a specialized `stringify` which returns a reference, not a copy.
+  friend const std::string& stringify(const Error& error)
+  {
+    return error.message;
+  }
+
+  // FIXME(bbannier): Make this member private.
   const std::string message;
 };
 
