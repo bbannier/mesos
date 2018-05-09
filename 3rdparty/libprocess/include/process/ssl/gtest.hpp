@@ -306,7 +306,7 @@ protected:
           process::network::internal::SocketImpl::Kind::SSL);
 
     if (create.isError()) {
-      return Error(create.error());
+      return create.error();
     }
 
     process::network::inet::Socket server = create.get();
@@ -318,12 +318,12 @@ protected:
           process::network::inet::Address(net::IP(process::address().ip), 0));
 
     if (bind.isError()) {
-      return Error(bind.error());
+      return bind.error();
     }
 
     const Try<Nothing> listen = server.listen(BACKLOG);
     if (listen.isError()) {
-      return Error(listen.error());
+      return listen.error();
     }
 
     return server;
@@ -350,7 +350,7 @@ protected:
   {
     const Try<process::network::inet::Address> address = server.address();
     if (address.isError()) {
-      return Error(address.error());
+      return address.error();
     }
 
     // Set up arguments to be passed to the 'client-ssl' binary.

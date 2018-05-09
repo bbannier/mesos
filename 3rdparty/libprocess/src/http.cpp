@@ -873,13 +873,13 @@ Try<hashmap<string, string>> decode(const string& query)
 
     Try<string> key = http::decode(pairs[0]);
     if (key.isError()) {
-      return Error(key.error());
+      return key.error();
     }
 
     if (pairs.size() == 2) {
       Try<string> value = http::decode(pairs[1]);
       if (value.isError()) {
-        return Error(value.error());
+        return value.error();
       }
       result[key.get()] = value.get();
 

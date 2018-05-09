@@ -68,7 +68,7 @@ public:
       : net::getHostname(ip);
 
     if (hostname.isError()) {
-      return Error(hostname.error());
+      return hostname.error();
     }
 
     return hostname.get();
@@ -425,7 +425,7 @@ template <>
 inline Try<unix::Address> convert(Try<Address>&& address)
 {
   if (address.isError()) {
-    return Error(address.error());
+    return address.error();
   }
 
   return address->visit(
@@ -446,7 +446,7 @@ template <>
 inline Try<inet4::Address> convert(Try<Address>&& address)
 {
   if (address.isError()) {
-    return Error(address.error());
+    return address.error();
   }
 
   return address->visit(
@@ -468,7 +468,7 @@ template <>
 inline Try<inet6::Address> convert(Try<Address>&& address)
 {
   if (address.isError()) {
-    return Error(address.error());
+    return address.error();
   }
 
   return address->visit(
@@ -492,7 +492,7 @@ template <>
 inline Try<inet::Address> convert(Try<Address>&& address)
 {
   if (address.isError()) {
-    return Error(address.error());
+    return address.error();
   }
 
   return address->visit(

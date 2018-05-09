@@ -133,7 +133,7 @@ Try<Address> SocketImpl::bind(const Address& address)
 {
   Try<Nothing> bind = network::bind(get(), address);
   if (bind.isError()) {
-    return Error(bind.error());
+    return bind.error();
   }
 
   // Lookup and store assigned IP and assigned port.

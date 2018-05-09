@@ -492,7 +492,7 @@ public:
     }
     Try<T> header = T::create(value.get());
     if (header.isError()) {
-      return Error(header.error());
+      return header.error();
     }
     return header.get();
   }

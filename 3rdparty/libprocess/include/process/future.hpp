@@ -1329,7 +1329,7 @@ const std::string& Future<T>::failure() const
   }
 
   CHECK_ERROR(data->result);
-  return data->result.error();
+  return stringify(data->result.error());
 }
 
 
@@ -1414,7 +1414,8 @@ const Future<T>& Future<T>::onFailed(FailedCallback&& callback) const
 
   // TODO(*): Invoke callback in another execution context.
   if (run) {
-    std::move(callback)(data->result.error()); // NOLINT(misc-use-after-move)
+    std::move(callback)(
+        stringify(data->result.error())); // NOLINT(misc-use-after-move)
   }
 
   return *this;
@@ -1817,7 +1818,8 @@ bool Future<T>::fail(const std::string& _message)
     // Grab a copy of `data` just in case invoking the callbacks
     // erroneously attempts to delete this future.
     std::shared_ptr<typename Future<T>::Data> copy = data;
-    internal::run(std::move(copy->onFailedCallbacks), copy->result.error());
+    internal::run(
+        std::move(copy->onFailedCallbacks), stringify(copy->result.error()));
     internal::run(std::move(copy->onAnyCallbacks), *this);
 
     copy->clearAllCallbacks();

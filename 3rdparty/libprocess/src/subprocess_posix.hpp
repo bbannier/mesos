@@ -91,7 +91,7 @@ inline Try<Nothing> cloexec(
     if (fd >= 0) {
       Try<Nothing> cloexec = os::cloexec(fd);
       if (cloexec.isError()) {
-        return Error(cloexec.error());
+        return cloexec.error();
       }
     }
   }

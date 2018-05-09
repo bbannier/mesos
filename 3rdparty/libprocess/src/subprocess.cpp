@@ -78,7 +78,7 @@ Subprocess::ChildHook Subprocess::ChildHook::CHDIR(
   return Subprocess::ChildHook([working_directory]() -> Try<Nothing> {
     const Try<Nothing> result = os::chdir(working_directory);
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     }
 
     return Nothing();

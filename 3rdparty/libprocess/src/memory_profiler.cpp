@@ -1118,7 +1118,7 @@ void MemoryProfiler::stopAndGenerateRawProfile()
         const string data(DUMMY_FILE_SIZE, '\0');
         Try<Nothing> written = os::write(outputPath, data);
         if (written.isError()) {
-          return Error(written.error());
+          return written.error();
         }
 
         // Verify independently that the file was actually written.

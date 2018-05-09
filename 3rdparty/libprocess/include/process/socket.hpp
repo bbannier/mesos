@@ -261,7 +261,7 @@ public:
   {
     Try<std::shared_ptr<SocketImpl>> impl = SocketImpl::create(s, kind);
     if (impl.isError()) {
-      return Error(impl.error());
+      return impl.error();
     }
     return Socket(impl.get());
   }
@@ -461,7 +461,7 @@ inline Try<Socket<network::Address>> Socket<network::Address>::create(
 {
   Try<std::shared_ptr<SocketImpl>> impl = SocketImpl::create(family, kind);
   if (impl.isError()) {
-    return Error(impl.error());
+    return impl.error();
   }
   return Socket(impl.get());
 }
@@ -476,7 +476,7 @@ inline Try<Socket<inet::Address>> Socket<inet::Address>::create(
   Try<std::shared_ptr<SocketImpl>> impl =
     SocketImpl::create(Address::Family::INET4, kind);
   if (impl.isError()) {
-    return Error(impl.error());
+    return impl.error();
   }
   return Socket(impl.get());
 }
@@ -496,7 +496,7 @@ inline Try<Socket<unix::Address>> Socket<unix::Address>::create(
   Try<std::shared_ptr<SocketImpl>> impl =
     SocketImpl::create(Address::Family::UNIX, kind);
   if (impl.isError()) {
-    return Error(impl.error());
+    return impl.error();
   }
   return Socket(impl.get());
 }
