@@ -117,7 +117,7 @@ public:
     if (!isSome()) {
       std::string errorMessage = "Result::get() but state == ";
       if (isError()) {
-        errorMessage += "ERROR: " + data.error();
+        errorMessage += "ERROR: " + stringify(data.error());
       } else if (isNone()) {
         errorMessage += "NONE";
       }

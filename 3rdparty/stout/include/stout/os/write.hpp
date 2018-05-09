@@ -120,7 +120,7 @@ inline Try<Nothing> write(const std::string& path, const std::string& message)
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (fd.isError()) {
-    return Error(fd.error());
+    return fd.error();
   }
 
   Try<Nothing> result = write(fd.get(), message);

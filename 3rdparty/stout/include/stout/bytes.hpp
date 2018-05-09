@@ -51,7 +51,7 @@ public:
       Try<uint64_t> value = numify<uint64_t>(s.substr(0, index));
 
       if (value.isError()) {
-        return Error(value.error());
+        return value.error();
       }
 
       const std::string unit = strings::upper(s.substr(index));

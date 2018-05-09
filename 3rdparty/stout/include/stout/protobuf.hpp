@@ -124,7 +124,7 @@ Try<Nothing> write(
   foreach (const T& message, messages) {
     Try<Nothing> result = write(fd, message);
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     }
   }
 
@@ -232,7 +232,7 @@ struct Read
       // Save the offset so we can re-adjust if something goes wrong.
       Try<off_t> lseek = os::lseek(fd, offset, SEEK_CUR);
       if (lseek.isError()) {
-        return Error(lseek.error());
+        return lseek.error();
       }
 
       offset = lseek.get();
@@ -331,7 +331,7 @@ struct Read<google::protobuf::RepeatedPtrField<T>>
     for (;;) {
       Result<T> message = Read<T>()(fd, ignorePartial, undoFailed);
       if (message.isError()) {
-        return Error(message.error());
+        return message.error();
       } else if (message.isNone()) {
         break;
       } else {
@@ -436,7 +436,7 @@ struct Parser : boost::static_visitor<Try<Nothing>>
               boost::apply_visitor(Parser(entry, key_field), key);
 
             if (apply.isError()) {
-              return Error(apply.error());
+              return apply.error();
             }
 
             const google::protobuf::FieldDescriptor* value_field =
@@ -444,7 +444,7 @@ struct Parser : boost::static_visitor<Try<Nothing>>
 
             apply = boost::apply_visitor(Parser(entry, value_field), value);
             if (apply.isError()) {
-              return Error(apply.error());
+              return apply.error();
             }
           }
         } else if (field->is_repeated()) {
@@ -627,7 +627,7 @@ struct Parser : boost::static_visitor<Try<Nothing>>
         boost::apply_visitor(Parser(message, field), value);
 
       if (apply.isError()) {
-        return Error(apply.error());
+        return apply.error();
       }
     }
 
@@ -681,7 +681,7 @@ inline Try<Nothing> parse(
         boost::apply_visitor(Parser(message, field), value);
 
       if (apply.isError()) {
-        return Error(apply.error());
+        return apply.error();
       }
     }
   }
@@ -710,7 +710,7 @@ struct Parse
 
     Try<Nothing> parse = internal::parse(&message, *object);
     if (parse.isError()) {
-      return Error(parse.error());
+      return parse.error();
     }
 
     if (!message.IsInitialized()) {
@@ -749,7 +749,7 @@ struct Parse<google::protobuf::RepeatedPtrField<T>>
     foreach (const JSON::Value& elem, array->values) {
       Try<T> message = Parse<T>()(elem);
       if (message.isError()) {
-        return Error(message.error());
+        return message.error();
       }
 
       collection.Add()->CopyFrom(message.get());

@@ -326,7 +326,7 @@ private:
     for (size_t i = 0; i < children.size(); i++) {
       Try<Tree> tree_ = children[i].prepare();
       if (tree_.isError()) {
-        return Error(tree_.error());
+        return tree_.error();
       }
       tree.children.push_back(tree_.get());
     }
@@ -414,7 +414,7 @@ private:
     for (size_t i = 0; i < tree.children.size(); i++) {
       Try<ProcessTree> child = coordinate(tree.children[i]);
       if (child.isError()) {
-        return Error(child.error());
+        return child.error();
       }
       children.push_back(child.get());
     }
@@ -429,13 +429,13 @@ public:
     Try<Tree> tree = prepare();
 
     if (tree.isError()) {
-      return Error(tree.error());
+      return tree.error();
     }
 
     Try<pid_t> pid = instantiate(tree.get());
 
     if (pid.isError()) {
-      return Error(pid.error());
+      return pid.error();
     }
 
     return coordinate(tree.get());

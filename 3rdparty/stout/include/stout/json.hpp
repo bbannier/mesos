@@ -929,7 +929,7 @@ Try<T> parse(const std::string& s)
   Try<Value> value = parse(s);
 
   if (value.isError()) {
-    return Error(value.error());
+    return value.error();
   }
 
   if (!value->is<T>()) {

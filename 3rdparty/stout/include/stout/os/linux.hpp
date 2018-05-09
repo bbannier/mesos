@@ -183,7 +183,7 @@ inline Result<Process> process(pid_t pid)
   const Result<proc::ProcessStatus> status = proc::status(pid);
 
   if (status.isError()) {
-    return Error(status.error());
+    return status.error();
   }
 
   if (status.isNone()) {

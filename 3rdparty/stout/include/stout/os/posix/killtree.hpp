@@ -64,7 +64,7 @@ inline Try<std::list<ProcessTree>> killtree(
   Try<std::list<Process>> processes = os::processes();
 
   if (processes.isError()) {
-    return Error(processes.error());
+    return processes.error();
   }
 
   Result<Process> process = os::process(pid, processes.get());
@@ -131,7 +131,7 @@ inline Try<std::list<ProcessTree>> killtree(
     process = os::process(pid);
 
     if (process.isError()) {
-      return Error(process.error());
+      return process.error();
     } else if (process.isNone()) {
       continue;
     }
@@ -149,7 +149,7 @@ inline Try<std::list<ProcessTree>> killtree(
     processes = os::processes();
 
     if (processes.isError()) {
-      return Error(processes.error());
+      return processes.error();
     }
 
     // Enqueue the children for visiting.

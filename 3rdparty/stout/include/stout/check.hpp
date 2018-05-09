@@ -184,7 +184,7 @@ template <typename T, typename E>
 Option<Error> _check_some(const Try<T, E>& t)
 {
   if (t.isError()) {
-    return Error(t.error());
+    return t.error();
   } else {
     CHECK(t.isSome());
     return None();
@@ -196,7 +196,7 @@ template <typename T>
 Option<Error> _check_some(const Result<T>& r)
 {
   if (r.isError()) {
-    return Error(r.error());
+    return r.error();
   } else if (r.isNone()) {
     return Error("is NONE");
   } else {

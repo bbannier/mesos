@@ -101,7 +101,7 @@ Result<T> numify(const Option<std::string>& s)
     if (t.isSome()) {
       return t.get();
     } else if (t.isError()) {
-      return Error(t.error());
+      return t.error();
     }
   }
 

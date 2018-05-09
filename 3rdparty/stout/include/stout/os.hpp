@@ -171,7 +171,7 @@ inline Try<std::string> sysname()
 {
   Try<UTSInfo> info = uname();
   if (info.isError()) {
-    return Error(info.error());
+    return info.error();
   }
 
   return info->sysname;
@@ -183,7 +183,7 @@ inline Try<std::list<Process>> processes()
 {
   const Try<std::set<pid_t>> pids = os::pids();
   if (pids.isError()) {
-    return Error(pids.error());
+    return pids.error();
   }
 
   std::list<Process> result;
@@ -246,7 +246,7 @@ inline Try<std::set<pid_t>> children(pid_t pid, bool recursive = true)
   const Try<std::list<Process>> processes = os::processes();
 
   if (processes.isError()) {
-    return Error(processes.error());
+    return processes.error();
   }
 
   return children(pid, processes.get(), recursive);

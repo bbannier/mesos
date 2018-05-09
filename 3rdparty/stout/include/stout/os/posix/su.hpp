@@ -199,7 +199,7 @@ inline Try<std::vector<gid_t>> getgrouplist(const std::string& user)
   Result<gid_t> gid = os::getgid(user);
   if (!gid.isSome()) {
     return Error("Failed to get the gid of the user: " +
-                 (gid.isError() ? gid.error() : "group not found"));
+                 (gid.isError() ? stringify(gid.error()) : "group not found"));
   }
 
 #ifdef __APPLE__
@@ -321,7 +321,7 @@ inline Try<Nothing> su(const std::string& user)
   Result<gid_t> gid = os::getgid(user);
   if (gid.isError() || gid.isNone()) {
     return Error("Failed to getgid: " +
-        (gid.isError() ? gid.error() : "unknown user"));
+        (gid.isError() ? stringify(gid.error()) : "unknown user"));
   } else if (::setgid(gid.get())) {
     return ErrnoError("Failed to set gid");
   }
@@ -336,7 +336,7 @@ inline Try<Nothing> su(const std::string& user)
   Result<uid_t> uid = os::getuid(user);
   if (uid.isError() || uid.isNone()) {
     return Error("Failed to getuid: " +
-        (uid.isError() ? uid.error() : "unknown user"));
+        (uid.isError() ? stringify(uid.error()) : "unknown user"));
   } else if (::setuid(uid.get())) {
     return ErrnoError("Failed to setuid");
   }

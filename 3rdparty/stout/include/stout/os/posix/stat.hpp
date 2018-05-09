@@ -122,7 +122,7 @@ inline Try<Bytes> size(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return Bytes(s->st_size);
@@ -134,7 +134,7 @@ inline Try<Bytes> size(const int_fd fd)
 {
   Try<struct ::stat> s = internal::stat(fd);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return Bytes(s->st_size);
@@ -147,7 +147,7 @@ inline Try<long> mtime(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return s->st_mtime;
@@ -160,7 +160,7 @@ inline Try<mode_t> mode(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return s->st_mode;
@@ -173,7 +173,7 @@ inline Try<dev_t> dev(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return s->st_dev;
@@ -186,7 +186,7 @@ inline Try<dev_t> rdev(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   if (!S_ISCHR(s->st_mode) && !S_ISBLK(s->st_mode)) {
@@ -203,7 +203,7 @@ inline Try<ino_t> inode(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return s->st_ino;
@@ -216,7 +216,7 @@ inline Try<uid_t> uid(
 {
   Try<struct ::stat> s = internal::stat(path, follow);
   if (s.isError()) {
-    return Error(s.error());
+    return s.error();
   }
 
   return s->st_uid;

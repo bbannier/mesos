@@ -43,7 +43,7 @@ inline Try<ProcessTree> pstree(
     if (process.parent == pid) {
       Try<ProcessTree> tree = pstree(process.pid, processes);
       if (tree.isError()) {
-        return Error(tree.error());
+        return tree.error();
       }
       children.push_back(tree.get());
     }
@@ -72,7 +72,7 @@ inline Try<ProcessTree> pstree(Option<pid_t> pid = None())
   const Try<std::list<Process>> processes = os::processes();
 
   if (processes.isError()) {
-    return Error(processes.error());
+    return processes.error();
   }
 
   return pstree(pid.get(), processes.get());
@@ -101,7 +101,7 @@ inline Try<std::list<ProcessTree>> pstrees(
     if (disconnected) {
       Try<ProcessTree> tree = pstree(pid, processes);
       if (tree.isError()) {
-        return Error(tree.error());
+        return tree.error();
       }
 
       // Now see if any of the existing process trees are actually

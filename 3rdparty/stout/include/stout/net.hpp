@@ -152,7 +152,7 @@ inline Try<int> download(
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (fd.isError()) {
-    return Error(fd.error());
+    return fd.error();
   }
 
   CURL* curl = curl_easy_init();

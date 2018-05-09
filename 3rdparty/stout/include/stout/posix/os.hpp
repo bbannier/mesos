@@ -343,7 +343,7 @@ inline Try<std::set<pid_t>> pids(Option<pid_t> group, Option<pid_t> session)
   const Try<std::list<Process>> processes = os::processes();
 
   if (processes.isError()) {
-    return Error(processes.error());
+    return processes.error();
   }
 
   // Obtain the calling process group / session ID when 0 is provided.
@@ -395,7 +395,7 @@ inline Try<Version> release()
 {
   Try<UTSInfo> info = uname();
   if (info.isError()) {
-    return Error(info.error());
+    return info.error();
   }
 
   int major, minor, patch = 0;

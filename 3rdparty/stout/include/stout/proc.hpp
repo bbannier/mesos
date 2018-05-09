@@ -174,7 +174,7 @@ inline Result<ProcessStatus> status(pid_t pid)
     if (!os::exists(path)) {
       return None();
     }
-    return Error(read.error());
+    return read.error();
   }
 
   std::istringstream data(read.get());
@@ -466,7 +466,7 @@ inline Try<std::list<CPU>> cpus()
 
       Try<unsigned int> value = numify<unsigned int>(tokens.back());
       if (value.isError()) {
-        return Error(value.error());
+        return value.error();
       }
 
       // Now save the value.

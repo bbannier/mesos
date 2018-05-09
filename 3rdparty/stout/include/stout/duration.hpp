@@ -373,7 +373,7 @@ inline Try<Duration> Duration::parse(const std::string& s)
     Try<double> value = numify<double>(s.substr(0, index));
 
     if (value.isError()) {
-      return Error(value.error());
+      return value.error();
     }
 
     const std::string unit = s.substr(index);

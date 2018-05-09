@@ -58,7 +58,7 @@ inline Result<IP::Network> IP::Network::fromLinkDevice(
 
           Try<IP::Network> network = IP::Network::create(address, netmask);
           if (network.isError()) {
-            return Error(network.error());
+            return network.error();
           }
 
           return network.get();
@@ -73,7 +73,7 @@ inline Result<IP::Network> IP::Network::fromLinkDevice(
 
         Try<IP::Network> network = IP::Network::create(address, prefix);
         if (network.isError()) {
-          return Error(network.error());
+          return network.error();
         }
 
         return network.get();
