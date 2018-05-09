@@ -134,7 +134,7 @@ public:
   const T* operator->() const { return &get(); }
   T* operator->() { return &get(); }
 
-  const std::string& error() const { assert(isError()); return data.error(); }
+  const Error& error() const { assert(isError()); return data.error(); }
 
 private:
   // We leverage Try<Option<T>> to avoid dynamic allocation of T. This

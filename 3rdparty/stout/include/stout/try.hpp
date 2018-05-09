@@ -78,20 +78,14 @@ public:
   const T* operator->() const { return &get(); }
   T* operator->() { return &get(); }
 
-  // NOTE: This function is intended to return the error of type `E`.
-  // However, we return a `std::string` if `E` == `Error` since that's what it
-  // used to return, and it's the only data that `Error` holds anyway.
-  const typename std::conditional<
-      std::is_same<E, Error>::value, std::string, E>::type& error() const
+  const E& error() const
   {
     assert(data.isNone());
     assert(error_.isSome());
-    return error_impl(error_.get());
+    return error_.get();
   }
 
 private:
-  static const std::string& error_impl(const Error& err) { return err.message; }
-
   template <typename Self>
   static auto get(Self&& self) -> decltype(std::forward<Self>(self).data.get())
   {
@@ -101,9 +95,6 @@ private:
     }
     return std::forward<Self>(self).data.get();
   }
-
-  template <typename Err>
-  static const Err& error_impl(const Err& err) { return err; }
 
   // We leverage Option<T> to avoid dynamic allocation of T. This
   // means that the storage for T will be included in this object
