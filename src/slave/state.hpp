@@ -107,7 +107,7 @@ inline Result<Resources> read<Resources>(const std::string& path)
     read<google::protobuf::RepeatedPtrField<Resource>>(path);
 
   if (resources.isError()) {
-    return Error(resources.error());
+    return resources.error();
   }
 
   if (resources.isNone()) {

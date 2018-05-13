@@ -136,7 +136,7 @@ Try<Nothing> Fetcher::validateUri(const string& uri)
 {
   Try<string> result = basename(uri);
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   return Nothing();
@@ -147,7 +147,7 @@ Try<Nothing> Fetcher::validateOutputFile(const string& path)
 {
   Try<string> result = Path(path).basename();
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   if (path.size() == 0) {
@@ -169,14 +169,14 @@ static Try<Nothing> validateUris(const CommandInfo& commandInfo)
   foreach (const CommandInfo::URI& uri, commandInfo.uris()) {
     Try<Nothing> uriValidation = Fetcher::validateUri(uri.value());
     if (uriValidation.isError()) {
-      return Error(uriValidation.error());
+      return uriValidation.error();
     }
 
     if (uri.has_output_file()) {
       Try<Nothing> outputFileValidation =
         Fetcher::validateOutputFile(uri.output_file());
       if (outputFileValidation.isError()) {
-        return Error(outputFileValidation.error());
+        return outputFileValidation.error();
       }
     }
   }
@@ -313,7 +313,7 @@ static Try<Bytes> fetchSize(
 
   Result<string> path = Fetcher::uriToLocalPath(uri, frameworksHome);
   if (path.isError()) {
-    return Error(path.error());
+    return path.error();
   }
   if (path.isSome()) {
     Try<Bytes> size = os::stat::size(
@@ -328,7 +328,7 @@ static Try<Bytes> fetchSize(
   if (Fetcher::isNetUri(uri)) {
     Try<Bytes> size = net::contentLength(uri);
     if (size.isError()) {
-      return Error(size.error());
+      return size.error();
     }
     if (size.get() == 0) {
       return Error("URI reported content-length 0: " + uri);
@@ -1154,7 +1154,7 @@ Try<Nothing> FetcherProcess::Cache::reserve(
     foreach (const shared_ptr<Cache::Entry>& entry, victims.get()) {
       Try<Nothing> removal = remove(entry);
       if (removal.isError()) {
-        return Error(removal.error());
+        return removal.error();
       }
     }
   }

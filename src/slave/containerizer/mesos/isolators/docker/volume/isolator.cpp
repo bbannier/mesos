@@ -113,7 +113,7 @@ Try<Isolator*> DockerVolumeIsolatorProcess::create(const Flags& flags)
     DockerVolumeIsolatorProcess::_create(flags, client.get());
 
   if (isolator.isError()) {
-    return Error(isolator.error());
+    return isolator.error();
   }
 
   return isolator.get();

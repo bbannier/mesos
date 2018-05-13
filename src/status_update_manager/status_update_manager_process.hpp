@@ -422,7 +422,7 @@ private:
           checkpoint ? Option<std::string>(getPath(streamId)) : None());
 
     if (stream.isError()) {
-      return Error(stream.error());
+      return stream.error();
     }
 
     streams[streamId] = std::move(stream.get());
@@ -450,7 +450,7 @@ private:
               statusUpdateType, streamId, getPath(streamId), strict);
 
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     }
 
     if (result.isNone()) {
@@ -471,7 +471,7 @@ private:
     // Get the next update in the queue.
     const Result<UpdateType>& next = stream->next();
     if (next.isError()) {
-      return Error(next.error());
+      return next.error();
     }
 
     if (!paused && next.isSome()) {
@@ -705,7 +705,7 @@ private:
             // Get the corresponding update for this ACK.
             const Result<UpdateType>& update = stream->next();
             if (update.isError()) {
-              return Error(update.error());
+              return update.error();
             }
 
             if (update.isNone()) {
@@ -817,7 +817,7 @@ private:
       // Handle the update, checkpointing if necessary.
       Try<Nothing> result = handle(update, CheckpointType::UPDATE);
       if (result.isError()) {
-        return Error(result.error());
+        return result.error();
       }
 
       return true;
@@ -837,7 +837,7 @@ private:
       // Get the corresponding update for this ACK.
       const Result<UpdateType>& update_ = next();
       if (update_.isError()) {
-        return Error(update_.error());
+        return update_.error();
       }
 
       // This might happen if we retried a status update and got back
@@ -873,7 +873,7 @@ private:
       // Handle the ACK, checkpointing if necessary.
       Try<Nothing> result = handle(update, CheckpointType::ACK);
       if (result.isError()) {
-        return Error(result.error());
+        return result.error();
       }
 
       return true;

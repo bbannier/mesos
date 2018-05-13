@@ -141,7 +141,7 @@ Try<vector<Entry>> parse(const string& path)
   // Read the complete file into a buffer
   Try<string> buffer = os::read(path);
   if (buffer.isError()) {
-    return Error(buffer.error());
+    return buffer.error();
   }
 
   const char* data = buffer->data();

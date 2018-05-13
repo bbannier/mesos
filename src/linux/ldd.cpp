@@ -56,7 +56,7 @@ Try<hashset<string>> ldd(
 
     Try<elf::File*> load = elf::File::load(candidate);
     if (load.isError()) {
-      return Error(load.error());
+      return load.error();
     }
 
     Owned<elf::File> elf(load.get());
@@ -64,7 +64,7 @@ Try<hashset<string>> ldd(
     Try<vector<string>> _dependencies =
       elf->get_dynamic_strings(elf::DynamicTag::NEEDED);
     if (_dependencies.isError()) {
-      return Error(_dependencies.error());
+      return _dependencies.error();
     }
 
     // Collect the ELF dependencies of this path into the needed

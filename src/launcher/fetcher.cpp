@@ -210,7 +210,7 @@ static Try<string> copyFile(
   const Try<Nothing> result = os::copyfile(sourcePath, destinationPath);
 
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   return destinationPath;
@@ -230,7 +230,7 @@ static Try<string> download(
 
   Try<Nothing> validation = Fetcher::validateUri(sourceUri);
   if (validation.isError()) {
-    return Error(validation.error());
+    return validation.error();
   }
 
   // 1. Try to fetch using a local copy.
@@ -316,7 +316,7 @@ static Try<string> fetchBypassingCache(
     : Fetcher::basename(uri.value());
 
   if (outputFile.isError()) {
-    return Error(outputFile.error());
+    return outputFile.error();
   }
 
   string path = path::join(sandboxDirectory, outputFile.get());
@@ -324,7 +324,7 @@ static Try<string> fetchBypassingCache(
   Try<string> downloaded =
     download(uri.value(), path, frameworksHome, stallTimeout);
   if (downloaded.isError()) {
-    return Error(downloaded.error());
+    return downloaded.error();
   }
 
   if (uri.executable()) {
@@ -332,7 +332,7 @@ static Try<string> fetchBypassingCache(
   } else if (uri.extract()) {
     Try<bool> extracted = extract(path, sandboxDirectory);
     if (extracted.isError()) {
-      return Error(extracted.error());
+      return extracted.error();
     } else if (!extracted.get()) {
       LOG(WARNING) << "Copying instead of extracting resource from URI with "
                    << "'extract' flag, because it does not seem to be an "
@@ -372,7 +372,7 @@ static Try<string> fetchFromCache(
     : Fetcher::basename(item.uri().value());
 
   if (outputFile.isError()) {
-    return Error(outputFile.error());
+    return outputFile.error();
   }
 
   string destinationPath = path::join(sandboxDirectory, outputFile.get());
@@ -385,14 +385,14 @@ static Try<string> fetchFromCache(
   if (item.uri().executable()) {
     Try<string> copied = copyFile(sourcePath, destinationPath);
     if (copied.isError()) {
-      return Error(copied.error());
+      return copied.error();
     }
 
     return chmodExecutable(copied.get());
   } else if (item.uri().extract()) {
     Try<bool> extracted = extract(sourcePath, sandboxDirectory);
     if (extracted.isError()) {
-      return Error(extracted.error());
+      return extracted.error();
     } else if (extracted.get()) {
       return sandboxDirectory;
     } else {
@@ -441,7 +441,7 @@ static Try<string> fetchThroughCache(
         stallTimeout);
 
     if (downloaded.isError()) {
-      return Error(downloaded.error());
+      return downloaded.error();
     }
   }
 

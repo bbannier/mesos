@@ -400,7 +400,7 @@ Try<vector<ContainerID>> getContainerIds(const string& runtimeDir)
       // Now recursively build the list of nested containers.
       Try<vector<ContainerID>> children = helper(container);
       if (children.isError()) {
-        return Error(children.error());
+        return children.error();
       }
 
       if (!children->empty()) {

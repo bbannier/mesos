@@ -8959,7 +8959,7 @@ Try<Executor*> Framework::addExecutor(const ExecutorInfo& executorInfo)
       user);
 
   if (directory.isError()) {
-    return Error(directory.error());
+    return directory.error();
   }
 
   Executor* executor = new Executor(

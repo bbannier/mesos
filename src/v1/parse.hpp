@@ -29,7 +29,7 @@ inline Try<mesos::v1::CapabilityInfo> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::v1::CapabilityInfo>(json.get());
@@ -41,7 +41,7 @@ inline Try<mesos::v1::RLimitInfo> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::v1::RLimitInfo>(json.get());
@@ -54,7 +54,7 @@ inline Try<mesos::v1::TaskGroupInfo> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -68,7 +68,7 @@ inline Try<mesos::v1::TaskInfo> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.

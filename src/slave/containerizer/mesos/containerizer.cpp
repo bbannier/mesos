@@ -174,7 +174,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   }();
 
   if (isolations.isError()) {
-    return Error(isolations.error());
+    return isolations.error();
   }
 
   const hashmap<string, vector<string>> deprecations = {

@@ -158,7 +158,7 @@ Try<process::Owned<Rootfs>> LinuxRootfs::create(const string& root)
   foreach (const string& file, files) {
     Try<Nothing> result = rootfs->add(file);
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     }
   }
 

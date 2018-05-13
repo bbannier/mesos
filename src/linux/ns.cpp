@@ -56,7 +56,8 @@ static Try<Version> kernelVersion()
 {
   Try<os::UTSInfo> uname = os::uname();
   if (!uname.isSome()) {
-    return Error("Unable to determine kernel version: " + uname.error());
+    return Error(
+        "Unable to determine kernel version: " + stringify(uname.error()));
   }
 
   vector<string> parts = strings::split(uname->release, ".");
@@ -64,8 +65,9 @@ static Try<Version> kernelVersion()
 
   Try<Version> version = Version::parse(strings::join(".", parts));
   if (!version.isSome()) {
-    return Error("Failed to parse kernel version '" + uname->release +
-        "': " + version.error());
+    return Error(
+        "Failed to parse kernel version '" + uname->release + "':"
+        " " + stringify(version.error()));
   }
 
   return version;
@@ -167,7 +169,7 @@ Try<bool> supported(int nsTypes)
     Try<Version> version = kernelVersion();
 
     if (version.isError()) {
-      return Error(version.error());
+      return version.error();
     }
 
     if (version.get() < Version(3, 12, 0)) {
@@ -190,7 +192,7 @@ Try<Nothing> setns(
     if (threads.isError()) {
       return Error(
           "Failed to get the threads of the current process: " +
-          threads.error());
+          stringify(threads.error()));
     } else if (threads->size() > 1) {
       return Error("Multiple threads exist in the current process");
     }
@@ -211,12 +213,12 @@ Try<Nothing> setns(
   Try<int> fd = os::open(path, O_RDONLY | O_CLOEXEC);
 
   if (fd.isError()) {
-    return Error("Failed to open '" + path + "': " + fd.error());
+    return Error("Failed to open '" + path + "': " + stringify(fd.error()));
   }
 
   Try<int> nstype = ns::nstype(ns);
   if (nstype.isError()) {
-    return Error(nstype.error());
+    return nstype.error();
   }
 
   if (::setns(fd.get(), nstype.get()) == -1) {
@@ -342,7 +344,7 @@ Try<pid_t> clone(
       if (fd.isError()) {
         close(fds.values());
         return Error("Failed to open '" + path +
-                     "' for entering namespace: " + fd.error());
+                     "' for entering namespace: " + stringify(fd.error()));
       }
       fds[namespaces[i].nstype] = fd.get();
     }
@@ -417,7 +419,7 @@ Try<pid_t> clone(
   // allocation itself).
   Try<os::Stack> stack = os::Stack::create(os::Stack::DEFAULT_SIZE);
   if (stack.isError()) {
-    return Error("Failed to allocate stack: " + stack.error());
+    return Error("Failed to allocate stack: " + stringify(stack.error()));
   }
 
   pid_t child = fork();

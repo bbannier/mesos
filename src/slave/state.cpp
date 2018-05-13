@@ -77,7 +77,7 @@ Try<State> recover(const string& rootDir, bool strict)
   // Recover resources regardless whether the host has rebooted.
   Try<ResourcesState> resources = ResourcesState::recover(rootDir, strict);
   if (resources.isError()) {
-    return Error(resources.error());
+    return resources.error();
   }
 
   // TODO(jieyu): Do not set 'state.resources' if we cannot find the
@@ -125,7 +125,7 @@ Try<State> recover(const string& rootDir, bool strict)
 
   Try<SlaveState> slave = SlaveState::recover(rootDir, slaveId, strict);
   if (slave.isError()) {
-    return Error(slave.error());
+    return slave.error();
   }
 
   state.slave = slave.get();

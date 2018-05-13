@@ -174,7 +174,7 @@ private:
           svn::Diff(diff.entry().value()));
 
       if (patch.isError()) {
-        return Error(patch.error());
+        return patch.error();
       }
 
       Entry entry(diff.entry());

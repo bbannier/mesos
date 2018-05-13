@@ -151,7 +151,7 @@ public:
         // Else, create the master detector and record it in the map.
         Try<MasterDetector*> detector = MasterDetector::create(url);
         if (detector.isError()) {
-          return Error(detector.error());
+          return detector.error();
         }
 
         result = shared_ptr<MasterDetector>(detector.get());

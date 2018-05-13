@@ -112,7 +112,7 @@ Try<Nothing> set(const RLimitInfo::RLimit& limit)
 {
   const Try<int> resource = convert(limit.type());
   if (resource.isError()) {
-    return Error("Could not convert rlimit: " + resource.error());
+    return Error("Could not convert rlimit: " + stringify(resource.error()));
   }
 
   ::rlimit resourceLimit;

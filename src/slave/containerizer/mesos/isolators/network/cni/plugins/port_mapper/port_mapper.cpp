@@ -295,7 +295,7 @@ Try<Nothing> PortMapper::addPortMapping(
 {
   Try<string> iptablesRule = getIptablesRule(ip, portMapping);
   if (iptablesRule.isError()) {
-    return Error(iptablesRule.error());
+    return iptablesRule.error();
   }
 
   // Run the following iptables script to install the DNAT rule under

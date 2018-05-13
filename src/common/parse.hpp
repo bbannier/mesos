@@ -38,7 +38,7 @@ inline Try<mesos::ACLs> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -52,7 +52,7 @@ inline Try<mesos::RateLimits> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -66,7 +66,7 @@ inline Try<mesos::Modules> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -80,7 +80,7 @@ inline Try<mesos::ContainerInfo> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -94,7 +94,7 @@ inline Try<mesos::DeviceWhitelist> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Protobuf.
@@ -110,7 +110,7 @@ inline Try<hashmap<std::string, std::string>> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   // Convert from JSON to Hashmap.
@@ -183,7 +183,7 @@ inline Try<mesos::CapabilityInfo> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::CapabilityInfo>(json.get());
@@ -195,7 +195,7 @@ inline Try<mesos::Environment> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::Environment>(json.get());
@@ -207,7 +207,7 @@ inline Try<mesos::RLimitInfo> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::RLimitInfo>(json.get());
@@ -219,7 +219,7 @@ inline Try<mesos::DomainInfo> parse(const std::string& value)
 {
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::DomainInfo>(json.get());

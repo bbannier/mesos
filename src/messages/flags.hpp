@@ -39,7 +39,7 @@ inline Try<mesos::internal::ImageGcConfig> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::internal::ImageGcConfig>(json.get());
@@ -52,7 +52,7 @@ inline Try<mesos::internal::Firewall> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::internal::Firewall>(json.get());
@@ -65,7 +65,7 @@ inline Try<mesos::internal::ContainerDNSInfo> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::internal::ContainerDNSInfo>(json.get());
@@ -78,7 +78,7 @@ inline Try<mesos::internal::SlaveCapabilities> parse(const std::string& value)
   // Convert from string or file to JSON.
   Try<JSON::Object> json = parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error(json.error());
+    return json.error();
   }
 
   return protobuf::parse<mesos::internal::SlaveCapabilities>(json.get());

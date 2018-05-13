@@ -113,7 +113,7 @@ Try<Nothing> Replica::execute(int argc, char** argv)
 
     Try<Nothing> execution = initialize.execute();
     if (execution.isError()) {
-      return Error(execution.error());
+      return execution.error();
     }
   }
 

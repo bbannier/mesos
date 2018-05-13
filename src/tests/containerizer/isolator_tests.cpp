@@ -87,7 +87,7 @@ public:
       MesosContainerizer::create(flags, false, fetcher.get());
 
     if (_containerizer.isError()) {
-      return Error(_containerizer.error());
+      return _containerizer.error();
     }
 
     return Owned<MesosContainerizer>(_containerizer.get());

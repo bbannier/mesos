@@ -157,7 +157,7 @@ static Try<Resources> enumerateGpuResources(const Flags& flags)
       flags.resources.getOrElse(""), flags.default_role);
 
   if (parsed.isError()) {
-    return Error(parsed.error());
+    return parsed.error();
   }
 
   Resources resources = parsed->filter(
@@ -330,7 +330,7 @@ Try<NvidiaGpuAllocator> NvidiaGpuAllocator::create(
 {
   Try<set<Gpu>> gpus = enumerateGpus(flags, resources);
   if (gpus.isError()) {
-    return Error(gpus.error());
+    return gpus.error();
   }
 
   return NvidiaGpuAllocator(gpus.get());

@@ -512,7 +512,7 @@ public:
     foreach (const auto& t, iterable) {
       Try<Resources> converted = result.apply(t);
       if (converted.isError()) {
-        return Error(converted.error());
+        return converted.error();
       }
 
       result = converted.get();

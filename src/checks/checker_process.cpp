@@ -180,7 +180,7 @@ static Try<tuple<string, string>> decodeProcessIOData(const string& data)
   Try<std::deque<Try<v1::agent::ProcessIO>>> records = decoder.decode(data);
 
   if (records.isError()) {
-    return Error(records.error());
+    return records.error();
   }
 
   while (!records->empty()) {
@@ -188,7 +188,7 @@ static Try<tuple<string, string>> decodeProcessIOData(const string& data)
     records->pop_front();
 
     if (record.isError()) {
-      return Error(record.error());
+      return record.error();
     }
 
     if (record->data().type() == v1::agent::ProcessIO::Data::STDOUT) {

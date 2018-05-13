@@ -12389,7 +12389,7 @@ Try<Nothing> Slave::update(
 
   // This should be validated during slave recovery.
   if (resources.isError()) {
-    return Error(resources.error());
+    return resources.error();
   }
 
   version = _version;

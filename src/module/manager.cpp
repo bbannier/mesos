@@ -163,7 +163,7 @@ Try<Nothing> ModuleManager::verifyModule(
 
   Try<Version> moduleMesosVersion = Version::parse(moduleBase->mesosVersion);
   if (moduleMesosVersion.isError()) {
-    return Error(moduleMesosVersion.error());
+    return moduleMesosVersion.error();
   }
 
   if (moduleMesosVersion.get() < minimumVersion.get()) {

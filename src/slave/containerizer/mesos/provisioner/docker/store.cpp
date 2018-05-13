@@ -191,7 +191,7 @@ Try<Owned<slave::Store>> Store::create(
 
   Try<Owned<MetadataManager>> metadataManager = MetadataManager::create(flags);
   if (metadataManager.isError()) {
-    return Error(metadataManager.error());
+    return metadataManager.error();
   }
 
   Owned<StoreProcess> process(

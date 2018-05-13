@@ -67,7 +67,7 @@ Try<Resources> Containerizer::resources(const Flags& flags)
       flags.resources.getOrElse(""), flags.default_role);
 
   if (parsed.isError()) {
-    return Error(parsed.error());
+    return parsed.error();
   }
 
   Resources resources = parsed.get();
@@ -316,7 +316,7 @@ Try<Containerizer*> Containerizer::create(
     ComposingContainerizer::create(containerizers);
 
   if (containerizer.isError()) {
-    return Error(containerizer.error());
+    return containerizer.error();
   }
 
   return containerizer.get();

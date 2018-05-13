@@ -196,7 +196,7 @@ Result<Action> ReplicaProcess::read(uint64_t position)
   Try<Action> action = storage->read(position);
 
   if (action.isError()) {
-    return Error(action.error());
+    return action.error();
   }
 
   return action.get();

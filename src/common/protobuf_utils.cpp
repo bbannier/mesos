@@ -1050,7 +1050,7 @@ Try<Resources> getConsumedResources(const Offer::Operation& operation)
         getResourceConversions(operation);
 
       if (conversions.isError()) {
-        return Error(conversions.error());
+        return conversions.error();
       }
 
       Resources consumed;

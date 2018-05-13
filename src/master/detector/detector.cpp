@@ -62,7 +62,7 @@ Try<MasterDetector*> MasterDetector::create(
   if (strings::startsWith(zk, "zk://")) {
     Try<zookeeper::URL> url = zookeeper::URL::parse(zk);
     if (url.isError()) {
-      return Error(url.error());
+      return url.error();
     }
     if (url->path == "/") {
       return Error(

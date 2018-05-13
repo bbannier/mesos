@@ -212,7 +212,7 @@ Try<Nothing> schedule(
       maintenance::validation::unavailability(window.unavailability());
 
     if (unavailability.isError()) {
-      return Error(unavailability.error());
+      return unavailability.error();
     }
 
     // Collect machines from the updated schedule into a set.
@@ -220,7 +220,7 @@ Try<Nothing> schedule(
       // Validate the single machine.
       Try<Nothing> validId = validation::machine(id);
       if (validId.isError()) {
-        return Error(validId.error());
+        return validId.error();
       }
 
       // Check that the machine is unique.
@@ -273,7 +273,7 @@ Try<Nothing> machines(const RepeatedPtrField<MachineID>& ids)
     // Validate the single machine.
     Try<Nothing> validId = validation::machine(id);
     if (validId.isError()) {
-      return Error(validId.error());
+      return validId.error();
     }
 
     // Check machine uniqueness.
@@ -301,7 +301,7 @@ Try<Nothing> machine(const MachineID& id)
   if (!id.ip().empty()) {
     Try<net::IP> ip = net::IP::parse(id.ip(), AF_INET);
     if (ip.isError()) {
-      return Error(ip.error());
+      return ip.error();
     }
   }
 

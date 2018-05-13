@@ -71,7 +71,7 @@ public:
   {
     Try<std::string> moduleName = getModuleName(N);
     if (moduleName.isError()) {
-      return Error(moduleName.error());
+      return moduleName.error();
     }
     return mesos::modules::ModuleManager::create<T>(moduleName.get());
   }
@@ -82,7 +82,7 @@ public:
   {
     Try<std::string> moduleName = getModuleName(N);
     if (moduleName.isError()) {
-      return Error(moduleName.error());
+      return moduleName.error();
     }
     return mesos::modules::ModuleManager::create<T>(
         moduleName.get(),

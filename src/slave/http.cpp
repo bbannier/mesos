@@ -432,7 +432,7 @@ Future<Response> Http::api(
       deserialize<v1::agent::Call>(contentType, body);
 
     if (v1Call.isError()) {
-      return Error(v1Call.error());
+      return v1Call.error();
     }
 
     mesos::agent::Call call = devolve(v1Call.get());

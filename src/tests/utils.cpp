@@ -77,13 +77,13 @@ Try<uint16_t> getFreePort()
   Try<inet::Socket> socket = inet::Socket::create();
 
   if (socket.isError()) {
-    return Error(socket.error());
+    return socket.error();
   }
 
   Try<inet::Address> address = socket->bind(inet4::Address::ANY_ANY());
 
   if (address.isError()) {
-    return Error(address.error());
+    return address.error();
   }
 
   return address->port;

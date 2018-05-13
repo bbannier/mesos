@@ -194,14 +194,14 @@ static Try<Nothing> mount(const string& hierarchy, const string& subsystems)
   foreach (const string& subsystem, strings::tokenize(subsystems, ",")) {
     Try<bool> result = enabled(subsystem);
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     } else if (!result.get()) {
       return Error("'" + subsystem + "' is not enabled by the kernel");
     }
 
     result = busy(subsystem);
     if (result.isError()) {
-      return Error(result.error());
+      return result.error();
     } else if (result.get()) {
       return Error(
           "'" + subsystem + "' is already attached to another hierarchy");
@@ -513,7 +513,7 @@ Try<set<string>> hierarchies()
   // Read currently mounted file systems from /proc/mounts.
   Try<fs::MountTable> table = fs::MountTable::read("/proc/mounts");
   if (table.isError()) {
-    return Error(table.error());
+    return table.error();
   }
 
   set<string> results;
@@ -540,7 +540,7 @@ Result<string> hierarchy(const string& subsystems)
   Result<string> hierarchy = None();
   Try<set<string>> hierarchies = cgroups::hierarchies();
   if (hierarchies.isError()) {
-    return Error(hierarchies.error());
+    return hierarchies.error();
   }
 
   foreach (const string& candidate, hierarchies.get()) {
@@ -552,7 +552,7 @@ Result<string> hierarchy(const string& subsystems)
     // Check and see if this candidate meets our subsystem requirements.
     Try<bool> mounted = cgroups::mounted(candidate, subsystems);
     if (mounted.isError()) {
-      return Error(mounted.error());
+      return mounted.error();
     } else if (mounted.get()) {
       hierarchy = candidate;
       break;
@@ -568,7 +568,7 @@ Try<bool> enabled(const string& subsystems)
   Try<map<string, internal::SubsystemInfo>> infosResult =
     internal::subsystems();
   if (infosResult.isError()) {
-    return Error(infosResult.error());
+    return infosResult.error();
   }
 
   map<string, internal::SubsystemInfo> infos = infosResult.get();
@@ -594,7 +594,7 @@ Try<bool> busy(const string& subsystems)
   Try<map<string, internal::SubsystemInfo>> infosResult =
     internal::subsystems();
   if (infosResult.isError()) {
-    return Error(infosResult.error());
+    return infosResult.error();
   }
 
   map<string, internal::SubsystemInfo> infos = infosResult.get();
@@ -619,7 +619,7 @@ Try<set<string>> subsystems()
 {
   Try<map<string, internal::SubsystemInfo>> infos = internal::subsystems();
   if (infos.isError()) {
-    return Error(infos.error());
+    return infos.error();
   }
 
   set<string> names;
@@ -683,7 +683,7 @@ Try<set<string>> subsystems(const string& hierarchy)
   // (e.g. rw) that are not in the set of enabled subsystems.
   Try<set<string>> names = subsystems();
   if (names.isError()) {
-    return Error(names.error());
+    return names.error();
   }
 
   set<string> result;
@@ -1849,7 +1849,7 @@ Try<hashmap<string, uint64_t>> stat(
   Try<string> contents = cgroups::read(hierarchy, cgroup, file);
 
   if (contents.isError()) {
-    return Error(contents.error());
+    return contents.error();
   }
 
   hashmap<string, uint64_t> result;
@@ -2010,7 +2010,7 @@ Try<Value> Value::parse(const string& s)
   if (tokens.size() == 3) {
     Try<Device> dev = Device::parse(tokens[0]);
     if (dev.isError()) {
-      return Error(dev.error());
+      return dev.error();
     }
 
     device = dev.get();
@@ -2022,7 +2022,7 @@ Try<Value> Value::parse(const string& s)
   if (!isOperation(tokens[offset])) {
     Try<Device> dev = Device::parse(tokens[offset]);
     if (dev.isError()) {
-      return Error(dev.error());
+      return dev.error();
     }
 
     Try<uint64_t> value = numify<uint64_t>(tokens[offset + 1]);
@@ -2035,7 +2035,7 @@ Try<Value> Value::parse(const string& s)
 
   Try<Operation> operation = parseOperation(tokens[offset]);
   if (operation.isError()) {
-    return Error(operation.error());
+    return operation.error();
   }
 
   Try<uint64_t> value = numify<uint64_t>(tokens[offset + 1]);
@@ -2310,7 +2310,7 @@ Try<uint64_t> shares(
   Try<string> read = cgroups::read(hierarchy, cgroup, "cpu.shares");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   uint64_t shares;
@@ -2342,7 +2342,7 @@ Try<Duration> cfs_quota_us(
   Try<string> read = cgroups::read(hierarchy, cgroup, "cpu.cfs_quota_us");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Duration::parse(strings::trim(read.get()) + "us");
@@ -2379,7 +2379,7 @@ Try<Stats> stat(
     cgroups::stat(hierarchy, cgroup, "cpuacct.stat");
 
   if (!stats.isSome()) {
-    return Error(stats.error());
+    return stats.error();
   }
 
   if (!stats->contains("user") || !stats->contains("system")) {
@@ -2429,7 +2429,7 @@ Try<Bytes> limit_in_bytes(const string& hierarchy, const string& cgroup)
       hierarchy, cgroup, "memory.limit_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Bytes::parse(strings::trim(read.get()) + "B");
@@ -2470,13 +2470,13 @@ Result<Bytes> memsw_limit_in_bytes(
       hierarchy, cgroup, "memory.memsw.limit_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   Try<Bytes> bytes = Bytes::parse(strings::trim(read.get()) + "B");
 
   if (bytes.isError()) {
-    return Error(bytes.error());
+    return bytes.error();
   }
 
   return bytes.get();
@@ -2508,7 +2508,7 @@ Try<bool> memsw_limit_in_bytes(
       stringify(limit.bytes()));
 
   if (write.isError()) {
-    return Error(write.error());
+    return write.error();
   }
 
   return true;
@@ -2521,7 +2521,7 @@ Try<Bytes> soft_limit_in_bytes(const string& hierarchy, const string& cgroup)
       hierarchy, cgroup, "memory.soft_limit_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Bytes::parse(strings::trim(read.get()) + "B");
@@ -2547,7 +2547,7 @@ Try<Bytes> usage_in_bytes(const string& hierarchy, const string& cgroup)
       hierarchy, cgroup, "memory.usage_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Bytes::parse(strings::trim(read.get()) + "B");
@@ -2560,7 +2560,7 @@ Try<Bytes> memsw_usage_in_bytes(const string& hierarchy, const string& cgroup)
       hierarchy, cgroup, "memory.memsw.usage_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Bytes::parse(strings::trim(read.get()) + "B");
@@ -2573,7 +2573,7 @@ Try<Bytes> max_usage_in_bytes(const string& hierarchy, const string& cgroup)
       hierarchy, cgroup, "memory.max_usage_in_bytes");
 
   if (read.isError()) {
-    return Error(read.error());
+    return read.error();
   }
 
   return Bytes::parse(strings::trim(read.get()) + "B");
@@ -2625,7 +2625,7 @@ Try<Nothing> enable(const string& hierarchy, const string& cgroup)
   Try<bool> enabled = killer::enabled(hierarchy, cgroup);
 
   if (enabled.isError()) {
-    return Error(enabled.error());
+    return enabled.error();
   }
 
   if (!enabled.get()) {
@@ -2647,7 +2647,7 @@ Try<Nothing> disable(const string& hierarchy, const string& cgroup)
   Try<bool> enabled = killer::enabled(hierarchy, cgroup);
 
   if (enabled.isError()) {
-    return Error(enabled.error());
+    return enabled.error();
   }
 
   if (enabled.get()) {

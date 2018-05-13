@@ -721,7 +721,7 @@ Try<Resources> Resources::parse(
   Try<vector<Resource>> resources = Resources::fromString(text, defaultRole);
 
   if (resources.isError()) {
-    return Error(resources.error());
+    return resources.error();
   }
 
   Resources result;
@@ -820,7 +820,7 @@ Try<vector<Resource>> Resources::fromSimpleString(
 
     Try<Resource> resource = Resources::parse(name, pair[1], role);
     if (resource.isError()) {
-      return Error(resource.error());
+      return resource.error();
     }
 
     upgradeResource(&(resource.get()));
@@ -1687,7 +1687,7 @@ Try<Resources> Resources::apply(const Offer::Operation& operation) const
 
   Try<Resources> result = apply(conversions.get());
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   // The following are sanity checks to ensure the amount of each type
@@ -2368,7 +2368,7 @@ Try<Resources> ResourceConversion::apply(const Resources& resources) const
   if (postValidation.isSome()) {
     Try<Nothing> validation = postValidation.get()(result);
     if (validation.isError()) {
-      return Error(validation.error());
+      return validation.error();
     }
   }
 

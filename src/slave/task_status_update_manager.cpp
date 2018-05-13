@@ -751,7 +751,7 @@ Try<bool> TaskStatusUpdateStream::update(const StatusUpdate& update)
   // Handle the update, checkpointing if necessary.
   Try<Nothing> result = handle(update, StatusUpdateRecord::UPDATE);
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   return true;
@@ -787,7 +787,7 @@ Try<bool> TaskStatusUpdateStream::acknowledgement(
   // Handle the ACK, checkpointing if necessary.
   Try<Nothing> result = handle(update, StatusUpdateRecord::ACK);
   if (result.isError()) {
-    return Error(result.error());
+    return result.error();
   }
 
   return true;

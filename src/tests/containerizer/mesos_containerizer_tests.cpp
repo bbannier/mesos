@@ -328,7 +328,7 @@ public:
 
     Try<Launcher*> launcher_ = SubprocessLauncher::create(flags);
     if (launcher_.isError()) {
-      return Error(launcher_.error());
+      return launcher_.error();
     }
 
     Owned<Launcher> launcher(launcher_.get());
