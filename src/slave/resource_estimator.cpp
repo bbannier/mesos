@@ -42,7 +42,7 @@ Try<ResourceEstimator*> ResourceEstimator::create(const Option<string>& type)
   if (module.isError()) {
     return Error(
         "Failed to create resource estimator module '" + type.get() +
-        "': " + module.error());
+        "': " + stringify(module.error()));
   }
 
   return module.get();

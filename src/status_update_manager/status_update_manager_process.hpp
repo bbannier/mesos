@@ -321,7 +321,7 @@ public:
       if (result.isError()) {
         const std::string message =
           "Failed to recover " + statusUpdateType + " stream " +
-          stringify(streamId) + ": " + result.error();
+          stringify(streamId) + ": " + stringify(result.error());
         LOG(WARNING) << message;
 
         if (strict) {
@@ -628,7 +628,8 @@ private:
         Try<Nothing> directory = os::mkdir(dirName);
         if (directory.isError()) {
           return Error(
-              "Failed to create '" + dirName + "': " + directory.error());
+              "Failed to create '" + dirName +
+              "': " + stringify(directory.error()));
         }
 
         // Open the updates file.
@@ -639,7 +640,8 @@ private:
 
         if (result.isError()) {
           return Error(
-              "Failed to open '" + path.get() + "' : " + result.error());
+              "Failed to open '" + path.get() +
+              "' : " + stringify(result.error()));
         }
 
         fd = result.get();
@@ -675,7 +677,7 @@ private:
           O_SYNC | O_RDWR | O_CLOEXEC);
 
       if (fd.isError()) {
-        return Error("Failed to open '" + path + "': " + fd.error());
+        return Error("Failed to open '" + path + "': " + stringify(fd.error()));
       }
 
       process::Owned<StatusUpdateStream> stream(
@@ -730,20 +732,22 @@ private:
       Try<off_t> currentPosition = os::lseek(fd.get(), 0, SEEK_CUR);
       if (currentPosition.isError()) {
         return Error(
-            "Failed to lseek file '" + path + "': " + currentPosition.error());
+            "Failed to lseek file '" + path +
+            "': " + stringify(currentPosition.error()));
       }
 
       Try<Nothing> truncated = os::ftruncate(fd.get(), currentPosition.get());
 
       if (truncated.isError()) {
         return Error(
-            "Failed to truncate file '" + path + "': " + truncated.error());
+            "Failed to truncate file '" + path + "':"
+            " " + stringify(truncated.error()));
       }
 
       // After reading a non-corrupted updates file, `record` should be `none`.
       if (record.isError()) {
         std::string message =
-          "Failed to read file '" + path + "': " + record.error();
+          "Failed to read file '" + path + "': " + stringify(record.error());
 
         if (strict) {
           return Error(message);
@@ -768,7 +772,8 @@ private:
         Try<Nothing> removed = os::rm(path);
         if (removed.isError()) {
           return Error(
-              "Failed to remove file '" + path + "': " + removed.error());
+              "Failed to remove file '" + path +
+              "': " + stringify(removed.error()));
         }
 
         return None();
@@ -945,8 +950,8 @@ private:
 
         Try<Nothing> write = ::protobuf::write(fd.get(), record);
         if (write.isError()) {
-          error =
-            "Failed to write to file '" + path.get() + "': " + write.error();
+          error = "Failed to write to file '" + path.get() +
+                  "': " + stringify(write.error());
           return Error(error.get());
         }
       }

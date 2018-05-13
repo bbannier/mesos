@@ -2155,7 +2155,7 @@ TEST(DiskResourcesTest, Validation)
   ASSERT_SOME(error);
   EXPECT_EQ(
       "DiskInfo should not be set for cpus resource",
-      error->message);
+      stringify(error.get()));
 
   EXPECT_NONE(
       Resources::validate(createDiskResource("10", "role", "1", "path")));

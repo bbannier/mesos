@@ -76,7 +76,8 @@ Try<SecretResolver*> SecretResolver::create(const Option<string>& moduleName)
     modules::ModuleManager::create<SecretResolver>(moduleName.get());
 
   if (result.isError()) {
-    return Error("Failed to initialize secret resolver: " + result.error());
+    return Error(
+        "Failed to initialize secret resolver: " + stringify(result.error()));
   }
 
   return result;

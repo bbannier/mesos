@@ -95,7 +95,7 @@ Try<Owned<Subsystem>> Subsystem::create(
   if (subsystemProcess.isError()) {
     return Error(
         "Failed to create subsystem '" + name + "': " +
-        subsystemProcess.error());
+        stringify(subsystemProcess.error()));
   }
 
   return Owned<Subsystem>(new Subsystem(subsystemProcess.get()));

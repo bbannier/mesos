@@ -529,7 +529,8 @@ void Slave::initialize()
           EXIT(EXIT_FAILURE)
             << "Failed to determine `realpath` for DiskInfo mount in resource '"
             << resource << "' with path '" << source.mount().root() << "': "
-            << (realpath.isError() ? realpath.error() : "no such path");
+            << (realpath.isError() ? stringify(realpath.error())
+                                   : "no such path");
         }
 
         // TODO(jmlvanre): Consider moving this out of the for loop.
@@ -2941,7 +2942,7 @@ void Slave::__run(
 
       sendTaskDroppedUpdate(
           TaskStatus::REASON_EXECUTOR_TERMINATED,
-          added.error());
+          stringify(added.error()));
 
       // Refer to the comment after 'framework->removePendingTask' above
       // for why we need this.
@@ -3332,7 +3333,7 @@ Future<Secret> Slave::generateSecret(
 
       if (error.isSome()) {
         return Failure(
-            "Failed to validate generated secret: " + error->message);
+            "Failed to validate generated secret: " + stringify(error.get()));
       } else if (secret.type() != Secret::VALUE) {
         return Failure(
             "Expecting generated secret to be of VALUE type instead of " +
@@ -4283,7 +4284,7 @@ Try<Nothing> Slave::syncCheckpointedResources(
       Try<Nothing> result = os::mkdir(path, true);
       if (result.isError()) {
         return Error("Failed to create the " +
-            volumeDescription + ": " + result.error());
+            volumeDescription + ": " + stringify(result.error()));
       }
     }
   }
@@ -4320,7 +4321,7 @@ Try<Nothing> Slave::syncCheckpointedResources(
         return Error(
             "Failed to remove persistent volume '" +
             stringify(volume.disk().persistence().id()) +
-            "' at '" + path + "': " + result.error());
+            "' at '" + path + "': " + stringify(result.error()));
       }
     }
   }
@@ -6103,7 +6104,8 @@ ExecutorInfo Slave::getExecutorInfo(
     executor.mutable_command()->set_shell(true);
     executor.mutable_command()->set_value(
         "echo '" +
-        (path.isError() ? path.error() : "No such file or directory") +
+        (path.isError() ? stringify(path.error())
+                        : "No such file or directory") +
         "'; exit 1");
   }
 
@@ -7029,7 +7031,7 @@ Future<Nothing> Slave::recover(const Try<state::State>& state)
             stringify(targetResources) +
             " failed to sync from current checkpointed resources " +
             stringify(checkpointedResources) + ": " +
-            syncResult.error());
+            stringify(syncResult.error()));
       }
 
       // Rename the target checkpoint to the committed checkpoint.
@@ -7041,7 +7043,7 @@ Future<Nothing> Slave::recover(const Try<state::State>& state)
         return Failure(
             "Failed to checkpoint resources " +
             stringify(targetResources) + ": " +
-            renameResult.error());
+            stringify(renameResult.error()));
       }
 
       // Since we synced the target resources to the committed resources, we
@@ -7065,7 +7067,7 @@ Future<Nothing> Slave::recover(const Try<state::State>& state)
           stringify(checkpointedResources) +
           " are incompatible with agent resources " +
           stringify(info.resources()) + ": " +
-          _totalResources.error());
+          stringify(_totalResources.error()));
     }
 
     totalResources = _totalResources.get();
@@ -10146,7 +10148,8 @@ static CommandInfo defaultExecutorCommandInfo(
     commandInfo.set_shell(true);
     commandInfo.set_value(
         "echo '" +
-        (path.isError() ? path.error() : "No such file or directory") +
+        (path.isError() ? stringify(path.error())
+                        : "No such file or directory") +
         "'; exit 1");
   }
 

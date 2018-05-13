@@ -127,7 +127,8 @@ protected:
     Try<Nothing> mkdir = os::mkdir(directory);
     if (mkdir.isError()) {
       return Error(
-          "Failed to create directory '" + directory + "': " + mkdir.error());
+          "Failed to create directory '" + directory + "':"
+          " " + stringify(mkdir.error()));
     }
 
     return slaveState;

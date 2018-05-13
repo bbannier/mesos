@@ -335,7 +335,8 @@ public:
 
     Try<Owned<Provisioner>> provisioner = Provisioner::create(flags);
     if (provisioner.isError()) {
-      return Error("Failed to create provisioner: " + provisioner.error());
+      return Error(
+          "Failed to create provisioner: " + stringify(provisioner.error()));
     }
 
     return MesosContainerizer::create(

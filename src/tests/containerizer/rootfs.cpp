@@ -60,7 +60,8 @@ Try<Nothing> Rootfs::add(const string& path)
     }
 
     if (target.isError()) {
-      return Error("Failed to resolve '" + path + "': " + target.error());
+      return Error(
+          "Failed to resolve '" + path + "': " + stringify(target.error()));
     }
 
     source = target.get();
@@ -68,7 +69,9 @@ Try<Nothing> Rootfs::add(const string& path)
 
   Try<Nothing> copy = copyPath(source.isSome() ? source.get() : path, path);
   if (copy.isError()) {
-    return Error("Failed to copy '" + path + "' to rootfs: " + copy.error());
+    return Error(
+        "Failed to copy '" + path + "' to rootfs:"
+        " " + stringify(copy.error()));
   }
 
   return Nothing();
@@ -93,7 +96,7 @@ Try<Nothing> Rootfs::copyPath(const string& source, const string& destination)
     if (mkdir.isError()) {
       return Error(
           "Failed to create directory '" + rootfsDirectory +
-          "': " + mkdir.error());
+          "': " + stringify(mkdir.error()));
     }
   }
 
@@ -116,14 +119,15 @@ Try<process::Owned<Rootfs>> LinuxRootfs::create(const string& root)
   if (!os::exists(root)) {
     Try<Nothing> mkdir = os::mkdir(root);
     if (mkdir.isError()) {
-      return Error("Failed to create root directory: " + mkdir.error());
+      return Error(
+          "Failed to create root directory: " + stringify(mkdir.error()));
     }
   }
 
   Try<vector<ldcache::Entry>> cache = ldcache::parse();
 
   if (cache.isError()) {
-    return Error("Failed to parse ld.so cache: " + cache.error());
+    return Error("Failed to parse ld.so cache: " + stringify(cache.error()));
   }
 
   const vector<string> programs = {
@@ -144,7 +148,7 @@ Try<process::Owned<Rootfs>> LinuxRootfs::create(const string& root)
     if (dependencies.isError()) {
       return Error(
           "Failed to find dependencies for '" + program + "': " +
-          dependencies.error());
+          stringify(dependencies.error()));
     }
 
     files |= dependencies.get();
@@ -170,7 +174,7 @@ Try<process::Owned<Rootfs>> LinuxRootfs::create(const string& root)
     if (mkdir.isError()) {
       return Error(
           "Failed to create '" + directory + "' in rootfs: " +
-          mkdir.error());
+          stringify(mkdir.error()));
     }
   }
 

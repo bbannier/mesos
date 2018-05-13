@@ -590,7 +590,7 @@ void Master::initialize()
   if (initialize.isError()) {
     const string error =
       "Failed to initialize authenticator '" + authenticatorNames[0] +
-      "': " + initialize.error();
+      "': " + stringify(initialize.error());
     if (flags.authenticate_frameworks || flags.authenticate_agents) {
       EXIT(EXIT_FAILURE)
         << "Failed to start master with authentication enabled: " << error;
@@ -2349,7 +2349,7 @@ void Master::receive(
 
   if (error.isSome()) {
     metrics->incrementInvalidSchedulerCalls(call);
-    drop(from, call, error->message);
+    drop(from, call, stringify(error.get()));
     return;
   }
 
@@ -2613,10 +2613,10 @@ void Master::subscribe(
   if (validationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "': "
-              << validationError->message;
+              << stringify(validationError.get());
 
     FrameworkErrorMessage message;
-    message.set_message(validationError->message);
+    message.set_message(stringify(validationError.get()));
 
     http.send(message);
     http.close();
@@ -2665,10 +2665,10 @@ void Master::_subscribe(
   if (authorizationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "'"
-              << ": " << authorizationError->message;
+              << ": " << authorizationError.get();
 
     FrameworkErrorMessage message;
-    message.set_message(authorizationError->message);
+    message.set_message(stringify(authorizationError.get()));
     http.send(message);
     http.close();
     return;
@@ -2741,7 +2741,7 @@ void Master::_subscribe(
                 << frameworkInfo.name() << "': " << activate.error();
 
       FrameworkErrorMessage message;
-      message.set_message(activate.error());
+      message.set_message(stringify(activate.error()));
       http.send(message);
       http.close();
       return;
@@ -2879,10 +2879,10 @@ void Master::subscribe(
   if (validationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "' at " << from << ": "
-              << validationError->message;
+              << validationError.get();
 
     FrameworkErrorMessage message;
-    message.set_message(validationError->message);
+    message.set_message(stringify(validationError.get()));
     send(from, message);
     return;
   }
@@ -2945,10 +2945,10 @@ void Master::_subscribe(
   if (authorizationError.isSome()) {
     LOG(INFO) << "Refusing subscription of framework"
               << " '" << frameworkInfo.name() << "' at " << from
-              << ": " << authorizationError->message;
+              << ": " << authorizationError.get();
 
     FrameworkErrorMessage message;
-    message.set_message(authorizationError->message);
+    message.set_message(stringify(authorizationError.get()));
 
     send(from, message);
     return;
@@ -2963,7 +2963,7 @@ void Master::_subscribe(
   if (authenticationError.isSome()) {
     LOG(INFO) << "Dropping SUBSCRIBE call for framework"
               << " '" << frameworkInfo.name() << "' at " << from
-              << ": " << authenticationError->message;
+              << ": " << authenticationError.get();
 
     return;
   }
@@ -3150,7 +3150,7 @@ void Master::_subscribe(
                 << frameworkInfo.name() << "': " << activate.error();
 
       FrameworkErrorMessage message;
-      message.set_message(activate.error());
+      message.set_message(stringify(activate.error()));
       send(from, message);
       return;
     }
@@ -3420,7 +3420,8 @@ void Master::suppress(
     if (roleError.isSome()) {
       drop(framework,
            suppress,
-           "suppression role '" + role + "' is invalid: " + roleError->message);
+           "suppression role '" + role + "' is invalid: " +
+             stringify(roleError.get()));
       return;
     }
 
@@ -4026,7 +4027,7 @@ void Master::accept(
   // notifications.
   if (error.isSome()) {
     LOG(WARNING) << "ACCEPT call used invalid offers '" << accept.offer_ids()
-                 << "': " << error->message;
+                 << "': " << error.get();
 
     TaskState newTaskState = TASK_DROPPED;
     if (!framework->capabilities.partitionAware) {
@@ -4036,9 +4037,11 @@ void Master::accept(
     foreach (const Offer::Operation& operation, accept.operations()) {
       if (operation.type() != Offer::Operation::LAUNCH &&
           operation.type() != Offer::Operation::LAUNCH_GROUP) {
-        drop(framework,
-             operation,
-             "Operation attempted with invalid offers: " + error->message);
+        drop(
+            framework,
+            operation,
+            "Operation attempted with invalid offers: " +
+              stringify(error.get()));
         continue;
       }
 
@@ -4059,7 +4062,7 @@ void Master::accept(
             newTaskState,
             TaskStatus::SOURCE_MASTER,
             None(),
-            "Task launched with invalid offers: " + error->message,
+            "Task launched with invalid offers: " + stringify(error.get()),
             TaskStatus::REASON_INVALID_OFFERS);
 
         if (framework->capabilities.partitionAware) {
@@ -4159,14 +4162,14 @@ void Master::accept(
             drop(framework,
                  operation,
                  "Operation attempted with invalid resources: " +
-                 error->message);
+                 stringify(error.get()));
             break;
           }
           case Offer::Operation::LAUNCH: {
             sendStatusUpdates(
                 operation.launch().task_infos(),
                 TaskStatus::REASON_TASK_INVALID,
-                error->message);
+                stringify(error.get()));
 
             break;
           }
@@ -4174,7 +4177,7 @@ void Master::accept(
             sendStatusUpdates(
                 operation.launch_group().task_group().tasks(),
                 TaskStatus::REASON_TASK_GROUP_INVALID,
-                error->message);
+                stringify(error.get()));
 
             break;
           }
@@ -4701,7 +4704,7 @@ void Master::_accept(
           drop(
               framework,
               operation,
-              error->message + "; on agent " + stringify(*slave));
+              stringify(error.get()) + "; on agent " + stringify(*slave));
           continue;
         }
 
@@ -4710,13 +4713,13 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
         Try<Resources> resources = _offeredResources.apply(_conversions.get());
         if (resources.isError()) {
-          drop(framework, operation, resources.error());
+          drop(framework, operation, stringify(resources.error()));
           continue;
         }
 
@@ -4767,7 +4770,7 @@ void Master::_accept(
           validation::operation::validate(operation.unreserve());
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -4776,13 +4779,13 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
         Try<Resources> resources = _offeredResources.apply(_conversions.get());
         if (resources.isError()) {
-          drop(framework, operation, resources.error());
+          drop(framework, operation, stringify(resources.error()));
           continue;
         }
 
@@ -4843,7 +4846,7 @@ void Master::_accept(
           drop(
               framework,
               operation,
-              error->message + "; on agent " + stringify(*slave));
+              stringify(error.get()) + "; on agent " + stringify(*slave));
           continue;
         }
 
@@ -4852,13 +4855,13 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
         Try<Resources> resources = _offeredResources.apply(_conversions.get());
         if (resources.isError()) {
-          drop(framework, operation, resources.error());
+          drop(framework, operation, stringify(resources.error()));
           continue;
         }
 
@@ -4912,7 +4915,7 @@ void Master::_accept(
             slave->pendingTasks);
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -4945,13 +4948,13 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
         Try<Resources> resources = _offeredResources.apply(_conversions.get());
         if (resources.isError()) {
-          drop(framework, operation, resources.error());
+          drop(framework, operation, stringify(resources.error()));
           continue;
         }
 
@@ -5005,7 +5008,7 @@ void Master::_accept(
           drop(
               framework,
               operation,
-              error->message + "; on agent " + stringify(*slave));
+              stringify(error.get()) + "; on agent " + stringify(*slave));
           continue;
         }
 
@@ -5015,7 +5018,7 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
@@ -5087,7 +5090,7 @@ void Master::_accept(
           drop(
               framework,
               operation,
-              error->message + "; on agent " + stringify(*slave));
+              stringify(error.get()) + "; on agent " + stringify(*slave));
           continue;
         }
 
@@ -5097,7 +5100,7 @@ void Master::_accept(
           getResourceConversions(operation);
 
         if (_conversions.isError()) {
-          drop(framework, operation, _conversions.error());
+          drop(framework, operation, stringify(_conversions.error()));
           continue;
         }
 
@@ -5218,7 +5221,7 @@ void Master::_accept(
                 TASK_ERROR,
                 TaskStatus::SOURCE_MASTER,
                 None(),
-                error->message,
+                stringify(error.get()),
                 TaskStatus::REASON_TASK_INVALID);
 
             metrics->tasks_error++;
@@ -5431,7 +5434,7 @@ void Master::_accept(
                 TASK_ERROR,
                 TaskStatus::SOURCE_MASTER,
                 None(),
-                error->message,
+                stringify(error.get()),
                 reason.get());
 
             metrics->tasks_error++;
@@ -5570,7 +5573,7 @@ void Master::_accept(
             operation.create_volume());
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -5609,7 +5612,7 @@ void Master::_accept(
             operation.destroy_volume());
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -5648,7 +5651,7 @@ void Master::_accept(
             operation.create_block());
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -5687,7 +5690,7 @@ void Master::_accept(
             operation.destroy_block());
 
         if (error.isSome()) {
-          drop(framework, operation, error->message);
+          drop(framework, operation, stringify(error.get()));
           continue;
         }
 
@@ -5796,7 +5799,7 @@ void Master::acceptInverseOffers(
 
   if (error.isSome()) {
     LOG(WARNING) << "ACCEPT_INVERSE_OFFERS call used invalid offers '"
-                 << accept.inverse_offer_ids() << "': " << error->message;
+                 << accept.inverse_offer_ids() << "': " << error.get();
   }
 }
 
@@ -5927,9 +5930,11 @@ void Master::revive(
   foreach (const string& role, revive.roles()) {
     Option<Error> roleError = roles::validate(role);
     if (roleError.isSome()) {
-      drop(framework,
-           revive,
-           "revive role '" + role + "' is invalid: " + roleError->message);
+      drop(
+          framework,
+          revive,
+          "revive role '" + role +
+            "' is invalid: " + stringify(roleError.get()));
       return;
     }
 
@@ -6547,7 +6552,7 @@ void Master::registerSlave(
   if (error.isSome()) {
     LOG(WARNING) << "Dropping registration of agent at " << from
                  << " because it sent an invalid registration: "
-                 << error->message;
+                 << error.get();
 
     return;
   }
@@ -6917,7 +6922,7 @@ void Master::reregisterSlave(
   if (error.isSome()) {
     LOG(WARNING) << "Dropping re-registration of agent at " << from
                  << " because it sent an invalid re-registration: "
-                 << error->message;
+                 << error.get();
 
     return;
   }
@@ -7553,7 +7558,7 @@ void Master::___reregisterSlave(
                  << " because state update failed: " << stateUpdated.error();
 
     ShutdownMessage message;
-    message.set_message(stateUpdated.error());
+    message.set_message(stringify(stateUpdated.error()));
     send(pid, message);
 
     slaves.reregistering.erase(slaveInfo.id());

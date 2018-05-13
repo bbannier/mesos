@@ -390,7 +390,7 @@ Option<Error> reregisterSlave(const ReregisterSlaveMessage& message)
   foreach (const Task& task, message.tasks()) {
     Option<Error> error = common::validation::validateTaskID(task.task_id());
     if (error.isSome()) {
-      return Error("Task has an invalid TaskID: " + error->message);
+      return Error("Task has an invalid TaskID: " + stringify(error.get()));
     }
 
     if (task.slave_id() != slaveInfo.id()) {
@@ -422,7 +422,7 @@ Option<Error> reregisterSlave(const ReregisterSlaveMessage& message)
     // task's resources into post-refinement format here.
     error = Resources::validate(task.resources());
     if (error.isSome()) {
-      return Error("Task uses invalid resources: " + error->message);
+      return Error("Task uses invalid resources: " + stringify(error.get()));
     }
   }
 
@@ -486,14 +486,14 @@ Option<Error> validateRoles(const FrameworkInfo& frameworkInfo)
       Option<Error> error = roles::validate(role);
       if (error.isSome()) {
         return Error("'FrameworkInfo.roles' contains invalid role: " +
-                     error->message);
+                     stringify(error.get()));
       }
     }
   } else {
     Option<Error> error = roles::validate(frameworkInfo.role());
     if (error.isSome()) {
       return Error("'FrameworkInfo.role' is not a valid role: " +
-                   error->message);
+                   stringify(error.get()));
     }
   }
 
@@ -738,7 +738,7 @@ Option<Error> validateDiskInfo(const RepeatedPtrField<Resource>& resources)
         common::validation::validateID(resource.disk().persistence().id());
       if (error.isSome()) {
         return Error("Invalid persistence ID for persistent volume: " +
-                     error->message);
+                     stringify(error.get()));
       }
     } else if (resource.disk().has_volume()) {
       return Error("Non-persistent volume not supported");
@@ -890,22 +890,22 @@ Option<Error> validate(const RepeatedPtrField<Resource>& resources)
 {
   Option<Error> error = Resources::validate(resources);
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error = common::validation::validateGpus(resources);
   if (error.isSome()) {
-    return Error("Invalid 'gpus' resource: " + error->message);
+    return Error("Invalid 'gpus' resource: " + stringify(error.get()));
   }
 
   error = validateDiskInfo(resources);
   if (error.isSome()) {
-    return Error("Invalid DiskInfo: " + error->message);
+    return Error("Invalid DiskInfo: " + stringify(error.get()));
   }
 
   error = validateDynamicReservationInfo(resources);
   if (error.isSome()) {
-    return Error("Invalid ReservationInfo: " + error->message);
+    return Error("Invalid ReservationInfo: " + stringify(error.get()));
   }
 
   return None();
@@ -1041,7 +1041,7 @@ Option<Error> validateResources(const ExecutorInfo& executor)
 {
   Option<Error> error = resource::validate(executor.resources());
   if (error.isSome()) {
-    return Error("Executor uses invalid resources: " + error->message);
+    return Error("Executor uses invalid resources: " + stringify(error.get()));
   }
 
   const Resources& resources = executor.resources();
@@ -1049,18 +1049,18 @@ Option<Error> validateResources(const ExecutorInfo& executor)
   error = resource::validateUniquePersistenceID(resources);
   if (error.isSome()) {
     return Error(
-        "Executor uses duplicate persistence ID: " + error->message);
+        "Executor uses duplicate persistence ID: " + stringify(error.get()));
   }
 
   error = resource::validateAllocatedToSingleRole(resources);
   if (error.isSome()) {
-    return Error("Invalid executor resources: " + error->message);
+    return Error("Invalid executor resources: " + stringify(error.get()));
   }
 
   error = resource::validateRevocableAndNonRevocableResources(resources);
   if (error.isSome()) {
     return Error("Executor mixes revocable and non-revocable resources: " +
-                 error->message);
+                 stringify(error.get()));
   }
 
   return None();
@@ -1074,7 +1074,8 @@ Option<Error> validateCommandInfo(const ExecutorInfo& executor)
     Option<Error> error =
       common::validation::validateCommandInfo(executor.command());
     if (error.isSome()) {
-      return Error("Executor's `CommandInfo` is invalid: " + error->message);
+      return Error(
+          "Executor's `CommandInfo` is invalid: " + stringify(error.get()));
     }
   }
 
@@ -1089,7 +1090,8 @@ Option<Error> validateContainerInfo(const ExecutorInfo& executor)
     Option<Error> error =
       common::validation::validateContainerInfo(executor.container());
     if (error.isSome()) {
-      return Error("Executor's `ContainerInfo` is invalid: " + error->message);
+      return Error(
+          "Executor's `ContainerInfo` is invalid: " + stringify(error.get()));
     }
   }
 
@@ -1230,7 +1232,7 @@ Option<Error> validateCheck(const TaskInfo& task)
   if (task.has_check()) {
     Option<Error> error = checks::validation::checkInfo(task.check());
     if (error.isSome()) {
-      return Error("Task uses invalid check: " + error->message);
+      return Error("Task uses invalid check: " + stringify(error.get()));
     }
   }
 
@@ -1243,7 +1245,7 @@ Option<Error> validateHealthCheck(const TaskInfo& task)
   if (task.has_health_check()) {
     Option<Error> error = checks::validation::healthCheck(task.health_check());
     if (error.isSome()) {
-      return Error("Task uses invalid health check: " + error->message);
+      return Error("Task uses invalid health check: " + stringify(error.get()));
     }
   }
 
@@ -1259,25 +1261,26 @@ Option<Error> validateResources(const TaskInfo& task)
 
   Option<Error> error = resource::validate(task.resources());
   if (error.isSome()) {
-    return Error("Task uses invalid resources: " + error->message);
+    return Error("Task uses invalid resources: " + stringify(error.get()));
   }
 
   const Resources& resources = task.resources();
 
   error = resource::validateUniquePersistenceID(resources);
   if (error.isSome()) {
-    return Error("Task uses duplicate persistence ID: " + error->message);
+    return Error(
+        "Task uses duplicate persistence ID: " + stringify(error.get()));
   }
 
   error = resource::validateAllocatedToSingleRole(resources);
   if (error.isSome()) {
-    return Error("Invalid task resources: " + error->message);
+    return Error("Invalid task resources: " + stringify(error.get()));
   }
 
   error = resource::validateRevocableAndNonRevocableResources(resources);
   if (error.isSome()) {
     return Error("Task mixes revocable and non-revocable resources: " +
-                 error->message);
+                 stringify(error.get()));
   }
 
   return None();
@@ -1294,19 +1297,20 @@ Option<Error> validateTaskAndExecutorResources(const TaskInfo& task)
   Option<Error> error = resource::validate(total);
   if (error.isSome()) {
     return Error(
-        "Task and its executor use invalid resources: " + error->message);
+        "Task and its executor use invalid resources: " +
+        stringify(error.get()));
   }
 
   error = resource::validateUniquePersistenceID(total);
   if (error.isSome()) {
     return Error("Task and its executor use duplicate persistence ID: " +
-                 error->message);
+                 stringify(error.get()));
   }
 
   error = resource::validateRevocableAndNonRevocableResources(total);
   if (error.isSome()) {
     return Error("Task and its executor mix revocable and non-revocable"
-                 " resources: " + error->message);
+                 " resources: " + stringify(error.get()));
   }
 
   return None();
@@ -1320,7 +1324,8 @@ Option<Error> validateCommandInfo(const TaskInfo& task)
     Option<Error> error =
       common::validation::validateCommandInfo(task.command());
     if (error.isSome()) {
-      return Error("Task's `CommandInfo` is invalid: " + error->message);
+      return Error(
+          "Task's `CommandInfo` is invalid: " + stringify(error.get()));
     }
   }
 
@@ -1335,7 +1340,8 @@ Option<Error> validateContainerInfo(const TaskInfo& task)
     Option<Error> error =
       common::validation::validateContainerInfo(task.container());
     if (error.isSome()) {
-      return Error("Task's `ContainerInfo` is invalid: " + error->message);
+      return Error(
+          "Task's `ContainerInfo` is invalid: " + stringify(error.get()));
     }
   }
 
@@ -1570,13 +1576,13 @@ Option<Error> validateTaskGroupAndExecutorResources(
   Option<Error> error = resource::validateUniquePersistenceID(total);
   if (error.isSome()) {
     return Error("Task group and executor use duplicate persistence ID: " +
-                 error->message);
+                 stringify(error.get()));
   }
 
   error = resource::validateRevocableAndNonRevocableResources(total);
   if (error.isSome()) {
     return Error("Task group and executor mix revocable and non-revocable"
-                 " resources: " + error->message);
+                 " resources: " + stringify(error.get()));
   }
 
   return None();
@@ -1684,7 +1690,7 @@ Option<Error> validateExecutor(
     if (error.isSome()) {
       return Error(
           "Executor '" + stringify(executor.executor_id()) + "'" +
-          "contains an invalid command: " + error->message);
+          "contains an invalid command: " + stringify(error.get()));
     }
   }
 
@@ -1708,7 +1714,7 @@ Option<Error> validate(
     Option<Error> error = internal::validateTask(task, framework, slave);
     if (error.isSome()) {
       return Error("Task '" + stringify(task.task_id()) + "' is invalid: " +
-                   error->message);
+                   stringify(error.get()));
     }
   }
 
@@ -2001,13 +2007,13 @@ Option<Error> validate(
   // NOTE: this ensures the reservation is not being made to the "*" role.
   Option<Error> error = resource::validate(reserve.resources());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error =
     resource::internal::validateSingleResourceProvider(reserve.resources());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   Option<hashset<string>> frameworkRoles;
@@ -2131,7 +2137,7 @@ Option<Error> validate(
     // to a single role.
     error = resource::validateAllocatedToSingleRole(reserve.resources());
     if (error.isSome()) {
-      return Error("Invalid reservation resources: " + error->message);
+      return Error("Invalid reservation resources: " + stringify(error.get()));
     }
   }
 
@@ -2145,13 +2151,13 @@ Option<Error> validate(
 {
   Option<Error> error = resource::validate(unreserve.resources());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error =
     resource::internal::validateSingleResourceProvider(unreserve.resources());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   // NOTE: We don't check that 'FrameworkInfo.principal' matches
@@ -2188,17 +2194,17 @@ Option<Error> validate(
 {
   Option<Error> error = resource::validate(create.volumes());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error = resource::internal::validateSingleResourceProvider(create.volumes());
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error = resource::validatePersistentVolume(create.volumes());
   if (error.isSome()) {
-    return Error("Not a persistent volume: " + error->message);
+    return Error("Not a persistent volume: " + stringify(error.get()));
   }
 
   error = resource::validateUniquePersistenceID(
@@ -2273,7 +2279,7 @@ Option<Error> validate(
     // to a single role.
     error = resource::validateAllocatedToSingleRole(create.volumes());
     if (error.isSome()) {
-      return Error("Invalid volume resources: " + error->message);
+      return Error("Invalid volume resources: " + stringify(error.get()));
     }
   }
 
@@ -2308,17 +2314,17 @@ Option<Error> validate(
 
   Option<Error> error = resource::validate(volumes);
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error = resource::internal::validateSingleResourceProvider(volumes);
   if (error.isSome()) {
-    return Error("Invalid resources: " + error->message);
+    return Error("Invalid resources: " + stringify(error.get()));
   }
 
   error = resource::validatePersistentVolume(volumes);
   if (error.isSome()) {
-    return Error("Not a persistent volume: " + error->message);
+    return Error("Not a persistent volume: " + stringify(error.get()));
   }
 
   foreach (const Resource volume, volumes) {
@@ -2376,14 +2382,14 @@ Option<Error> validate(
   if (error.isSome()) {
     return Error(
         "Invalid resource in the 'GrowVolume.volume' field: " +
-        error->message);
+        stringify(error.get()));
   }
 
   error = Resources::validate(growVolume.addition());
   if (error.isSome()) {
     return Error(
         "Invalid resource in the 'GrowVolume.addition' field: " +
-        error->message);
+        stringify(error.get()));
   }
 
   Value::Scalar zero;
@@ -2403,7 +2409,7 @@ Option<Error> validate(
   if (error.isSome()) {
     return Error(
         "Invalid persistent volume in the 'GrowVolume.volume' field: " +
-        error->message);
+        stringify(error.get()));
   }
 
   if (growVolume.volume().has_shared()) {
@@ -2447,7 +2453,7 @@ Option<Error> validate(
   if (error.isSome()) {
     return Error(
         "Invalid resource in the 'ShrinkVolume.volume' field: " +
-        error->message);
+        stringify(error.get()));
   }
 
   Value::Scalar zero;
@@ -2480,7 +2486,7 @@ Option<Error> validate(
   if (error.isSome()) {
     return Error(
         "Invalid persistent volume in the 'ShrinkVolume.volume' field: " +
-        error->message);
+        stringify(error.get()));
   }
 
   if (shrinkVolume.volume().has_shared()) {
@@ -2503,7 +2509,7 @@ Option<Error> validate(const Offer::Operation::CreateVolume& createVolume)
 
   Option<Error> error = resource::validate(Resources(source));
   if (error.isSome()) {
-    return Error("Invalid resource: " + error->message);
+    return Error("Invalid resource: " + stringify(error.get()));
   }
 
   if (!Resources::hasResourceProvider(source)) {
@@ -2529,7 +2535,7 @@ Option<Error> validate(const Offer::Operation::DestroyVolume& destroyVolume)
 
   Option<Error> error = resource::validate(Resources(volume));
   if (error.isSome()) {
-    return Error("Invalid resource: " + error->message);
+    return Error("Invalid resource: " + stringify(error.get()));
   }
 
   if (!Resources::hasResourceProvider(volume)) {
@@ -2551,7 +2557,7 @@ Option<Error> validate(const Offer::Operation::CreateBlock& createBlock)
 
   Option<Error> error = resource::validate(Resources(source));
   if (error.isSome()) {
-    return Error("Invalid resource: " + error->message);
+    return Error("Invalid resource: " + stringify(error.get()));
   }
 
   if (!Resources::hasResourceProvider(source)) {
@@ -2572,7 +2578,7 @@ Option<Error> validate(const Offer::Operation::DestroyBlock& destroyBlock)
 
   Option<Error> error = resource::validate(Resources(block));
   if (error.isSome()) {
-    return Error("Invalid resource: " + error->message);
+    return Error("Invalid resource: " + stringify(error.get()));
   }
 
   if (!Resources::hasResourceProvider(block)) {

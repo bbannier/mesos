@@ -321,14 +321,15 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   }();
 
   if (launcher.isError()) {
-    return Error("Failed to create launcher: " + launcher.error());
+    return Error("Failed to create launcher: " + stringify(launcher.error()));
   }
 
   Try<Owned<Provisioner>> _provisioner =
     Provisioner::create(flags, secretResolver);
 
   if (_provisioner.isError()) {
-    return Error("Failed to create provisioner: " + _provisioner.error());
+    return Error(
+        "Failed to create provisioner: " + stringify(_provisioner.error()));
   }
 
   Shared<Provisioner> provisioner = _provisioner->share();
@@ -495,7 +496,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
     Try<Isolator*> isolator = creator.second(flags);
     if (isolator.isError()) {
       return Error("Failed to create isolator '" + creator.first + "': " +
-                   isolator.error());
+                   stringify(isolator.error()));
     }
 
     isolators.push_back(Owned<Isolator>(isolator.get()));
@@ -508,7 +509,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
 
       if (isolator.isError()) {
         return Error("Failed to create isolator '" + name + "': " +
-                    isolator.error());
+                    stringify(isolator.error()));
       }
 
       isolators.push_back(Owned<Isolator>(isolator.get()));
@@ -557,7 +558,9 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   // destruction of the containerizer.
   Try<IOSwitchboard*> ioSwitchboard = IOSwitchboard::create(flags, local);
   if (ioSwitchboard.isError()) {
-    return Error("Failed to create I/O switchboard: " + ioSwitchboard.error());
+    return Error(
+        "Failed to create I/O switchboard: " +
+        stringify(ioSwitchboard.error()));
   }
 
   vector<Owned<Isolator>> _isolators(isolators);
@@ -817,7 +820,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
     if (config.isError()) {
       return Failure(
         "Failed to get config for container " + stringify(containerId) +
-        ": " + config.error());
+        ": " + stringify(config.error()));
     }
 
     if (config.isSome()) {
@@ -847,7 +850,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
   if (containerIds.isError()) {
     return Failure(
         "Failed to get container ids from the runtime directory: " +
-        containerIds.error());
+        stringify(containerIds.error()));
   }
 
   // Reconcile the runtime containers with the containers from
@@ -877,7 +880,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
       containerizer::paths::getContainerPid(flags.runtime_dir, containerId);
 
     if (pid.isError()) {
-      return Failure("Failed to get container pid: " + pid.error());
+      return Failure("Failed to get container pid: " + stringify(pid.error()));
     }
 
     // Attempt to read the launch config of the container.
@@ -885,7 +888,8 @@ Future<Nothing> MesosContainerizerProcess::recover(
       containerizer::paths::getContainerConfig(flags.runtime_dir, containerId);
 
     if (config.isError()) {
-      return Failure("Failed to get container config: " + config.error());
+      return Failure(
+          "Failed to get container config: " + stringify(config.error()));
     }
 
     // Determine the sandbox if this is a nested or standalone container.
@@ -1085,7 +1089,8 @@ Future<Nothing> MesosContainerizerProcess::__recover(
     if (containerLaunchInfo.isError()) {
       return Failure(
           "Failed to recover launch information of container " +
-          stringify(containerId) + ": " + containerLaunchInfo.error());
+          stringify(containerId) + ": " +
+          stringify(containerLaunchInfo.error()));
     }
 
     if (containerLaunchInfo.isSome()) {
@@ -1221,7 +1226,7 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::launch(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create nested sandbox '" +
-          directory + "': " + mkdir.error());
+          directory + "': " + stringify(mkdir.error()));
     }
 
     // Modify the sandbox directory in the ContainerConfig.
@@ -1261,7 +1266,7 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::launch(
   if (mkdir.isError()) {
     return Failure(
         "Failed to make the containerizer runtime directory"
-        " '" + runtimePath + "': " + mkdir.error());
+        " '" + runtimePath + "': " + stringify(mkdir.error()));
   }
 
   // If we are launching a `DEBUG` container,
@@ -1406,7 +1411,7 @@ Future<Nothing> MesosContainerizerProcess::prepare(
 
   if (configCheckpointed.isError()) {
     return Failure("Failed to checkpoint the container config to '" +
-                   configPath + "': " + configCheckpointed.error());
+                   configPath + "': " + stringify(configCheckpointed.error()));
   }
 
   VLOG(1) << "Checkpointed ContainerConfig at '" << configPath << "'";
@@ -1852,7 +1857,7 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::_launch(
                << launchInfoPath << "': " << checkpointed.error();
 
     return Failure("Could not checkpoint container's launch information: " +
-                   checkpointed.error());
+                   stringify(checkpointed.error()));
   }
 
   // Use a pipe to block the child until it's been isolated.
@@ -1927,7 +1932,8 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::_launch(
     if (mountNamespaceTarget.isError()) {
       return Failure(
           "Cannot get target mount namespace from process " +
-          stringify(parentPid) + ": " + mountNamespaceTarget.error());
+          stringify(parentPid) + ": " +
+          stringify(mountNamespaceTarget.error()));
     }
 
     launchFlags.namespace_mnt_target = mountNamespaceTarget.get();
@@ -1969,7 +1975,7 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::_launch(
       _cloneNamespaces);
 
   if (forked.isError()) {
-    return Failure("Failed to fork: " + forked.error());
+    return Failure("Failed to fork: " + stringify(forked.error()));
   }
 
   pid_t pid = forked.get();
@@ -2012,7 +2018,7 @@ Future<Containerizer::LaunchResult> MesosContainerizerProcess::_launch(
 
   if (checkpointed.isError()) {
     return Failure("Failed to checkpoint the container pid to"
-                   " '" + pidPath + "': " + checkpointed.error());
+                   " '" + pidPath + "': " + stringify(checkpointed.error()));
   }
 
   // Monitor the forked process's pid. We keep the future because
@@ -2146,7 +2152,7 @@ Future<Option<ContainerTermination>> MesosContainerizerProcess::wait(
 
       if (termination.isError()) {
         return Failure("Failed to get container termination state:"
-                       " " + termination.error());
+                       " " + stringify(termination.error()));
       }
 
       if (termination.isSome()) {
@@ -2760,7 +2766,8 @@ Future<Nothing> MesosContainerizerProcess::remove(
     Try<Nothing> rmdir = os::rmdir(runtimePath);
     if (rmdir.isError()) {
       return Failure(
-          "Failed to remove the runtime directory: " + rmdir.error());
+          "Failed to remove the runtime directory: " +
+          stringify(rmdir.error()));
     }
   }
 
@@ -2771,7 +2778,8 @@ Future<Nothing> MesosContainerizerProcess::remove(
     Try<Nothing> rmdir = os::rmdir(sandboxPath);
     if (rmdir.isError()) {
       return Failure(
-          "Failed to remove the sandbox directory: " + rmdir.error());
+          "Failed to remove the sandbox directory: " +
+          stringify(rmdir.error()));
     }
   }
 
@@ -2812,7 +2820,7 @@ Future<Option<int>> MesosContainerizerProcess::reap(
 
       if (containerStatus.isError()) {
         return Failure("Failed to get container status: " +
-                       containerStatus.error());
+                       stringify(containerStatus.error()));
       } else if (containerStatus.isSome()) {
         return containerStatus.get();
       }

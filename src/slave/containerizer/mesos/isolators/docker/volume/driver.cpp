@@ -96,7 +96,8 @@ Future<string> DriverClient::mount(
       {Subprocess::ChildHook::SUPERVISOR()});
 
   if (s.isError()) {
-    return Failure("Failed to execute '" + command + "': " + s.error());
+    return Failure(
+        "Failed to execute '" + command + "': " + stringify(s.error()));
   }
 
   return await(
@@ -180,7 +181,8 @@ Future<Nothing> DriverClient::unmount(
       {Subprocess::ChildHook::SUPERVISOR()});
 
   if (s.isError()) {
-    return Failure("Failed to execute '" + command + "': " + s.error());
+    return Failure(
+        "Failed to execute '" + command + "': " + stringify(s.error()));
   }
 
   return await(

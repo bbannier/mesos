@@ -590,7 +590,7 @@ private:
         {Subprocess::ChildHook::SUPERVISOR()});
 
     if (s.isError()) {
-      entry->promise.fail("Failed to exec 'du': " + s.error());
+      entry->promise.fail("Failed to exec 'du': " + stringify(s.error()));
 
       entries.pop_front();
       delay(interval, self(), &Self::schedule);

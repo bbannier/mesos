@@ -128,7 +128,8 @@ Try<IOSwitchboard*> IOSwitchboard::create(
     ContainerLogger::create(flags.container_logger);
 
   if (logger.isError()) {
-    return Error("Cannot create container logger: " + logger.error());
+    return Error(
+        "Cannot create container logger: " + stringify(logger.error()));
   }
 
   return new IOSwitchboard(
@@ -202,7 +203,7 @@ Future<Nothing> IOSwitchboard::recover(
       return Failure("Failed to get I/O switchboard server pid for"
                      " '" + stringify(containerId) + "':"
                      " " + (pid.isError() ?
-                            pid.error() :
+                            stringify(pid.error()) :
                             "pid file does not exist"));
     }
 
@@ -392,7 +393,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     if (slavePath.isError()) {
       close(openedFds);
       return Failure("Failed to get the slave pseudo terminal path: " +
-                     slavePath.error());
+                     stringify(slavePath.error()));
     }
 
     // Unlock the slave end of the pseudo terminal.
@@ -416,7 +417,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
       if (chown.isError()) {
         close(openedFds);
         return Failure("Failed to chown the slave pseudo terminal: " +
-                       chown.error());
+                       stringify(chown.error()));
       }
     }
 
@@ -425,7 +426,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     Try<int> slave = os::open(slavePath.get(), O_RDWR | O_NOCTTY | O_CLOEXEC);
     if (slave.isError()) {
       return Failure("Failed to open the slave pseudo terminal: " +
-                     slave.error());
+                     stringify(slave.error()));
     }
 
     openedFds.insert(slave.get());
@@ -446,7 +447,8 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     Try<std::array<int_fd, 2>> infds_ = os::pipe();
     if (infds_.isError()) {
       close(openedFds);
-      return Failure("Failed to create stdin pipe: " + infds_.error());
+      return Failure(
+          "Failed to create stdin pipe: " + stringify(infds_.error()));
     }
 
     const std::array<int_fd, 2>& infds = infds_.get();
@@ -457,7 +459,8 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     Try<std::array<int_fd, 2>> outfds_ = os::pipe();
     if (outfds_.isError()) {
       close(openedFds);
-      return Failure("Failed to create stdout pipe: " + outfds_.error());
+      return Failure(
+          "Failed to create stdout pipe: " + stringify(outfds_.error()));
     }
 
     const std::array<int_fd, 2>& outfds = outfds_.get();
@@ -468,7 +471,8 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     Try<std::array<int_fd, 2>> errfds_ = os::pipe();
     if (errfds_.isError()) {
       close(openedFds);
-      return Failure("Failed to create stderr pipe: " + errfds_.error());
+      return Failure(
+          "Failed to create stderr pipe: " + stringify(errfds_.error()));
     }
 
     const std::array<int_fd, 2>& errfds = errfds_.get();
@@ -490,7 +494,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
     Try<Nothing> cloexec = os::cloexec(fd);
     if (cloexec.isError()) {
       close(openedFds);
-      return Failure("Failed to set cloexec: " + cloexec.error());
+      return Failure("Failed to set cloexec: " + stringify(cloexec.error()));
     }
   }
 
@@ -532,7 +536,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   if (mkdir.isError()) {
     return Failure("Error creating 'IOSwitchboard' checkpoint directory"
                    " for container '" + stringify(containerId) + "':"
-                   " " + mkdir.error());
+                   " " + stringify(mkdir.error()));
   }
 
   // Prepare the environment for the io switchboard server process.
@@ -597,7 +601,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   if (child.isError()) {
     close(openedFds);
     return Failure("Failed to create io switchboard"
-                   " server process: " + child.error());
+                   " server process: " + stringify(child.error()));
   }
 
   LOG(INFO) << "Created I/O switchboard server (pid: " << child->pid()
@@ -623,7 +627,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   if (checkpointed.isError()) {
     close(openedFds);
     return Failure("Failed to checkpoint container's socket path to"
-                   " '" + path + "': " + checkpointed.error());
+                   " '" + path + "': " + stringify(checkpointed.error()));
   }
 
   // We also checkpoint the child's pid.
@@ -634,7 +638,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   if (checkpointed.isError()) {
     close(openedFds);
     return Failure("Failed to checkpoint container's io switchboard pid to"
-                   " '" + path + "': " + checkpointed.error());
+                   " '" + path + "': " + stringify(checkpointed.error()));
   }
 
   // Build an info struct for this container.
@@ -682,8 +686,10 @@ Future<http::Connection> IOSwitchboard::_connect(
       flags.runtime_dir, containerId);
 
   if (!address.isSome()) {
-    return Failure("Failed to get the io switchboard address"
-                   ": " + (address.isError() ? address.error() : "Not found"));
+    return Failure(
+        "Failed to get the io switchboard address"
+        ": " +
+        (address.isError() ? stringify(address.error()) : "Not found"));
   }
 
   // Wait for the server to create the domain socket file.
@@ -1052,7 +1058,7 @@ Try<Owned<IOSwitchboardServer>> IOSwitchboardServer::create(
 {
   Try<unix::Socket> socket = unix::Socket::create(SocketImpl::Kind::POLL);
   if (socket.isError()) {
-    return Error("Failed to create socket: " + socket.error());
+    return Error("Failed to create socket: " + stringify(socket.error()));
   }
 
   // Agent connects to the switchboard once it sees a unix socket. However,
@@ -1065,25 +1071,27 @@ Try<Owned<IOSwitchboardServer>> IOSwitchboardServer::create(
   Try<unix::Address> address = unix::Address::create(socketProvisionalPath);
   if (address.isError()) {
     return Error("Failed to build address from '" + socketProvisionalPath + "':"
-                 " " + address.error());
+                 " " + stringify(address.error()));
   }
 
   Try<unix::Address> bind = socket->bind(address.get());
   if (bind.isError()) {
     return Error("Failed to bind to address '" + socketProvisionalPath + "':"
-                 " " + bind.error());
+                 " " + stringify(bind.error()));
   }
 
   Try<Nothing> listen = socket->listen(64);
   if (listen.isError()) {
     return Error("Failed to listen on socket at address"
-                 " '" + socketProvisionalPath + "': " + listen.error());
+                 " '" + socketProvisionalPath + "':"
+                 " " + stringify(listen.error()));
   }
 
   Try<Nothing> renameSocket = os::rename(socketProvisionalPath, socketPath);
   if (renameSocket.isError()) {
-    return Error("Failed to rename socket from '" + socketProvisionalPath + "'"
-                 " to '" + socketPath + "': " + renameSocket.error());
+    return Error(
+        "Failed to rename socket from '" + socketProvisionalPath + "' to "
+        "'" + socketPath + "': " + stringify(renameSocket.error()));
   }
 
   return new IOSwitchboardServer(
@@ -1486,7 +1494,7 @@ Future<http::Response> IOSwitchboardServerProcess::handler(
           [=](const string& body) -> Future<http::Response> {
             Try<agent::Call> call = deserialize<agent::Call>(contentType, body);
             if (call.isError()) {
-              return http::BadRequest(call.error());
+              return http::BadRequest(stringify(call.error()));
             }
 
             // Should have already been validated by the agent.
@@ -1619,7 +1627,7 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
         }
 
         if (record.isError()) {
-          return Break(http::BadRequest(record.error()));
+          return Break(http::BadRequest(stringify(record.error())));
         }
 
         // Should have already been validated by the agent.
@@ -1630,7 +1638,7 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
         // Validate the rest of the `AttachContainerInput` message.
         Option<Error> error = validate(record->attach_container_input());
         if (error.isSome()) {
-          return Break(http::BadRequest(error->message));
+          return Break(http::BadRequest(stringify(error.get())));
         }
 
         const agent::ProcessIO& message =
@@ -1651,7 +1659,8 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
 
                 if (window.isError()) {
                   return Break(http::BadRequest(
-                      "Unable to set the window size: " + window.error()));
+                      "Unable to set the window size: " +
+                      stringify(window.error())));
                 }
 
                 return Continue();

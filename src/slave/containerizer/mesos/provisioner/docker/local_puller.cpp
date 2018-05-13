@@ -169,7 +169,8 @@ Future<vector<string>> LocalPullerProcess::_pull(
   // layer id for the image.
   Try<string> _repositories = os::read(path::join(directory, "repositories"));
   if (_repositories.isError()) {
-    return Failure("Failed to read 'repositories': " + _repositories.error());
+    return Failure(
+        "Failed to read 'repositories': " + stringify(_repositories.error()));
   }
 
   VLOG(1) << "The repositories JSON file for image '" << reference
@@ -179,7 +180,8 @@ Future<vector<string>> LocalPullerProcess::_pull(
     JSON::parse<JSON::Object>(_repositories.get());
 
   if (repositories.isError()) {
-    return Failure("Failed to parse 'repositories': " + repositories.error());
+    return Failure(
+        "Failed to parse 'repositories': " + stringify(repositories.error()));
   }
 
   // We are looking for the topmost layer, so we know that is it OK to
@@ -198,7 +200,7 @@ Future<vector<string>> LocalPullerProcess::_pull(
   if (repository.isError()) {
     return Failure(
         "Failed to find repository '" + reference.repository() +
-        "' in 'repositories': " + repository.error());
+        "' in 'repositories': " + stringify(repository.error()));
   } else if (repository.isNone()) {
     return Failure(
         "Repository '" + reference.repository() + "' does not "
@@ -214,7 +216,8 @@ Future<vector<string>> LocalPullerProcess::_pull(
 
   if (layerId.isError()) {
     return Failure(
-        "Failed to access layer id '" + tag + "': " + layerId.error());
+        "Failed to access layer id '" + tag +
+        "': " + stringify(layerId.error()));
   } else if (layerId.isNone()) {
     return Failure("Layer id '" + tag + "' is not found");
   }
@@ -234,7 +237,7 @@ Future<vector<string>> LocalPullerProcess::_pull(
   if (parentLayerId.isError()) {
     return Failure(
         "Failed to find parent layer id for layer '" + layerId->value +
-        "': " + parentLayerId.error());
+        "': " + stringify(parentLayerId.error()));
   }
 
   return extractLayers(directory, layerIds, backend)
@@ -252,20 +255,22 @@ Result<string> LocalPullerProcess::getParentLayerId(
   Try<string> _manifest = os::read(path);
   if (_manifest.isError()) {
     return Error(
-        "Failed to read manifest from '" + path + "': " + _manifest.error());
+        "Failed to read manifest from '" + path + "':"
+        " " + stringify(_manifest.error()));
   }
 
   Try<JSON::Object> manifest = JSON::parse<JSON::Object>(_manifest.get());
   if (manifest.isError()) {
     return Error(
-        "Failed to parse manifest from '" + path + "': " + manifest.error());
+        "Failed to parse manifest from '" + path + "':"
+        " " + stringify(manifest.error()));
   }
 
   Result<JSON::Value> parentLayerId = manifest->find<JSON::Value>("parent");
   if (parentLayerId.isError()) {
     return Error(
         "Failed to parse 'parent' key in manifest from '" + path + "': " +
-        parentLayerId.error());
+        stringify(parentLayerId.error()));
   } else if (parentLayerId.isNone()) {
     return None();
   } else if (parentLayerId->is<JSON::Null>()) {
@@ -323,7 +328,7 @@ Future<Nothing> LocalPullerProcess::extractLayer(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create directory '" + rootfs + "'"
-        ": " + mkdir.error());
+        ": " + stringify(mkdir.error()));
   }
 
   return command::untar(Path(tar), Path(rootfs))
@@ -333,7 +338,7 @@ Future<Nothing> LocalPullerProcess::extractLayer(
       if (rm.isError()) {
         return Failure(
           "Failed to remove '" + tar + "' "
-          "after extraction: " + rm.error());
+          "after extraction: " + stringify(rm.error()));
       }
 
       return Nothing();

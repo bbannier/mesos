@@ -127,7 +127,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create container rootfs at '" +
-        rootfs + "': " + mkdir.error());
+        rootfs + "': " + stringify(mkdir.error()));
   }
 
   const string rootfsId = Path(rootfs).basename();
@@ -139,14 +139,14 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create overlay upperdir at '" +
-        upperdir + "': " + mkdir.error());
+        upperdir + "': " + stringify(mkdir.error()));
   }
 
   mkdir = os::mkdir(workdir);
   if (mkdir.isError()) {
     return Failure(
         "Failed to create overlay workdir at '" +
-        workdir + "': " + mkdir.error());
+        workdir + "': " + stringify(mkdir.error()));
   }
 
   // We create symlink with shorter path to each of the base layers.
@@ -154,7 +154,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mktemp.isError()) {
     return Failure(
       "Failed to create temporary directory for symlinks to layers: " +
-      mktemp.error());
+      stringify(mktemp.error()));
   }
 
   const string tempDir = mktemp.get();
@@ -164,7 +164,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (symlink.isError()) {
     return Failure(
         "Failed to create symlink '" + tempLink +
-        "' -> '" + tempDir + "': " + symlink.error());
+        "' -> '" + tempDir + "': " + stringify(symlink.error()));
   }
 
   VLOG(1) << "Created symlink '" << tempLink << "' -> '" << tempDir << "'";
@@ -182,7 +182,7 @@ Future<Nothing> OverlayBackendProcess::provision(
     if (symlink.isError()) {
       return Failure(
           "Failed to create symlink at '" + link +
-          "' -> '" + layer + "': " + symlink.error());
+          "' -> '" + layer + "': " + stringify(symlink.error()));
     }
 
     links.push_back(link);
@@ -207,7 +207,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to mount rootfs '" + rootfs +
-        "' with overlayfs: " + mount.error());
+        "' with overlayfs: " + stringify(mount.error()));
   }
 
   // Mark the mount as shared+slave.
@@ -221,7 +221,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to mark mount '" + rootfs +
-        "' as a slave mount: " + mount.error());
+        "' as a slave mount: " + stringify(mount.error()));
   }
 
   mount = fs::mount(
@@ -234,7 +234,7 @@ Future<Nothing> OverlayBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to mark mount '" + rootfs +
-        "' as a shared mount: " + mount.error());
+        "' as a shared mount: " + stringify(mount.error()));
   }
 
   return Nothing();
@@ -247,7 +247,8 @@ Future<bool> OverlayBackendProcess::destroy(
 {
   Try<fs::MountInfoTable> mountTable = fs::MountInfoTable::read();
   if (mountTable.isError()) {
-    return Failure("Failed to read mount table: " + mountTable.error());
+    return Failure(
+        "Failed to read mount table: " + stringify(mountTable.error()));
   }
 
   foreach (const fs::MountInfoTable::Entry& entry, mountTable->entries) {
@@ -257,14 +258,14 @@ Future<bool> OverlayBackendProcess::destroy(
       if (unmount.isError()) {
         return Failure(
             "Failed to destroy overlay-mounted rootfs '" + rootfs + "': " +
-            unmount.error());
+            stringify(unmount.error()));
       }
 
       Try<Nothing> rmdir = os::rmdir(rootfs);
       if (rmdir.isError()) {
         return Failure(
             "Failed to remove rootfs mount point '" + rootfs + "': " +
-            rmdir.error());
+            stringify(rmdir.error()));
       }
 
       // Clean up tempDir used for image layer links.
@@ -302,7 +303,7 @@ Future<bool> OverlayBackendProcess::destroy(
       Try<Nothing> rm = os::rm(tempLink);
       if (rm.isError()) {
         return Failure("Failed to remove symlink at '" + tempLink +
-                       "': " + rm.error());
+                       "': " + stringify(rm.error()));
       }
 
       return true;

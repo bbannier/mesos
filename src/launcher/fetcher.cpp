@@ -121,7 +121,7 @@ static Try<bool> extract(
     return Error(
         "Failed to extract '" + sourcePath + "': '" +
         strings::join(" ", command) + "' failed: " +
-        extractProcess.error());
+        stringify(extractProcess.error()));
   }
 
   // `status()` never fails or gets discarded.
@@ -147,7 +147,7 @@ static Try<string> downloadWithHadoopClient(
 {
   Try<Owned<HDFS>> hdfs = HDFS::create();
   if (hdfs.isError()) {
-    return Error("Failed to create HDFS client: " + hdfs.error());
+    return Error("Failed to create HDFS client: " + stringify(hdfs.error()));
   }
 
   LOG(INFO) << "Downloading resource with Hadoop client from '" << sourceUri
@@ -181,7 +181,7 @@ static Try<string> downloadWithNet(
 
   Try<int> code = net::download(sourceUri, destinationPath, stallTimeout);
   if (code.isError()) {
-    return Error("Error downloading resource: " + code.error());
+    return Error("Error downloading resource: " + stringify(code.error()));
   } else {
     // The status code for successful HTTP requests is 200, the status code
     // for successful FTP file transfers is 226.
@@ -239,7 +239,7 @@ static Try<string> download(
     Fetcher::uriToLocalPath(sourceUri, frameworksHome);
 
   if (sourcePath.isError()) {
-    return Error(sourcePath.error());
+    return sourcePath.error();
   } else if (sourcePath.isSome()) {
     return copyFile(sourcePath.get(), destinationPath);
   }
@@ -277,7 +277,7 @@ static Try<string> chmodExecutable(const string& filePath)
       filePath, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
   if (chmod.isError()) {
     return Error("Failed to chmod executable '" +
-                 filePath + "': " + chmod.error());
+                 filePath + "': " + stringify(chmod.error()));
   }
 #endif // __WINDOWS__
 
@@ -306,7 +306,7 @@ static Try<string> fetchBypassingCache(
       if (result.isError()) {
         return Error(
             "Unable to create subdirectory " + dirname +
-            " in sandbox: " + result.error());
+            " in sandbox: " + stringify(result.error()));
       }
     }
   }
@@ -362,7 +362,7 @@ static Try<string> fetchFromCache(
       if (result.isError()) {
         return Error(
           "Unable to create subdirectory " + dirname +
-          " in sandbox: " + result.error());
+          " in sandbox: " + stringify(result.error()));
       }
     }
   }
@@ -546,7 +546,7 @@ int main(int argc, char* argv[])
   }
 
   if (load.isError()) {
-    std::cerr << flags.usage(load.error()) << std::endl;
+    std::cerr << flags.usage(stringify(load.error())) << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -615,7 +615,8 @@ int main(int argc, char* argv[])
         item, cacheDirectory, sandboxDirectory, frameworksHome, stallTimeout);
     if (fetched.isError()) {
       EXIT(EXIT_FAILURE)
-        << "Failed to fetch '" << item.uri().value() << "': " + fetched.error();
+        << "Failed to fetch '" << item.uri().value() << "':"
+        << " " + stringify(fetched.error());
     } else {
       LOG(INFO) << "Fetched '" << item.uri().value()
                 << "' to '" << fetched.get() << "'";

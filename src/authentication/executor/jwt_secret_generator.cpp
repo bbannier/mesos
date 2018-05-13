@@ -57,7 +57,7 @@ Future<Secret> JWTSecretGenerator::generate(const Principal& principal)
   Try<JWT, JWTError> jwt = JWT::create(payload, secret_);
 
   if (jwt.isError()) {
-    return Failure("Error creating JWT: " + jwt.error().message);
+    return Failure("Error creating JWT: " + stringify(jwt.error()));
   }
 
   Secret::Value value;

@@ -156,7 +156,7 @@ Try<string> getEndpointSocketPath(
   if(mkdir.isError()) {
     return Error(
         "Failed to create directory '" + Path(symlinkPath).dirname()  + "': " +
-        mkdir.error());
+        stringify(mkdir.error()));
   }
 
   Result<string> endpointDir = os::realpath(symlinkPath);
@@ -169,7 +169,7 @@ Try<string> getEndpointSocketPath(
     if (rm.isError()) {
       return Error(
           "Failed to remove endpoint symlink '" + symlinkPath + "': " +
-          rm.error());
+          stringify(rm.error()));
     }
   }
 
@@ -177,14 +177,14 @@ Try<string> getEndpointSocketPath(
   if (mkdtemp.isError()) {
     return Error(
         "Failed to create endpoint directory in '" + os::temp() + "': " +
-        mkdtemp.error());
+        stringify(mkdtemp.error()));
   }
 
   Try<Nothing> symlink = fs::symlink(mkdtemp.get(), symlinkPath);
   if (symlink.isError()) {
     return Error(
         "Failed to symlink directory '" + mkdtemp.get() + "' to '" +
-        symlinkPath + "': " + symlink.error());
+        symlinkPath + "': " + stringify(symlink.error()));
   }
 
   const string socketPath = path::join(mkdtemp.get(), ENDPOINT_SOCKET_FILE);
@@ -195,7 +195,7 @@ Try<string> getEndpointSocketPath(
   if (address.isError()) {
     return Error(
         "Failed to create address from '" + socketPath + "': " +
-        address.error());
+        stringify(address.error()));
   }
 
   return socketPath;
@@ -254,7 +254,7 @@ Try<VolumePath> parseVolumePath(const string& rootDir, const string& dir)
   if (volumeId.isError()) {
     return Error(
         "Could not decode volume ID from string '" + tokens[3] + "': " +
-        volumeId.error());
+        stringify(volumeId.error()));
   }
 
   return VolumePath{tokens[0], tokens[1], volumeId.get()};

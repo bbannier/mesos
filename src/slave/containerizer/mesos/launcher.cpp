@@ -134,7 +134,7 @@ Try<pid_t> SubprocessLauncher::fork(
       {Subprocess::ChildHook::SETSID()});
 
   if (child.isError()) {
-    return Error("Failed to fork a child process: " + child.error());
+    return Error("Failed to fork a child process: " + stringify(child.error()));
   }
 
   LOG(INFO) << "Forked child with pid '" << child->pid()

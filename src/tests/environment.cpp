@@ -126,7 +126,7 @@ public:
     } else if (hierarchy.isError()) {
       cfsError = Error(
           "There was an error finding the 'cpu' cgroup hierarchy:\n" +
-          hierarchy.error());
+          stringify(hierarchy.error()));
     } else {
       cfsError = Error(
           "The 'cpu' cgroup hierarchy was not found, which means\n"
@@ -137,7 +137,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "The 'CFS_' tests cannot be run because:\n"
-        << cfsError->message << "\n"
+        << cfsError.get()<< "\n"
         << "-------------------------------------------------------------"
         << std::endl;
     }
@@ -317,7 +317,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "We cannot run any Docker tests because:\n"
-        << dockerError->message << "\n"
+        << dockerError.get()<< "\n"
         << "-------------------------------------------------------------"
         << std::endl;
     }
@@ -326,7 +326,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "We cannot run any Docker user network tests because:\n"
-        << dockerUserNetworkError->message << "\n"
+        << dockerUserNetworkError.get()<< "\n"
         << "-------------------------------------------------------------"
         << std::endl;
     }
@@ -335,7 +335,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "We cannot run any Docker network health checks tests because:\n"
-        << dockerNamespaceError->message << "\n"
+        << dockerNamespaceError.get()<< "\n"
         << "-------------------------------------------------------------"
         << std::endl;
     }
@@ -458,7 +458,7 @@ public:
         dtypeError = Error(
             "Cannot verify filesystem d_type attribute: "
             "Failed to create temporary directory '" +
-            probeDir + "': " + mkdir.error());
+            probeDir + "': " + stringify(mkdir.error()));
       }
 
       Try<bool> supportDType = fs::dtypeSupported(directory);
@@ -474,7 +474,7 @@ public:
       if (supportDType.isError()) {
         dtypeError = Error(
           "Cannot verify filesystem d_type attribute: " +
-          supportDType.error());
+          stringify(supportDType.error()));
       }
 
       if (!supportDType.get()) {
@@ -492,7 +492,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "We cannot run any overlay backend tests because:\n"
-        << dtypeError->message << "\n"
+        << dtypeError.get()<< "\n"
         << "-------------------------------------------------------------\n";
       return;
     }
@@ -701,7 +701,7 @@ public:
       std::cerr
         << "-------------------------------------------------------------\n"
         << "We cannot run any " << fsname << " tests because:\n"
-        << fsSupportError->message << "\n"
+        << fsSupportError.get()<< "\n"
         << "-------------------------------------------------------------\n";
     }
   }
@@ -776,7 +776,7 @@ public:
     if (perfError.isSome()) {
       std::cerr
         << "-------------------------------------------------------------\n"
-        << perfError->message << "\n"
+        << perfError.get()<< "\n"
         << "-------------------------------------------------------------"
         << std::endl;
     }

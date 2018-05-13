@@ -90,7 +90,7 @@ Future<Option<Group::Membership>> LeaderDetectorProcess::detect(
   // Return immediately if the detector is no longer operational due
   // to the non-retryable error.
   if (error.isSome()) {
-    return Failure(error->message);
+    return Failure(error.get());
   }
 
   // Return immediately if the incumbent leader is different from the

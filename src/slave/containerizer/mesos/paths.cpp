@@ -96,14 +96,15 @@ Result<pid_t> getContainerPid(
 
   Result<string> read = state::read<string>(path);
   if (read.isError()) {
-    return Error("Failed to recover pid of container: " + read.error());
+    return Error(
+        "Failed to recover pid of container: " + stringify(read.error()));
   }
 
   Try<pid_t> pid = numify<pid_t>(read.get());
   if (pid.isError()) {
     return Error(
         "Failed to numify pid '" + read.get() +
-        "' of container at '" + path + "': " + pid.error());
+        "' of container at '" + path + "': " + stringify(pid.error()));
   }
 
   return pid.get();
@@ -126,7 +127,7 @@ Result<int> getContainerStatus(
   if (read.isError()) {
     return Error("Unable to read status for container '" +
                  containerId.value() + "' from checkpoint file '" +
-                 path + "': " + read.error());
+                 path + "': " + stringify(read.error()));
   }
 
   if (read.get() != "") {
@@ -134,7 +135,7 @@ Result<int> getContainerStatus(
     if (containerStatus.isError()) {
       return Error("Unable to read status for container '" +
                    containerId.value() + "' as integer from '" +
-                   path + "': " + read.error());
+                   path + "': " + stringify(read.error()));
     }
 
     return containerStatus.get();
@@ -182,14 +183,15 @@ Result<pid_t> getContainerIOSwitchboardPid(
 
   Result<string> read = state::read<string>(path);
   if (read.isError()) {
-    return Error("Failed to recover pid of io switchboard: " + read.error());
+    return Error(
+        "Failed to recover pid of io switchboard: " + stringify(read.error()));
   }
 
   Try<pid_t> pid = numify<pid_t>(read.get());
   if (pid.isError()) {
     return Error(
         "Failed to numify pid '" + read.get() +
-        "' of io switchboard at '" + path + "': " + pid.error());
+        "' of io switchboard at '" + path + "': " + stringify(pid.error()));
   }
 
   return pid.get();
@@ -239,12 +241,12 @@ Result<unix::Address> getContainerIOSwitchboardAddress(
 
   Result<string> read = state::read<string>(path);
   if (read.isError()) {
-    return Error("Failed reading '" + path + "': " + read.error());
+    return Error("Failed reading '" + path + "': " + stringify(read.error()));
   }
 
   Try<unix::Address> address = unix::Address::create(read.get());
   if (address.isError()) {
-    return Error("Invalid AF_UNIX address: " + address.error());
+    return Error("Invalid AF_UNIX address: " + stringify(address.error()));
   }
 
   return address.get();
@@ -298,7 +300,7 @@ Result<ContainerTermination> getContainerTermination(
 
   if (termination.isError()) {
     return Error("Failed to read termination state of container: " +
-                 termination.error());
+                 stringify(termination.error()));
   }
 
   return termination;
@@ -345,7 +347,7 @@ Result<ContainerConfig> getContainerConfig(
 
   if (containerConfig.isError()) {
     return Error("Failed to read launch config of container: " +
-                 containerConfig.error());
+                 stringify(containerConfig.error()));
   }
 
   return containerConfig;
@@ -371,7 +373,8 @@ Try<vector<ContainerID>> getContainerIds(const string& runtimeDir)
 
     Try<list<string>> entries = os::ls(path);
     if (entries.isError()) {
-      return Error("Failed to list '" + path + "': " + entries.error());
+      return Error(
+          "Failed to list '" + path + "': " + stringify(entries.error()));
     }
 
     // The order always guarantee that a parent container is inserted
@@ -442,7 +445,8 @@ Result<ContainerLaunchInfo> getContainerLaunchInfo(
 
   if (containerLaunchInfo.isError()) {
     return Error(
-        "Failed to read ContainerLaunchInfo: " + containerLaunchInfo.error());
+        "Failed to read ContainerLaunchInfo: " +
+        stringify(containerLaunchInfo.error()));
   }
 
   return containerLaunchInfo;

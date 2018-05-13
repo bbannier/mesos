@@ -119,18 +119,18 @@ void run(ExecutorDriver* driver, const TaskInfo& task)
     void* buffer = nullptr;
     if (posix_memalign(&buffer, os::pagesize(), chunk) != 0) {
       LOG(FATAL) << ErrnoError(
-          "Failed to allocate page-aligned memory, posix_memalign").message;
+          "Failed to allocate page-aligned memory, posix_memalign");
     }
 
     // We use `memset` and possibly `mlock` here to make sure that the
     // memory actually gets paged in and thus accounted for.
     if (memset(buffer, 1, chunk) != buffer) {
-      LOG(FATAL) << ErrnoError("Failed to fill memory, memset").message;
+      LOG(FATAL) << ErrnoError("Failed to fill memory, memset");
     }
 
     if (lockMemory) {
       if (mlock(buffer, chunk) != 0) {
-        LOG(FATAL) << ErrnoError("Failed to lock memory, mlock").message;
+        LOG(FATAL) << ErrnoError("Failed to lock memory, mlock");
       }
     }
 

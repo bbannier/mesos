@@ -39,7 +39,7 @@ inline Result<Credentials> read(const Path& path)
   Try<std::string> read = os::read(path.string());
   if (read.isError()) {
     return Error("Failed to read credentials file '" + path.string() +
-                 "': " + read.error());
+                 "': " + stringify(read.error()));
   } else if (read->empty()) {
     return None();
   }
@@ -88,7 +88,7 @@ inline Result<Credential> readCredential(const Path& path)
   Try<std::string> read = os::read(path.string());
   if (read.isError()) {
     return Error("Failed to read credential file '" + path.string() +
-                 "': " + read.error());
+                 "': " + stringify(read.error()));
   } else if (read->empty()) {
     return None();
   }

@@ -123,7 +123,7 @@ Try<Owned<Puller>> RegistryPuller::create(
   if (defaultRegistryUrl.isError()) {
     return Error(
         "Failed to parse the default Docker registry: " +
-        defaultRegistryUrl.error());
+        stringify(defaultRegistryUrl.error()));
   }
 
   VLOG(1) << "Creating registry puller with docker registry '"
@@ -249,12 +249,13 @@ Future<vector<string>> RegistryPullerProcess::_pull(
   if (reference.has_registry()) {
     Result<int> port = spec::getRegistryPort(reference.registry());
     if (port.isError()) {
-      return Failure("Failed to get registry port: " + port.error());
+      return Failure("Failed to get registry port: " + stringify(port.error()));
     }
 
     Try<string> scheme = spec::getRegistryScheme(reference.registry());
     if (scheme.isError()) {
-      return Failure("Failed to get registry scheme: " + scheme.error());
+      return Failure(
+          "Failed to get registry scheme: " + stringify(scheme.error()));
     }
 
     manifestUri = uri::docker::manifest(
@@ -304,12 +305,14 @@ Future<vector<string>> RegistryPullerProcess::__pull(
 {
   Try<string> _manifest = os::read(path::join(directory, "manifest"));
   if (_manifest.isError()) {
-    return Failure("Failed to read the manifest: " + _manifest.error());
+    return Failure(
+        "Failed to read the manifest: " + stringify(_manifest.error()));
   }
 
   Try<spec::v2::ImageManifest> manifest = spec::v2::parse(_manifest.get());
   if (manifest.isError()) {
-    return Failure("Failed to parse the manifest: " + manifest.error());
+    return Failure(
+        "Failed to parse the manifest: " + stringify(manifest.error()));
   }
 
   VLOG(1) << "The manifest for image '" << reference << "' is '"
@@ -400,14 +403,14 @@ Future<vector<string>> RegistryPullerProcess::___pull(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create rootfs directory '" + rootfs + "' "
-          "for layer '" + v1.id() + "': " + mkdir.error());
+          "for layer '" + v1.id() + "': " + stringify(mkdir.error()));
     }
 
     Try<Nothing> write = os::write(json, stringify(JSON::protobuf(v1)));
     if (write.isError()) {
       return Failure(
           "Failed to save the layer manifest for layer '" +
-          v1.id() + "': " + write.error());
+          v1.id() + "': " + stringify(write.error()));
     }
 
     futures.push_back(command::untar(Path(tar), Path(rootfs)));
@@ -423,7 +426,7 @@ Future<vector<string>> RegistryPullerProcess::___pull(
         if (rm.isError()) {
           return Failure(
               "Failed to remove '" + tar + "' "
-              "after extraction: " + rm.error());
+              "after extraction: " + stringify(rm.error()));
         }
       }
 
@@ -473,12 +476,14 @@ Future<hashset<string>> RegistryPullerProcess::fetchBlobs(
     if (reference.has_registry()) {
       Result<int> port = spec::getRegistryPort(reference.registry());
       if (port.isError()) {
-        return Failure("Failed to get registry port: " + port.error());
+        return Failure(
+            "Failed to get registry port: " + stringify(port.error()));
       }
 
       Try<string> scheme = spec::getRegistryScheme(reference.registry());
       if (scheme.isError()) {
-        return Failure("Failed to get registry scheme: " + scheme.error());
+        return Failure(
+            "Failed to get registry scheme: " + stringify(scheme.error()));
       }
 
       // If users want to use the registry specified in '--docker_image',

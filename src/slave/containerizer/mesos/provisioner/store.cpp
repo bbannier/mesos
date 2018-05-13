@@ -71,7 +71,7 @@ Try<hashmap<Image::Type, Owned<Store>>> Store::create(
     if (store.isError()) {
       return Error(
           "Failed to create store for image type '" +
-          type + "': " + store.error());
+          type + "': " + stringify(store.error()));
     }
 
     stores.put(imageType, store.get());

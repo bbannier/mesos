@@ -145,7 +145,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
     // launch a task with a volume.
     Option<Error> error = common::validation::validateVolume(volume);
     if (error.isSome()) {
-      return Failure("Invalid volume: " + error->message);
+      return Failure("Invalid volume: " + stringify(error.get()));
     }
 
     Option<Volume::Source::SandboxPath> sandboxPath;
@@ -243,7 +243,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create the directory '" + source + "' "
-            "in the sandbox: " + mkdir.error());
+            "in the sandbox: " + stringify(mkdir.error()));
       }
 
       // Get 'sourceRoot''s user and group info for the source path.
@@ -262,7 +262,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
         return Failure(
             "Failed to change the ownership of the SANDBOX_PATH volume at '" +
             source + "' with UID " + stringify(s.st_uid) + " and GID " +
-            stringify(s.st_gid) + ": " + chown.error());
+            stringify(s.st_gid) + ": " + stringify(chown.error()));
       }
     }
 
@@ -282,7 +282,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
           if (mkdir.isError()) {
             return Failure(
                 "Failed to create the mount point at "
-                "'" + target + "': " + mkdir.error());
+                "'" + target + "': " + stringify(mkdir.error()));
           }
         } else {
           // The file (regular file or device file) bind mount case.
@@ -291,14 +291,14 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
             return Failure(
                 "Failed to create directory "
                 "'" + Path(target).dirname() + "' "
-                "for the mount point: " + mkdir.error());
+                "for the mount point: " + stringify(mkdir.error()));
           }
 
           Try<Nothing> touch = os::touch(target);
           if (touch.isError()) {
             return Failure(
                 "Failed to touch the mount point at "
-                "'" + target + "': " + touch.error());
+                "'" + target + "': " + stringify(touch.error()));
           }
         }
       } else {
@@ -347,7 +347,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
           if (mkdir.isError()) {
             return Failure(
                 "Failed to create the mount point at "
-                "'" + mountPoint + "': " + mkdir.error());
+                "'" + mountPoint + "': " + stringify(mkdir.error()));
           }
         } else {
           // The file (regular file or device file) bind mount case.
@@ -356,14 +356,14 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
             return Failure(
                 "Failed to create the directory "
                 "'" + Path(mountPoint).dirname() + "' "
-                "for the mount point: " + mkdir.error());
+                "for the mount point: " + stringify(mkdir.error()));
           }
 
           Try<Nothing> touch = os::touch(mountPoint);
           if (touch.isError()) {
             return Failure(
                 "Failed to touch the mount point at "
-                "'" + mountPoint+ "': " + touch.error());
+                "'" + mountPoint+ "': " + stringify(touch.error()));
           }
         }
       }
@@ -389,7 +389,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSandboxPathIsolatorProcess::prepare(
       if (symlink.isError()) {
         return Failure(
             "Failed to symlink '" + source + "' -> '" + target + "'"
-            ": " + symlink.error());
+            ": " + stringify(symlink.error()));
       }
     }
   }

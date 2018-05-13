@@ -288,7 +288,7 @@ Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
         if (!result.isSome()) {
           return Error(
               "Error opening library: '" + libraryName +
-              "': " + result.error());
+              "': " + stringify(result.error()));
         }
 
         dynamicLibraries[libraryName] = dynamicLibrary.release();
@@ -309,7 +309,8 @@ Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
           dynamicLibraries[libraryName]->loadSymbol(moduleName);
         if (symbol.isError()) {
           return Error(
-              "Error loading module '" + moduleName + "': " + symbol.error());
+              "Error loading module '" + moduleName + "':"
+              " " + stringify(symbol.error()));
         }
 
         ModuleBase* moduleBase = (ModuleBase*) symbol.get();
@@ -318,7 +319,8 @@ Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
         Try<Nothing> result = verifyModule(moduleName, moduleBase);
         if (result.isError()) {
           return Error(
-              "Error verifying module '" + moduleName + "': " + result.error());
+              "Error verifying module '" + moduleName + "':"
+              " " + stringify(result.error()));
         }
 
         // We verify module compatibilty before checking for identical modules
@@ -333,7 +335,7 @@ Try<Nothing> ModuleManager::loadManifest(const Modules& modules)
             return Error(
                 "Error loading module '" + moduleName + "'; this is "
                 " potenatially due to duplicate module names; " +
-                result.error());
+                stringify(result.error()));
           }
 
           continue;
@@ -362,7 +364,7 @@ Try<Nothing> ModuleManager::load(const string& modulesDir)
   if (moduleManifests.isError()) {
     return Error(
         "Error loading module manifests from '" + modulesDir + "' directory: " +
-        moduleManifests.error());
+        stringify(moduleManifests.error()));
   }
 
   moduleManifests->sort();
@@ -374,20 +376,21 @@ Try<Nothing> ModuleManager::load(const string& modulesDir)
     if (read.isError()) {
       return Error(
           "Error reading module manifest file '" + filepath + "': " +
-          read.error());
+          stringify(read.error()));
     }
 
     Try<Modules> modules = flags::parse<Modules>(read.get());
     if (modules.isError()) {
       return Error(
           "Error parsing module manifest file '" + filepath + "': " +
-          modules.error());
+          stringify(modules.error()));
     }
 
     Try<Nothing> result = loadManifest(modules.get());
     if (result.isError()) {
       return Error(
-          "Error loading modules from '" + filepath + "': " + result.error());
+          "Error loading modules from '" + filepath +
+          "': " + stringify(result.error()));
     }
   }
 

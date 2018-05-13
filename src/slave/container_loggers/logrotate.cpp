@@ -95,13 +95,15 @@ public:
         flags.log_filename.get() + CONF_SUFFIX, config);
 
     if (result.isError()) {
-      return Failure("Failed to write configuration file: " + result.error());
+      return Failure(
+          "Failed to write configuration file: " + stringify(result.error()));
     }
 
     // NOTE: This is a prerequisuite for `io::read`.
     Try<Nothing> nonblock = os::nonblock(STDIN_FILENO);
     if (nonblock.isError()) {
-      return Failure("Failed to set nonblocking pipe: " + nonblock.error());
+      return Failure(
+          "Failed to set nonblocking pipe: " + stringify(nonblock.error()));
     }
 
     // NOTE: This does not block.
@@ -127,7 +129,7 @@ public:
         // leading log file.
         Try<Nothing> result = write(readSize);
         if (result.isError()) {
-          promise.fail("Failed to write: " + result.error());
+          promise.fail("Failed to write: " + stringify(result.error()));
           return Nothing();
         }
 
@@ -159,8 +161,8 @@ public:
 
       if (open.isError()) {
         return Error(
-            "Failed to open '" + flags.log_filename.get() +
-            "': " + open.error());
+            "Failed to open '" + flags.log_filename.get() + "':"
+            " " + stringify(open.error()));
       }
 
       leading = open.get();
@@ -234,7 +236,7 @@ int main(int argc, char** argv)
   }
 
   if (load.isError()) {
-    std::cerr << flags.usage(load.error()) << std::endl;
+    std::cerr << flags.usage(stringify(load.error())) << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -249,8 +251,7 @@ int main(int argc, char** argv)
   // This ensures that, if the parent process (presumably the Mesos agent)
   // terminates, this logger process will continue to run.
   if (::setsid() == -1) {
-    EXIT(EXIT_FAILURE)
-      << ErrnoError("Failed to put child in a new session").message;
+    EXIT(EXIT_FAILURE) << ErrnoError("Failed to put child in a new session");
   }
 
   // If the `--user` flag is set, change the UID of this process to that user.
@@ -259,7 +260,7 @@ int main(int argc, char** argv)
 
     if (result.isError()) {
       EXIT(EXIT_FAILURE)
-        << ErrnoError("Failed to switch user for logrotate process").message;
+        << ErrnoError("Failed to switch user for logrotate process");
     }
   }
 

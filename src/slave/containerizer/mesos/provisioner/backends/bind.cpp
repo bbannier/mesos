@@ -134,7 +134,7 @@ Future<Nothing> BindBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to bind mount rootfs '" + layers.front() +
-        "' to '" + rootfs + "': " + mount.error());
+        "' to '" + rootfs + "': " + stringify(mount.error()));
   }
 
   // And remount it read-only.
@@ -148,7 +148,7 @@ Future<Nothing> BindBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to remount rootfs '" + rootfs + "' read-only: " +
-        mount.error());
+        stringify(mount.error()));
   }
 
   // Mark the mount as shared+slave.
@@ -162,7 +162,7 @@ Future<Nothing> BindBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to mark mount '" + rootfs +
-        "' as a slave mount: " + mount.error());
+        "' as a slave mount: " + stringify(mount.error()));
   }
 
   mount = fs::mount(
@@ -175,7 +175,7 @@ Future<Nothing> BindBackendProcess::provision(
   if (mount.isError()) {
     return Failure(
         "Failed to mark mount '" + rootfs +
-        "' as a shared mount: " + mount.error());
+        "' as a shared mount: " + stringify(mount.error()));
   }
 
   return Nothing();
@@ -187,7 +187,8 @@ Future<bool> BindBackendProcess::destroy(const string& rootfs)
   Try<fs::MountInfoTable> mountTable = fs::MountInfoTable::read();
 
   if (mountTable.isError()) {
-    return Failure("Failed to read mount table: " + mountTable.error());
+    return Failure(
+        "Failed to read mount table: " + stringify(mountTable.error()));
   }
 
   foreach (const fs::MountInfoTable::Entry& entry, mountTable->entries) {
@@ -200,7 +201,7 @@ Future<bool> BindBackendProcess::destroy(const string& rootfs)
       if (unmount.isError()) {
         return Failure(
             "Failed to destroy bind-mounted rootfs '" + rootfs + "': " +
-            unmount.error());
+            stringify(unmount.error()));
       }
 
       // TODO(jieyu): If 'rmdir' here returns EBUSY, we still returns

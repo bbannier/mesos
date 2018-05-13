@@ -151,7 +151,7 @@ Future<Option<ContainerLaunchInfo>> VolumeImageIsolatorProcess::prepare(
         if (mkdir.isError()) {
           return Failure(
               "Failed to create the target of the mount at '" +
-              target + "': " + mkdir.error());
+              target + "': " + stringify(mkdir.error()));
         }
       } else {
         target = volume.container_path();
@@ -183,7 +183,7 @@ Future<Option<ContainerLaunchInfo>> VolumeImageIsolatorProcess::prepare(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create the target of the mount at '" +
-            mountPoint + "': " + mkdir.error());
+            mountPoint + "': " + stringify(mkdir.error()));
       }
     }
 

@@ -57,7 +57,9 @@ int main(int argc, char** argv)
   }
 
   if (input.isError()) {
-    cout << spec::error(input.error(), PortMapper::ERROR_READ_FAILURE) << endl;
+    cout << spec::error(
+                stringify(input.error()), PortMapper::ERROR_READ_FAILURE)
+         << endl;
     return EXIT_FAILURE;
   }
 

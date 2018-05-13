@@ -211,7 +211,8 @@ public:
       status.mutable_task_id()->CopyFrom(task.task_id());
       status.set_state(TASK_FAILED);
       status.set_message(
-        "Failed to create docker run options: " + runOptions.error());
+          "Failed to create docker run options: " +
+          stringify(runOptions.error()));
 
       LOG(ERROR) << status.message();
 
@@ -979,7 +980,7 @@ int main(int argc, char** argv)
   }
 
   if (load.isError()) {
-    cerr << flags.usage(load.error()) << endl;
+    cerr << flags.usage(stringify(load.error())) << endl;
     return EXIT_FAILURE;
   }
 
@@ -1017,8 +1018,8 @@ int main(int argc, char** argv)
       JSON::parse<JSON::Object>(flags.task_environment.get());
 
     if (json.isError()) {
-      EXIT(EXIT_FAILURE)
-        << flags.usage("Failed to parse --task_environment: " + json.error());
+      EXIT(EXIT_FAILURE) << flags.usage(
+          "Failed to parse --task_environment: " + stringify(json.error()));
     }
 
     // Convert from JSON to map.
@@ -1044,7 +1045,8 @@ int main(int argc, char** argv)
 
     if (parse.isError()) {
       EXIT(EXIT_FAILURE) << flags.usage(
-          "Failed to parse --default_container_dns: " + parse.error());
+          "Failed to parse --default_container_dns: " +
+          stringify(parse.error()));
     }
 
     defaultContainerDNS = parse.get();

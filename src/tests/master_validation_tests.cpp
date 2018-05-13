@@ -126,9 +126,8 @@ TEST_F(ResourceValidationTest, RevocableDynamicReservation)
   Option<Error> error = resource::validate(CreateResources(resource));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message, "cannot be created from revocable resources"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()), "cannot be created from revocable resources"));
 }
 
 
@@ -151,10 +150,9 @@ TEST_F(ResourceValidationTest, UnreservedDiskInfo)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Persistent volumes cannot be created from unreserved resources"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Persistent volumes cannot be created from unreserved resources"));
 }
 
 
@@ -166,11 +164,10 @@ TEST_F(ResourceValidationTest, InvalidPersistenceID)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Invalid persistence ID for persistent volume: 'id1/' contains "
-          "invalid characters"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Invalid persistence ID for persistent volume: 'id1/' contains "
+      "invalid characters"));
 }
 
 
@@ -182,10 +179,9 @@ TEST_F(ResourceValidationTest, PersistentVolumeWithoutVolumeInfo)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Expecting 'volume' to be set for persistent volume"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Expecting 'volume' to be set for persistent volume"));
 }
 
 
@@ -198,10 +194,9 @@ TEST_F(ResourceValidationTest, PersistentVolumeWithHostPath)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Expecting 'host_path' to be unset for persistent volume"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Expecting 'host_path' to be unset for persistent volume"));
 }
 
 
@@ -213,8 +208,8 @@ TEST_F(ResourceValidationTest, NonPersistentVolume)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(error->message, "Non-persistent volume not supported"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()), "Non-persistent volume not supported"));
 }
 
 
@@ -227,10 +222,9 @@ TEST_F(ResourceValidationTest, RevocablePersistentVolume)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Persistent volumes cannot be created from revocable resources"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Persistent volumes cannot be created from revocable resources"));
 }
 
 
@@ -242,9 +236,8 @@ TEST_F(ResourceValidationTest, UnshareableResource)
   Option<Error> error = resource::validate(CreateResources(volume));
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message, "Only persistent volumes can be shared"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()), "Only persistent volumes can be shared"));
 }
 
 
@@ -303,7 +296,7 @@ TEST_F(ResourceValidationTest, SingleResourceProvider)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "The resources have multiple resource providers"));
   }
 
@@ -317,7 +310,7 @@ TEST_F(ResourceValidationTest, SingleResourceProvider)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Some resources have a resource provider and some do not"));
   }
 }
@@ -349,12 +342,11 @@ TEST_F(ReserveOperationValidationTest, MatchingRole)
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "A reserve operation was attempted for a resource allocated "
-          "to role 'resourceRole', but the framework only has roles "
-          "'{ frameworkRole }'"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "A reserve operation was attempted for a resource allocated "
+      "to role 'resourceRole', but the framework only has roles "
+      "'{ frameworkRole }'"));
 
   // Now verify with a MULTI_ROLE framework.
   frameworkInfo.clear_role();
@@ -372,11 +364,10 @@ TEST_F(ReserveOperationValidationTest, MatchingRole)
   // resource. We only check part of the error message here as internally the
   // list of the framework's roles does not have a particular order.
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "A reserve operation was attempted for a resource allocated to "
-          "role 'resourceRole', but the framework only has roles "));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "A reserve operation was attempted for a resource allocated to "
+      "role 'resourceRole', but the framework only has roles "));
 }
 
 
@@ -404,7 +395,8 @@ TEST_F(ReserveOperationValidationTest, DisallowReservingToStar)
 
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message, "Invalid reservation: role \"*\" cannot be reserved"));
+      stringify(error.get()),
+      "Invalid reservation: role \"*\" cannot be reserved"));
 
   // Now verify with a MULTI_ROLE framework.
   frameworkInfo.clear_role();
@@ -418,7 +410,8 @@ TEST_F(ReserveOperationValidationTest, DisallowReservingToStar)
 
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message, "Invalid reservation: role \"*\" cannot be reserved"));
+      stringify(error.get()),
+      "Invalid reservation: role \"*\" cannot be reserved"));
 }
 
 
@@ -444,7 +437,7 @@ TEST_F(ReserveOperationValidationTest, MatchingPrincipal)
   Option<Error> error =
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
-  EXPECT_NONE(error) << error->message;
+  EXPECT_NONE(error) << error.get();
 }
 
 
@@ -472,7 +465,7 @@ TEST_F(ReserveOperationValidationTest, NonMatchingPrincipal)
 
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "A reserve operation was attempted by authenticated principal "
       "'principal1', which does not match a reserved resource in the "
       "request with principal 'principal2'"));
@@ -505,7 +498,7 @@ TEST_F(ReserveOperationValidationTest, ReservationInfoMissingPrincipal)
 
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "A reserve operation was attempted by principal 'principal', but "
       "there is a reserved resource in the request with no principal set"));
 }
@@ -531,7 +524,8 @@ TEST_F(ReserveOperationValidationTest, StaticReservation)
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(strings::contains(error->message, "is not dynamically reserved"));
+  EXPECT_TRUE(
+      strings::contains(stringify(error.get()), "is not dynamically reserved"));
 }
 
 
@@ -565,7 +559,8 @@ TEST_F(ReserveOperationValidationTest, NoPersistentVolumes)
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(strings::contains(error->message, "is not dynamically reserved"));
+  EXPECT_TRUE(
+      strings::contains(stringify(error.get()), "is not dynamically reserved"));
 }
 
 
@@ -595,11 +590,10 @@ TEST_F(ReserveOperationValidationTest, MismatchedAllocation)
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "A reserve operation was attempted for a resource with role "
-          "'role1', but the resource was allocated to role 'role2'"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "A reserve operation was attempted for a resource with role "
+      "'role1', but the resource was allocated to role 'role2'"));
 }
 
 
@@ -621,12 +615,11 @@ TEST_F(ReserveOperationValidationTest, UnexpectedAllocatedResource)
     operation::validate(reserve, "principal", capabilities, None());
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "A reserve operation was attempted with an allocated resource,"
-          " but the operator API only allows reservations to be made"
-          " to unallocated resources"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "A reserve operation was attempted with an allocated resource,"
+      " but the operator API only allows reservations to be made"
+      " to unallocated resources"));
 }
 
 
@@ -658,12 +651,11 @@ TEST_F(ReserveOperationValidationTest, MixedAllocationRoles)
     operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Invalid reservation resources: The resources have multiple"
-          " allocation roles ('role2' and 'role1') but only one allocation"
-          " role is allowed"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Invalid reservation resources: The resources have multiple"
+      " allocation roles ('role2' and 'role1') but only one allocation"
+      " role is allowed"));
 }
 
 
@@ -701,7 +693,7 @@ TEST_F(ReserveOperationValidationTest, AgentHierarchicalRoleCapability)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "with reservation for hierarchical role 'foo/bar' cannot be reserved "
         "on an agent without HIERARCHICAL_ROLE capability"));
   }
@@ -743,7 +735,7 @@ TEST_F(ReserveOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: Some resources have a resource provider "
         "and some do not"));
   }
@@ -758,7 +750,7 @@ TEST_F(ReserveOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: The resources have multiple resource providers: "
         "provider2, provider1"));
   }
@@ -771,7 +763,7 @@ TEST_F(ReserveOperationValidationTest, MultipleResourceProviders)
     Option<Error> error =
       operation::validate(reserve, "principal", capabilities, frameworkInfo);
 
-    EXPECT_NONE(error) << error->message;
+    EXPECT_NONE(error) << error.get();
   }
 }
 
@@ -876,7 +868,7 @@ TEST_F(UnreserveOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: Some resources have a resource provider "
         "and some do not"));
   }
@@ -890,7 +882,7 @@ TEST_F(UnreserveOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: The resources have multiple resource providers: "
         "provider2, provider1"));
   }
@@ -901,7 +893,7 @@ TEST_F(UnreserveOperationValidationTest, MultipleResourceProviders)
 
     Option<Error> error = operation::validate(unreserve);
 
-    EXPECT_NONE(error) << error->message;
+    EXPECT_NONE(error) << error.get();
   }
 }
 
@@ -1173,12 +1165,11 @@ TEST_F(CreateOperationValidationTest, MixedAllocationRole)
       create, Resources(), None(), capabilities, frameworkInfo);
 
   ASSERT_SOME(error);
-  EXPECT_TRUE(
-      strings::contains(
-          error->message,
-          "Invalid volume resources: The resources have multiple allocation"
-          " roles ('role2' and 'role1') but only one allocation role is"
-          " allowed"));
+  EXPECT_TRUE(strings::contains(
+      stringify(error.get()),
+      "Invalid volume resources: The resources have multiple allocation"
+      " roles ('role2' and 'role1') but only one allocation role is"
+      " allowed"));
 }
 
 
@@ -1209,7 +1200,7 @@ TEST_F(CreateOperationValidationTest, AgentHierarchicalRoleCapability)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "with reservation for hierarchical role 'foo/bar' cannot be created "
         "on an agent without HIERARCHICAL_ROLE capability"));
   }
@@ -1244,7 +1235,7 @@ TEST_F(CreateOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: Some resources have a resource provider "
         "and some do not"));
   }
@@ -1259,7 +1250,7 @@ TEST_F(CreateOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: The resources have multiple resource providers: "
         "provider2, provider1"));
   }
@@ -1271,7 +1262,7 @@ TEST_F(CreateOperationValidationTest, MultipleResourceProviders)
     Option<Error> error =
       operation::validate(create, Resources(), None(), capabilities);
 
-    EXPECT_NONE(error) << error->message;
+    EXPECT_NONE(error) << error.get();
   }
 }
 
@@ -1430,7 +1421,7 @@ TEST_F(DestroyOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: Some resources have a resource provider "
         "and some do not"));
   }
@@ -1444,7 +1435,7 @@ TEST_F(DestroyOperationValidationTest, MultipleResourceProviders)
 
     ASSERT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "Invalid resources: The resources have multiple resource providers: "
         "provider2, provider1"));
   }
@@ -1455,7 +1446,7 @@ TEST_F(DestroyOperationValidationTest, MultipleResourceProviders)
 
     Option<Error> error = operation::validate(destroy, volumes, {}, {});
 
-    EXPECT_NONE(error) << error->message;
+    EXPECT_NONE(error) << error.get();
   }
 }
 
@@ -1785,8 +1776,7 @@ TEST(OperationValidationTest, CreateVolume)
   error = operation::validate(createVolume);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
-      "'source' is not a RAW disk resource"));
+      stringify(error.get()), "'source' is not a RAW disk resource"));
 
   createVolume.mutable_source()->CopyFrom(disk3);
   createVolume.set_target_type(Resource::DiskInfo::Source::PATH);
@@ -1794,7 +1784,7 @@ TEST(OperationValidationTest, CreateVolume)
   error = operation::validate(createVolume);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "'source' is not managed by a resource provider"));
 
   createVolume.mutable_source()->CopyFrom(disk1);
@@ -1803,8 +1793,7 @@ TEST(OperationValidationTest, CreateVolume)
   error = operation::validate(createVolume);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
-      "'target_type' is neither MOUNT or PATH"));
+      stringify(error.get()), "'target_type' is neither MOUNT or PATH"));
 }
 
 
@@ -1833,7 +1822,7 @@ TEST(OperationValidationTest, DestroyVolume)
   error = operation::validate(destroyVolume);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "'volume' is not managed by a resource provider"));
 
   destroyVolume.mutable_volume()->CopyFrom(disk3);
@@ -1841,7 +1830,7 @@ TEST(OperationValidationTest, DestroyVolume)
   error = operation::validate(destroyVolume);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "'volume' is neither a MOUTN or PATH disk resource"));
 }
 
@@ -1871,15 +1860,14 @@ TEST(OperationValidationTest, CreateBlock)
   error = operation::validate(createBlock);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
-      "'source' is not a RAW disk resource"));
+      stringify(error.get()), "'source' is not a RAW disk resource"));
 
   createBlock.mutable_source()->CopyFrom(disk3);
 
   error = operation::validate(createBlock);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "'source' is not managed by a resource provider"));
 }
 
@@ -1909,16 +1897,14 @@ TEST(OperationValidationTest, DestroyBlock)
   error = operation::validate(destroyBlock);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
-      "'block' is not managed by a resource provider"));
+      stringify(error.get()), "'block' is not managed by a resource provider"));
 
   destroyBlock.mutable_block()->CopyFrom(disk3);
 
   error = operation::validate(destroyBlock);
   ASSERT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
-      "'block' is not a BLOCK disk resource"));
+      stringify(error.get()), "'block' is not a BLOCK disk resource"));
 }
 
 
@@ -3224,7 +3210,7 @@ TEST_F(ExecutorValidationTest, ExecutorType)
 
     EXPECT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "'ExecutorInfo.command' must be set for 'CUSTOM' executor"));
   }
 
@@ -3247,7 +3233,7 @@ TEST_F(ExecutorValidationTest, ExecutorType)
 
     EXPECT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "'ExecutorInfo.command' must not be set for 'DEFAULT' executor"));
   }
 
@@ -3261,7 +3247,7 @@ TEST_F(ExecutorValidationTest, ExecutorType)
 
     EXPECT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "'ExecutorInfo.container.type' must be 'MESOS' for "
         "'DEFAULT' executor"));
   }
@@ -3277,7 +3263,7 @@ TEST_F(ExecutorValidationTest, ExecutorType)
 
     EXPECT_SOME(error);
     EXPECT_TRUE(strings::contains(
-        error->message,
+        stringify(error.get()),
         "'ExecutorInfo.container.mesos.image' must not be set for "
         "'DEFAULT' executor"));
   }
@@ -3532,7 +3518,7 @@ TEST_F(TaskGroupValidationTest, TaskGroupAndExecutorUsesRevocableResources)
 
   EXPECT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "Task group and executor mix revocable and non-revocable resources"));
 
   // A task group with the task using non-revocable resources and executor
@@ -3551,7 +3537,7 @@ TEST_F(TaskGroupValidationTest, TaskGroupAndExecutorUsesRevocableResources)
 
   EXPECT_SOME(error);
   EXPECT_TRUE(strings::contains(
-      error->message,
+      stringify(error.get()),
       "Task group and executor mix revocable and non-revocable resources"));
 }
 

@@ -161,7 +161,8 @@ Future<Image> MetadataManagerProcess::put(
 
   Try<Nothing> status = persist();
   if (status.isError()) {
-    return Failure("Failed to save state of Docker images: " + status.error());
+    return Failure(
+        "Failed to save state of Docker images: " + stringify(status.error()));
   }
 
   VLOG(1) << "Successfully cached image '" << imageReference << "'";
@@ -221,7 +222,8 @@ Future<hashset<string>> MetadataManagerProcess::prune(
 
   Try<Nothing> status = persist();
   if (status.isError()) {
-    return Failure("Failed to save state of Docker images: " + status.error());
+    return Failure(
+        "Failed to save state of Docker images: " + stringify(status.error()));
   }
 
   return retainedLayers;
@@ -239,7 +241,7 @@ Try<Nothing> MetadataManagerProcess::persist()
   Try<Nothing> status = state::checkpoint(
       paths::getStoredImagesPath(flags.docker_store_dir), images);
   if (status.isError()) {
-    return Error("Failed to perform checkpoint: " + status.error());
+    return Error("Failed to perform checkpoint: " + stringify(status.error()));
   }
 
   return Nothing();
@@ -259,7 +261,7 @@ Future<Nothing> MetadataManagerProcess::recover()
   Result<Images> images = state::read<Images>(storedImagesPath);
   if (images.isError()) {
     return Failure("Failed to read images from '" + storedImagesPath + "' " +
-                   images.error());
+                   stringify(images.error()));
   }
 
   if (images.isNone()) {

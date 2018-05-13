@@ -73,7 +73,7 @@ public:
   {
     Try<os::Load> load = loadAverage();
     if (load.isError()) {
-      LOG(ERROR) << "Failed to fetch system load: " + load.error();
+      LOG(ERROR) << "Failed to fetch system load: " + stringify(load.error());
       return list<QoSCorrection>();
     }
 

@@ -130,7 +130,8 @@ static Future<http::Response> curl(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to exec the curl subprocess: " + s.error());
+    return Failure(
+        "Failed to exec the curl subprocess: " + stringify(s.error()));
   }
 
   return await(
@@ -195,7 +196,7 @@ static Future<http::Response> curl(
 
       if (responses.isError()) {
         return Failure(
-            "Failed to decode HTTP responses: " + responses.error() +
+            "Failed to decode HTTP responses: " + stringify(responses.error()) +
             "\n" + output.get());
       }
 
@@ -254,7 +255,8 @@ static Future<int> download(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to exec the curl subprocess: " + s.error());
+    return Failure(
+        "Failed to exec the curl subprocess: " + stringify(s.error()));
   }
 
   return await(
@@ -481,7 +483,8 @@ Try<Owned<Fetcher::Plugin>> DockerFetcherPlugin::create(const Flags& flags)
       spec::parseAuthConfig(flags.docker_config.get());
 
     if (cachedAuths.isError()) {
-      return Error("Failed to parse docker config: " + cachedAuths.error());
+      return Error(
+          "Failed to parse docker config: " + stringify(cachedAuths.error()));
     }
 
     auths = cachedAuths.get();
@@ -563,7 +566,7 @@ Future<Nothing> DockerFetcherPluginProcess::fetch(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create directory '" +
-        directory + "': " + mkdir.error());
+        directory + "': " + stringify(mkdir.error()));
   }
 
   hashmap<string, spec::Config::Auth> _auths;
@@ -574,7 +577,8 @@ Future<Nothing> DockerFetcherPluginProcess::fetch(
       spec::parseAuthConfig(data.get());
 
     if (secretAuths.isError()) {
-      return Failure("Failed to parse docker config: " + secretAuths.error());
+      return Failure(
+          "Failed to parse docker config: " + stringify(secretAuths.error()));
     }
 
     _auths = secretAuths.get();
@@ -682,7 +686,8 @@ Future<Nothing> DockerFetcherPluginProcess::__fetch(
 
   Try<spec::v2::ImageManifest> manifest = spec::v2::parse(response.body);
   if (manifest.isError()) {
-    return Failure("Failed to parse the image manifest: " + manifest.error());
+    return Failure(
+        "Failed to parse the image manifest: " + stringify(manifest.error()));
   }
 
   // Save manifest to 'directory'.
@@ -693,7 +698,7 @@ Future<Nothing> DockerFetcherPluginProcess::__fetch(
   if (write.isError()) {
     return Failure(
         "Failed to write the image manifest to "
-        "'" + directory + "': " + write.error());
+        "'" + directory + "': " + stringify(write.error()));
   }
 
   // No need to proceed if we only want manifest.
@@ -803,7 +808,7 @@ Future<http::Headers> DockerFetcherPluginProcess::getAuthHeader(
 
   if (header.isError()) {
     return Failure(
-        "Failed to get WWW-Authenticate header: " + header.error());
+        "Failed to get WWW-Authenticate header: " + stringify(header.error()));
   } else if (header.isNone()) {
     return Failure("Unexpected empty WWW-Authenticate header");
   }
@@ -857,13 +862,15 @@ Future<http::Headers> DockerFetcherPluginProcess::getAuthHeader(
 
         Try<JSON::Object> object = JSON::parse<JSON::Object>(response.body);
         if (object.isError()) {
-          return Failure("Parsing the JSON object failed: " + object.error());
+          return Failure(
+              "Parsing the JSON object failed: " + stringify(object.error()));
         }
 
         Result<JSON::String> token = object->find<JSON::String>("token");
         if (token.isError()) {
           return Failure(
-              "Finding token in JSON object failed: " + token.error());
+              "Finding token in JSON object failed: " +
+              stringify(token.error()));
         } else if (token.isNone()) {
           return Failure("Failed to find token in JSON object");
         }

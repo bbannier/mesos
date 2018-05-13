@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   }
 
   if (load.isError()) {
-    std::cerr << flags.usage(load.error()) << std::endl;
+    std::cerr << flags.usage(stringify(load.error())) << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
   Try<std::array<int_fd, 2>> pipe = os::pipe();
   if (pipe.isError()) {
     EXIT(EXIT_FAILURE) << "Failed to create pipe for signaling unblock:"
-                       << " " + pipe.error();
+                       << " " <<  pipe.error();
   }
 
   unblockFds = pipe.get();

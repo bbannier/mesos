@@ -309,7 +309,7 @@ Future<Nothing> FilesProcess::attach(
     return Failure(
         "Failed to get realpath of '" + convertedPath + "': " +
         (result.isError()
-         ? result.error()
+         ? stringify(result.error())
          : "No such file or directory"));
   }
 
@@ -317,8 +317,9 @@ Future<Nothing> FilesProcess::attach(
   Try<bool> access = os::access(result.get(), R_OK);
 
   if (access.isError() || !access.get()) {
-    return Failure("Failed to access '" + convertedPath + "': " +
-                   (access.isError() ? access.error() : "Access denied"));
+    return Failure(
+        "Failed to access '" + convertedPath + "': " +
+        (access.isError() ? stringify(access.error()) : "Access denied"));
   }
 
   // To simplify the read/browse logic, strip any trailing / from the virtual
@@ -460,7 +461,7 @@ Future<Try<list<FileInfo>, FilesError>> FilesProcess::browse(
       if (resolvedPath.isError()) {
         return FilesError(
             FilesError::Type::INVALID,
-            resolvedPath.error() + ".\n");
+            stringify(resolvedPath.error()) + ".\n");
       } else if (resolvedPath.isNone()) {
         return FilesError(FilesError::Type::NOT_FOUND);
       }
@@ -534,7 +535,8 @@ Future<http::Response> FilesProcess::__read(
     Try<off_t> result = numify<off_t>(request.url.query.get("offset").get());
 
     if (result.isError()) {
-      return BadRequest("Failed to parse offset: " + result.error() + ".\n");
+      return BadRequest(
+          "Failed to parse offset: " + stringify(result.error()) + ".\n");
     }
 
     if (result.get() < -1) {
@@ -552,7 +554,8 @@ Future<http::Response> FilesProcess::__read(
         request.url.query.get("length").get());
 
     if (result.isError()) {
-      return BadRequest("Failed to parse length: " + result.error() + ".\n");
+      return BadRequest(
+          "Failed to parse length: " + stringify(result.error()) + ".\n");
     }
 
     // TODO(tomxing): The pailer in the webui sends `length=-1` at first to
@@ -644,7 +647,8 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
   Result<string> resolvedPath = resolve(path);
 
   if (resolvedPath.isError()) {
-    return FilesError(FilesError::Type::INVALID, resolvedPath.error() + ".\n");
+    return FilesError(
+        FilesError::Type::INVALID, stringify(resolvedPath.error()) + ".\n");
   } else if (!resolvedPath.isSome()) {
     return FilesError(FilesError::Type::NOT_FOUND);
   }
@@ -713,8 +717,8 @@ Future<Try<tuple<size_t, string>, FilesError>> FilesProcess::_read(
 
   Try<Nothing> nonblock = os::nonblock(fd.get());
   if (nonblock.isError()) {
-    string error =
-        "Failed to set file descriptor nonblocking: " + nonblock.error();
+    string error = "Failed to set file descriptor nonblocking: " +
+                   stringify(nonblock.error());
     LOG(WARNING) << error;
     os::close(fd.get());
     return FilesError(FilesError::Type::UNKNOWN, error);
@@ -783,7 +787,7 @@ Future<http::Response> FilesProcess::_download(const string& path)
   Result<string> resolvedPath = resolve(path);
 
   if (resolvedPath.isError()) {
-    return BadRequest(resolvedPath.error() + ".\n");
+    return BadRequest(stringify(resolvedPath.error()) + ".\n");
   } else if (!resolvedPath.isSome()) {
     return NotFound();
   }
@@ -895,7 +899,7 @@ Result<string> FilesProcess::resolve(const string& path)
       if (realpath.isError()) {
         return Error(
             "Failed to determine canonical path of '" + path +
-            "': " + realpath.error());
+            "': " + stringify(realpath.error()));
       } else if (realpath.isNone()) {
         return None();
       }

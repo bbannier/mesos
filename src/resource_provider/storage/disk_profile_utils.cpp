@@ -52,7 +52,7 @@ Try<DiskProfileMapping> parseDiskProfileMapping(
   if (validation.isSome()) {
     return Error(
         "Fetched profile mapping failed validation with: " +
-        validation->message);
+        stringify(validation.get()));
   }
 
   return output;
@@ -152,7 +152,7 @@ Option<Error> validate(const DiskProfileMapping& mapping)
     if (selector.isSome()) {
       return Error(
           "Profile '" + entry.first + "' has no valid selector: " +
-          selector->message);
+          stringify(selector.get()));
     }
 
     if (!entry.second.has_volume_capabilities()) {
@@ -166,7 +166,7 @@ Option<Error> validate(const DiskProfileMapping& mapping)
     if (capabilities.isSome()) {
       return Error(
           "Profile '" + entry.first + "' has an invalid VolumeCapability: " +
-          capabilities->message);
+          stringify(capabilities.get()));
     }
 
     // NOTE: The `create_parameters` field is optional and needs no further

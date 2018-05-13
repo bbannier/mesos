@@ -171,7 +171,9 @@ Future<Version> Docker::version() const
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   return s->status()
@@ -222,7 +224,7 @@ Future<Version> Docker::__version(const Future<string>& output)
 
       if (version.isError()) {
         return Failure("Failed to parse docker version: " +
-                       version.error());
+                       stringify(version.error()));
       }
 
       return version;
@@ -262,7 +264,7 @@ Try<Docker::Container> Docker::Container::create(const string& output)
 {
   Try<JSON::Array> parse = JSON::parse<JSON::Array>(output);
   if (parse.isError()) {
-    return Error("Failed to parse JSON: " + parse.error());
+    return Error("Failed to parse JSON: " + stringify(parse.error()));
   }
 
   // TODO(benh): Handle the case where the short container ID was
@@ -280,7 +282,8 @@ Try<Docker::Container> Docker::Container::create(const string& output)
   if (idValue.isNone()) {
     return Error("Unable to find Id in container");
   } else if (idValue.isError()) {
-    return Error("Error finding Id in container: " + idValue.error());
+    return Error(
+        "Error finding Id in container: " + stringify(idValue.error()));
   }
 
   string id = idValue->value;
@@ -289,7 +292,8 @@ Try<Docker::Container> Docker::Container::create(const string& output)
   if (nameValue.isNone()) {
     return Error("Unable to find Name in container");
   } else if (nameValue.isError()) {
-    return Error("Error finding Name in container: " + nameValue.error());
+    return Error(
+        "Error finding Name in container: " + stringify(nameValue.error()));
   }
 
   string name = nameValue->value;
@@ -298,14 +302,15 @@ Try<Docker::Container> Docker::Container::create(const string& output)
   if (stateValue.isNone()) {
     return Error("Unable to find State in container");
   } else if (stateValue.isError()) {
-    return Error("Error finding State in container: " + stateValue.error());
+    return Error(
+        "Error finding State in container: " + stringify(stateValue.error()));
   }
 
   Result<JSON::Number> pidValue = stateValue->find<JSON::Number>("Pid");
   if (pidValue.isNone()) {
     return Error("Unable to find Pid in State");
   } else if (pidValue.isError()) {
-    return Error("Error finding Pid in State: " + pidValue.error());
+    return Error("Error finding Pid in State: " + stringify(pidValue.error()));
   }
 
   pid_t pid = pid_t(pidValue->as<int64_t>());
@@ -320,7 +325,9 @@ Try<Docker::Container> Docker::Container::create(const string& output)
   if (startedAtValue.isNone()) {
     return Error("Unable to find StartedAt in State");
   } else if (startedAtValue.isError()) {
-    return Error("Error finding StartedAt in State: " + startedAtValue.error());
+    return Error(
+        "Error finding StartedAt in State: " +
+        stringify(startedAtValue.error()));
   }
 
   bool started = startedAtValue->value != "0001-01-01T00:00:00Z";
@@ -386,7 +393,7 @@ Try<Docker::Container> Docker::Container::create(const string& output)
     } else if (ipAddressValue.isError()) {
       return Error(
         "Error finding NetworkSettings.IPAddress in container: " +
-        ipAddressValue.error());
+        stringify(ipAddressValue.error()));
     } else if (!ipAddressValue->value.empty()) {
       ipAddress = ipAddressValue->value;
     }
@@ -398,7 +405,9 @@ Try<Docker::Container> Docker::Container::create(const string& output)
     json.find<JSON::Array>("HostConfig.Devices");
 
   if (devicesArray.isError()) {
-    return Error("Failed to parse HostConfig.Devices: " + devicesArray.error());
+    return Error(
+        "Failed to parse HostConfig.Devices: " +
+        stringify(devicesArray.error()));
   }
 
   if (devicesArray.isSome()) {
@@ -441,7 +450,8 @@ Try<Docker::Container> Docker::Container::create(const string& output)
     json.find<JSON::Array>("HostConfig.Dns");
 
   if (dnsArray.isError()) {
-    return Error("Failed to parse HostConfig.Dns: " + dnsArray.error());
+    return Error(
+        "Failed to parse HostConfig.Dns: " + stringify(dnsArray.error()));
   }
 
   if (dnsArray.isSome()) {
@@ -462,7 +472,7 @@ Try<Docker::Container> Docker::Container::create(const string& output)
 
   if (dnsOptionArray.isError()) {
     return Error("Failed to parse HostConfig.DnsOptions: " +
-                 dnsOptionArray.error());
+                 stringify(dnsOptionArray.error()));
   }
 
   if (dnsOptionArray.isSome()) {
@@ -483,7 +493,7 @@ Try<Docker::Container> Docker::Container::create(const string& output)
 
   if (dnsSearchArray.isError()) {
     return Error("Failed to parse HostConfig.DnsSearch: " +
-                 dnsSearchArray.error());
+                 stringify(dnsSearchArray.error()));
   }
 
   if (dnsSearchArray.isSome()) {
@@ -519,7 +529,7 @@ Try<Docker::Image> Docker::Image::create(const JSON::Object& json)
 
   if (entrypoint.isError()) {
     return Error("Failed to find 'ContainerConfig.Entrypoint': " +
-                 entrypoint.error());
+                 stringify(entrypoint.error()));
 
   } else if (entrypoint.isNone()) {
     return Error("Unable to find 'ContainerConfig.Entrypoint'");
@@ -552,7 +562,7 @@ Try<Docker::Image> Docker::Image::create(const JSON::Object& json)
 
   if (env.isError()) {
     return Error("Failed to find 'ContainerConfig.Env': " +
-                 env.error());
+                 stringify(env.error()));
   } else if (env.isNone()) {
     return Error("Unable to find 'ContainerConfig.Env'");
   }
@@ -1147,7 +1157,9 @@ Future<Option<int>> Docker::run(
       nullptr);
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + path + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + path + "':"
+        " " + stringify(s.error()));
   }
 
   s->status().onDiscard(lambda::bind(&commandDiscarded, s.get(), cmd));
@@ -1190,7 +1202,9 @@ Future<Nothing> Docker::stop(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   return s->status()
@@ -1245,7 +1259,9 @@ Future<Nothing> Docker::kill(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   return checkError(cmd, s.get());
@@ -1270,7 +1286,9 @@ Future<Nothing> Docker::rm(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   return checkError(cmd, s.get());
@@ -1318,7 +1336,9 @@ void Docker::_inspect(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    promise->fail("Failed to create subprocess '" + cmd + "': " + s.error());
+    promise->fail(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
     return;
   }
 
@@ -1424,7 +1444,8 @@ void Docker::___inspect(
       output.get());
 
   if (container.isError()) {
-    promise->fail("Unable to create container: " + container.error());
+    promise->fail(
+        "Unable to create container: " + stringify(container.error()));
     return;
   }
 
@@ -1455,7 +1476,9 @@ Future<list<Docker::Container>> Docker::ps(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   // Start reading from stdout so writing to the pipe won't block
@@ -1626,7 +1649,9 @@ Future<Docker::Image> Docker::pull(
       nullptr);
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess '" + cmd + "': " + s.error());
+    return Failure(
+        "Failed to create subprocess '" + cmd + "':"
+        " " + stringify(s.error()));
   }
 
   // Start reading from stdout so writing to the pipe won't block
@@ -1699,7 +1724,7 @@ Future<Docker::Image> Docker::__pull(
 
     if (_home.isError()) {
       return Failure("Failed to create temporary directory for docker config"
-                     "file: " + _home.error());
+                     "file: " + stringify(_home.error()));
     }
 
     home = _home.get();
@@ -1707,7 +1732,7 @@ Future<Docker::Image> Docker::__pull(
     Result<JSON::Object> auths = config->find<JSON::Object>("auths");
     if (auths.isError()) {
       return Failure("Failed to find 'auths' in docker config file: " +
-                     auths.error());
+                     stringify(auths.error()));
     }
 
     const string path = auths.isSome()
@@ -1716,7 +1741,9 @@ Future<Docker::Image> Docker::__pull(
 
     Try<Nothing> mkdir = os::mkdir(path);
     if (mkdir.isError()) {
-      return Failure("Failed to create path '" + path + "': " + mkdir.error());
+      return Failure(
+          "Failed to create path '" + path + "':"
+          " " + stringify(mkdir.error()));
     }
 
     const string file = path::join(path, auths.isSome()
@@ -1726,7 +1753,7 @@ Future<Docker::Image> Docker::__pull(
     Try<Nothing> write = os::write(file, stringify(config.get()));
     if (write.isError()) {
       return Failure("Failed to write docker config file to '" +
-                     file + "': " + write.error());
+                     file + "': " + stringify(write.error()));
     }
   }
 
@@ -1773,7 +1800,9 @@ Future<Docker::Image> Docker::__pull(
       environment);
 
   if (s_.isError()) {
-    return Failure("Failed to execute '" + cmd + "': " + s_.error());
+    return Failure(
+        "Failed to execute '" + cmd + "':"
+        " " + stringify(s_.error()));
   }
 
   // Docker pull can run for a long time due to large images, so
@@ -1832,7 +1861,7 @@ Future<Docker::Image> Docker::____pull(
   Try<JSON::Array> parse = JSON::parse<JSON::Array>(output);
 
   if (parse.isError()) {
-    return Failure("Failed to parse JSON: " + parse.error());
+    return Failure("Failed to parse JSON: " + stringify(parse.error()));
   }
 
   JSON::Array array = parse.get();
@@ -1845,7 +1874,7 @@ Future<Docker::Image> Docker::____pull(
       Docker::Image::create(array.values.front().as<JSON::Object>());
 
     if (image.isError()) {
-      return Failure("Unable to create image: " + image.error());
+      return Failure("Unable to create image: " + stringify(image.error()));
     }
 
     return image.get();

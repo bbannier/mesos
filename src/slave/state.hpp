@@ -196,7 +196,9 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
 
   Try<Nothing> mkdir = os::mkdir(base);
   if (mkdir.isError()) {
-    return Error("Failed to create directory '" + base + "': " + mkdir.error());
+    return Error(
+        "Failed to create directory '" + base +
+        "': " + stringify(mkdir.error()));
   }
 
   // NOTE: We create the temporary file at 'base/XXXXXX' to make sure
@@ -207,7 +209,7 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
   // Consider adding a way to garbage collect them.
   Try<std::string> temp = os::mktemp(path::join(base, "XXXXXX"));
   if (temp.isError()) {
-    return Error("Failed to create temporary file: " + temp.error());
+    return Error("Failed to create temporary file: " + stringify(temp.error()));
   }
 
   // Now checkpoint the instance of T to the temporary file.
@@ -217,7 +219,7 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
     os::rm(temp.get());
 
     return Error("Failed to write temporary file '" + temp.get() +
-                 "': " + checkpoint.error());
+                 "': " + stringify(checkpoint.error()));
   }
 
   // Rename the temporary file to the path.
@@ -227,7 +229,7 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
     os::rm(temp.get());
 
     return Error("Failed to rename '" + temp.get() + "' to '" +
-                 path + "': " + rename.error());
+                 path + "': " + stringify(rename.error()));
   }
 
   return Nothing();

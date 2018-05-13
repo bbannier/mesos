@@ -202,7 +202,8 @@ Future<bool> LocalResourceProviderDaemonProcess::add(
   Try<Nothing> _save = save(path, info);
   if (_save.isError()) {
     return Failure(
-        "Failed to write config file '" + path + "': " + _save.error());
+        "Failed to write config file '" + path +
+        "': " + stringify(_save.error()));
   }
 
   providers[info.type()].put(info.name(), {path, info});
@@ -247,7 +248,8 @@ Future<bool> LocalResourceProviderDaemonProcess::update(
   Try<Nothing> _save = save(data.path, info);
   if (_save.isError()) {
     return Failure(
-        "Failed to write config file '" + data.path + "': " + _save.error());
+        "Failed to write config file '" + data.path + "':"
+        " " + stringify(_save.error()));
   }
 
   data.info = info;
@@ -290,7 +292,8 @@ Future<Nothing> LocalResourceProviderDaemonProcess::remove(
   Try<Nothing> rm = os::rm(path);
   if (rm.isError()) {
     return Failure(
-        "Failed to remove config file '" + path + "': " + rm.error());
+        "Failed to remove config file '" + path +
+        "': " + stringify(rm.error()));
   }
 
   // Removing the provider data from `providers` will cause the resource
@@ -336,19 +339,20 @@ Try<Nothing> LocalResourceProviderDaemonProcess::load(const string& path)
 {
   Try<string> read = os::read(path);
   if (read.isError()) {
-    return Error("Failed to read the config file: " + read.error());
+    return Error("Failed to read the config file: " + stringify(read.error()));
   }
 
   Try<JSON::Object> json = JSON::parse<JSON::Object>(read.get());
   if (json.isError()) {
-    return Error("Failed to parse the JSON config: " + json.error());
+    return Error("Failed to parse the JSON config: " + stringify(json.error()));
   }
 
   Try<ResourceProviderInfo> info =
     ::protobuf::parse<ResourceProviderInfo>(json.get());
 
   if (info.isError()) {
-    return Error("Not a valid resource provider config: " + info.error());
+    return Error(
+        "Not a valid resource provider config: " + stringify(info.error()));
   }
 
   if (info->has_id()) {
@@ -386,7 +390,8 @@ Try<Nothing> LocalResourceProviderDaemonProcess::save(
   Try<Nothing> mkdir = os::mkdir(stagingDir);
   if (mkdir.isError()) {
     return Error(
-        "Failed to create directory '" + stagingDir + "': " + mkdir.error());
+        "Failed to create directory '" + stagingDir +
+        "': " + stringify(mkdir.error()));
   }
 
   const string stagingPath = path::join(stagingDir, Path(path).basename());
@@ -398,7 +403,7 @@ Try<Nothing> LocalResourceProviderDaemonProcess::save(
 
     return Error(
         "Failed to write temporary file '" + stagingPath + "': " +
-        write.error());
+        stringify(write.error()));
   }
 
   Try<Nothing> rename = os::rename(stagingPath, path);
@@ -408,7 +413,7 @@ Try<Nothing> LocalResourceProviderDaemonProcess::save(
 
     return Error(
         "Failed to rename '" + stagingPath + "' to '" + path + "': " +
-        rename.error());
+        stringify(rename.error()));
   }
 
   return Nothing();
@@ -463,7 +468,7 @@ Future<Nothing> LocalResourceProviderDaemonProcess::_launch(
   if (provider.isError()) {
     return Failure(
         "Failed to create resource provider with type '" + type +
-        "' and name '" + name + "': " + provider.error());
+        "' and name '" + name + "': " + stringify(provider.error()));
   }
 
   data.provider = provider.get();
@@ -486,7 +491,7 @@ Future<Option<string>> LocalResourceProviderDaemonProcess::generateAuthToken(
     return Failure(
         "Failed to generate resource provider principal with type '" +
         info.type() + "' and name '" + info.name() + "': " +
-        principal.error());
+        stringify(principal.error()));
   }
 
   return secretGenerator->generate(principal.get())
@@ -495,7 +500,7 @@ Future<Option<string>> LocalResourceProviderDaemonProcess::generateAuthToken(
 
       if (error.isSome()) {
         return Failure(
-            "Failed to validate generated secret: " + error->message);
+            "Failed to validate generated secret: " + stringify(error.get()));
       } else if (secret.type() != Secret::VALUE) {
         return Failure(
             "Expecting generated secret to be of VALUE type instead of " +

@@ -153,7 +153,7 @@ struct Flags : public virtual LoggerFlags
 
           if (helpCommand.isError()) {
             return Error(
-                "Failed to check logrotate: " + helpCommand.error());
+                "Failed to check logrotate: " + stringify(helpCommand.error()));
           }
 
           return None();

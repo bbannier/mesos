@@ -167,7 +167,7 @@ public:
     }
 
     if (error.isSome()) {
-      return process::Failure(error->message);
+      return process::Failure(error.get());
     }
 
     if (done) {
@@ -238,7 +238,7 @@ private:
     Try<std::deque<Try<T>>> decode = decoder.decode(read.get());
 
     if (decode.isError()) {
-      fail("Decoder failure: " + decode.error());
+      fail("Decoder failure: " + stringify(decode.error()));
       return;
     }
 

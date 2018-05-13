@@ -175,14 +175,18 @@ public:
   {
     Try<Nothing> mkdir = os::mkdir(cniPluginDir);
     if (mkdir.isError()) {
-      return Error("Failed to mkdir '" + cniPluginDir + "': " + mkdir.error());
+      return Error(
+          "Failed to mkdir '" + cniPluginDir + "':"
+          " " + stringify(mkdir.error()));
     }
 
     string mockPlugin = path::join(cniPluginDir, "mockPlugin");
 
     Try<Nothing> write = os::write(mockPlugin, pluginScript);
     if (write.isError()) {
-      return Error("Failed to write '" + mockPlugin + "': " + write.error());
+      return Error(
+          "Failed to write '" + mockPlugin + "':"
+          " " + stringify(write.error()));
     }
 
     // Make sure the plugin has execution permission.
@@ -191,7 +195,9 @@ public:
         S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
 
     if (chmod.isError()) {
-      return Error("Failed to chmod '" + mockPlugin + "': " + chmod.error());
+      return Error(
+          "Failed to chmod '" + mockPlugin + "':"
+          " " + stringify(chmod.error()));
     }
 
     return Nothing();

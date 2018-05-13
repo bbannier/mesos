@@ -115,7 +115,7 @@ Try<Nothing> Benchmark::execute(int argc, char** argv)
   if (argc > 0 && argv != nullptr) {
     Try<flags::Warnings> load = flags.load(None(), argc, argv);
     if (load.isError()) {
-      return Error(flags.usage(load.error()));
+      return Error(flags.usage(stringify(load.error())));
     }
 
     if (flags.help) {
@@ -203,7 +203,8 @@ Try<Nothing> Benchmark::execute(int argc, char** argv)
   while (getline(input, line)) {
     Try<Bytes> size = Bytes::parse(strings::trim(line));
     if (size.isError()) {
-      return Error("Failed to parse the trace file: " + size.error());
+      return Error(
+          "Failed to parse the trace file: " + stringify(size.error()));
     }
 
     sizes.push_back(size.get());

@@ -99,12 +99,12 @@ Try<Isolator*> LinuxFilesystemIsolatorProcess::create(const Flags& flags)
   if (!workDir.isSome()) {
     return Error(
         "Failed to get the realpath of slave's working directory: " +
-        (workDir.isError() ? workDir.error() : "Not found"));
+        (workDir.isError() ? stringify(workDir.error()) : "Not found"));
   }
 
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Error("Failed to get mount table: " + table.error());
+    return Error("Failed to get mount table: " + stringify(table.error()));
   }
 
   // Trying to find the mount entry that contains the slave's working
@@ -180,7 +180,7 @@ Try<Isolator*> LinuxFilesystemIsolatorProcess::create(const Flags& flags)
       if (mount.isError()) {
         return Error(
             "Failed to bind mount '" + workDir.get() +
-            "' and make it a shared mount: " + mount.error());
+            "' and make it a shared mount: " + stringify(mount.error()));
       }
     } else {
       // This is the case where the working directory mount is in the
@@ -198,7 +198,7 @@ Try<Isolator*> LinuxFilesystemIsolatorProcess::create(const Flags& flags)
       if (mount.isError()) {
         return Error(
             "Failed to make '" + workDir.get() +
-            "' a shared mount: " + mount.error());
+            "' a shared mount: " + stringify(mount.error()));
       }
     }
   }
@@ -252,7 +252,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::recover(
   // Remove orphaned persistent volume mounts.
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Failure("Failed to get mount table: " + table.error());
+    return Failure("Failed to get mount table: " + stringify(table.error()));
   }
 
   list<Future<Nothing>> cleanups;
@@ -283,7 +283,8 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::recover(
     // Since we pass the same 'entry.target' to 'parseSandboxPath' and
     // 'parseSandboxPath', we should not see an error here.
     if (containerId.isError()) {
-      return Failure("Parsing sandbox path failed: " + containerId.error());
+      return Failure(
+          "Parsing sandbox path failed: " + stringify(containerId.error()));
     }
 
     if (infos.contains(containerId.get())) {
@@ -389,7 +390,7 @@ Future<Option<ContainerLaunchInfo>> LinuxFilesystemIsolatorProcess::prepare(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create sandbox mount point at '" +
-          sandbox + "': " + mkdir.error());
+          sandbox + "': " + stringify(mkdir.error()));
     }
 
     ContainerMountInfo* mount = launchInfo.add_mounts();
@@ -460,7 +461,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
     if (unmount.isError()) {
       return Failure(
           "Failed to unmount unneeded persistent volume at '" +
-          target + "': " + unmount.error());
+          target + "': " + stringify(unmount.error()));
     }
 
     // NOTE: This is a non-recursive rmdir.
@@ -468,7 +469,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
     if (rmdir.isError()) {
       return Failure(
           "Failed to remove persistent volume mount point at '" +
-          target + "': " + rmdir.error());
+          target + "': " + stringify(rmdir.error()));
     }
   }
 
@@ -535,7 +536,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
         return Failure(
             "Failed to change the ownership of the persistent volume at '" +
             source + "' with uid " + stringify(uid) +
-            " and gid " + stringify(gid) + ": " + chown.error());
+            " and gid " + stringify(gid) + ": " + stringify(chown.error()));
       }
     }
 
@@ -562,7 +563,8 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
       // volume but before it is able to delete the mount point.
       Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
       if (table.isError()) {
-        return Failure("Failed to get mount table: " + table.error());
+        return Failure(
+            "Failed to get mount table: " + stringify(table.error()));
       }
 
       // Check a particular persistent volume is mounted or not.
@@ -588,7 +590,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create persistent volume mount point at '" +
-          target + "': " + mkdir.error());
+          target + "': " + stringify(mkdir.error()));
     }
 
     LOG(INFO) << "Mounting '" << source << "' to '" << target
@@ -599,7 +601,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
     if (mount.isError()) {
       return Failure(
           "Failed to mount persistent volume from '" +
-          source + "' to '" + target + "': " + mount.error());
+          source + "' to '" + target + "': " + stringify(mount.error()));
     }
 
     // If the mount needs to be read-only, do a remount.
@@ -610,7 +612,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::update(
       if (mount.isError()) {
         return Failure(
             "Failed to remount persistent volume as read-only from '" +
-            source + "' to '" + target + "': " + mount.error());
+            source + "' to '" + target + "': " + stringify(mount.error()));
       }
     }
   }
@@ -660,7 +662,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::cleanup(
   // persistent volume mounts.
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Failure("Failed to get mount table: " + table.error());
+    return Failure("Failed to get mount table: " + stringify(table.error()));
   }
 
   vector<string> unmountErrors;
@@ -691,7 +693,7 @@ Future<Nothing> LinuxFilesystemIsolatorProcess::cleanup(
         // in the end.
         unmountErrors.push_back(
             "Failed to unmount volume '" + entry.target +
-            "': " + unmount.error());
+            "': " + stringify(unmount.error()));
       }
     }
   }

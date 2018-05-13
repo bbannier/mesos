@@ -90,7 +90,7 @@ Try<Nothing> initialize()
   Try<Nothing> open = library->open(LIBRARY_NAME);
   if (open.isError()) {
     *error = Error("Failed to open '" + stringify(LIBRARY_NAME) + "': " +
-                   open.error());
+                   stringify(open.error()));
     initialized->done();
     return error->get();
   }
@@ -113,7 +113,8 @@ Try<Nothing> initialize()
   foreachkey (const string& name, symbols) {
     Try<void*> symbol = library->loadSymbol(name);
     if (symbol.isError()) {
-      *error = Error("Failed to load symbol '" + name + "': " + symbol.error());
+      *error = Error(
+          "Failed to load symbol '" + name + "': " + stringify(symbol.error()));
       initialized->done();
       return error->get();
     }

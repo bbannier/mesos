@@ -1071,7 +1071,7 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   Result<string> user = os::user();
   ASSERT_SOME(user) << "Failed to get current user name"
-                    << (user.isError() ? ": " + user.error() : "");
+                    << (user.isError() ? ": " + stringify(user.error()) : "");
 
   const string helper = getTestHelperPath("test-helper");
 
@@ -1187,7 +1187,7 @@ TEST_F(SlaveTest, DISABLED_ROOT_RunTaskWithCommandInfoWithUser)
 
   Result<string> user = os::user();
   ASSERT_SOME(user) << "Failed to get current user name"
-                    << (user.isError() ? ": " + user.error() : "");
+                    << (user.isError() ? ": " + stringify(user.error()) : "");
   // Current user should be root.
   EXPECT_EQ("root", user.get());
 

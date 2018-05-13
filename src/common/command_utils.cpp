@@ -59,7 +59,8 @@ static Future<string> launch(
 
   if (s.isError()) {
     return Failure(
-        "Failed to execute the subprocess '" + command + "': " + s.error());
+        "Failed to execute the subprocess '" + command +
+        "': " + stringify(s.error()));
   }
 
   return await(

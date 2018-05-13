@@ -577,7 +577,7 @@ TYPED_TEST(SlaveAuthorizerTest, AuthorizeRunTaskOnAgent)
   // Get the current user.
   Result<string> user = os::user();
   ASSERT_SOME(user) << "Failed to get the current user name"
-                    << (user.isError() ? ": " + user.error() : "");
+                    << (user.isError() ? ": " + stringify(user.error()) : "");
 
   Try<Owned<cluster::Master>> master = this->StartMaster();
   ASSERT_SOME(master);

@@ -290,7 +290,7 @@ public:
   {
     Option<Error> error = validate(devolve(call));
     if (error.isSome()) {
-      drop(call, error->message);
+      drop(call, stringify(error.get()));
       return;
     }
 
@@ -706,7 +706,7 @@ protected:
     }
 
     if (event->isError()) {
-      error("Failed to de-serialize event: " + event->error());
+      error("Failed to de-serialize event: " + stringify(event->error()));
       return;
     }
 

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
   Try<flags::Warnings> load = flags.load(None(), argc, argv);
 
   if (load.isError()) {
-    cerr << flags.usage(load.error()) << endl;
+    cerr << flags.usage(stringify(load.error())) << endl;
     return EXIT_FAILURE;
   }
 

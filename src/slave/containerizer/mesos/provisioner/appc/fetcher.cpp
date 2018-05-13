@@ -95,7 +95,8 @@ static Try<URI> getUri(const string& prefix, const string& path)
   Try<http::URL> _url = http::URL::parse(rawUrl);
   if (_url.isError()) {
     return Error(
-        "Failed to parse '" + rawUrl + "' as a valid URL: " + _url.error());
+        "Failed to parse '" + rawUrl +
+        "' as a valid URL: " + stringify(_url.error()));
   }
 
   const http::URL& url = _url.get();
@@ -170,7 +171,7 @@ Future<Nothing> Fetcher::fetch(const Image::Appc& appc, const Path& directory)
   if (path.isError()) {
     return Failure(
         "Failed to get discovery path for image '" +
-        appc.name() + "': " + path.error());
+        appc.name() + "': " + stringify(path.error()));
   }
 
   // First construct a URI based on the scheme.
@@ -178,7 +179,7 @@ Future<Nothing> Fetcher::fetch(const Image::Appc& appc, const Path& directory)
   if (uri.isError()) {
     return Failure(
         "Failed to get URI for image discovery path '" +
-        path.get() + "': " + uri.error());
+        path.get() + "': " + stringify(uri.error()));
   }
 
   VLOG(1) << "Fetching image from URI '" << uri.get() << "'";
@@ -198,7 +199,7 @@ Future<Nothing> Fetcher::fetch(const Image::Appc& appc, const Path& directory)
       if (rename.isError()) {
         return Failure(
             "Failed to change extension to 'gz' for bundle '" +
-            stringify(aciBundle) + "': " + rename.error());
+            stringify(aciBundle) + "': " + stringify(rename.error()));
       }
 
       return command::decompress(_aciBundle);
@@ -213,7 +214,7 @@ Future<Nothing> Fetcher::fetch(const Image::Appc& appc, const Path& directory)
       if (mkdir.isError()) {
         return Failure(
             "Failed to create directory for untarring image '" +
-            appc.name() + "': " + mkdir.error());
+            appc.name() + "': " + stringify(mkdir.error()));
       }
 
       return command::untar(aciBundle, imagePath);
@@ -224,7 +225,7 @@ Future<Nothing> Fetcher::fetch(const Image::Appc& appc, const Path& directory)
       if (remove.isError()) {
         return Failure(
             "Failed to remove aci bundle file '" + stringify(aciBundle) +
-            "': " + remove.error());
+            "': " + stringify(remove.error()));
       }
 
       return Nothing();

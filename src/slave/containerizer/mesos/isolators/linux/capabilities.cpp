@@ -53,7 +53,8 @@ Try<Isolator*> LinuxCapabilitiesIsolatorProcess::create(const Flags& flags)
 
   Try<Capabilities> create = Capabilities::create();
   if (create.isError()) {
-    return Error("Failed to initialize capabilities: " + create.error());
+    return Error(
+        "Failed to initialize capabilities: " + stringify(create.error()));
   }
 
   if (flags.effective_capabilities.isSome() &&

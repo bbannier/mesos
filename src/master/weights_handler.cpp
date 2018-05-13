@@ -170,7 +170,7 @@ Future<http::Response> Master::WeightsHandler::update(
   if (parse.isError()) {
     return BadRequest(
         "Failed to parse update weights request JSON '" +
-        request.body + "': " + parse.error());
+        request.body + "': " + stringify(parse.error()));
   }
 
   // Create Protobuf representation of weights.
@@ -180,7 +180,7 @@ Future<http::Response> Master::WeightsHandler::update(
   if (weightInfos.isError()) {
     return BadRequest(
         "Failed to convert weights JSON array to protobuf '" +
-        request.body + "': " + weightInfos.error());
+        request.body + "': " + stringify(weightInfos.error()));
   }
 
   return _updateWeights(principal, weightInfos.get());
@@ -212,7 +212,7 @@ Future<http::Response> Master::WeightsHandler::_updateWeights(
     if (roleError.isSome()) {
       return BadRequest(
           "Failed to validate update weights request JSON: Invalid role '" +
-          role + "': " + roleError->message);
+          role + "': " + stringify(roleError.get()));
     }
 
     // Check that the role is on the role whitelist, if it exists.

@@ -584,7 +584,7 @@ Try<id::UUID> parseOperationPath(
   if (operationUuid.isError()) {
     return Error(
         "Could not decode operation UUID from string '" +
-        Path(dir).basename() + "': " + operationUuid.error());
+        Path(dir).basename() + "': " + stringify(operationUuid.error()));
   }
 
   return operationUuid.get();
@@ -752,7 +752,7 @@ Try<string> createExecutorDirectory(
   if (mkdir.isError()) {
     return Error(
         "Failed to create executor directory '" + directory + "': " +
-        mkdir.error());
+        stringify(mkdir.error()));
   }
 
   // Remove the previous "latest" symlink.
@@ -769,7 +769,7 @@ Try<string> createExecutorDirectory(
   if (symlink.isError()) {
     return Error(
         "Failed to symlink '" + directory + "' to '" + latest + "': " +
-        symlink.error());
+        stringify(symlink.error()));
   }
 
   return directory;
@@ -785,7 +785,7 @@ Try<Nothing> createSandboxDirectory(
 {
   Try<Nothing> mkdir = os::mkdir(directory);
   if (mkdir.isError()) {
-    return Error("Failed to create directory: " + mkdir.error());
+    return Error("Failed to create directory: " + stringify(mkdir.error()));
   }
 
 #ifndef __WINDOWS__
@@ -793,7 +793,7 @@ Try<Nothing> createSandboxDirectory(
   // we want to ensure that it is not accessible to "others".
   Try<Nothing> chmod = os::chmod(directory, 0750);
   if (mkdir.isError()) {
-    return Error("Failed to chmod directory: " + chmod.error());
+    return Error("Failed to chmod directory: " + stringify(chmod.error()));
   }
 
   if (user.isSome()) {
@@ -805,7 +805,7 @@ Try<Nothing> createSandboxDirectory(
 
       return Error(
           "Failed to chown directory to '" +
-          user.get() + "': " + chown.error());
+          user.get() + "': " + stringify(chown.error()));
     }
   }
 #endif // __WINDOWS__

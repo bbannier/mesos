@@ -67,7 +67,8 @@ public:
   {
     Try<Nothing> mkdir = os::mkdir(directory, true);
     if (mkdir.isError()) {
-      return Failure("Failed to create '" + directory + "': " + mkdir.error());
+      return Failure(
+          "Failed to create '" + directory + "': " + stringify(mkdir.error()));
     }
 
     const std::string imagePath = path::join(directory, name);
@@ -75,7 +76,7 @@ public:
     mkdir = os::mkdir(imagePath);
     if (mkdir.isError()) {
       return Failure("Failed to create docker test image directory '" +
-                     imagePath + "': " + mkdir.error());
+                     imagePath + "': " + stringify(mkdir.error()));
     }
 
     const std::string layerId =
@@ -100,13 +101,13 @@ public:
 
     if (write.isError()) {
       return Failure("Failed to save docker test image 'repositories': " +
-                     write.error());
+                     stringify(write.error()));
     }
 
     mkdir = os::mkdir(layerPath);
     if (mkdir.isError()) {
       return Failure("Failed to create docker test image layer '" +
-                     layerId + "': " + mkdir.error());
+                     layerId + "': " + stringify(mkdir.error()));
     }
 
     JSON::Value manifest = JSON::parse(strings::format(
@@ -171,7 +172,7 @@ public:
 
     if (write.isError()) {
       return Failure("Failed to save docker test image layer '" + layerId +
-                     "': " + write.error());
+                     "': " + stringify(write.error()));
     }
 
     const std::string rootfsDir = path::join(layerPath, "layer");
@@ -179,14 +180,14 @@ public:
     mkdir = os::mkdir(rootfsDir);
     if (mkdir.isError()) {
       return Failure("Failed to create layer rootfs directory '" +
-                     rootfsDir + "': " + mkdir.error());
+                     rootfsDir + "': " + stringify(mkdir.error()));
     }
 
     // Create one linux rootfs for the layer.
     Try<process::Owned<Rootfs>> rootfs = LinuxRootfs::create(rootfsDir);
     if (rootfs.isError()) {
       return Failure("Failed to create docker test image rootfs: " +
-                     rootfs.error());
+                     stringify(rootfs.error()));
     }
 
     Future<Nothing> tarRootfs = command::tar(
@@ -205,7 +206,7 @@ public:
     Try<Nothing> rmdir = os::rmdir(rootfsDir);
     if (rmdir.isError()) {
         return Failure("Failed to remove layer rootfs directory: " +
-                       rmdir.error());
+                       stringify(rmdir.error()));
     }
 
     write = os::write(
@@ -213,7 +214,8 @@ public:
         "1.0");
 
     if (write.isError()) {
-      return Failure("Failed to save layer version: " + write.error());
+      return Failure(
+          "Failed to save layer version: " + stringify(write.error()));
     }
 
     Future<Nothing> tarImage = command::tar(
@@ -232,7 +234,7 @@ public:
     rmdir = os::rmdir(imagePath);
     if (rmdir.isError()) {
       return Failure("Failed to remove image directory: " +
-                     rmdir.error());
+                     stringify(rmdir.error()));
     }
 
     return Nothing();

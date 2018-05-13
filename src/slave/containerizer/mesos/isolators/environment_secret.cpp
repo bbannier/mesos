@@ -87,7 +87,7 @@ Future<Option<ContainerLaunchInfo>> EnvironmentSecretIsolatorProcess::prepare(
   Option<Error> error = common::validation::validateEnvironment(
       containerConfig.command_info().environment());
   if (error.isSome()) {
-    return Failure( "Invalid environment specified: " + error->message);
+    return Failure( "Invalid environment specified: " + stringify(error.get()));
   }
 
   Environment environment;
@@ -105,7 +105,7 @@ Future<Option<ContainerLaunchInfo>> EnvironmentSecretIsolatorProcess::prepare(
     if (error.isSome()) {
       return Failure(
           "Invalid secret specified in environment '" + variable.name() +
-          "': " + error->message);
+          "': " + stringify(error.get()));
     }
 
     if (secretResolver == nullptr) {

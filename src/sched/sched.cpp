@@ -1704,7 +1704,7 @@ void MesosSchedulerDriver::initialize() {
 
   if (load.isError()) {
     status = DRIVER_ABORTED;
-    scheduler->error(this, load.error());
+    scheduler->error(this, stringify(load.error()));
     return;
   }
 
@@ -1918,7 +1918,7 @@ Status MesosSchedulerDriver::start()
       if (detector_.isError()) {
         status = DRIVER_ABORTED;
         string message = "Failed to create a master detector for '" +
-        master + "': " + detector_.error();
+        master + "': " + stringify(detector_.error());
         scheduler->error(this, message);
         return status;
       }
@@ -1933,7 +1933,7 @@ Status MesosSchedulerDriver::start()
 
     if (load.isError()) {
       status = DRIVER_ABORTED;
-      scheduler->error(this, load.error());
+      scheduler->error(this, stringify(load.error()));
       return status;
     }
 
@@ -1957,7 +1957,8 @@ Status MesosSchedulerDriver::start()
         modules::ModuleManager::load(flags.modulesDir.get());
       if (result.isError()) {
         status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
+        scheduler->error(
+            this, "Error loading modules: " + stringify(result.error()));
         return status;
       }
     }
@@ -1966,7 +1967,8 @@ Status MesosSchedulerDriver::start()
       Try<Nothing> result = modules::ModuleManager::load(flags.modules.get());
       if (result.isError()) {
         status = DRIVER_ABORTED;
-        scheduler->error(this, "Error loading modules: " + result.error());
+        scheduler->error(
+            this, "Error loading modules: " + stringify(result.error()));
         return status;
       }
     }

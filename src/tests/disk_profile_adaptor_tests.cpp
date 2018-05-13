@@ -390,9 +390,9 @@ TEST_F(UriDiskProfileAdaptorTest, ParseInvalids)
       mesos::internal::storage::parseDiskProfileMapping(examples[i]);
 
     ASSERT_ERROR(parsed) << examples[i];
-    ASSERT_EQ(0u, errors.count(parsed.error())) << parsed.error();
+    ASSERT_EQ(0u, errors.count(stringify(parsed.error()))) << parsed.error();
 
-    errors.insert(parsed.error());
+    errors.insert(stringify(parsed.error()));
   }
 }
 

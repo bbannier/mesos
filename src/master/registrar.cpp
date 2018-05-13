@@ -374,7 +374,7 @@ void RegistrarProcess::_recover(
     ::protobuf::deserialize<Registry>(recovery->value());
   if (deserialized.isError()) {
     recovered.get()->fail("Failed to recover registrar: " +
-                          deserialized.error());
+                          stringify(deserialized.error()));
     return;
   }
 
@@ -493,7 +493,8 @@ void RegistrarProcess::update()
   // Serialize updated registry.
   Try<string> serialized = ::protobuf::serialize(*updatedRegistry);
   if (serialized.isError()) {
-    string message = "Failed to update registry: " + serialized.error();
+    string message =
+      "Failed to update registry: " + stringify(serialized.error());
     fail(&operations, message);
     abort(message);
     return;

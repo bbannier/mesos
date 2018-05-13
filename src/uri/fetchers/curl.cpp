@@ -102,7 +102,7 @@ Future<Nothing> CurlFetcherPlugin::fetch(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create directory '" +
-        directory + "': " + mkdir.error());
+        directory + "': " + stringify(mkdir.error()));
   }
 
   // TODO(jieyu): Allow user to specify the name of the output file.
@@ -141,7 +141,8 @@ Future<Nothing> CurlFetcherPlugin::fetch(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to exec the curl subprocess: " + s.error());
+    return Failure(
+        "Failed to exec the curl subprocess: " + stringify(s.error()));
   }
 
   return await(

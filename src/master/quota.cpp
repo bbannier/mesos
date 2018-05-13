@@ -115,7 +115,7 @@ Option<Error> quotaInfo(const QuotaInfo& quotaInfo)
   // Check the provided role is valid.
   Option<Error> roleError = roles::validate(quotaInfo.role());
   if (roleError.isSome()) {
-    return Error("QuotaInfo with invalid role: " + roleError->message);
+    return Error("QuotaInfo with invalid role: " + stringify(roleError.get()));
   }
 
   // Disallow quota for '*' role.

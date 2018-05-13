@@ -106,7 +106,8 @@ Try<Owned<slave::Store>> Store::create(
 {
   Try<Nothing> mkdir = os::mkdir(paths::getImagesDir(flags.appc_store_dir));
   if (mkdir.isError()) {
-    return Error("Failed to create the images directory: " + mkdir.error());
+    return Error(
+        "Failed to create the images directory: " + stringify(mkdir.error()));
   }
 
   // Make sure the root path is canonical so all image paths derived
@@ -115,17 +116,17 @@ Try<Owned<slave::Store>> Store::create(
   if (!rootDir.isSome()) {
     return Error(
         "Failed to get the realpath of the store root directory: " +
-        (rootDir.isError() ? rootDir.error() : "not found"));
+        (rootDir.isError() ? stringify(rootDir.error()) : "not found"));
   }
 
   Try<Owned<Cache>> cache = Cache::create(Path(rootDir.get()));
   if (cache.isError()) {
-    return Error("Failed to create image cache: " + cache.error());
+    return Error("Failed to create image cache: " + stringify(cache.error()));
   }
 
   Try<Nothing> recover = cache.get()->recover();
   if (recover.isError()) {
-    return Error("Failed to load image cache: " + recover.error());
+    return Error("Failed to load image cache: " + stringify(recover.error()));
   }
 
   // TODO(jojy): Uri fetcher has 'shared' semantics for the
@@ -136,12 +137,14 @@ Try<Owned<slave::Store>> Store::create(
 
   Try<Owned<uri::Fetcher>> uriFetcher = uri::fetcher::create(_flags);
   if (uriFetcher.isError()) {
-    return Error("Failed to create uri fetcher: " + uriFetcher.error());
+    return Error(
+        "Failed to create uri fetcher: " + stringify(uriFetcher.error()));
   }
 
   Try<Owned<Fetcher>> fetcher = Fetcher::create(flags, uriFetcher->share());
   if (fetcher.isError()) {
-    return Error("Failed to create image fetcher: " + fetcher.error());
+    return Error(
+        "Failed to create image fetcher: " + stringify(fetcher.error()));
   }
 
   return Owned<slave::Store>(new Store(Owned<StoreProcess>(new StoreProcess(
@@ -191,7 +194,7 @@ Future<Nothing> StoreProcess::recover()
 {
   Try<Nothing> recover = cache->recover();
   if (recover.isError()) {
-    return Failure("Failed to recover cache: " + recover.error());
+    return Failure("Failed to recover cache: " + stringify(recover.error()));
   }
 
   return Nothing();
@@ -210,7 +213,8 @@ Future<ImageInfo> StoreProcess::get(const Image& image)
 
   Try<Nothing> staging = os::mkdir(stagingDir);
   if (staging.isError()) {
-    return Failure("Failed to create staging directory: " + staging.error());
+    return Failure(
+        "Failed to create staging directory: " + stringify(staging.error()));
   }
 
   return fetchImage(appc, image.cached())
@@ -224,7 +228,7 @@ Future<ImageInfo> StoreProcess::get(const Image& image)
       if (manifest.isError()) {
         return Failure(
             "Failed to get manifest for Appc image '" +
-            appc.SerializeAsString() + "': " + manifest.error());
+            appc.SerializeAsString() + "': " + stringify(manifest.error()));
       }
 
       vector<string> rootfses;
@@ -272,7 +276,7 @@ Future<string> StoreProcess::_fetchImage(const Image::Appc& appc)
   if (_tmpFetchDir.isError()) {
     return Failure(
         "Failed to create temporary fetch directory for image '" +
-        appc.name() + "': " + _tmpFetchDir.error());
+        appc.name() + "': " + stringify(_tmpFetchDir.error()));
   }
 
   const string tmpFetchDir = _tmpFetchDir.get();
@@ -283,7 +287,7 @@ Future<string> StoreProcess::_fetchImage(const Image::Appc& appc)
       if (imageIds.isError()) {
         return Failure(
             "Failed to list images under '" + tmpFetchDir +
-            "': " + imageIds.error());
+            "': " + stringify(imageIds.error()));
       }
 
       if (imageIds->size() != 1) {
@@ -304,7 +308,7 @@ Future<string> StoreProcess::_fetchImage(const Image::Appc& appc)
         if (rename.isError()) {
           return Failure(
               "Failed to rename directory '" + source +
-              "' to '" + target + "': " + rename.error());
+              "' to '" + target + "': " + stringify(rename.error()));
         }
       }
 
@@ -312,7 +316,7 @@ Future<string> StoreProcess::_fetchImage(const Image::Appc& appc)
       if (addCache.isError()) {
         return Failure(
             "Failed to add image '" + appc.name() + "' with image id '" +
-            imageId + "' to the cache: " + addCache.error());
+            imageId + "' to the cache: " + stringify(addCache.error()));
       }
 
       Try<Nothing> rmdir = os::rmdir(tmpFetchDir);
@@ -320,7 +324,7 @@ Future<string> StoreProcess::_fetchImage(const Image::Appc& appc)
         return Failure(
             "Failed to remove temporary fetch directory '" +
             tmpFetchDir + "' for image '" + appc.name() + "': " +
-            rmdir.error());
+            stringify(rmdir.error()));
       }
 
       return imageId;
@@ -351,7 +355,7 @@ Future<vector<string>> StoreProcess::fetchDependencies(
   if (manifest.isError()) {
     return Failure(
         "Failed to get dependencies for image id '" + imageId +
-        "': " + manifest.error());
+        "': " + stringify(manifest.error()));
   }
 
   vector<Image::Appc> dependencies;

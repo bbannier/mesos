@@ -450,8 +450,9 @@ protected:
         // NOTE: We only chown the sandbox directory (non-recursively).
         Try<Nothing> chown = os::chown(user.get(), os::getcwd(), false);
         if (chown.isError()) {
-          ABORT("Failed to chown sandbox to user " +
-                user.get() + ": " + chown.error());
+          ABORT(
+              "Failed to chown sandbox to user " + user.get() + ": " +
+              stringify(chown.error()));
         }
       }
     }
@@ -512,7 +513,8 @@ protected:
         {Subprocess::ChildHook::SETSID()});
 
     if (s.isError()) {
-      ABORT("Failed to launch '" + commandString + "': " + s.error());
+      ABORT(
+          "Failed to launch '" + commandString + "': " + stringify(s.error()));
     }
 
     return s->pid();
@@ -554,12 +556,12 @@ protected:
       // Get CommandInfo from a JSON string.
       Try<JSON::Object> object = JSON::parse<JSON::Object>(taskCommand.get());
       if (object.isError()) {
-        ABORT("Failed to parse JSON: " + object.error());
+        ABORT("Failed to parse JSON: " + stringify(object.error()));
       }
 
       Try<CommandInfo> parse = ::protobuf::parse<CommandInfo>(object.get());
       if (parse.isError()) {
-        ABORT("Failed to parse protobuf: " + parse.error());
+        ABORT("Failed to parse protobuf: " + stringify(parse.error()));
       }
 
       command = parse.get();
@@ -1299,7 +1301,7 @@ int main(int argc, char** argv)
   }
 
   if (load.isError()) {
-    cerr << flags.usage(load.error()) << endl;
+    cerr << flags.usage(stringify(load.error())) << endl;
     return EXIT_FAILURE;
   }
 

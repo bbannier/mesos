@@ -358,7 +358,8 @@ Status TestCSIPlugin::CreateVolume(
     if (mkdir.isError()) {
       return Status(
           grpc::INTERNAL,
-          "Failed to create volume '" + volumeInfo.id + "': " + mkdir.error());
+          "Failed to create volume '" + volumeInfo.id +
+            "': " + stringify(mkdir.error()));
     }
 
     availableCapacity -= volumeInfo.size;
@@ -403,7 +404,7 @@ Status TestCSIPlugin::DeleteVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to delete volume '" + request->volume_id() + "': " +
-        rmdir.error());
+        stringify(rmdir.error()));
   }
 
   availableCapacity -= volumeInfo.size;
@@ -637,7 +638,7 @@ Status TestCSIPlugin::NodeStageVolume(
   if (table.isError()) {
     return Status(
         grpc::INTERNAL,
-        "Failed to get mount table: " + table.error());
+        "Failed to get mount table: " + stringify(table.error()));
   }
 
   foreach (const fs::MountInfoTable::Entry& entry, table->entries) {
@@ -657,7 +658,7 @@ Status TestCSIPlugin::NodeStageVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to mount from '" + path + "' to '" +
-        request->staging_target_path() + "': " + mount.error());
+        request->staging_target_path() + "': " + stringify(mount.error()));
   }
 
   return Status::OK;
@@ -683,7 +684,7 @@ Status TestCSIPlugin::NodeUnstageVolume(
   if (table.isError()) {
     return Status(
         grpc::INTERNAL,
-        "Failed to get mount table: " + table.error());
+        "Failed to get mount table: " + stringify(table.error()));
   }
 
   bool found = false;
@@ -703,7 +704,7 @@ Status TestCSIPlugin::NodeUnstageVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to unmount '" + request->staging_target_path() +
-        "': " + unmount.error());
+        "': " + stringify(unmount.error()));
   }
 
   return Status::OK;
@@ -749,7 +750,7 @@ Status TestCSIPlugin::NodePublishVolume(
   if (table.isError()) {
     return Status(
         grpc::INTERNAL,
-        "Failed to get mount table: " + table.error());
+        "Failed to get mount table: " + stringify(table.error()));
   }
 
   bool found = false;
@@ -783,7 +784,7 @@ Status TestCSIPlugin::NodePublishVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to mount from '" + path + "' to '" +
-        request->target_path() + "': " + mount.error());
+        request->target_path() + "': " + stringify(mount.error()));
   }
 
   if (request->readonly()) {
@@ -797,7 +798,7 @@ Status TestCSIPlugin::NodePublishVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to mount '" + request->target_path() +
-        "' as read only: " + mount.error());
+        "' as read only: " + stringify(mount.error()));
   }
 
   return Status::OK;
@@ -821,7 +822,7 @@ Status TestCSIPlugin::NodeUnpublishVolume(
   if (table.isError()) {
     return Status(
         grpc::INTERNAL,
-        "Failed to get mount table: " + table.error());
+        "Failed to get mount table: " + stringify(table.error()));
   }
 
   bool found = false;
@@ -841,7 +842,7 @@ Status TestCSIPlugin::NodeUnpublishVolume(
     return Status(
         grpc::INTERNAL,
         "Failed to unmount '" + request->target_path() +
-        "': " + unmount.error());
+        "': " + stringify(unmount.error()));
   }
 
   return Status::OK;
@@ -896,7 +897,7 @@ Try<TestCSIPlugin::VolumeInfo> TestCSIPlugin::parseVolumePath(
 
   Try<Bytes> bytes = Bytes::parse(bytesString);
   if (bytes.isError()) {
-    return Error("Failed to parse bytes: " + bytes.error());
+    return Error("Failed to parse bytes: " + stringify(bytes.error()));
   }
 
   VolumeInfo volumeInfo;
@@ -918,7 +919,7 @@ int main(int argc, char** argv)
   }
 
   if (load.isError()) {
-    cerr << flags.usage(load.error()) << endl;
+    cerr << flags.usage(stringify(load.error())) << endl;
     return EXIT_FAILURE;
   }
 
@@ -963,7 +964,7 @@ int main(int argc, char** argv)
 
       if (error.isSome()) {
         cerr << "Failed to parse item '" << token << "' in 'volumes' flag: "
-             << error->message;
+             << error.get();
         return EXIT_FAILURE;
       }
     }

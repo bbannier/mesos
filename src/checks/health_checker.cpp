@@ -365,7 +365,8 @@ Option<Error> healthCheck(const HealthCheck& healthCheck)
         common::validation::validateCommandInfo(command);
       if (error.isSome()) {
         return Error(
-            "Health check's `CommandInfo` is invalid: " + error->message);
+            "Health check's `CommandInfo` is invalid: " +
+            stringify(error.get()));
       }
 
       // TODO(alexr): Make sure irrelevant fields, e.g., `uris` are not set.

@@ -47,7 +47,7 @@ Try<QoSController*> QoSController::create(const Option<string>& type)
   if (module.isError()) {
     return Error(
         "Failed to create QoS Controller module '" + type.get() +
-        "': " + module.error());
+        "': " + stringify(module.error()));
   }
 
   return module.get();

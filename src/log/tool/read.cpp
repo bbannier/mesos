@@ -72,7 +72,7 @@ Try<Nothing> Read::execute(int argc, char** argv)
   if (argc > 0 && argv != nullptr) {
     Try<flags::Warnings> load = flags.load(None(), argc, argv);
     if (load.isError()) {
-      return Error(flags.usage(load.error()));
+      return Error(flags.usage(stringify(load.error())));
     }
 
     if (flags.help) {

@@ -375,7 +375,7 @@ void GroupProcess::connected(int64_t sessionId, bool reconnect)
 
   if (synced.isError()) {
     // Non-retryable error. Abort.
-    abort(synced.error());
+    abort(stringify(synced.error()));
   } else if (!synced.get()) {
     // Retryable error.
     if (!retrying) {
@@ -567,7 +567,7 @@ void GroupProcess::updated(int64_t sessionId, const string& path)
   Try<bool> cached = cache(); // Update cache (will invalidate first).
 
   if (cached.isError()) {
-    abort(cached.error()); // Cancel everything pending.
+    abort(stringify(cached.error())); // Cancel everything pending.
   } else if (!cached.get()) {
     CHECK_NONE(memberships);
 
@@ -861,7 +861,7 @@ Try<bool> GroupProcess::sync()
     if (membership.isNone()) {
       return false; // Try again later.
     } else if (membership.isError()) {
-      join->promise.fail(membership.error());
+      join->promise.fail(stringify(membership.error()));
     } else {
       join->promise.set(membership.get());
     }
@@ -876,7 +876,7 @@ Try<bool> GroupProcess::sync()
     if (cancellation.isNone()) {
       return false; // Try again later.
     } else if (cancellation.isError()) {
-      cancel->promise.fail(cancellation.error());
+      cancel->promise.fail(stringify(cancellation.error()));
     } else {
       cancel->promise.set(cancellation.get());
     }
@@ -892,7 +892,7 @@ Try<bool> GroupProcess::sync()
     if (result.isNone()) {
       return false; // Try again later.
     } else if (result.isError()) {
-      data->promise.fail(result.error());
+      data->promise.fail(stringify(result.error()));
     } else {
       data->promise.set(result.get());
     }
@@ -943,7 +943,7 @@ void GroupProcess::retry(const Duration& duration)
 
   if (synced.isError()) {
     // Non-retryable error. Abort.
-    abort(synced.error());
+    abort(stringify(synced.error()));
   } else if (!synced.get()) {
     // Backoff and keep retrying.
     retrying = true;

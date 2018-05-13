@@ -119,7 +119,8 @@ Try<Message> deserialize(
     case ContentType::JSON: {
       Try<JSON::Value> value = JSON::parse(body);
       if (value.isError()) {
-        return Error("Failed to parse body into JSON: " + value.error());
+        return Error(
+            "Failed to parse body into JSON: " + stringify(value.error()));
       }
 
       return ::protobuf::parse<Message>(value.get());

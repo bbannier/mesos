@@ -260,7 +260,7 @@ int main(int argc, char** argv)
   Try<flags::Warnings> load = flags.load("MESOS_EXAMPLE_", argc, argv);
 
   if (load.isError()) {
-    std::cerr << flags.usage(load.error()) << std::endl;
+    std::cerr << flags.usage(stringify(load.error())) << std::endl;
     return EXIT_FAILURE;
   }
 

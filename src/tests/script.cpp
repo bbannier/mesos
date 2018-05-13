@@ -64,9 +64,9 @@ void execute(const string& script)
   Result<string> path = os::realpath(getTestScriptPath(script));
 
   if (!path.isSome()) {
-    FAIL() << "Failed to locate script "
-           << script << ": "
-           << (path.isError() ? path.error() : "No such file or directory");
+    FAIL() << "Failed to locate script " << script << ": "
+           << (path.isError() ? stringify(path.error())
+                              : "No such file or directory");
   }
 
   // Fork a process to change directory and run the test.

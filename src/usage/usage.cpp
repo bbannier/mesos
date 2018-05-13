@@ -37,7 +37,7 @@ Try<ResourceStatistics> usage(pid_t pid, bool mem, bool cpus)
   Try<os::ProcessTree> pstree = os::pstree(pid);
 
   if (pstree.isError()) {
-    return Error("Failed to get usage: " + pstree.error());
+    return Error("Failed to get usage: " + stringify(pstree.error()));
   }
 
   ResourceStatistics statistics;

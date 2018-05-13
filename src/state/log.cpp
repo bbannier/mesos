@@ -345,7 +345,8 @@ Future<Nothing> LogStorageProcess::apply(const list<Log::Entry>& entries)
           Try<Snapshot> patched = snapshot->patch(operation.diff());
 
           if (patched.isError()) {
-            return Failure("Failed to apply the diff: " + patched.error());
+            return Failure(
+                "Failed to apply the diff: " + stringify(patched.error()));
           }
 
           // Replace the snapshot with the patched snapshot.
@@ -501,7 +502,7 @@ Future<bool> LogStorageProcess::__set(
 
     if (diff.isError()) {
       // TODO(benh): Fallback and try and write a whole snapshot?
-      return Failure("Failed to construct diff: " + diff.error());
+      return Failure("Failed to construct diff: " + stringify(diff.error()));
     }
 
     VLOG(1) << "Created an SVN diff in " << elapsed

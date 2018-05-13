@@ -105,7 +105,8 @@ Try<Isolator*> DockerVolumeIsolatorProcess::create(const Flags& flags)
   Try<Owned<DriverClient>> client = DriverClient::create(dvdcli.get());
   if (client.isError()) {
     return Error(
-        "Unable to create docker volume driver client: " + client.error());
+        "Unable to create docker volume driver client: " +
+        stringify(client.error()));
   }
 
   Try<Isolator*> isolator =
@@ -130,15 +131,17 @@ Try<Isolator*> DockerVolumeIsolatorProcess::_create(
   if (mkdir.isError()) {
     return Error(
         "Failed to create docker volume information root directory at '" +
-        flags.docker_volume_checkpoint_dir + "': " + mkdir.error());
+        flags.docker_volume_checkpoint_dir + "': " + stringify(mkdir.error()));
   }
 
   Result<string> rootDir = os::realpath(flags.docker_volume_checkpoint_dir);
   if (!rootDir.isSome()) {
     return Error(
         "Failed to determine canonical path of docker volume information root "
-        "directory at '" + flags.docker_volume_checkpoint_dir + "': " +
-        (rootDir.isError() ? rootDir.error() : "No such file or directory"));
+        "directory at '" +
+        flags.docker_volume_checkpoint_dir + "': " +
+        (rootDir.isError() ? stringify(rootDir.error())
+                           : "No such file or directory"));
   }
 
   VLOG(1) << "Initialized the docker volume information root directory at '"
@@ -172,7 +175,7 @@ Future<Nothing> DockerVolumeIsolatorProcess::recover(
     if (recover.isError()) {
       return Failure(
           "Failed to recover docker volumes for container " +
-          stringify(containerId) + ": " + recover.error());
+          stringify(containerId) + ": " + stringify(recover.error()));
     }
   }
 
@@ -184,7 +187,7 @@ Future<Nothing> DockerVolumeIsolatorProcess::recover(
     if (recover.isError()) {
       return Failure(
           "Failed to recover docker volumes for orphan container " +
-          stringify(containerId) + ": " + recover.error());
+          stringify(containerId) + ": " + stringify(recover.error()));
     }
   }
 
@@ -194,7 +197,7 @@ Future<Nothing> DockerVolumeIsolatorProcess::recover(
   if (entries.isError()) {
     return Failure(
         "Unable to list docker volume checkpoint directory '" +
-        rootDir + "': " + entries.error());
+        rootDir + "': " + stringify(entries.error()));
   }
 
   foreach (const string& entry, entries.get()) {
@@ -228,7 +231,7 @@ Future<Nothing> DockerVolumeIsolatorProcess::recover(
     if (recover.isError()) {
       return Failure(
           "Failed to recover docker volumes for orphan container " +
-          stringify(containerId) + ": " + recover.error());
+          stringify(containerId) + ": " + stringify(recover.error()));
     }
 
     LOG(INFO) << "Cleanup volumes for unknown orphaned "
@@ -276,17 +279,17 @@ Try<Nothing> DockerVolumeIsolatorProcess::_recover(
   if (read.isError()) {
     return Error(
         "Failed to read docker volumes checkpoint file '" +
-        volumesPath + "': " + read.error());
+        volumesPath + "': " + stringify(read.error()));
   }
 
   Try<JSON::Object> json = JSON::parse<JSON::Object>(read.get());
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<DockerVolumes> parse = ::protobuf::parse<DockerVolumes>(json.get());
   if (parse.isError()) {
-    return Error("Protobuf parse failed: " + parse.error());
+    return Error("Protobuf parse failed: " + stringify(parse.error()));
   }
 
   hashset<DockerVolume> volumes;
@@ -403,7 +406,7 @@ Future<Option<ContainerLaunchInfo>> DockerVolumeIsolatorProcess::prepare(
         if (mkdir.isError()) {
           return Failure(
               "Failed to create the target of the mount at '" +
-              target + "': " + mkdir.error());
+              target + "': " + stringify(mkdir.error()));
         }
       } else {
         target = _volume.container_path();
@@ -435,7 +438,7 @@ Future<Option<ContainerLaunchInfo>> DockerVolumeIsolatorProcess::prepare(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create the target of the mount at '" +
-            mountPoint + "': " + mkdir.error());
+            mountPoint + "': " + stringify(mkdir.error()));
       }
     }
 
@@ -463,7 +466,7 @@ Future<Option<ContainerLaunchInfo>> DockerVolumeIsolatorProcess::prepare(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create the container directory at '" +
-        containerDir + "': " + mkdir.error());
+        containerDir + "': " + stringify(mkdir.error()));
   }
 
   // Create DockerVolumes protobuf message to checkpoint.
@@ -482,7 +485,7 @@ Future<Option<ContainerLaunchInfo>> DockerVolumeIsolatorProcess::prepare(
   if (checkpoint.isError()) {
     return Failure(
         "Failed to checkpoint docker volumes at '" +
-        volumesPath + "': " + checkpoint.error());
+        volumesPath + "': " + stringify(checkpoint.error()));
   }
 
   VLOG(1) << "Successfully created checkpoint at '" << volumesPath << "'";
@@ -637,7 +640,7 @@ Future<Nothing> DockerVolumeIsolatorProcess::_cleanup(
   if (rmdir.isError()) {
     return Failure(
         "Failed to remove the checkpoint directory at '" +
-        containerDir + "': " + rmdir.error());
+        containerDir + "': " + stringify(rmdir.error()));
   }
 
   LOG(INFO) << "Removed the checkpoint directory at '" << containerDir

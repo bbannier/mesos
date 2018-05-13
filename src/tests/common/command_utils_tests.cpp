@@ -53,13 +53,15 @@ protected:
     if (!os::exists(testFileDir)) {
       Try<Nothing> mkdir = os::mkdir(testFileDir, true);
       if (mkdir.isError()) {
-        return Error("Failed to create test directory: " + mkdir.error());
+        return Error(
+            "Failed to create test directory: " + stringify(mkdir.error()));
       }
     }
 
     Try<Nothing> write = os::write(testFile, "test");
     if (write.isError()) {
-      return Error("Failed to create to test file: " + write.error());
+      return Error(
+          "Failed to create to test file: " + stringify(write.error()));
     }
 
     return Nothing();

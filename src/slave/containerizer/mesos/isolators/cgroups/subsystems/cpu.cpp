@@ -46,7 +46,7 @@ Try<Owned<SubsystemProcess>> CpuSubsystemProcess::create(
     if (exists.isError()) {
       return Error(
           "Failed to check the existence of 'cpu.cfs_quota_us': " +
-          exists.error());
+          stringify(exists.error()));
     } else if (!exists.get()) {
       return Error(
           "Failed to find 'cpu.cfs_quota_us'. Your kernel might be "
@@ -95,7 +95,8 @@ Future<Nothing> CpuSubsystemProcess::update(
   Try<Nothing> write = cgroups::cpu::shares(hierarchy, cgroup, shares);
 
   if (write.isError()) {
-    return Failure("Failed to update 'cpu.shares': " + write.error());
+    return Failure(
+        "Failed to update 'cpu.shares': " + stringify(write.error()));
   }
 
   LOG(INFO) << "Updated 'cpu.shares' to " << shares
@@ -107,7 +108,8 @@ Future<Nothing> CpuSubsystemProcess::update(
     write = cgroups::cpu::cfs_period_us(hierarchy, cgroup, CPU_CFS_PERIOD);
 
     if (write.isError()) {
-      return Failure("Failed to update 'cpu.cfs_period_us': " + write.error());
+      return Failure(
+          "Failed to update 'cpu.cfs_period_us': " + stringify(write.error()));
     }
 
     Duration quota = std::max(CPU_CFS_PERIOD * cpus, MIN_CPU_CFS_QUOTA);
@@ -115,7 +117,8 @@ Future<Nothing> CpuSubsystemProcess::update(
     write = cgroups::cpu::cfs_quota_us(hierarchy, cgroup, quota);
 
     if (write.isError()) {
-      return Failure("Failed to update 'cpu.cfs_quota_us': " + write.error());
+      return Failure(
+          "Failed to update 'cpu.cfs_quota_us': " + stringify(write.error()));
     }
 
     LOG(INFO) << "Updated 'cpu.cfs_period_us' to " << CPU_CFS_PERIOD
@@ -142,7 +145,7 @@ Future<ResourceStatistics> CpuSubsystemProcess::usage(
         "cpu.stat");
 
     if (stat.isError()) {
-      return Failure("Failed to read 'cpu.stat': " + stat.error());
+      return Failure("Failed to read 'cpu.stat': " + stringify(stat.error()));
     }
 
     Option<uint64_t> nr_periods = stat->get("nr_periods");

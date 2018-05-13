@@ -129,7 +129,8 @@ Try<Isolator*> NetworkCniIsolatorProcess::create(const Flags& flags)
       flags.network_cni_plugins_dir.get());
 
   if (networkConfigs.isError()) {
-    return Error("Unable to load CNI config: " + networkConfigs.error());
+    return Error(
+        "Unable to load CNI config: " + stringify(networkConfigs.error()));
   }
 
   // Create the CNI network information root directory if it does not exist.
@@ -137,20 +138,22 @@ Try<Isolator*> NetworkCniIsolatorProcess::create(const Flags& flags)
   if (mkdir.isError()) {
     return Error(
         "Failed to create CNI network information root directory at '" +
-        string(paths::ROOT_DIR) + "': " + mkdir.error());
+        string(paths::ROOT_DIR) + "': " + stringify(mkdir.error()));
   }
 
   Result<string> rootDir = os::realpath(paths::ROOT_DIR);
   if (!rootDir.isSome()) {
     return Error(
         "Failed to determine canonical path of CNI network information root"
-        " directory '" + string(paths::ROOT_DIR) + "': " +
-        (rootDir.isError() ? rootDir.error() : "No such file or directory"));
+        " directory '" +
+        string(paths::ROOT_DIR) + "': " +
+        (rootDir.isError() ? stringify(rootDir.error())
+                           : "No such file or directory"));
   }
 
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Error("Failed to get mount table: " + table.error());
+    return Error("Failed to get mount table: " + stringify(table.error()));
   }
 
   // Trying to find the mount entry that contains the CNI network
@@ -229,7 +232,7 @@ Try<Isolator*> NetworkCniIsolatorProcess::create(const Flags& flags)
       if (mount.isError()) {
         return Error(
             "Failed to bind mount '" + rootDir.get() +
-            "' and make it a shared mount: " + mount.error());
+            "' and make it a shared mount: " + stringify(mount.error()));
       }
     } else {
       // This is the case where the CNI network information root
@@ -248,7 +251,7 @@ Try<Isolator*> NetworkCniIsolatorProcess::create(const Flags& flags)
       if (mount.isError()) {
         return Error(
             "Failed to make '" + rootDir.get() +
-            "' a shared mount: " + mount.error());
+            "' a shared mount: " + stringify(mount.error()));
       }
     }
   }
@@ -294,7 +297,7 @@ Try<hashmap<string, string>> NetworkCniIsolatorProcess::loadNetworkConfigs(
   if (entries.isError()) {
     return Error(
         "Unable to list the CNI network configuration directory '" +
-        configDir + "': " + entries.error());
+        configDir + "': " + stringify(entries.error()));
   }
 
   foreach (const string& entry, entries.get()) {
@@ -400,7 +403,7 @@ Future<Nothing> NetworkCniIsolatorProcess::recover(
   if (entries.isError()) {
     return Failure(
         "Unable to list CNI network information root directory '" +
-        rootDir.get() + "': " + entries.error());
+        rootDir.get() + "': " + stringify(entries.error()));
   }
 
   foreach (const string& entry, entries.get()) {
@@ -416,7 +419,7 @@ Future<Nothing> NetworkCniIsolatorProcess::recover(
       if (recover.isError()) {
         return Failure(
             "Failed to recover CNI network information for the container " +
-            stringify(containerId) + ": " + recover.error());
+            stringify(containerId) + ": " + stringify(recover.error()));
       }
     } else {
       // Recover CNI network information for orphan container.
@@ -424,7 +427,8 @@ Future<Nothing> NetworkCniIsolatorProcess::recover(
       if (recover.isError()) {
         return Failure(
             "Failed to recover CNI network information for orphaned the "
-            "container " + stringify(containerId) + ": " + recover.error());
+            "container " + stringify(containerId) + ":"
+            " " + stringify(recover.error()));
       }
     }
 
@@ -473,7 +477,8 @@ Try<Nothing> NetworkCniIsolatorProcess::_recover(
     paths::getNetworkNames(rootDir.get(), containerId);
 
   if (networkNames.isError()) {
-    return Error("Failed to list CNI network names: " + networkNames.error());
+    return Error(
+        "Failed to list CNI network names: " + stringify(networkNames.error()));
   }
 
   hashmap<string, ContainerNetwork> containerNetworks;
@@ -486,7 +491,7 @@ Try<Nothing> NetworkCniIsolatorProcess::_recover(
     if (interfaces.isError()) {
       return Error(
           "Failed to list interfaces for network '" + networkName +
-          "': " + interfaces.error());
+          "': " + stringify(interfaces.error()));
     }
 
     // It's likely that the slave crashes right after removing the interface
@@ -543,14 +548,14 @@ Try<Nothing> NetworkCniIsolatorProcess::_recover(
     if (read.isError()) {
       return Error(
           "Failed to read CNI network information file '" +
-          networkInfoPath + "': " + read.error());
+          networkInfoPath + "': " + stringify(read.error()));
     }
 
     Try<spec::NetworkInfo> parse = spec::parseNetworkInfo(read.get());
     if (parse.isError()) {
       return Error(
           "Failed to parse CNI network information file '" +
-          networkInfoPath + "': " + parse.error());
+          networkInfoPath + "': " + stringify(parse.error()));
     }
 
     containerNetwork.cniNetworkInfo = parse.get();
@@ -910,7 +915,7 @@ Future<Nothing> NetworkCniIsolatorProcess::isolate(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create the container directory at '" +
-        containerDir + "': " + mkdir.error());
+        containerDir + "': " + stringify(mkdir.error()));
   }
 
   // Bind mount the network namespace handle of the process 'pid' to
@@ -921,14 +926,15 @@ Future<Nothing> NetworkCniIsolatorProcess::isolate(
 
   Try<Nothing> touch = os::touch(target);
   if (touch.isError()) {
-    return Failure("Failed to create the bind mount point: " + touch.error());
+    return Failure(
+        "Failed to create the bind mount point: " + stringify(touch.error()));
   }
 
   Try<Nothing> mount = fs::mount(source, target, None(), MS_BIND, nullptr);
   if (mount.isError()) {
     return Failure(
         "Failed to mount the network namespace handle from '" +
-        source + "' to '" + target + "': " + mount.error());
+        source + "' to '" + target + "': " + stringify(mount.error()));
   }
 
   LOG(INFO) << "Bind mounted '" << source << "' to '" << target
@@ -998,7 +1004,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_isolate(
   if (write.isError()) {
     return Failure(
         "Failed to write the hostname to '" + hostnamePath +
-        "': " + write.error());
+        "': " + stringify(write.error()));
   }
 
   // Update the `hosts` file.
@@ -1022,7 +1028,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_isolate(
         return Failure(
             "Unable to parse the IP address " +
             network.cniNetworkInfo->ip4().ip() +
-            " for the container: " + ip.error());
+            " for the container: " + stringify(ip.error()));
       }
 
       hosts << ip->address() << " " << hostname << endl;
@@ -1034,7 +1040,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_isolate(
   if (write.isError()) {
     return Failure(
         "Failed to write the 'hosts' file at '" +
-        hostsPath + "': " + write.error());
+        hostsPath + "': " + stringify(write.error()));
   }
 
   cni::spec::DNS dns;
@@ -1081,7 +1087,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_isolate(
     if (write.isError()) {
       return Failure(
           "Failed to write 'resolv.conf' file at '" +
-          resolvPath + "': " + write.error());
+          resolvPath + "': " + stringify(write.error()));
     }
   }
 
@@ -1120,7 +1126,8 @@ Future<Nothing> NetworkCniIsolatorProcess::__isolate(
 
   if (s.isError()) {
     return Failure(
-        "Failed to execute the setup helper subprocess: " + s.error());
+        "Failed to execute the setup helper subprocess: " +
+        stringify(s.error()));
   }
 
   return await(s->status(), io::read(s->err().get()))
@@ -1167,7 +1174,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
   if (networkConfigJSON.isError()) {
     return Failure(
         "Could not get valid CNI configuration for network '" + networkName +
-        "': " + networkConfigJSON.error());
+        "': " + stringify(networkConfigJSON.error()));
   }
 
   const ContainerNetwork& containerNetwork =
@@ -1184,7 +1191,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
     return Failure(
         "Failed to create interface directory for the interface '" +
         containerNetwork.ifName + "' of the network '" +
-        networkName + "': "+ mkdir.error());
+        networkName + "': "+ stringify(mkdir.error()));
   }
 
   // Prepare environment variables for CNI plugin.
@@ -1214,7 +1221,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
   if (_args.isError()) {
     return Failure(
         "Invalid 'args' found in CNI network configuration file '" +
-        networkConfigs[networkName] + "': " + _args.error());
+        networkConfigs[networkName] + "': " + stringify(_args.error()));
   }
 
   JSON::Object args = _args.isSome() ? _args.get() : JSON::Object();
@@ -1244,7 +1251,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
         "Could not find the CNI plugin to use for network '" +
         networkName + "' with CNI configuration '" +
         networkConfigs[networkName] +
-        (_plugin.isNone() ? "'" : ("': " + _plugin.error())));
+        (_plugin.isNone() ? "'" : ("': " + stringify(_plugin.error()))));
   }
 
   Option<string> plugin = os::which(
@@ -1271,7 +1278,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
   if (write.isError()) {
     return Failure(
         "Failed to checkpoint the CNI network configuration '" +
-        stringify(networkConfigJSON.get()) + "': " + write.error());
+        stringify(networkConfigJSON.get()) + "': " + stringify(write.error()));
   }
 
   VLOG(1) << "Invoking CNI plugin '" << plugin.get()
@@ -1292,7 +1299,7 @@ Future<Nothing> NetworkCniIsolatorProcess::attach(
   if (s.isError()) {
     return Failure(
         "Failed to execute the CNI plugin '" +
-        plugin.get() + "': " + s.error());
+        plugin.get() + "': " + stringify(s.error()));
   }
 
   return await(s->status(), io::read(s->out().get()), io::read(s->err().get()))
@@ -1358,7 +1365,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_attach(
   if (parse.isError()) {
     return Failure(
         "Failed to parse the output of the CNI plugin '" +
-        plugin + "': " + parse.error());
+        plugin + "': " + stringify(parse.error()));
   }
 
   if (parse->has_ip4()) {
@@ -1390,7 +1397,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_attach(
   if (write.isError()) {
     return Failure(
         "Failed to checkpoint the output of CNI plugin '" +
-        output.get() + "': " + write.error());
+        output.get() + "': " + stringify(write.error()));
   }
 
   containerNetwork.cniNetworkInfo = parse.get();
@@ -1444,7 +1451,7 @@ Future<ContainerStatus> NetworkCniIsolatorProcess::status(
         return Failure(
             "Unable to parse the IP address " +
             containerNetwork.cniNetworkInfo->ip4().ip() +
-            " for the container: " + ip.error());
+            " for the container: " + stringify(ip.error()));
       }
 
       mesos::NetworkInfo::IPAddress* ipAddress =
@@ -1540,7 +1547,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_cleanup(
     if (unmount.isError()) {
       return Failure(
           "Failed to unmount the network namespace handle '" +
-          target + "': " + unmount.error());
+          target + "': " + stringify(unmount.error()));
     }
 
     LOG(INFO) << "Unmounted the network namespace handle '"
@@ -1551,7 +1558,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_cleanup(
   if (rmdir.isError()) {
     return Failure(
         "Failed to remove the container directory '" +
-        containerDir + "': " + rmdir.error());
+        containerDir + "': " + stringify(rmdir.error()));
   }
 
   LOG(INFO) << "Removed the container directory '" << containerDir << "'";
@@ -1605,7 +1612,7 @@ Future<Nothing> NetworkCniIsolatorProcess::detach(
   if (networkConfigJSON.isError()) {
     return Failure(
         "Failed to parse CNI network configuration file: '" +
-        networkConfigPath + "': " + networkConfigJSON.error());
+        networkConfigPath + "': " + stringify(networkConfigJSON.error()));
   }
 
   Result<JSON::String> _plugin = networkConfigJSON->at<JSON::String>("type");
@@ -1613,7 +1620,7 @@ Future<Nothing> NetworkCniIsolatorProcess::detach(
     return Failure(
         "Could not find the CNI plugin to use for network " +
         networkName + " with CNI configuration '" + networkConfigPath +
-        (_plugin.isNone() ? "'" : ("': " + _plugin.error())));
+        (_plugin.isNone() ? "'" : ("': " + stringify(_plugin.error()))));
   }
 
   // Invoke the CNI plugin.
@@ -1648,7 +1655,7 @@ Future<Nothing> NetworkCniIsolatorProcess::detach(
   if (s.isError()) {
     return Failure(
         "Failed to execute the CNI plugin '" + plugin.get() +
-        "': " + s.error());
+        "': " + stringify(s.error()));
   }
 
   return await(
@@ -1698,7 +1705,7 @@ Future<Nothing> NetworkCniIsolatorProcess::_detach(
     if (rmdir.isError()) {
       return Failure(
           "Failed to remove interface directory '" +
-          ifDir + "': " + rmdir.error());
+          ifDir + "': " + stringify(rmdir.error()));
     }
 
     return Nothing();
@@ -1735,14 +1742,14 @@ Try<JSON::Object> NetworkCniIsolatorProcess::getNetworkConfigJSON(
   if (read.isError()) {
     return Error(
         "Failed to read CNI network configuration file: '" +
-        path + "': " + read.error());
+        path + "': " + stringify(read.error()));
   }
 
   Try<JSON::Object> parse = JSON::parse<JSON::Object>(read.get());
   if (parse.isError()) {
     return Error(
         "Failed to parse CNI network configuration file: '" +
-        path + "': " + parse.error());
+        path + "': " + stringify(parse.error()));
   }
 
   Result<JSON::String> name = parse->at<JSON::String>("name");
@@ -1750,7 +1757,7 @@ Try<JSON::Object> NetworkCniIsolatorProcess::getNetworkConfigJSON(
     return Error(
         "Cannot determine the 'name' of the CNI network for this "
         "configuration " +
-        (name.isNone() ? "'" : ("': " + name.error())));
+        (name.isNone() ? "'" : ("': " + stringify(name.error()))));
   }
 
   // Verify the configuration is for this network
@@ -1795,7 +1802,7 @@ Try<JSON::Object> NetworkCniIsolatorProcess::getNetworkConfigJSON(
       return Error(
           "Encountered error while loading CNI config during "
           "a cache-miss for CNI network '" + network + "': " +
-          _networkConfigs.error());
+          stringify(_networkConfigs.error()));
   }
 
   networkConfigs = _networkConfigs.get();

@@ -130,7 +130,8 @@ Try<Launcher*> LinuxLauncher::create(const Flags& flags)
 
   if (freezerHierarchy.isError()) {
     return Error(
-        "Failed to create Linux launcher: " + freezerHierarchy.error());
+        "Failed to create Linux launcher: " +
+        stringify(freezerHierarchy.error()));
   }
 
   // Ensure that no other subsystem is attached to the freezer hierarchy.
@@ -173,7 +174,7 @@ Try<Launcher*> LinuxLauncher::create(const Flags& flags)
       return Error(
           "Failed to check the existence of cgroup root '" +
           flags.cgroups_root + "' under systemd hierarchy '" +
-          systemdHierarchy.get() + "': " + exists.error());
+          systemdHierarchy.get() + "': " + stringify(exists.error()));
     }
 
     if (!exists.get()) {
@@ -184,7 +185,7 @@ Try<Launcher*> LinuxLauncher::create(const Flags& flags)
       if (create.isError()) {
         return Error(
             "Failed to create cgroup root under systemd hierarchy: " +
-            create.error());
+            stringify(create.error()));
       }
     }
 
@@ -314,7 +315,7 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
     return Failure(
         "Failed to get cgroups from " +
         path::join(freezerHierarchy, flags.cgroups_root) +
-        ": "+ freezerCgroups.error());
+        ": "+ stringify(freezerCgroups.error()));
   }
 
   foreach (const string& cgroup, freezerCgroups.get()) {
@@ -329,7 +330,7 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
       return Failure(
           "Failed to get cgroups from " +
           path::join(systemdHierarchy.get(), flags.cgroups_root) +
-          ": " + systemdCgroups.error());
+          ": " + stringify(systemdCgroups.error()));
     }
 
     foreach (const string& cgroup, systemdCgroups.get()) {
@@ -424,7 +425,8 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
       if (!cgroup.isSome()) {
         LOG(ERROR) << "Failed to get cgroup in systemd hierarchy for "
                    << "container pid " << pid << ": "
-                   << (cgroup.isError() ? cgroup.error() : "Not found");
+                   << (cgroup.isError() ? stringify(cgroup.error())
+                                        : "Not found");
         continue;
       }
 
@@ -571,7 +573,7 @@ Try<pid_t> LinuxLauncherProcess::fork(
       {Subprocess::ChildHook::SETSID()});
 
   if (child.isError()) {
-    return Error("Failed to clone child process: " + child.error());
+    return Error("Failed to clone child process: " + stringify(child.error()));
   }
 
   Container container;
@@ -623,7 +625,8 @@ Future<Nothing> LinuxLauncherProcess::destroy(const ContainerID& containerId)
   // is a partially destroyed container than there is nothing to do.
   Try<bool> exists = cgroups::exists(freezerHierarchy, cgroup);
   if (exists.isError()) {
-    return Failure("Failed to determine if cgroup exists: " + exists.error());
+    return Failure(
+        "Failed to determine if cgroup exists: " + stringify(exists.error()));
   }
 
   if (!exists.get()) {
@@ -663,7 +666,8 @@ Future<Nothing> LinuxLauncherProcess::_destroy(const ContainerID& containerId)
 
   Try<bool> exists = cgroups::exists(systemdHierarchy.get(), cgroup);
   if (exists.isError()) {
-    return Failure("Failed to determine if cgroup exists: " + exists.error());
+    return Failure(
+        "Failed to determine if cgroup exists: " + stringify(exists.error()));
   }
 
   if (!exists.get()) {

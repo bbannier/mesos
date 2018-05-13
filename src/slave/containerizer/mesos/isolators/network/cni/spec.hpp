@@ -69,12 +69,6 @@ public:
     : ::Error(error(msg, code)) {}
 };
 
-
-inline std::ostream& operator<<(std::ostream& stream, const PluginError& _error)
-{
-  return stream << _error.message;
-}
-
 } // namespace spec {
 } // namespace cni {
 } // namespace slave {

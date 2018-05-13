@@ -66,7 +66,7 @@ Try<Authenticator*> BasicAuthenticatorFactory::create(
       if (json.isError()) {
         return Error(
             "Unable to parse HTTP credentials as JSON: " +
-            json.error());
+            stringify(json.error()));
       }
 
       Try<RepeatedPtrField<Credential>> credentials_ =
@@ -74,7 +74,7 @@ Try<Authenticator*> BasicAuthenticatorFactory::create(
       if (credentials_.isError()) {
         return Error(
             "Unable to parse credentials for basic HTTP authenticator: " +
-            credentials_.error());
+            stringify(credentials_.error()));
       }
 
       credentials.mutable_credentials()->CopyFrom(credentials_.get());

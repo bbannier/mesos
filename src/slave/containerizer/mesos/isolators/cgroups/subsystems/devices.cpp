@@ -106,13 +106,13 @@ Try<Owned<SubsystemProcess>> DevicesSubsystemProcess::create(
       Try<dev_t> device = os::stat::rdev(path);
       if (device.isError()) {
         return Error("Failed to obtain device ID for '" + path +
-                     "': " + device.error());
+                     "': " + stringify(device.error()));
       }
 
       Try<mode_t> mode = os::stat::mode(path);
       if (mode.isError()) {
         return Error("Failed to obtain device mode for '" + path +
-                     "': " + mode.error());
+                     "': " + stringify(mode.error()));
       }
 
       Entry::Selector::Type type;
@@ -201,15 +201,16 @@ Future<Nothing> DevicesSubsystemProcess::prepare(
   Try<Nothing> deny = cgroups::devices::deny(hierarchy, cgroup, all);
 
   if (deny.isError()) {
-    return Failure("Failed to deny all devices: " + deny.error());
+    return Failure("Failed to deny all devices: " + stringify(deny.error()));
   }
 
   foreach (const cgroups::devices::Entry& entry, whitelistDeviceEntries) {
     Try<Nothing> allow = cgroups::devices::allow(hierarchy, cgroup, entry);
 
     if (allow.isError()) {
-      return Failure("Failed to whitelist device "
-                     "'" + stringify(entry) + "': " + allow.error());
+      return Failure(
+          "Failed to whitelist device "
+          "'" + stringify(entry) + "': " + stringify(allow.error()));
     }
   }
 

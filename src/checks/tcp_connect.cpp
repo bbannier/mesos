@@ -102,7 +102,7 @@ int testTCPConnect(const string& ip, int port)
       process::network::inet::Address(parse.get(), port));
 
   if (connect.isError()) {
-    cerr << connect.error().message << endl;
+    cerr << connect.error() << endl;
     os::close(socket.get());
     return EXIT_FAILURE;
   }
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
   }
 
   if (load.isError()) {
-    cerr << flags.usage(load.error()) << endl;
+    cerr << flags.usage(stringify(load.error())) << endl;
     return EXIT_FAILURE;
   }
 

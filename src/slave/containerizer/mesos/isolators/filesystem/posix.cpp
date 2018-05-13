@@ -219,7 +219,7 @@ Future<Nothing> PosixFilesystemIsolatorProcess::update(
         return Failure(
             "Failed to change the ownership of the persistent volume at '" +
             original + "' with uid " + stringify(uid) +
-            " and gid " + stringify(gid) + ": " + chown.error());
+            " and gid " + stringify(gid) + ": " + stringify(chown.error()));
       }
 #endif
     }
@@ -235,7 +235,8 @@ Future<Nothing> PosixFilesystemIsolatorProcess::update(
       if (!realpath.isSome()) {
         return Failure(
             "Failed to get the realpath of symlink '" + link + "': " +
-            (realpath.isError() ? realpath.error() : "No such directory"));
+            (realpath.isError() ? stringify(realpath.error())
+                                : "No such directory"));
       }
 
       // A sanity check to make sure the target of the symlink does
@@ -246,7 +247,8 @@ Future<Nothing> PosixFilesystemIsolatorProcess::update(
       if (!_original.isSome()) {
         return Failure(
             "Failed to get the realpath of volume '" + original + "': " +
-            (_original.isError() ? _original.error() : "No such directory"));
+            (_original.isError() ? stringify(_original.error())
+                                 : "No such directory"));
       }
 
       if (realpath.get() != _original.get()) {

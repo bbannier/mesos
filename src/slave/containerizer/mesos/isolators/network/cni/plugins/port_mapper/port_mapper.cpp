@@ -96,7 +96,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   // Verify the CNI config for this plugin.
   Try<JSON::Object> cniConfig = JSON::parse<JSON::Object>(_cniConfig);
   if (cniConfig.isError()) {
-    return PluginError(cniConfig.error(), ERROR_BAD_ARGS);
+    return PluginError(stringify(cniConfig.error()), ERROR_BAD_ARGS);
   }
 
   // TODO(jieyu): Validate 'cniVersion' and 'type'.
@@ -105,7 +105,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!name.isSome()) {
     return PluginError(
         "Failed to get the required field 'name': " +
-        (name.isError() ? name.error() : "Not found"),
+        (name.isError() ? stringify(name.error()) : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -113,7 +113,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!chain.isSome()) {
     return PluginError(
         "Failed to get the required field 'chain': " +
-        (chain.isError() ? chain.error() : "Not found"),
+        (chain.isError() ? stringify(chain.error()) : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -125,7 +125,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (_excludeDevices.isError()) {
     return PluginError(
         "Failed to parse field 'excludeDevices': " +
-        _excludeDevices.error(),
+        stringify(_excludeDevices.error()),
         ERROR_BAD_ARGS);
   } else if (_excludeDevices.isSome()) {
     foreach (const JSON::Value& value, _excludeDevices->values) {
@@ -149,7 +149,8 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   Result<JSON::Object> args = cniConfig->find<JSON::Object>("args");
   if (args.isError()) {
     return PluginError(
-        "Failed to get the field 'args': " + args.error(), ERROR_BAD_ARGS);
+        "Failed to get the field 'args': " + stringify(args.error()),
+        ERROR_BAD_ARGS);
   } else if (args.isNone()) {
     JSON::Object _args;
     JSON::Object mesos;
@@ -167,7 +168,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!mesos.isSome()) {
     return PluginError(
         "Failed to get the field 'args{org.apache.mesos}': " +
-        (mesos.isError() ? mesos.error() : "Not found"),
+        (mesos.isError() ? stringify(mesos.error()) : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -175,7 +176,8 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!_networkInfo.isSome()) {
     return PluginError(
         "Failed to get the field 'args{org.apache.mesos}{network_info}': " +
-        (_networkInfo.isError() ? _networkInfo.error() : "Not found"),
+          (_networkInfo.isError() ? stringify(_networkInfo.error())
+                                  : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -184,7 +186,7 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
 
   if (networkInfo.isError()) {
     return PluginError(
-        "Unable to parse `NetworkInfo`: " + networkInfo.error(),
+        "Unable to parse `NetworkInfo`: " + stringify(networkInfo.error()),
         ERROR_BAD_ARGS);
   }
 
@@ -196,7 +198,8 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!_delegateConfig.isSome()) {
     return PluginError(
         "Failed to get the required field 'delegate'" +
-        (_delegateConfig.isError() ? _delegateConfig.error() : "Not found"),
+          (_delegateConfig.isError() ? stringify(_delegateConfig.error())
+                                     : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -210,7 +213,8 @@ Try<Owned<PortMapper>, PluginError> PortMapper::create(const string& _cniConfig)
   if (!_delegatePlugin.isSome()) {
     return PluginError(
         "Failed to get the delegate plugin 'type'" +
-        (_delegatePlugin.isError() ? _delegatePlugin.error() : "Not found"),
+          (_delegatePlugin.isError() ? stringify(_delegatePlugin.error())
+                                     : "Not found"),
         ERROR_BAD_ARGS);
   }
 
@@ -395,8 +399,8 @@ Try<string, PluginError> PortMapper::handleAddCommand()
   Result<spec::NetworkInfo> delegateResult = delegate(cniCommand);
   if (delegateResult.isError()) {
     return PluginError(
-        "Could not execute the delegate plugin '" +
-        delegatePlugin + "' for ADD command: " + delegateResult.error(),
+        "Could not execute the delegate plugin '" + delegatePlugin +
+          "' for ADD command: " + stringify(delegateResult.error()),
         ERROR_DELEGATE_FAILURE);
   }
 
@@ -421,7 +425,7 @@ Try<string, PluginError> PortMapper::handleAddCommand()
   if (ip.isError()) {
     return PluginError(
         "Could not parse IPv4 address return by delegate CNI plugin '" +
-        delegatePlugin + "': " + ip.error(),
+        delegatePlugin + "': " + stringify(ip.error()),
         ERROR_DELEGATE_FAILURE);
   }
 
@@ -431,7 +435,7 @@ Try<string, PluginError> PortMapper::handleAddCommand()
            networkInfo.port_mappings()) {
     Try<Nothing> result = addPortMapping(ip->address(), portMapping);
     if (result.isError()) {
-      return PluginError(result.error(), ERROR_PORTMAP_FAILURE);
+      return PluginError(stringify(result.error()), ERROR_PORTMAP_FAILURE);
     }
   }
 
@@ -451,7 +455,7 @@ Try<Nothing, PluginError> PortMapper::handleDelCommand()
   Try<Nothing> result = delPortMapping();
   if (result.isError()) {
     return PluginError(
-        "Unable to remove iptables DNAT rules: " + result.error(),
+        "Unable to remove iptables DNAT rules: " + stringify(result.error()),
         ERROR_PORTMAP_FAILURE);
   }
 
@@ -461,8 +465,8 @@ Try<Nothing, PluginError> PortMapper::handleDelCommand()
   Result<spec::NetworkInfo> delegateResult = delegate(spec::CNI_CMD_DEL);
   if (delegateResult.isError()) {
     return PluginError(
-        "Could not execute the delegate plugin '" +
-        delegatePlugin + "' for DEL command: " + delegateResult.error(),
+        "Could not execute the delegate plugin '" + delegatePlugin +
+          "' for DEL command: " + stringify(delegateResult.error()),
         ERROR_DELEGATE_FAILURE);
   }
 
@@ -523,7 +527,7 @@ Result<spec::NetworkInfo> PortMapper::delegate(const string& command)
 
   Try<string> temp = os::mktemp();
   if (temp.isError()) {
-    return Error("Failed to create the temp file: " + temp.error());
+    return Error("Failed to create the temp file: " + stringify(temp.error()));
   }
 
   Try<Nothing> write = os::write(
@@ -532,7 +536,7 @@ Result<spec::NetworkInfo> PortMapper::delegate(const string& command)
 
   if (write.isError()) {
     os::rm(temp.get());
-    return Error("Failed to write the temp file: " + write.error());
+    return Error("Failed to write the temp file: " + stringify(write.error()));
   }
 
   Try<Subprocess> s = process::subprocess(
@@ -547,7 +551,7 @@ Result<spec::NetworkInfo> PortMapper::delegate(const string& command)
   if (s.isError()) {
     return Error(
         "Failed to exec the delegate CNI plugin '" + delegatePlugin +
-        "' subprocess: " + s.error());
+        "' subprocess: " + stringify(s.error()));
   }
 
   auto result = await(
@@ -617,7 +621,7 @@ Result<spec::NetworkInfo> PortMapper::delegate(const string& command)
     if (parse.isError()) {
       return Error(
           "Failed to parse the output of the delegate CNI plugin '" +
-          delegatePlugin + "': " + parse.error());
+          delegatePlugin + "': " + stringify(parse.error()));
     }
 
     return parse.get();

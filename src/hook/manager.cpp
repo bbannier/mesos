@@ -71,7 +71,7 @@ Try<Nothing> HookManager::initialize(const string& hookList)
       if (module.isError()) {
         return Error(
             "Failed to instantiate hook module '" + hook + "': " +
-            module.error());
+            stringify(module.error()));
       }
 
       // Add the hook module to the list of available hooks.

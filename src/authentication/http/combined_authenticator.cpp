@@ -217,7 +217,7 @@ vector<string> CombinedAuthenticatorProcess::extractErrorMessages(
     if (result.isError()) {
       messages.push_back(
           "\"" + scheme + "\" authenticator returned:\n" +
-          result.error());
+          stringify(result.error()));
     }
   }
 

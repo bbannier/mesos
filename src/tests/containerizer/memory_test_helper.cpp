@@ -97,7 +97,7 @@ Try<Nothing> MemoryTestHelper::spawn()
       Subprocess::FD(STDERR_FILENO));
 
   if (process.isError()) {
-    return Error("Failed to spawn a subprocess: " + process.error());
+    return Error("Failed to spawn a subprocess: " + stringify(process.error()));
   }
 
   s = process.get();
@@ -150,7 +150,8 @@ Try<Nothing> MemoryTestHelper::requestAndWait(const string& request)
   Try<Nothing> write = os::write(s->in().get(), request + "\n");
   if (write.isError()) {
     cleanup();
-    return Error("Fail to sync with the subprocess: " + write.error());
+    return Error(
+        "Fail to sync with the subprocess: " + stringify(write.error()));
   }
 
   Result<string> read = os::read(s->out().get(), sizeof(DONE));
@@ -224,7 +225,7 @@ static Try<Nothing> doIncreaseRSS(const vector<string>& tokens)
 
   Try<void*> memory = allocateRSS(size.get());
   if (memory.isError()) {
-    return Error("Failed to allocate RSS memory: " + memory.error());
+    return Error("Failed to allocate RSS memory: " + stringify(memory.error()));
   }
 
   return Nothing();
@@ -252,12 +253,13 @@ static Try<Nothing> doIncreasePageCache(const vector<string>& tokens)
   // TemporaryDirectoryTest. Consider relaxing this constraint.
   Try<string> path = os::mktemp(path::join(os::getcwd(), "XXXXXX"));
   if (path.isError()) {
-    return Error("Failed to create a temporary file: " + path.error());
+    return Error(
+        "Failed to create a temporary file: " + stringify(path.error()));
   }
 
   Try<int_fd> fd = os::open(path.get(), O_WRONLY);
   if (fd.isError()) {
-    return Error("Failed to open file: " + fd.error());
+    return Error("Failed to open file: " + stringify(fd.error()));
   }
 
   // NOTE: We are doing round-down here to calculate the number of
@@ -267,14 +269,14 @@ static Try<Nothing> doIncreasePageCache(const vector<string>& tokens)
     Try<Nothing> write = os::write(fd.get(), string(UNIT.bytes(), 'a'));
     if (write.isError()) {
       os::close(fd.get());
-      return Error("Failed to write file: " + write.error());
+      return Error("Failed to write file: " + stringify(write.error()));
     }
 
     // Use fsync to make sure data is written to disk.
     Try<Nothing> fsync = os::fsync(fd.get());
     if (fsync.isError()) {
       os::close(fd.get());
-      return Error("Failed to fsync: " + fsync.error());
+      return Error("Failed to fsync: " + stringify(fsync.error()));
     }
   }
 

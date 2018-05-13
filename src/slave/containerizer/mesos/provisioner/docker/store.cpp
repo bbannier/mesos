@@ -146,19 +146,21 @@ Try<Owned<slave::Store>> Store::create(
 
   Try<Owned<uri::Fetcher>> fetcher = uri::fetcher::create(_flags);
   if (fetcher.isError()) {
-    return Error("Failed to create the URI fetcher: " + fetcher.error());
+    return Error(
+        "Failed to create the URI fetcher: " + stringify(fetcher.error()));
   }
 
   Try<Owned<Puller>> puller =
     Puller::create(flags, fetcher->share(), secretResolver);
 
   if (puller.isError()) {
-    return Error("Failed to create Docker puller: " + puller.error());
+    return Error(
+        "Failed to create Docker puller: " + stringify(puller.error()));
   }
 
   Try<Owned<slave::Store>> store = Store::create(flags, puller.get());
   if (store.isError()) {
-    return Error("Failed to create Docker store: " + store.error());
+    return Error("Failed to create Docker store: " + stringify(store.error()));
   }
 
   return store.get();
@@ -172,19 +174,19 @@ Try<Owned<slave::Store>> Store::create(
   Try<Nothing> mkdir = os::mkdir(flags.docker_store_dir);
   if (mkdir.isError()) {
     return Error("Failed to create Docker store directory: " +
-                 mkdir.error());
+                 stringify(mkdir.error()));
   }
 
   mkdir = os::mkdir(paths::getStagingDir(flags.docker_store_dir));
   if (mkdir.isError()) {
     return Error("Failed to create Docker store staging directory: " +
-                 mkdir.error());
+                 stringify(mkdir.error()));
   }
 
   mkdir = os::mkdir(paths::getGcDir(flags.docker_store_dir));
   if (mkdir.isError()) {
     return Error("Failed to create Docker store gc directory: " +
-                 mkdir.error());
+                 stringify(mkdir.error()));
   }
 
   Try<Owned<MetadataManager>> metadataManager = MetadataManager::create(flags);
@@ -254,7 +256,7 @@ Future<ImageInfo> StoreProcess::get(
 
   if (reference.isError()) {
     return Failure("Failed to parse docker image '" + image.docker().name() +
-                   "': " + reference.error());
+                   "': " + stringify(reference.error()));
   }
 
   return metadataManager->get(reference.get(), image.cached())
@@ -316,7 +318,8 @@ Future<Image> StoreProcess::_get(
 
     if (staging.isError()) {
       return Failure(
-          "Failed to create a staging directory: " + staging.error());
+          "Failed to create a staging directory: " +
+          stringify(staging.error()));
     }
 
     Owned<Promise<Image>> promise(new Promise<Image>());
@@ -378,7 +381,7 @@ Future<ImageInfo> StoreProcess::__get(
   if (manifest.isError()) {
     return Failure(
         "Failed to read manifest from '" + path + "': " +
-        manifest.error());
+        stringify(manifest.error()));
   }
 
   Try<::docker::spec::v1::ImageManifest> v1 =
@@ -387,7 +390,7 @@ Future<ImageInfo> StoreProcess::__get(
   if (v1.isError()) {
     return Failure(
         "Failed to parse docker v1 manifest from '" + path + "': " +
-        v1.error());
+        stringify(v1.error()));
   }
 
   return ImageInfo{layerPaths, v1.get()};
@@ -449,7 +452,7 @@ Future<Nothing> StoreProcess::moveLayer(
     if (convert.isError()) {
       return Failure(
           "Failed to convert the whiteout files under '" +
-          sourceRootfs + "': " + convert.error());
+          sourceRootfs + "': " + stringify(convert.error()));
     }
   }
 #endif
@@ -460,14 +463,14 @@ Future<Nothing> StoreProcess::moveLayer(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create directory in store for layer '" +
-          layerId + "': " + mkdir.error());
+          layerId + "': " + stringify(mkdir.error()));
     }
 
     Try<Nothing> rename = os::rename(source, target);
     if (rename.isError()) {
       return Failure(
           "Failed to move layer from '" + source +
-          "' to '" + target + "': " + rename.error());
+          "' to '" + target + "': " + stringify(rename.error()));
     }
   } else {
     // This is the case where the layer has already been pulled with a
@@ -476,7 +479,7 @@ Future<Nothing> StoreProcess::moveLayer(
     if (rename.isError()) {
       return Failure(
           "Failed to move rootfs from '" + sourceRootfs +
-          "' to '" + targetRootfs + "': " + rename.error());
+          "' to '" + targetRootfs + "': " + stringify(rename.error()));
     }
   }
 
@@ -503,7 +506,7 @@ Future<Nothing> StoreProcess::prune(
     if (reference.isError()) {
       return Failure(
           "Failed to parse docker image '" + image.docker().name() +
-          "': " + reference.error());
+          "': " + stringify(reference.error()));
     }
 
     imageReferences.push_back(reference.get());
@@ -520,7 +523,8 @@ Future<Nothing> StoreProcess::_prune(
 {
   Try<list<string>> allLayers = paths::listLayers(flags.docker_store_dir);
   if (allLayers.isError()) {
-    return Failure("Failed to find all layer paths: " + allLayers.error());
+    return Failure(
+        "Failed to find all layer paths: " + stringify(allLayers.error()));
   }
 
   // Paths in provisioner are layer rootfs. Normalize them to layer
@@ -559,7 +563,7 @@ Future<Nothing> StoreProcess::_prune(
     if (rename.isError()) {
       return Failure(
           "Failed to move layer from '" + layerPath +
-          "' to '" + target + "': " + rename.error());
+          "' to '" + target + "': " + stringify(rename.error()));
     }
   }
 

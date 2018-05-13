@@ -102,7 +102,7 @@ public:
     Option<Error> error = callbacks.validate(call);
 
     if (error.isSome()) {
-      return process::Failure(error->message);
+      return process::Failure(error.get());
     }
 
     if (endpoint.isNone()) {

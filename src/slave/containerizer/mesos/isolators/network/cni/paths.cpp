@@ -66,7 +66,7 @@ Try<list<string>> getNetworkNames(
   if (entries.isError()) {
     return Error(
         "Unable to list the CNI network information directory '" +
-        networkInfoDir + "': " + entries.error());
+        networkInfoDir + "': " + stringify(entries.error()));
   }
 
   list<string> networkNames;
@@ -114,7 +114,7 @@ Try<list<string>> getInterfaces(
   if (entries.isError()) {
     return Error(
         "Unable to list the CNI network directory '" + networkDir + "': " +
-        entries.error());
+        stringify(entries.error()));
   }
 
   list<string> ifNames;

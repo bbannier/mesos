@@ -68,7 +68,8 @@ Future<ResourceStatistics> CpuacctSubsystemProcess::usage(
     Try<set<pid_t>> pids = cgroups::processes(hierarchy, cgroup);
 
     if (pids.isError()) {
-      return Failure("Failed to get number of processes: " + pids.error());
+      return Failure(
+          "Failed to get number of processes: " + stringify(pids.error()));
     }
 
     result.set_processes(pids->size());
@@ -76,7 +77,8 @@ Future<ResourceStatistics> CpuacctSubsystemProcess::usage(
     Try<set<pid_t>> tids = cgroups::threads(hierarchy, cgroup);
 
     if (tids.isError()) {
-      return Failure("Failed to get number of threads: " + tids.error());
+      return Failure(
+          "Failed to get number of threads: " + stringify(tids.error()));
     }
 
     result.set_threads(tids->size());
@@ -94,7 +96,7 @@ Future<ResourceStatistics> CpuacctSubsystemProcess::usage(
       "cpuacct.stat");
 
   if (stat.isError()) {
-    return Failure("Failed to read 'cpuacct.stat': " + stat.error());
+    return Failure("Failed to read 'cpuacct.stat': " + stringify(stat.error()));
   }
 
   // TODO(bmahler): Add namespacing to cgroups to enforce the expected

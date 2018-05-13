@@ -509,7 +509,7 @@ Future<int> CheckerProcess::commandCheck(
   }
 
   if (s.isError()) {
-    return Failure("Failed to create subprocess: " + s.error());
+    return Failure("Failed to create subprocess: " + stringify(s.error()));
   }
 
   // TODO(alexr): Use lambda named captures for
@@ -1034,7 +1034,7 @@ Future<int> CheckerProcess::_httpCheck(
   if (s.isError()) {
     return Failure(
         "Failed to create the " + string(HTTP_CHECK_COMMAND) +
-        " subprocess: " + s.error());
+        " subprocess: " + stringify(s.error()));
   }
 
   // TODO(alexr): Use lambda named captures for
@@ -1247,7 +1247,8 @@ Future<bool> CheckerProcess::_tcpCheck(
 
   if (s.isError()) {
     return Failure(
-        "Failed to create the " + cmdArgv[0] + " subprocess: " + s.error());
+        "Failed to create the " + cmdArgv[0] +
+        " subprocess: " + stringify(s.error()));
   }
 
   // TODO(alexr): Use lambda named captures for

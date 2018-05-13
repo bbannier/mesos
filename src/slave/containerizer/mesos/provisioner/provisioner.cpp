@@ -102,7 +102,7 @@ static Try<Nothing> validateBackend(
   if (fsType.isError()) {
     return Error(
       "Failed to get filesystem type id from directory '" +
-      directory + "': " + fsType.error());
+      directory + "': " + stringify(fsType.error()));
   }
 
   Try<string> _fsTypeName = fs::typeName(fsType.get());
@@ -138,7 +138,7 @@ static Try<Nothing> validateBackend(
     if (mkdir.isError()) {
       return Error(
           "Failed to create temporary directory '" +
-          probeDir + "': " + mkdir.error());
+          probeDir + "': " + stringify(mkdir.error()));
     }
 
     Try<bool> supportDType = fs::dtypeSupported(directory);
@@ -153,7 +153,7 @@ static Try<Nothing> validateBackend(
     if (supportDType.isError()) {
       return Error(
           "Cannot verify filesystem attributes: " +
-          supportDType.error());
+          stringify(supportDType.error()));
     }
 
     if (!supportDType.get()) {
@@ -199,14 +199,14 @@ Try<Owned<Provisioner>> Provisioner::create(
   if (mkdir.isError()) {
     return Error(
         "Failed to create provisioner root directory '" +
-        _rootDir + "': " + mkdir.error());
+        _rootDir + "': " + stringify(mkdir.error()));
   }
 
   Result<string> rootDir = os::realpath(_rootDir);
   if (rootDir.isError()) {
     return Error(
         "Failed to resolve the realpath of provisioner root directory '" +
-        _rootDir + "': " + rootDir.error());
+        _rootDir + "': " + stringify(rootDir.error()));
   }
 
   CHECK_SOME(rootDir); // Can't be None since we just created it.
@@ -215,7 +215,7 @@ Try<Owned<Provisioner>> Provisioner::create(
     Store::create(flags, secretResolver);
 
   if (stores.isError()) {
-    return Error("Failed to create image stores: " + stores.error());
+    return Error("Failed to create image stores: " + stringify(stores.error()));
   }
 
   hashmap<string, Owned<Backend>> backends = Backend::create(flags);
@@ -251,7 +251,7 @@ Try<Owned<Provisioner>> Provisioner::create(
       return Error(
           "The specified provisioner backend '" +
           flags.image_provisioner_backend.get() +
-          "' is not supported: " + supported.error());
+          "' is not supported: " + stringify(supported.error()));
     }
 
     defaultBackend = flags.image_provisioner_backend.get();
@@ -392,7 +392,7 @@ Future<Nothing> ProvisionerProcess::recover(
   if (containers.isError()) {
     return Failure(
         "Failed to list the containers managed by the provisioner: " +
-        containers.error());
+        stringify(containers.error()));
   }
 
   // Scan the list of containers, register all of them with 'infos'
@@ -408,7 +408,7 @@ Future<Nothing> ProvisionerProcess::recover(
     if (rootfses.isError()) {
       return Failure(
           "Unable to list rootfses belonged to container " +
-          stringify(containerId) + ": " + rootfses.error());
+          stringify(containerId) + ": " + stringify(rootfses.error()));
     }
 
     foreachkey (const string& backend, rootfses.get()) {
@@ -433,7 +433,7 @@ Future<Nothing> ProvisionerProcess::recover(
       if (layers.isError()) {
         return Failure(
             "Failed to recover layers for container '" +
-            stringify(containerId) + "': " + layers.error());
+            stringify(containerId) + "': " + stringify(layers.error()));
       }
 
       if (layers.isSome()) {
@@ -579,7 +579,7 @@ Future<ProvisionInfo> ProvisionerProcess::_provision(
       if (checkpoint.isError()) {
         return Failure(
             "Failed to checkpoint layers to '" + path + "': " +
-            checkpoint.error());
+            stringify(checkpoint.error()));
       }
 
       return ProvisionInfo{

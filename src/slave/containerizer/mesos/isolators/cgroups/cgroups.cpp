@@ -120,7 +120,7 @@ Try<Isolator*> CgroupsIsolatorProcess::create(const Flags& flags)
       if (hierarchy.isError()) {
         return Error(
             "Failed to prepare hierarchy for the subsystem '" + subsystemName +
-            "': " + hierarchy.error());
+            "': " + stringify(hierarchy.error()));
       }
 
       // Create and load the subsystem.
@@ -130,7 +130,7 @@ Try<Isolator*> CgroupsIsolatorProcess::create(const Flags& flags)
       if (subsystem.isError()) {
         return Error(
             "Failed to create subsystem '" + subsystemName + "': " +
-            subsystem.error());
+            stringify(subsystem.error()));
       }
 
       subsystems.put(hierarchy.get(), subsystem.get());
@@ -214,7 +214,7 @@ Future<Nothing> CgroupsIsolatorProcess::_recover(
     if (cgroups.isError()) {
       return Failure(
           "Failed to list cgroups under '" + hierarchy + "': " +
-          cgroups.error());
+          stringify(cgroups.error()));
     }
 
     foreach (const string& cgroup, cgroups.get()) {
@@ -306,7 +306,7 @@ Future<Nothing> CgroupsIsolatorProcess::___recover(
           "Failed to check the existence of the cgroup "
           "'" + cgroup + "' in hierarchy '" + hierarchy + "' "
           "for container " + stringify(containerId) +
-          ": " + exists.error());
+          ": " + stringify(exists.error()));
     }
 
     if (!exists.get()) {
@@ -406,7 +406,7 @@ Future<Option<ContainerLaunchInfo>> CgroupsIsolatorProcess::prepare(
     if (exists.isError()) {
       return Failure(
           "Failed to check the existence of cgroup at "
-          "'" + path + "': " + exists.error());
+          "'" + path + "': " + stringify(exists.error()));
     } else if (exists.get()) {
       return Failure("The cgroup at '" + path + "' already exists");
     }
@@ -418,7 +418,7 @@ Future<Option<ContainerLaunchInfo>> CgroupsIsolatorProcess::prepare(
     if (create.isError()) {
       return Failure(
           "Failed to create the cgroup at "
-          "'" + path + "': " + create.error());
+          "'" + path + "': " + stringify(create.error()));
     }
 
     foreach (const Owned<Subsystem>& subsystem, subsystems.get(hierarchy)) {
@@ -470,7 +470,7 @@ Future<Option<ContainerLaunchInfo>> CgroupsIsolatorProcess::prepare(
         if (chown.isError()) {
           return Failure(
               "Failed to chown the cgroup at '" + path + "' "
-              "to user '" + user.get() + "': " + chown.error());
+              "to user '" + user.get() + "': " + stringify(chown.error()));
         }
       }
     }
@@ -534,7 +534,7 @@ Future<Nothing> CgroupsIsolatorProcess::isolate(
       string message =
         "Failed to assign pid " + stringify(pid) + " to cgroup at "
         "'" + path::join(hierarchy, infos[rootContainerId]->cgroup) + "'"
-        ": " + assign.error();
+        ": " + stringify(assign.error());
 
       LOG(ERROR) << message;
 

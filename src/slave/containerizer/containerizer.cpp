@@ -125,7 +125,7 @@ Try<Resources> Containerizer::resources(const Flags& flags)
   // GPU resource.
   Try<Resources> gpus = NvidiaGpuAllocator::resources(flags);
   if (gpus.isError()) {
-    return Error("Failed to obtain GPU resources: " + gpus.error());
+    return Error("Failed to obtain GPU resources: " + stringify(gpus.error()));
   }
 
   // When adding in the GPU resources, make sure that we filter out
@@ -255,7 +255,7 @@ Try<Containerizer*> Containerizer::create(
 
       if (gpus.isError()) {
         return Error("Failed call to NvidiaGpuAllocator::resources: " +
-                     gpus.error());
+                     stringify(gpus.error()));
       }
 
       Try<NvidiaGpuAllocator> allocator =
@@ -263,13 +263,14 @@ Try<Containerizer*> Containerizer::create(
 
       if (allocator.isError()) {
         return Error("Failed to NvidiaGpuAllocator::create: " +
-                     allocator.error());
+                     stringify(allocator.error()));
       }
 
       Try<NvidiaVolume> volume = NvidiaVolume::create();
 
       if (volume.isError()) {
-        return Error("Failed to NvidiaVolume::create: " + volume.error());
+        return Error(
+            "Failed to NvidiaVolume::create: " + stringify(volume.error()));
       }
 
       nvidia = NvidiaComponents(allocator.get(), volume.get());
@@ -289,7 +290,7 @@ Try<Containerizer*> Containerizer::create(
           flags, local, fetcher, secretResolver, nvidia);
       if (containerizer.isError()) {
         return Error("Could not create MesosContainerizer: " +
-                     containerizer.error());
+                     stringify(containerizer.error()));
       } else {
         containerizers.push_back(containerizer.get());
       }
@@ -298,7 +299,7 @@ Try<Containerizer*> Containerizer::create(
         DockerContainerizer::create(flags, fetcher, nvidia);
       if (containerizer.isError()) {
         return Error("Could not create DockerContainerizer: " +
-                     containerizer.error());
+                     stringify(containerizer.error()));
       } else {
         containerizers.push_back(containerizer.get());
       }

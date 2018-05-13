@@ -307,7 +307,7 @@ Future<http::Response> ResourceProviderManagerProcess::api(
           Try<JSON::Value> value = JSON::parse(request.body);
           if (value.isError()) {
             return BadRequest(
-                "Failed to parse body into JSON: " + value.error());
+                "Failed to parse body into JSON: " + stringify(value.error()));
           }
 
           Try<v1::resource_provider::Call> parse =
@@ -315,7 +315,8 @@ Future<http::Response> ResourceProviderManagerProcess::api(
 
           if (parse.isError()) {
             return BadRequest(
-                "Failed to convert JSON into Call protobuf: " + parse.error());
+                "Failed to convert JSON into Call protobuf: " +
+                stringify(parse.error()));
           }
 
           v1Call = parse.get();
@@ -330,7 +331,8 @@ Future<http::Response> ResourceProviderManagerProcess::api(
         Option<Error> error = validate(call);
         if (error.isSome()) {
           return BadRequest(
-              "Failed to validate resource_provider::Call: " + error->message);
+              "Failed to validate resource_provider::Call: " +
+              stringify(error.get()));
         }
 
         if (call.type() == Call::SUBSCRIBE) {
@@ -446,8 +448,9 @@ void ResourceProviderManagerProcess::applyOperation(
     LOG(ERROR) << "Failed to get the resource provider ID of operation "
                << "'" << operation.id() << "' (uuid: " << operationUUID
                << ") from framework " << frameworkId << ": "
-               << (resourceProviderId.isError() ? resourceProviderId.error()
-                                                : "Not found");
+               << (resourceProviderId.isError()
+                     ? stringify(resourceProviderId.error())
+                     : "Not found");
     return;
   }
 

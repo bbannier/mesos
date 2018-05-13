@@ -117,7 +117,7 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
     // launch a task with a volume.
     Option<Error> error = common::validation::validateVolume(volume);
     if (error.isSome()) {
-      return Failure("Invalid volume: " + error->message);
+      return Failure("Invalid volume: " + stringify(error.get()));
     }
 
     Option<string> hostPath;
@@ -185,7 +185,7 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
           if (mkdir.isError()) {
             return Failure(
                 "Failed to create the mount point at "
-                "'" + mountPoint + "': " + mkdir.error());
+                "'" + mountPoint + "': " + stringify(mkdir.error()));
           }
         } else {
           // The file (regular file or device file) bind mount case.
@@ -194,14 +194,14 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
             return Failure(
                 "Failed to create directory "
                 "'" + Path(mountPoint).dirname() + "' "
-                "for the mount point: " + mkdir.error());
+                "for the mount point: " + stringify(mkdir.error()));
           }
 
           Try<Nothing> touch = os::touch(mountPoint);
           if (touch.isError()) {
             return Failure(
                 "Failed to touch the mount point at "
-                "'" + mountPoint + "': " + touch.error());
+                "'" + mountPoint + "': " + stringify(touch.error()));
           }
         }
       } else {
@@ -236,7 +236,7 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
         if (mkdir.isError()) {
           return Failure(
               "Failed to create the mount point at "
-              "'" + mountPoint + "': " + mkdir.error());
+              "'" + mountPoint + "': " + stringify(mkdir.error()));
         }
       } else {
         // The file (regular file or device file) bind mount case.
@@ -245,14 +245,14 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
           return Failure(
               "Failed to create the directory "
               "'" + Path(mountPoint).dirname() + "' "
-              "for the mount point: " + mkdir.error());
+              "for the mount point: " + stringify(mkdir.error()));
         }
 
         Try<Nothing> touch = os::touch(mountPoint);
         if (touch.isError()) {
           return Failure(
               "Failed to touch the mount point at "
-              "'" + mountPoint+ "': " + touch.error());
+              "'" + mountPoint+ "': " + stringify(touch.error()));
         }
       }
 
@@ -274,7 +274,8 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
         return Failure(
             "Failed to get the realpath of the host path '" +
             hostPath.get() + "': " +
-            (realHostPath.isError() ? realHostPath.error() : "Not found"));
+            (realHostPath.isError() ? stringify(realHostPath.error())
+                                    : "Not found"));
       }
 
       Try<fs::MountInfoTable::Entry> sourceMountEntry =
@@ -283,7 +284,7 @@ Future<Option<ContainerLaunchInfo>> VolumeHostPathIsolatorProcess::prepare(
       if (sourceMountEntry.isError()) {
         return Failure(
             "Cannot find the mount containing host path '" +
-            hostPath.get() + "': " + sourceMountEntry.error());
+            hostPath.get() + "': " + stringify(sourceMountEntry.error()));
       }
 
       if (sourceMountEntry->shared().isNone()) {

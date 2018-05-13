@@ -118,7 +118,8 @@ Try<Owned<HDFS>> HDFS::create(const Option<string>& _hadoop)
   Try<Subprocess> subprocess = process::subprocess(hadoop + " version 2>&1");
 
   if (subprocess.isError()) {
-    return Error("Failed to exec hadoop subprocess: " + subprocess.error());
+    return Error(
+        "Failed to exec hadoop subprocess: " + stringify(subprocess.error()));
   }
 
   Option<int> status = subprocess->status().get();
@@ -162,7 +163,7 @@ Future<bool> HDFS::exists(const string& path)
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to execute the subprocess: " + s.error());
+    return Failure("Failed to execute the subprocess: " + stringify(s.error()));
   }
 
   return result(s.get())
@@ -201,7 +202,7 @@ Future<Bytes> HDFS::du(const string& _path)
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to execute the subprocess: " + s.error());
+    return Failure("Failed to execute the subprocess: " + stringify(s.error()));
   }
 
   return result(s.get())
@@ -254,7 +255,7 @@ Future<Nothing> HDFS::rm(const string& path)
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to execute the subprocess: " + s.error());
+    return Failure("Failed to execute the subprocess: " + stringify(s.error()));
   }
 
   return result(s.get())
@@ -290,7 +291,7 @@ Future<Nothing> HDFS::copyFromLocal(const string& from, const string& to)
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to execute the subprocess: " + s.error());
+    return Failure("Failed to execute the subprocess: " + stringify(s.error()));
   }
 
   return result(s.get())
@@ -322,7 +323,7 @@ Future<Nothing> HDFS::copyToLocal(const string& from, const string& to)
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to execute the subprocess: " + s.error());
+    return Failure("Failed to execute the subprocess: " + stringify(s.error()));
   }
 
   return result(s.get())

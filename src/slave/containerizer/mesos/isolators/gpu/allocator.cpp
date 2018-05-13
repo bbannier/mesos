@@ -95,12 +95,15 @@ static Try<set<Gpu>> enumerateGpus(
   foreach (unsigned int index, indices) {
     Try<nvmlDevice_t> handle = nvml::deviceGetHandleByIndex(index);
     if (handle.isError()) {
-      return Error("Failed to nvml::deviceGetHandleByIndex: " + handle.error());
+      return Error(
+          "Failed to nvml::deviceGetHandleByIndex: " +
+          stringify(handle.error()));
     }
 
     Try<unsigned int> minor = nvml::deviceGetMinorNumber(handle.get());
     if (minor.isError()) {
-      return Error("Failed to nvml::deviceGetMinorNumber: " + minor.error());
+      return Error(
+          "Failed to nvml::deviceGetMinorNumber: " + stringify(minor.error()));
     }
 
     Gpu gpu;
@@ -171,12 +174,14 @@ static Try<Resources> enumerateGpuResources(const Flags& flags)
   // Enumerate GPUs based on the flags.
   Try<Nothing> initialized = nvml::initialize();
   if (initialized.isError()) {
-    return Error("Failed to nvml::initialize: " + initialized.error());
+    return Error(
+        "Failed to nvml::initialize: " + stringify(initialized.error()));
   }
 
   Try<unsigned int> available = nvml::deviceGetCount();
   if (available.isError()) {
-    return Error("Failed to nvml::deviceGetCount: " + available.error());
+    return Error(
+        "Failed to nvml::deviceGetCount: " + stringify(available.error()));
   }
 
   // The `Resources` wrapper does not allow us to distinguish between

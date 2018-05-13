@@ -70,7 +70,8 @@ Try<Owned<SubsystemProcess>> MemorySubsystemProcess::create(
       hierarchy, flags.cgroups_root);
 
   if (enable.isError()) {
-    return Error("Failed to enable kernel OOM killer: " + enable.error());
+    return Error(
+        "Failed to enable kernel OOM killer: " + stringify(enable.error()));
   }
 
   // Test if memory pressure listening is enabled. We test that on the
@@ -86,7 +87,7 @@ Try<Owned<SubsystemProcess>> MemorySubsystemProcess::create(
     if (counter.isError()) {
       return Error(
           "Failed to listen on '" + stringify(level) + "' "
-          "memory events: " + counter.error());
+          "memory events: " + stringify(counter.error()));
     }
   }
 
@@ -98,7 +99,7 @@ Try<Owned<SubsystemProcess>> MemorySubsystemProcess::create(
     if (check.isError()) {
       return Error(
           "Failed to read 'memory.memsw.limit_in_bytes'"
-          ": " + check.error());
+          ": " + stringify(check.error()));
     } else if (check.isNone()) {
       return Error("'memory.memsw.limit_in_bytes' is not available");
     }
@@ -193,7 +194,7 @@ Future<Nothing> MemorySubsystemProcess::update(
   if (write.isError()) {
     return Failure(
         "Failed to set 'memory.soft_limit_in_bytes'"
-        ": " + write.error());
+        ": " + stringify(write.error()));
   }
 
   LOG(INFO) << "Updated 'memory.soft_limit_in_bytes' to "
@@ -208,7 +209,7 @@ Future<Nothing> MemorySubsystemProcess::update(
   if (currentLimit.isError()) {
     return Failure(
         "Failed to read 'memory.limit_in_bytes'"
-        ": " + currentLimit.error());
+        ": " + stringify(currentLimit.error()));
   }
 
   bool limitSwap = flags.cgroups_limit_swap;
@@ -222,7 +223,7 @@ Future<Nothing> MemorySubsystemProcess::update(
     if (write.isError()) {
       return Error(
           "Failed to set 'memory.limit_in_bytes'"
-          ": " + write.error());
+          ": " + stringify(write.error()));
     }
 
     LOG(INFO) << "Updated 'memory.limit_in_bytes' to " << limit
@@ -241,7 +242,7 @@ Future<Nothing> MemorySubsystemProcess::update(
       if (write.isError()) {
         return Error(
             "Failed to set 'memory.memsw.limit_in_bytes'"
-            ": " + write.error());
+            ": " + stringify(write.error()));
       }
 
       LOG(INFO) << "Updated 'memory.memsw.limit_in_bytes' to " << limit
@@ -320,7 +321,8 @@ Future<ResourceStatistics> MemorySubsystemProcess::usage(
   Try<Bytes> usage = cgroups::memory::usage_in_bytes(hierarchy, cgroup);
 
   if (usage.isError()) {
-    return Failure("Failed to parse 'memory.usage_in_bytes': " + usage.error());
+    return Failure(
+        "Failed to parse 'memory.usage_in_bytes': " + stringify(usage.error()));
   }
 
   result.set_mem_total_bytes(usage->bytes());
@@ -330,7 +332,8 @@ Future<ResourceStatistics> MemorySubsystemProcess::usage(
 
     if (usage.isError()) {
       return Failure(
-        "Failed to parse 'memory.memsw.usage_in_bytes': " + usage.error());
+          "Failed to parse 'memory.memsw.usage_in_bytes': " +
+          stringify(usage.error()));
     }
 
     result.set_mem_total_memsw_bytes(usage->bytes());
@@ -344,7 +347,7 @@ Future<ResourceStatistics> MemorySubsystemProcess::usage(
       "memory.stat");
 
   if (stat.isError()) {
-    return Failure("Failed to read 'memory.stat': " + stat.error());
+    return Failure("Failed to read 'memory.stat': " + stringify(stat.error()));
   }
 
   Option<uint64_t> total_cache = stat->get("total_cache");

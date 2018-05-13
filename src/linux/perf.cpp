@@ -140,7 +140,8 @@ private:
         {Subprocess::ChildHook::SUPERVISOR()});
 
     if (_perf.isError()) {
-      promise.fail("Failed to launch perf process: " + _perf.error());
+      promise.fail(
+          "Failed to launch perf process: " + stringify(_perf.error()));
       terminate(self());
       return;
     }
@@ -173,7 +174,7 @@ private:
         }
 
         if (error.isSome()) {
-          promise.fail(error->message);
+          promise.fail(stringify(error.get()));
           terminate(self());
           return;
         }
@@ -308,7 +309,8 @@ Future<hashmap<string, mesos::PerfStatistics>> sample(
         perf::parse(output);
 
       if (result.isError()) {
-        return Failure("Failed to parse perf sample: " + result.error());
+        return Failure(
+            "Failed to parse perf sample: " + stringify(result.error()));
       }
 
       foreachvalue (mesos::PerfStatistics& statistics, result.get()) {
@@ -411,8 +413,9 @@ Try<hashmap<string, mesos::PerfStatistics>> parse(
     Try<Sample> sample = Sample::parse(line);
 
     if (sample.isError()) {
-      return Error("Failed to parse perf sample line '" + line + "': " +
-                   sample.error());
+      return Error(
+          "Failed to parse perf sample line '" + line + "': " +
+          stringify(sample.error()));
     }
 
     // Some additional metrics (e.g. stalled cycles per instruction)

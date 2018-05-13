@@ -126,7 +126,7 @@ Try<string> getRegistryScheme(const string& registry)
 {
   Result<int> port = getRegistryPort(registry);
   if (port.isError()) {
-    return Error("Failed to get registry port: " + port.error());
+    return Error("Failed to get registry port: " + stringify(port.error()));
   } else if (port.isSome()) {
     if (port.get() == 443) {
       return "https";
@@ -167,7 +167,7 @@ Try<hashmap<string, Config::Auth>> parseAuthConfig(
   Result<JSON::Object> auths = _config.find<JSON::Object>("auths");
   if (auths.isError()) {
     return Error("Failed to find 'auths' in docker config file: " +
-                 auths.error());
+                 stringify(auths.error()));
   }
 
   const JSON::Object& config = auths.isSome()
@@ -185,7 +185,7 @@ Try<hashmap<string, Config::Auth>> parseAuthConfig(
       protobuf::parse<Config::Auth>(value.as<JSON::Object>());
 
     if (auth.isError()) {
-      return Error("Protobuf parse failed: " + auth.error());
+      return Error("Protobuf parse failed: " + stringify(auth.error()));
     }
 
     // Assuming no duplicate registry url in docker config file,
@@ -201,7 +201,7 @@ Try<hashmap<string, Config::Auth>> parseAuthConfig(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   return parseAuthConfig(json.get());
@@ -236,13 +236,14 @@ Try<ImageManifest> parse(const JSON::Object& json)
 {
   Try<ImageManifest> manifest = protobuf::parse<ImageManifest>(json);
   if (manifest.isError()) {
-    return Error("Protobuf parse failed: " + manifest.error());
+    return Error("Protobuf parse failed: " + stringify(manifest.error()));
   }
 
   Option<Error> error = validate(manifest.get());
   if (error.isSome()) {
     return Error(
-        "Docker v1 image manifest validation failed: " + error->message);
+        "Docker v1 image manifest validation failed: " +
+        stringify(error.get()));
   }
 
   return manifest.get();
@@ -253,7 +254,7 @@ Try<ImageManifest> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   return parse(json.get());
@@ -298,7 +299,7 @@ Try<ImageManifest> parse(const JSON::Object& json)
 {
   Try<ImageManifest> manifest = protobuf::parse<ImageManifest>(json);
   if (manifest.isError()) {
-    return Error("Protobuf parse failed: " + manifest.error());
+    return Error("Protobuf parse failed: " + stringify(manifest.error()));
   }
 
   for (int i = 0; i < manifest->history_size(); i++) {
@@ -307,12 +308,13 @@ Try<ImageManifest> parse(const JSON::Object& json)
 
     if (v1Compatibility.isError()) {
       return Error("Parsing v1Compatibility JSON failed: " +
-                   v1Compatibility.error());
+                   stringify(v1Compatibility.error()));
     }
 
     Try<v1::ImageManifest> v1 = v1::parse(v1Compatibility.get());
     if (v1.isError()) {
-      return Error("Parsing v1Compatibility protobuf failed: " + v1.error());
+      return Error(
+          "Parsing v1Compatibility protobuf failed: " + stringify(v1.error()));
     }
 
     CHECK(!manifest->history(i).has_v1());
@@ -323,7 +325,8 @@ Try<ImageManifest> parse(const JSON::Object& json)
   Option<Error> error = validate(manifest.get());
   if (error.isSome()) {
     return Error(
-        "Docker v2 image manifest validation failed: " + error->message);
+        "Docker v2 image manifest validation failed: " +
+        stringify(error.get()));
   }
 
   return manifest.get();
@@ -334,7 +337,7 @@ Try<ImageManifest> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   return parse(json.get());

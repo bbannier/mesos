@@ -120,7 +120,7 @@ public:
                 process::http::URL::parse(value.string());
 
               if (url.isError()) {
-                return Error("Failed to parse URI: " + url.error());
+                return Error("Failed to parse URI: " + stringify(url.error()));
               }
 
               return None();

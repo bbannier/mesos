@@ -40,7 +40,8 @@ Try<Owned<Puller>> Puller::create(
   if (strings::startsWith(flags.docker_registry, "/")) {
     Try<Owned<Puller>> puller = LocalPuller::create(flags);
     if (puller.isError()) {
-      return Error("Failed to create local puller: " + puller.error());
+      return Error(
+          "Failed to create local puller: " + stringify(puller.error()));
     }
 
     return puller.get();
@@ -50,7 +51,8 @@ Try<Owned<Puller>> Puller::create(
     RegistryPuller::create(flags, fetcher, secretResolver);
 
   if (puller.isError()) {
-    return Error("Failed to create registry puller: " + puller.error());
+    return Error(
+        "Failed to create registry puller: " + stringify(puller.error()));
   }
 
   return puller.get();

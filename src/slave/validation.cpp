@@ -47,7 +47,7 @@ Option<Error> validateContainerId(const ContainerID& containerId)
   // Check common Mesos ID rules.
   Option<Error> error = common::validation::validateID(id);
   if (error.isSome()) {
-    return Error(error->message);
+    return error.get();
   }
 
   // Check ContainerID specific rules.
@@ -74,7 +74,8 @@ Option<Error> validateContainerId(const ContainerID& containerId)
     Option<Error> parentError = validateContainerId(containerId.parent());
 
     if (parentError.isSome()) {
-      return Error("'ContainerID.parent' is invalid: " + parentError->message);
+      return Error(
+          "'ContainerID.parent' is invalid: " + stringify(parentError.get()));
     }
   }
 
@@ -172,7 +173,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'launch_nested_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       // The parent `ContainerID` is required, so that we know
@@ -187,7 +188,7 @@ Option<Error> validate(
             call.launch_nested_container().command());
         if (error.isSome()) {
           return Error("'launch_nested_container.command' is invalid"
-                       ": " + error->message);
+                       ": " + stringify(error.get()));
         }
       }
 
@@ -196,7 +197,7 @@ Option<Error> validate(
             call.launch_nested_container().container());
         if (error.isSome()) {
           return Error("'launch_nested_container.container' is invalid"
-                       ": " + error->message);
+                       ": " + stringify(error.get()));
         }
       }
 
@@ -213,7 +214,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'wait_nested_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       // Nested containers always have at least one parent.
@@ -235,7 +236,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'kill_nested_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       // Nested containers always have at least one parent.
@@ -257,7 +258,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'remove_nested_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       // Nested containers always have at least one parent.
@@ -280,7 +281,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'launch_nested_container_session.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       // The parent `ContainerID` is required, so that we know
@@ -296,7 +297,7 @@ Option<Error> validate(
             call.launch_nested_container_session().command());
         if (error.isSome()) {
           return Error("'launch_nested_container_session.command' is invalid"
-                       ": " + error->message);
+                       ": " + stringify(error.get()));
         }
       }
 
@@ -305,7 +306,7 @@ Option<Error> validate(
             call.launch_nested_container_session().container());
         if (error.isSome()) {
           return Error("'launch_nested_container_session.container' is invalid"
-                       ": " + error->message);
+                       ": " + stringify(error.get()));
         }
       }
 
@@ -331,7 +332,7 @@ Option<Error> validate(
 
           if (error.isSome()) {
             return Error("'attach_container_input.container_id' is invalid"
-                ": " + error->message);
+                ": " + stringify(error.get()));
           }
         }
 
@@ -352,7 +353,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'attach_container_output.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       return None();
@@ -368,7 +369,8 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error(
-            "'launch_container.container_id' is invalid: " + error->message);
+            "'launch_container.container_id' is invalid: " +
+            stringify(error.get()));
       }
 
       // Nested containers share resources with their parent so are
@@ -383,14 +385,14 @@ Option<Error> validate(
       // General resource validation first.
       error = Resources::validate(call.launch_container().resources());
       if (error.isSome()) {
-        return Error("Invalid resources: " + error->message);
+        return Error("Invalid resources: " + stringify(error.get()));
       }
 
       error = common::validation::validateGpus(
           call.launch_container().resources());
 
       if (error.isSome()) {
-        return Error("Invalid GPU resources: " + error->message);
+        return Error("Invalid GPU resources: " + stringify(error.get()));
       }
 
       // Because standalone containers are launched outside of the master's
@@ -428,7 +430,8 @@ Option<Error> validate(
             call.launch_container().command());
         if (error.isSome()) {
           return Error(
-              "'launch_container.command' is invalid: " + error->message);
+              "'launch_container.command' is invalid: " +
+              stringify(error.get()));
         }
       }
 
@@ -437,7 +440,8 @@ Option<Error> validate(
             call.launch_container().container());
         if (error.isSome()) {
           return Error(
-              "'launch_container.container' is invalid: " + error->message);
+              "'launch_container.container' is invalid: " +
+              stringify(error.get()));
         }
       }
 
@@ -454,7 +458,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'wait_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       return None();
@@ -470,7 +474,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'kill_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       return None();
@@ -486,7 +490,7 @@ Option<Error> validate(
 
       if (error.isSome()) {
         return Error("'remove_container.container_id' is invalid"
-                     ": " + error->message);
+                     ": " + stringify(error.get()));
       }
 
       return None();

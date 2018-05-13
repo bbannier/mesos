@@ -99,7 +99,8 @@ public:
     Try<string> value = os::read(path);
 
     if (value.isError()) {
-      return Error("Failed to read '" + path + "': " + value.error());
+      return Error(
+          "Failed to read '" + path + "': " + stringify(value.error()));
     }
 
     return numify<uint64_t>(strings::trim(value.get()));

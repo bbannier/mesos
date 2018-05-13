@@ -678,7 +678,7 @@ Try<Resource> Resources::parse(
   if (result.isError()) {
     return Error(
         "Failed to parse resource " + name +
-        " value " + value + " error " + result.error());
+        " value " + value + " error " + stringify(result.error()));
   }
 
   Resource resource;
@@ -759,7 +759,7 @@ Try<vector<Resource>> Resources::fromJSON(
   if (resourcesProtobuf.isError()) {
     return Error(
         "Some JSON resources were not formatted properly: " +
-        resourcesProtobuf.error());
+        stringify(resourcesProtobuf.error()));
   }
 
   vector<Resource> result;
@@ -1134,7 +1134,7 @@ Option<Error> Resources::validate(const RepeatedPtrField<Resource>& resources)
     if (error.isSome()) {
       return Error(
           "Resource '" + stringify(resource) +
-          "' is invalid: " + error->message);
+          "' is invalid: " + stringify(error.get()));
     }
   }
 
@@ -1682,7 +1682,7 @@ Try<Resources> Resources::apply(const Offer::Operation& operation) const
     getResourceConversions(operation);
 
   if (conversions.isError()) {
-    return Error("Cannot get conversions: " + conversions.error());
+    return Error("Cannot get conversions: " + stringify(conversions.error()));
   }
 
   Try<Resources> result = apply(conversions.get());

@@ -147,7 +147,7 @@ static Try<bool> isBlacklisted(
 
     if (dependencies.isError()) {
       return Error("Failed reading external dependencies in ELF file"
-                   " '" + library + "': " + dependencies.error());
+                   " '" + library + "': " + stringify(dependencies.error()));
     }
 
     foreach (const string& dependency, dependencies.get()) {
@@ -166,8 +166,8 @@ static Try<bool> isBlacklisted(
     Result<Version> abi = elf->get_abi_version();
     if (!abi.isSome()) {
       return Error(
-          "Failed to read ELF ABI version:"
-          " " + (abi.isError() ? abi.error() : "No ABI version found"));
+          "Failed to read ELF ABI version: " +
+          (abi.isError() ? stringify(abi.error()) : "No ABI version found"));
     }
 
     if (abi.get() != Version(2, 3, 99)) {
@@ -200,12 +200,15 @@ Try<NvidiaVolume> NvidiaVolume::create()
   // Append the Nvidia driver version to the name of the volume.
   Try<Nothing> initialized = nvml::initialize();
   if (initialized.isError()) {
-    return Error("Failed to nvml::initialize: " + initialized.error());
+    return Error(
+        "Failed to nvml::initialize: " + stringify(initialized.error()));
   }
 
   Try<string> version = nvml::systemGetDriverVersion();
   if (version.isError()) {
-    return Error("Failed to nvml::systemGetDriverVersion: " + version.error());
+    return Error(
+        "Failed to nvml::systemGetDriverVersion: " +
+        stringify(version.error()));
   }
 
   // Create the volume on the host.
@@ -213,7 +216,8 @@ Try<NvidiaVolume> NvidiaVolume::create()
   if (!os::exists(hostPath)) {
     Try<Nothing> mkdir = os::mkdir(hostPath);
     if (mkdir.isError()) {
-      return Error("Failed to os::mkdir '" + hostPath + "': " + mkdir.error());
+      return Error("Failed to os::mkdir '" + hostPath + "':"
+          " " + stringify(mkdir.error()));
     }
   }
 
@@ -224,14 +228,14 @@ Try<NvidiaVolume> NvidiaVolume::create()
   // the `noexec` bit set. See MESOS-5923 for more information.
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Error("Failed to get mount table: " + table.error());
+    return Error("Failed to get mount table: " + stringify(table.error()));
   }
 
   Result<string> realpath = os::realpath(hostPath);
   if (!realpath.isSome()) {
     return Error("Failed to os::realpath '" + hostPath + "':"
                  " " + (realpath.isError()
-                        ? realpath.error()
+                        ? stringify(realpath.error())
                         : "No such file or directory"));
   }
 
@@ -248,7 +252,8 @@ Try<NvidiaVolume> NvidiaVolume::create()
             "tmpfs", hostPath, "tmpfs", MS_NOSUID | MS_NODEV, "mode=755");
 
         if (mnt.isError()) {
-          return Error("Failed to mount '" + hostPath + "': " + mnt.error());
+          return Error(
+              "Failed to mount '" + hostPath + "': " + stringify(mnt.error()));
         }
       }
 
@@ -264,7 +269,8 @@ Try<NvidiaVolume> NvidiaVolume::create()
     if (!os::exists(path)) {
       Try<Nothing> mkdir = os::mkdir(path);
       if (mkdir.isError()) {
-        return Error("Failed to os::mkdir '" + path + "': " + mkdir.error());
+        return Error(
+            "Failed to os::mkdir '" + path + "': " + stringify(mkdir.error()));
       }
     }
   }
@@ -284,14 +290,16 @@ Try<NvidiaVolume> NvidiaVolume::create()
         if (!realpath.isSome()) {
           return Error("Failed to os::realpath '" + which.get() + "':"
                        " " + (realpath.isError()
-                              ? realpath.error()
+                              ? stringify(realpath.error())
                               : "No such file or directory"));
         }
 
         command = "cp " + realpath.get() + " " + path;
         Try<string> cp = os::shell(command);
         if (cp.isError()) {
-          return Error("Failed to os::shell '" + command + "': " + cp.error());
+          return Error(
+              "Failed to os::shell '" + command + "':"
+              " " + stringify(cp.error()));
         }
       }
     }
@@ -301,7 +309,7 @@ Try<NvidiaVolume> NvidiaVolume::create()
   // versions of a library that match `lib*.so*` in the ldcache.
   Try<vector<ldcache::Entry>> cache = ldcache::parse();
   if (cache.isError()) {
-    return Error("Failed to ldcache::parse: " + cache.error());
+    return Error("Failed to ldcache::parse: " + stringify(cache.error()));
   }
 
   foreach (const string& library, LIBRARIES) {
@@ -314,14 +322,14 @@ Try<NvidiaVolume> NvidiaVolume::create()
         if (!realpath.isSome()) {
           return Error("Failed to os::realpath '" + entry.path + "':"
                        " " + (realpath.isError()
-                              ? realpath.error()
+                              ? stringify(realpath.error())
                               : "No such file or directory"));
         }
 
         Try<elf::File*> load = elf::File::load(realpath.get());
         if (load.isError()) {
           return Error("Failed to elf::File::load '" + realpath.get() + "':"
-                       " " + load.error());
+                       " " + stringify(load.error()));
         }
 
         Owned<elf::File> file(load.get());
@@ -329,7 +337,8 @@ Try<NvidiaVolume> NvidiaVolume::create()
         // If the library is blacklisted, skip it.
         Try<bool> blacklisted = isBlacklisted(library, file);
         if (blacklisted.isError()) {
-          return Error("Failed to check blacklist: " + blacklisted.error());
+          return Error(
+              "Failed to check blacklist: " + stringify(blacklisted.error()));
         }
 
         if (blacklisted.get()) {
@@ -341,7 +350,7 @@ Try<NvidiaVolume> NvidiaVolume::create()
         Try<elf::Class> c = file->get_class();
         if (c.isError()) {
           return Error("Failed to get ELF class for '" + entry.name + "':"
-                       " " + c.error());
+                       " " + stringify(c.error()));
         }
 
         if (c.get() == elf::CLASS32) {
@@ -364,7 +373,7 @@ Try<NvidiaVolume> NvidiaVolume::create()
           Try<string> cp = os::shell(command);
           if (cp.isError()) {
             return Error("Failed to os::shell '" + command + "':"
-                         " " + cp.error());
+                         " " + stringify(cp.error()));
           }
         }
 
@@ -383,7 +392,7 @@ Try<NvidiaVolume> NvidiaVolume::create()
             return Error("Failed to fs::symlink"
                          " '" + symlinkPath + "'"
                          " -> '" + Path(realpath.get()).basename() + "':"
-                         " " + symlink.error());
+                         " " + stringify(symlink.error()));
           }
         }
 
@@ -408,7 +417,7 @@ Try<NvidiaVolume> NvidiaVolume::create()
               return Error("Failed to fs::symlink"
                            " '" + symlinkPath + "'"
                            " -> '" + Path(realpath.get()).basename() + "':"
-                           " " + symlink.error());
+                           " " + stringify(symlink.error()));
             }
           }
         }

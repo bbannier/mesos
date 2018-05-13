@@ -80,7 +80,7 @@ Fetcher::Fetcher(const Flags& flags) : process(new FetcherProcess(flags))
     Try<Nothing> rmdir = os::rmdir(flags.fetcher_cache_dir, true);
     CHECK_SOME(rmdir)
       << "Could not delete fetcher cache directory '"
-      << flags.fetcher_cache_dir << "': " + rmdir.error();
+      << flags.fetcher_cache_dir << "': " << rmdir.error();
   }
 
   spawn(process.get());
@@ -320,7 +320,7 @@ static Try<Bytes> fetchSize(
         path.get(), os::stat::FollowSymlink::FOLLOW_SYMLINK);
     if (size.isError()) {
       return Error("Could not determine file size for: '" + path.get() +
-                     "', error: " + size.error());
+                     "', error: " + stringify(size.error()));
     }
     return size.get();
   }
@@ -342,7 +342,7 @@ static Try<Bytes> fetchSize(
 #ifndef __WINDOWS__
   Try<Owned<HDFS>> hdfs = HDFS::create();
   if (hdfs.isError()) {
-    return Error("Failed to create HDFS client: " + hdfs.error());
+    return Error("Failed to create HDFS client: " + stringify(hdfs.error()));
   }
 
   Future<Bytes> size = hdfs.get()->du(uri);
@@ -372,7 +372,7 @@ Future<Nothing> FetcherProcess::fetch(
   Try<Nothing> validated = validateUris(commandInfo);
   if (validated.isError()) {
     ++metrics.task_fetches_failed;
-    return Failure("Could not fetch: " + validated.error());
+    return Failure("Could not fetch: " + stringify(validated.error()));
   }
 
   Option<string> commandUser = user;
@@ -657,8 +657,9 @@ Try<list<Path>> FetcherProcess::cacheFiles() const
     os::find(flags.fetcher_cache_dir, CACHE_FILE_NAME_PREFIX);
 
   if (find.isError()) {
-    return Error("Could not access cache directory '" +
-                 flags.fetcher_cache_dir + "' with error: " + find.error());
+    return Error(
+        "Could not access cache directory '" + flags.fetcher_cache_dir +
+        "' with error: " + stringify(find.error()));
   }
 
   transform(
@@ -698,7 +699,7 @@ FetcherProcess::reserveCacheSpace(
 
     return Failure("Could not determine size of cache file for '" +
                    entry->key + "' with error: " +
-                   requestedSpace.error());
+                   stringify(requestedSpace.error()));
   }
 
   Try<Nothing> reservation = cache.reserve(requestedSpace.get());
@@ -711,7 +712,7 @@ FetcherProcess::reserveCacheSpace(
     cache.remove(entry);
 
     return Failure("Failed to reserve space in the cache: " +
-                   reservation.error());
+                   stringify(reservation.error()));
   }
 
   VLOG(1) << "Claiming fetcher cache space for: " << entry->key;
@@ -750,7 +751,7 @@ Future<Nothing> FetcherProcess::run(
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (out.isError()) {
-    return Failure("Failed to create 'stdout' file: " + out.error());
+    return Failure("Failed to create 'stdout' file: " + stringify(out.error()));
   }
 
   string stderrPath = path::join(info.sandbox_directory(), "stderr");
@@ -761,7 +762,7 @@ Future<Nothing> FetcherProcess::run(
 
   if (err.isError()) {
     os::close(out.get());
-    return Failure("Failed to create 'stderr' file: " + err.error());
+    return Failure("Failed to create 'stderr' file: " + stringify(err.error()));
   }
 
 // NOTE: `os::chown` is not supported on Windows. The flag that gets passed in
@@ -783,7 +784,7 @@ Future<Nothing> FetcherProcess::run(
           "Failed to chown '" +
           stdoutPath +
           "' to user '" + user.get() + "' : " +
-          chownOut.error());
+          stringify(chownOut.error()));
     }
 
     Try<Nothing> chownErr = os::chown(
@@ -798,7 +799,7 @@ Future<Nothing> FetcherProcess::run(
           "Failed to chown '" +
           stderrPath +
           "' to user '" + user.get() + "' : " +
-          chownErr.error());
+          stringify(chownErr.error()));
     }
   }
 #endif // __WINDOWS__
@@ -823,7 +824,7 @@ Future<Nothing> FetcherProcess::run(
                << "for the mesos-fetcher '"
                << fetcherPath
                << "': "
-               << (realpath.isError() ? realpath.error()
+               << (realpath.isError() ? stringify(realpath.error())
                                       : "No such file or directory");
 
     os::close(out.get());
@@ -883,7 +884,7 @@ Future<Nothing> FetcherProcess::run(
 
   if (fetcherSubprocess.isError()) {
     return Failure("Failed to execute mesos-fetcher: " +
-                   fetcherSubprocess.error());
+                   stringify(fetcherSubprocess.error()));
   }
 
   // Remember this PID in case we need to kill the subprocess. See
@@ -1092,7 +1093,8 @@ Try<Nothing> FetcherProcess::Cache::remove(
     Try<Nothing> rm = os::rm(entry->path().string());
     if (rm.isError()) {
       return Error("Could not delete fetcher cache file '" +
-                   entry->path().string() + "' with error: " + rm.error() +
+                   entry->path().string() + "'"
+                   " with error: " + stringify(rm.error()) +
                    " for entry '" + entry->key +
                    "', leaking cache space: " + stringify(entry->size));
     }

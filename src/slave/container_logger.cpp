@@ -46,7 +46,7 @@ Try<ContainerLogger*> ContainerLogger::create(const Option<string>& type)
     if (module.isError()) {
       return Error(
           "Failed to create container logger module '" + type.get() +
-          "': " + module.error());
+          "': " + stringify(module.error()));
     }
 
     logger = module.get();
@@ -58,7 +58,8 @@ Try<ContainerLogger*> ContainerLogger::create(const Option<string>& type)
     delete logger;
 
     return Error(
-        "Failed to initialize container logger module: " + initialize.error());
+        "Failed to initialize container logger module: " +
+        stringify(initialize.error()));
   }
 
   return logger;

@@ -86,7 +86,7 @@ Try<Nothing> convertWhiteouts(const string& directory)
         return Error(
             "Failed to set extended attribute 'trusted.overlay.opaque'"
             " for the directory '" + path.dirname() + "': " +
-            setxattr.error());
+            stringify(setxattr.error()));
       }
     } else {
       const string originalPath = path::join(
@@ -98,7 +98,7 @@ Try<Nothing> convertWhiteouts(const string& directory)
         ::fts_close(tree);
         return Error(
             "Failed to create character device '" +
-            originalPath + "': " + mknod.error());
+            originalPath + "': " + stringify(mknod.error()));
       }
     }
 
@@ -108,7 +108,7 @@ Try<Nothing> convertWhiteouts(const string& directory)
       ::fts_close(tree);
       return Error(
           "Failed to remove AUFS whiteout file '" +
-          path.string() + "': " + rm.error());
+          path.string() + "': " + stringify(rm.error()));
     }
   }
 

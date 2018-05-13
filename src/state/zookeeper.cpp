@@ -342,7 +342,7 @@ void ZooKeeperStorageProcess::connected(int64_t sessionId, bool reconnect)
     if (result.isNone()) {
       return; // Try again later.
     } else if (result.isError()) {
-      names->promise.fail(result.error());
+      names->promise.fail(stringify(result.error()));
     } else {
       names->promise.set(result.get());
     }
@@ -356,7 +356,7 @@ void ZooKeeperStorageProcess::connected(int64_t sessionId, bool reconnect)
     if (result.isNone()) {
       return; // Try again later.
     } else if (result.isError()) {
-      get->promise.fail(result.error());
+      get->promise.fail(stringify(result.error()));
     } else {
       get->promise.set(result.get());
     }
@@ -370,7 +370,7 @@ void ZooKeeperStorageProcess::connected(int64_t sessionId, bool reconnect)
     if (result.isNone()) {
       return; // Try again later.
     } else if (result.isError()) {
-      set->promise.fail(result.error());
+      set->promise.fail(stringify(result.error()));
     } else {
       set->promise.set(result.get());
     }

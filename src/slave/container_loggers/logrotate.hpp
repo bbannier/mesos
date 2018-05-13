@@ -26,6 +26,8 @@
 #include <stout/option.hpp>
 #include <stout/path.hpp>
 
+#include <stout/os/shell.hpp>
+
 #include <stout/os/constants.hpp>
 #include <stout/os/pagesize.hpp>
 
@@ -108,7 +110,7 @@ struct Flags : public virtual flags::FlagsBase
 
           if (helpCommand.isError()) {
             return Error(
-                "Failed to check logrotate: " + helpCommand.error());
+                "Failed to check logrotate: " + stringify(helpCommand.error()));
           }
 
           return None();

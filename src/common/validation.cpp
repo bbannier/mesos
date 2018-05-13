@@ -157,7 +157,7 @@ Option<Error> validateEnvironment(const Environment& environment)
         if (error.isSome()) {
           return Error(
               "Environment variable '" + variable.name() + "' specifies an "
-              "invalid secret: " + error->message);
+              "invalid secret: " + stringify(error.get()));
         }
 
         if (variable.secret().value().data().find('\0') != string::npos) {
@@ -264,7 +264,7 @@ Option<Error> validateContainerInfo(const ContainerInfo& containerInfo)
   foreach (const Volume& volume, containerInfo.volumes()) {
     Option<Error> error = validateVolume(volume);
     if (error.isSome()) {
-      return Error("Invalid volume: " + error->message);
+      return Error("Invalid volume: " + stringify(error.get()));
     }
   }
 

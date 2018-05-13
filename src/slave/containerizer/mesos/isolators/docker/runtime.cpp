@@ -123,7 +123,7 @@ Future<Option<ContainerLaunchInfo>> DockerRuntimeIsolatorProcess::prepare(
 
   if (command.isError()) {
     return Failure("Failed to determine the launch command: " +
-                   command.error());
+                   stringify(command.error()));
   }
 
   // Set 'launchInfo'.

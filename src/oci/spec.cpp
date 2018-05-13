@@ -55,7 +55,8 @@ Option<Error> validate(const Index& index)
     Option<Error> error = validateDigest(manifest.digest());
     if (error.isSome()) {
       return Error(
-          "Failed to validate 'digest' of the 'manifest': " + error->message);
+          "Failed to validate 'digest' of the 'manifest': " +
+          stringify(error.get()));
     }
   }
 
@@ -76,7 +77,8 @@ Option<Error> validate(const Manifest& manifest)
   Option<Error> error = validateDigest(config.digest());
   if (error.isSome()) {
     return Error(
-        "Failed to validate 'digest' of the 'config': " + error->message);
+        "Failed to validate 'digest' of the 'config': " +
+        stringify(error.get()));
   }
 
   if (config.mediatype() != MEDIA_TYPE_CONFIG) {
@@ -92,7 +94,8 @@ Option<Error> validate(const Manifest& manifest)
     Option<Error> error = validateDigest(layer.digest());
     if (error.isSome()) {
       return Error(
-          "Failed to validate 'digest' of the 'layer': " + error->message);
+          "Failed to validate 'digest' of the 'layer': " +
+          stringify(error.get()));
     }
 
     if (layer.mediatype() != MEDIA_TYPE_LAYER &&
@@ -125,18 +128,18 @@ Try<Descriptor> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<Descriptor> descriptor = protobuf::parse<Descriptor>(json.get());
   if (descriptor.isError()) {
-    return Error("Protobuf parse failed: " + descriptor.error());
+    return Error("Protobuf parse failed: " + stringify(descriptor.error()));
   }
 
   Option<Error> error = internal::validateDigest(descriptor->digest());
   if (error.isSome()) {
     return Error(
-        "OCI v1 image descriptor validation failed: " + error->message);
+        "OCI v1 image descriptor validation failed: " + stringify(error.get()));
   }
 
   return descriptor.get();
@@ -148,19 +151,19 @@ Try<Index> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<Index> index = protobuf::parse<Index>(json.get());
   if (index.isError()) {
-    return Error("Protobuf parse failed: " + index.error());
+    return Error("Protobuf parse failed: " + stringify(index.error()));
   }
 
   // Manually parse 'manifest.platform.os.version' and
   // 'manifest.platform.os.features'.
   Result<JSON::Array> manifests = json->at<JSON::Array>("manifests");
   if (manifests.isError()) {
-    return Error("Failed to find 'manifests': " + manifests.error());
+    return Error("Failed to find 'manifests': " + stringify(manifests.error()));
   } else if (manifests.isNone()) {
     return Error("Unable to find 'manifests'");
   }
@@ -173,7 +176,7 @@ Try<Index> parse(const string& s)
     const JSON::Object& manifest = value.as<JSON::Object>();
     Result<JSON::String> digest = manifest.at<JSON::String>("digest");
     if (digest.isError()) {
-      return Error("Failed to find 'digest': " + digest.error());
+      return Error("Failed to find 'digest': " + stringify(digest.error()));
     } else if (digest.isNone()) {
       return Error("Unable to find 'digest'");
     }
@@ -194,14 +197,15 @@ Try<Index> parse(const string& s)
 
     Result<JSON::Object> platform = manifest.at<JSON::Object>("platform");
     if (platform.isError()) {
-      return Error("Failed to find 'platform': " + platform.error());
+      return Error("Failed to find 'platform': " + stringify(platform.error()));
     }
 
     if (platform.isSome()) {
       Result<JSON::String> osVersion = platform->at<JSON::String>("os.version");
       if (osVersion.isError()) {
         return Error(
-            "Failed to find 'platform.os.version': " + osVersion.error());
+            "Failed to find 'platform.os.version': " +
+            stringify(osVersion.error()));
       }
 
       if (osVersion.isSome()) {
@@ -212,7 +216,8 @@ Try<Index> parse(const string& s)
       Result<JSON::Array> osFeatures = platform->at<JSON::Array>("os.features");
       if (osFeatures.isError()) {
         return Error(
-            "Failed to find 'platform.os.features': " + osFeatures.error());
+            "Failed to find 'platform.os.features': " +
+            stringify(osFeatures.error()));
       }
 
       if (osFeatures.isSome()) {
@@ -234,7 +239,7 @@ Try<Index> parse(const string& s)
   Option<Error> error = internal::validate(index.get());
   if (error.isSome()) {
     return Error(
-        "OCI v1 image index validation failed: " + error->message);
+        "OCI v1 image index validation failed: " + stringify(error.get()));
   }
 
   return index.get();
@@ -246,18 +251,18 @@ Try<Manifest> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<Manifest> manifest = protobuf::parse<Manifest>(json.get());
   if (manifest.isError()) {
-    return Error("Protobuf parse failed: " + manifest.error());
+    return Error("Protobuf parse failed: " + stringify(manifest.error()));
   }
 
   Option<Error> error = internal::validate(manifest.get());
   if (error.isSome()) {
     return Error(
-        "OCI v1 image manifest validation failed: " + error->message);
+        "OCI v1 image manifest validation failed: " + stringify(error.get()));
   }
 
   return manifest.get();
@@ -269,25 +274,26 @@ Try<Configuration> parse(const string& s)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(s);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<Configuration> configuration =
     protobuf::parse<Configuration>(json.get());
 
   if (configuration.isError()) {
-    return Error("Protobuf parse failed: " + configuration.error());
+    return Error("Protobuf parse failed: " + stringify(configuration.error()));
   }
 
   Result<JSON::Object> config = json->find<JSON::Object>("config");
   if (config.isError()) {
-    return Error("Failed to find 'config': " + config.error());
+    return Error("Failed to find 'config': " + stringify(config.error()));
   }
 
   Option<Error> error = internal::validate(configuration.get());
   if (error.isSome()) {
     return Error(
-        "OCI v1 image configuration validation failed: " + error->message);
+        "OCI v1 image configuration validation failed: " +
+        stringify(error.get()));
   }
 
   return configuration.get();

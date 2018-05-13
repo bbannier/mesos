@@ -144,7 +144,7 @@ Try<Isolator*> NvidiaGpuIsolatorProcess::create(
   if (hierarchy.isError()) {
     return Error(
         "Error retrieving the 'devices' subsystem hierarchy: " +
-        hierarchy.error());
+        stringify(hierarchy.error()));
   }
 
   // Create device entries for `/dev/nvidiactl` and
@@ -155,7 +155,7 @@ Try<Isolator*> NvidiaGpuIsolatorProcess::create(
   Try<dev_t> device = os::stat::rdev("/dev/nvidiactl");
   if (device.isError()) {
     return Error("Failed to obtain device ID for '/dev/nvidiactl': " +
-                 device.error());
+                 stringify(device.error()));
   }
 
   cgroups::devices::Entry entry;
@@ -181,14 +181,15 @@ Try<Isolator*> NvidiaGpuIsolatorProcess::create(
   if (!os::exists("/dev/nvidia-uvm")) {
     Try<string> modprobe = os::shell("nvidia-modprobe -u -c 0");
     if (modprobe.isError()) {
-      return Error("Failed to load '/dev/nvidia-uvm': " + modprobe.error());
+      return Error(
+          "Failed to load '/dev/nvidia-uvm': " + stringify(modprobe.error()));
     }
   }
 
   device = os::stat::rdev("/dev/nvidia-uvm");
   if (device.isError()) {
     return Error("Failed to obtain device ID for '/dev/nvidia-uvm': " +
-                 device.error());
+                 stringify(device.error()));
   }
 
   entry.selector.type = Entry::Selector::Type::CHARACTER;
@@ -265,7 +266,7 @@ Future<Nothing> NvidiaGpuIsolatorProcess::recover(
           "Failed to check the existence of the cgroup "
           "'" + cgroup + "' in hierarchy '" + hierarchy + "' "
           "for container " + stringify(containerId) +
-          ": " + exists.error());
+          ": " + stringify(exists.error()));
     }
 
     if (!exists.get()) {
@@ -287,7 +288,7 @@ Future<Nothing> NvidiaGpuIsolatorProcess::recover(
 
     if (entries.isError()) {
       return Failure("Failed to obtain devices list for cgroup"
-                     " '" + cgroup + "': " + entries.error());
+                     " '" + cgroup + "': " + stringify(entries.error()));
     }
 
     const set<Gpu>& available = allocator.total();
@@ -356,7 +357,8 @@ Future<Option<ContainerLaunchInfo>> NvidiaGpuIsolatorProcess::prepare(
 
     if (allow.isError()) {
       return Failure("Failed to grant cgroups access to"
-                     " '" + stringify(devicePath) + "': " + allow.error());
+                     " '" + stringify(devicePath) + "':"
+                     " " + stringify(allow.error()));
     }
   }
 
@@ -406,7 +408,7 @@ Future<Option<ContainerLaunchInfo>> NvidiaGpuIsolatorProcess::_prepare(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create the container directory at"
-          " '" + target + "': " + mkdir.error());
+          " '" + target + "': " + stringify(mkdir.error()));
     }
 
     ContainerMountInfo* mount = launchInfo.add_mounts();
@@ -478,7 +480,8 @@ Future<Nothing> NvidiaGpuIsolatorProcess::update(
 
       if (deny.isError()) {
         return Failure("Failed to deny cgroups access to GPU device"
-                       " '" + stringify(entry) + "': " + deny.error());
+                       " '" + stringify(entry) + "':"
+                       " " + stringify(deny.error()));
       }
 
       deallocated.insert(*gpu);
@@ -516,7 +519,8 @@ Future<Nothing> NvidiaGpuIsolatorProcess::_update(
 
     if (allow.isError()) {
       return Failure("Failed to grant cgroups access to GPU device"
-                     " '" + stringify(entry) + "': " + allow.error());
+                     " '" + stringify(entry) + "':"
+                     " " + stringify(allow.error()));
     }
   }
 

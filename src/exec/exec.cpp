@@ -647,7 +647,7 @@ MesosExecutorDriver::MesosExecutorDriver(mesos::Executor* _executor)
 
   if (load.isError()) {
     status = DRIVER_ABORTED;
-    executor->error(this, load.error());
+    executor->error(this, stringify(load.error()));
     return;
   }
 

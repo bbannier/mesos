@@ -145,7 +145,7 @@ static Try<Nothing> assignCgroups(const slave::Flags& flags)
       return Error(
           "Failed to prepare cgroup " + flags.cgroups_root +
           " for subsystem " + subsystem +
-          ": " + hierarchy.error());
+          ": " + stringify(hierarchy.error()));
     }
 
     // Create a cgroup for the slave.
@@ -157,7 +157,7 @@ static Try<Nothing> assignCgroups(const slave::Flags& flags)
           "Failed to find cgroup " + cgroup +
           " for subsystem " + subsystem +
           " under hierarchy " + hierarchy.get() +
-          " for agent: " + exists.error());
+          " for agent: " + stringify(exists.error()));
     }
 
     if (!exists.get()) {
@@ -167,7 +167,7 @@ static Try<Nothing> assignCgroups(const slave::Flags& flags)
             "Failed to create cgroup " + cgroup +
             " for subsystem " + subsystem +
             " under hierarchy " + hierarchy.get() +
-            " for agent: " + create.error());
+            " for agent: " + stringify(create.error()));
       }
     }
 
@@ -179,7 +179,7 @@ static Try<Nothing> assignCgroups(const slave::Flags& flags)
           "Failed to check for existing threads in cgroup " + cgroup +
           " for subsystem " + subsystem +
           " under hierarchy " + hierarchy.get() +
-          " for agent: " + processes.error());
+          " for agent: " + stringify(processes.error()));
     }
 
     // Log if there are any processes in the slave's cgroup. They
@@ -222,7 +222,7 @@ static Try<Nothing> assignCgroups(const slave::Flags& flags)
           "Failed to move agent into cgroup " + cgroup +
           " for subsystem " + subsystem +
           " under hierarchy " + hierarchy.get() +
-          " for agent: " + assign.error());
+          " for agent: " + stringify(assign.error()));
     }
   }
 
@@ -480,7 +480,7 @@ int main(int argc, char** argv)
     Try<Nothing> initialize = systemd::initialize(systemdFlags);
     if (initialize.isError()) {
       EXIT(EXIT_FAILURE)
-        << "Failed to initialize systemd: " + initialize.error();
+        << "Failed to initialize systemd: " + stringify(initialize.error());
     }
   }
 #endif // __linux__

@@ -91,7 +91,7 @@ Future<Nothing> CopyFetcherPlugin::fetch(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create directory '" +
-        directory + "': " + mkdir.error());
+        directory + "': " + stringify(mkdir.error()));
   }
 
   VLOG(1) << "Copying '" << uri.path() << "' to '" << directory << "'";
@@ -113,7 +113,8 @@ Future<Nothing> CopyFetcherPlugin::fetch(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to exec the copy subprocess: " + s.error());
+    return Failure(
+        "Failed to exec the copy subprocess: " + stringify(s.error()));
   }
 
   return await(

@@ -702,7 +702,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverServices()
         "Failed to find plugin containers for CSI plugin type '" +
         info.storage().plugin().type() + "' and name '" +
         info.storage().plugin().name() + ": " +
-        containerPaths.error());
+        stringify(containerPaths.error()));
   }
 
   list<Future<Nothing>> futures;
@@ -716,7 +716,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverServices()
     if (containerPath.isError()) {
       return Failure(
           "Failed to parse container path '" + path + "': " +
-          containerPath.error());
+          stringify(containerPath.error()));
     }
 
     CHECK_EQ(info.storage().plugin().type(), containerPath->type);
@@ -743,7 +743,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverServices()
         if (config.isError()) {
           return Failure(
               "Failed to read plugin container config from '" +
-              configPath + "': " + config.error());
+              configPath + "': " + stringify(config.error()));
         }
 
         if (config.isSome() &&
@@ -767,7 +767,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverServices()
           if (rmdir.isError()) {
             return Failure(
                 "Failed to remove endpoint directory '" + endpointDir.get() +
-                "': " + rmdir.error());
+                "': " + stringify(rmdir.error()));
           }
         }
 
@@ -775,7 +775,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverServices()
         if (rmdir.isError()) {
           return Failure(
               "Failed to remove plugin container directory '" + path + "': " +
-              rmdir.error());
+              stringify(rmdir.error()));
         }
 
         return Nothing();
@@ -807,7 +807,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverVolumes()
     return Failure(
         "Failed to find volumes for CSI plugin type '" +
         info.storage().plugin().type() + "' and name '" +
-        info.storage().plugin().name() + ": " + volumePaths.error());
+        info.storage().plugin().name() + ": " + stringify(volumePaths.error()));
   }
 
   list<Future<Nothing>> futures;
@@ -818,7 +818,8 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverVolumes()
 
     if (volumePath.isError()) {
       return Failure(
-          "Failed to parse volume path '" + path + "': " + volumePath.error());
+          "Failed to parse volume path '" + path +
+          "': " + stringify(volumePath.error()));
     }
 
     CHECK_EQ(info.storage().plugin().type(), volumePath->type);
@@ -841,7 +842,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::recoverVolumes()
     if (volumeState.isError()) {
       return Failure(
           "Failed to read volume state from '" + statePath + "': " +
-          volumeState.error());
+          stringify(volumeState.error()));
     }
 
     if (volumeState.isSome()) {
@@ -963,7 +964,7 @@ StorageLocalResourceProviderProcess::recoverResourceProviderState()
     return Failure(
         "Failed to read the latest symlink for resource provider with "
         "type '" + info.type() + "' and name '" + info.name() + "'"
-        ": " + realpath.error());
+        ": " + stringify(realpath.error()));
   }
 
   if (realpath.isSome()) {
@@ -982,7 +983,7 @@ StorageLocalResourceProviderProcess::recoverResourceProviderState()
     if (resourceProviderState.isError()) {
       return Failure(
           "Failed to read resource provider state from '" + statePath +
-          "': " + resourceProviderState.error());
+          "': " + stringify(resourceProviderState.error()));
     }
 
     if (resourceProviderState.isSome()) {
@@ -1120,7 +1121,7 @@ StorageLocalResourceProviderProcess::reconcileOperationStatuses()
   if (operationPaths.isError()) {
     return Failure(
         "Failed to find operations for resource provider " +
-        stringify(info.id()) + ": " + operationPaths.error());
+        stringify(info.id()) + ": " + stringify(operationPaths.error()));
   }
 
   list<id::UUID> operationUuids;
@@ -1131,7 +1132,7 @@ StorageLocalResourceProviderProcess::reconcileOperationStatuses()
     if (uuid.isError()) {
       return Failure(
           "Failed to parse operation path '" + path + "': " +
-          uuid.error());
+          stringify(uuid.error()));
     }
 
     CHECK(operations.contains(uuid.get()));
@@ -1161,7 +1162,8 @@ StorageLocalResourceProviderProcess::reconcileOperationStatuses()
           Try<Nothing> rmdir = os::rmdir(path);
           if (rmdir.isError()) {
             return Failure(
-                "Failed to remove directory '" + path + "': " + rmdir.error());
+                "Failed to remove directory '" + path +
+                "': " + stringify(rmdir.error()));
           }
         }
       }
@@ -1683,7 +1685,8 @@ void StorageLocalResourceProviderProcess::acknowledgeOperationStatus(
           Try<Nothing> rmdir = os::rmdir(path);
           if (rmdir.isError()) {
             return Failure(
-                "Failed to remove directory '" + path + "': " + rmdir.error());
+                "Failed to remove directory '" + path +
+                "': " + stringify(rmdir.error()));
           }
         }
       }
@@ -1795,7 +1798,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
   if (endpoint.isError()) {
     return Failure(
         "Failed to resolve endpoint path for plugin container '" +
-        stringify(containerId) + "': " + endpoint.error());
+        stringify(containerId) + "': " + stringify(endpoint.error()));
   }
 
   const string& endpointPath = endpoint.get();
@@ -1828,7 +1831,8 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
   Try<Nothing> mkdir = os::mkdir(mountRootDir);
   if (mkdir.isError()) {
     return Failure(
-        "Failed to create directory '" + mountRootDir + "': " + mkdir.error());
+        "Failed to create directory '" + mountRootDir +
+        "': " + stringify(mkdir.error()));
   }
 
   // Prepare a volume where the mount points will be placed.
@@ -1882,7 +1886,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
           if (rm.isError()) {
             return Failure(
                 "Failed to remove endpoint '" + endpointPath +
-                "': " + rm.error());
+                "': " + stringify(rm.error()));
           }
         }
 
@@ -1892,7 +1896,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
   if (daemon.isError()) {
     return Failure(
         "Failed to create container daemon for plugin container '" +
-        stringify(containerId) + "': " + daemon.error());
+        stringify(containerId) + "': " + stringify(daemon.error()));
   }
 
   // Checkpoint the plugin container config.
@@ -1906,7 +1910,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
   if (checkpoint.isError()) {
     return Failure(
         "Failed to checkpoint plugin container config to '" + configPath +
-        "': " + checkpoint.error());
+        "': " + stringify(checkpoint.error()));
   }
 
   auto die = [=](const string& message) {
@@ -2243,7 +2247,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::nodeStage(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create mount staging path '" + stagingPath + "': " +
-            mkdir.error());
+            stringify(mkdir.error()));
       }
 
       if (volume.state.state() == VolumeState::NODE_READY) {
@@ -2363,7 +2367,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::nodePublish(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create mount target path '" + targetPath + "': " +
-            mkdir.error());
+            stringify(mkdir.error()));
       }
 
       if (volume.state.state() == VolumeState::VOL_READY) {
@@ -2456,7 +2460,7 @@ Future<Nothing> StorageLocalResourceProviderProcess::nodeUnpublish(
           if (rmdir.isError()) {
             return Failure(
                 "Failed to remove mount point '" + targetPath + "': " +
-                rmdir.error());
+                stringify(rmdir.error()));
           }
 
           return Nothing();
@@ -3202,7 +3206,7 @@ Try<Nothing> StorageLocalResourceProviderProcess::updateOperationStatus(
           error.isNone() ? OPERATION_FINISHED : OPERATION_FAILED,
           operation.info().has_id()
             ? operation.info().id() : Option<OperationID>::none(),
-          error.isNone() ? Option<string>::none() : error->message,
+          error.isNone() ? Option<string>::none() : stringify(error.get()),
           error.isNone() ? convertedResources : Option<Resources>::none(),
           id::UUID::random()));
 

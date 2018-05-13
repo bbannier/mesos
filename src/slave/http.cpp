@@ -439,7 +439,7 @@ Future<Response> Http::api(
 
     Option<Error> error = validation::agent::call::validate(call);
     if (error.isSome()) {
-      return Error("Failed to validate agent::Call: " + error->message);
+      return Error("Failed to validate agent::Call: " + stringify(error.get()));
     }
 
     return call;
@@ -509,7 +509,7 @@ Future<Response> Http::api(
             }
 
             if (call.isError()) {
-              return BadRequest(call.error());
+              return BadRequest(stringify(call.error()));
             }
 
             return _api(call.get(), std::move(reader), mediaTypes, principal);
@@ -523,7 +523,7 @@ Future<Response> Http::api(
           [=](const string& body) -> Future<Response> {
             Try<mesos::agent::Call> call = deserializer(body, contentType);
             if (call.isError()) {
-              return BadRequest(call.error());
+              return BadRequest(stringify(call.error()));
             }
             return _api(call.get(), None(), mediaTypes, principal);
           }));
@@ -739,7 +739,8 @@ Future<Response> Http::executor(
   } else if (contentType.get() == APPLICATION_JSON) {
     Try<JSON::Value> value = JSON::parse(request.body);
     if (value.isError()) {
-      return BadRequest("Failed to parse body into JSON: " + value.error());
+      return BadRequest(
+          "Failed to parse body into JSON: " + stringify(value.error()));
     }
 
     Try<v1::executor::Call> parse =
@@ -747,7 +748,7 @@ Future<Response> Http::executor(
 
     if (parse.isError()) {
       return BadRequest("Failed to convert JSON into Call protobuf: " +
-                        parse.error());
+                        stringify(parse.error()));
     }
 
     v1Call = parse.get();
@@ -762,7 +763,8 @@ Future<Response> Http::executor(
   Option<Error> error = validation::executor::call::validate(call);
 
   if (error.isSome()) {
-    return BadRequest("Failed to validate Executor::Call: " + error->message);
+    return BadRequest(
+        "Failed to validate Executor::Call: " + stringify(error.get()));
   }
 
   ContentType acceptType;
@@ -807,7 +809,7 @@ Future<Response> Http::executor(
         executor->containerId);
 
     if (error.isSome()) {
-      return Forbidden(error->message);
+      return Forbidden(stringify(error.get()));
     }
   }
 
@@ -1891,7 +1893,8 @@ Future<Response> Http::statistics(
 
   Try<string> endpoint = extractEndpoint(request.url);
   if (endpoint.isError()) {
-    return Failure("Failed to extract endpoint: " + endpoint.error());
+    return Failure(
+        "Failed to extract endpoint: " + stringify(endpoint.error()));
   }
 
   return authorizeEndpoint(
@@ -2000,7 +2003,8 @@ Future<Response> Http::containers(
 
   Try<string> endpoint = extractEndpoint(request.url);
   if (endpoint.isError()) {
-    return Failure("Failed to extract endpoint: " + endpoint.error());
+    return Failure(
+        "Failed to extract endpoint: " + stringify(endpoint.error()));
   }
 
   return authorizeEndpoint(
@@ -2557,7 +2561,8 @@ Future<Response> Http::_launchContainer(
                                    : Option<string>::none());
 
     if (mkdir.isError()){
-      return InternalServerError("Failed to create sandbox: " + mkdir.error());
+      return InternalServerError(
+          "Failed to create sandbox: " + stringify(mkdir.error()));
     }
 
     containerConfig.set_directory(directory);

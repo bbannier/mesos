@@ -174,7 +174,7 @@ Future<Option<ContainerLaunchInfo>> SharedFilesystemIsolatorProcess::prepare(
                         "' for mount to '" +
                         volume.container_path() +
                         "': " +
-                        mkdir.error());
+                        stringify(mkdir.error()));
       }
 
       // Set the ownership and permissions to match the container path
@@ -191,7 +191,7 @@ Future<Option<ContainerLaunchInfo>> SharedFilesystemIsolatorProcess::prepare(
         return Failure("Failed to chmod hostPath '" +
                        hostPath +
                        "': " +
-                       chmod.error());
+                       stringify(chmod.error()));
       }
 
       Try<Nothing> chown = os::chown(stat.st_uid, stat.st_gid, hostPath, false);
@@ -199,7 +199,7 @@ Future<Option<ContainerLaunchInfo>> SharedFilesystemIsolatorProcess::prepare(
         return Failure("Failed to chown hostPath '" +
                        hostPath +
                        "': " +
-                       chown.error());
+                       stringify(chown.error()));
       }
     } else {
       hostPath = volume.host_path();

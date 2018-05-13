@@ -74,7 +74,7 @@ Try<Isolator*> VolumeSecretIsolatorProcess::create(
   Try<Nothing> mkdir = os::mkdir(hostSecretTmpDir);
   if (mkdir.isError()) {
     return Error("Failed to create secret directory on the host tmpfs:" +
-                 mkdir.error());
+                 stringify(mkdir.error()));
   }
 
   Owned<MesosIsolatorProcess> process(new VolumeSecretIsolatorProcess(
@@ -131,7 +131,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
   Try<Nothing> mkdir = os::mkdir(sandboxSecretRootDir);
   if (mkdir.isError()) {
     return Failure("Failed to create sandbox secret root directory at '" +
-                   sandboxSecretRootDir + "': " + mkdir.error());
+                   sandboxSecretRootDir + "': " + stringify(mkdir.error()));
   }
 
   // Mount ramfs in the container.
@@ -166,7 +166,8 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
 
     Option<Error> error = common::validation::validateSecret(secret);
     if (error.isSome()) {
-      return Failure("Invalid secret specified in volume: " + error->message);
+      return Failure(
+          "Invalid secret specified in volume: " + stringify(error.get()));
     }
 
     string targetContainerPath;
@@ -181,14 +182,14 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
           return Failure(
               "Failed to create directory '" +
               Path(targetContainerPath).dirname() + "' "
-              "for the target mount file: " + mkdir.error());
+              "for the target mount file: " + stringify(mkdir.error()));
         }
 
         Try<Nothing> touch = os::touch(targetContainerPath);
         if (touch.isError()) {
           return Failure(
               "Failed to create the target mount file at '" +
-              targetContainerPath + "': " + touch.error());
+              targetContainerPath + "': " + stringify(touch.error()));
         }
       } else {
         targetContainerPath = volume.container_path();
@@ -224,14 +225,14 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
       if (mkdir.isError()) {
         return Failure(
             "Failed to create the target mount file directory at '" +
-            Path(mountPoint).dirname() + "': " + mkdir.error());
+            Path(mountPoint).dirname() + "': " + stringify(mkdir.error()));
       }
 
       Try<Nothing> touch = os::touch(mountPoint);
       if (touch.isError()) {
         return Failure(
             "Failed to create the target mount file at '" +
-            targetContainerPath + "': " + touch.error());
+            targetContainerPath + "': " + stringify(touch.error()));
       }
     }
 
@@ -246,7 +247,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
     if (mkdir.isError()) {
       return Failure(
           "Failed to create the target mount file directory at '" +
-          Path(sandboxSecretPath).dirname() + "': " + mkdir.error());
+          Path(sandboxSecretPath).dirname() + "': " + stringify(mkdir.error()));
     }
 
     // Create directory tree inside sandbox secret root dir.
@@ -282,7 +283,7 @@ Future<Option<ContainerLaunchInfo>> VolumeSecretIsolatorProcess::prepare(
         if (writeSecret.isError()) {
           return Failure(
               "Error writing secret to '" + hostSecretPath + "': " +
-              writeSecret.error());
+              stringify(writeSecret.error()));
         }
         return Nothing();
       });

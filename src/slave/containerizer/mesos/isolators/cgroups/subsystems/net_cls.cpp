@@ -321,7 +321,7 @@ Future<Nothing> NetClsSubsystemProcess::recover(
 
   if (handle.isError()) {
     return Failure(
-        "Failed to recover the net_cls handle: " + handle.error());
+        "Failed to recover the net_cls handle: " + stringify(handle.error()));
   }
 
   if (handle.isSome()) {
@@ -346,7 +346,7 @@ Future<Nothing> NetClsSubsystemProcess::prepare(
     Try<NetClsHandle> handle = handleManager->alloc();
     if (handle.isError()) {
       return Failure(
-          "Failed to allocate a net_cls handle: " + handle.error());
+          "Failed to allocate a net_cls handle: " + stringify(handle.error()));
     }
 
     LOG(INFO) << "Allocated a net_cls handle: " << handle.get()
@@ -385,7 +385,7 @@ Future<Nothing> NetClsSubsystemProcess::isolate(
     if (write.isError()) {
       return Failure(
           "Failed to assign a net_cls handle to the cgroup"
-          ": " + write.error());
+          ": " + stringify(write.error()));
     }
   }
 
@@ -437,7 +437,8 @@ Future<Nothing> NetClsSubsystemProcess::cleanup(
   if (info->handle.isSome() && handleManager.isSome()) {
     Try<Nothing> free = handleManager->free(info->handle.get());
     if (free.isError()) {
-      return Failure("Could not free the net_cls handle: " + free.error());
+      return Failure(
+          "Could not free the net_cls handle: " + stringify(free.error()));
     }
   }
 
@@ -453,7 +454,8 @@ Result<NetClsHandle> NetClsSubsystemProcess::recoverHandle(
 {
   Try<uint32_t> classid = cgroups::net_cls::classid(hierarchy, cgroup);
   if (classid.isError()) {
-    return Error("Failed to read 'net_cls.classid': " + classid.error());
+    return Error(
+        "Failed to read 'net_cls.classid': " + stringify(classid.error()));
   }
 
   if (classid.get() == 0) {
@@ -466,7 +468,8 @@ Result<NetClsHandle> NetClsSubsystemProcess::recoverHandle(
   if (handleManager.isSome()) {
     Try<Nothing> reserve = handleManager->reserve(handle);
     if (reserve.isError()) {
-      return Error("Failed to reserve the handle: " + reserve.error());
+      return Error(
+          "Failed to reserve the handle: " + stringify(reserve.error()));
     }
   }
 

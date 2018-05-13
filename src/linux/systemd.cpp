@@ -92,7 +92,7 @@ Try<Nothing> extendLifetime(pid_t child)
   if (assign.isError()) {
     return Error("Failed to contain process on systemd: "
                  "Failed to assign process to its systemd executor slice: " +
-                  assign.error());
+                  stringify(assign.error()));
   }
 
   LOG(INFO) << "Assigned child process '" << child << "' to '"
@@ -161,7 +161,7 @@ Try<Nothing> initialize(const Flags& flags)
     if (create.isError()) {
       return Error("Failed to create systemd slice '" +
                    stringify(mesos::MESOS_EXECUTORS_SLICE) +
-                   "': " + create.error());
+                   "': " + stringify(create.error()));
     }
   }
 
@@ -173,7 +173,7 @@ Try<Nothing> initialize(const Flags& flags)
   if (start.isError()) {
     return Error("Failed to start '" +
                  stringify(mesos::MESOS_EXECUTORS_SLICE) +
-                 "': " + start.error());
+                 "': " + stringify(start.error()));
   }
 
   // Now the `MESOS_EXECUTORS_SLICE` is ready for us to assign any pids. We can
@@ -183,8 +183,9 @@ Try<Nothing> initialize(const Flags& flags)
       mesos::MESOS_EXECUTORS_SLICE);
 
   if (exists.isError() || !exists.get()) {
-    return Error("Failed to locate systemd cgroups hierarchy: " +
-                  (exists.isError() ? exists.error() : "does not exist"));
+    return Error(
+        "Failed to locate systemd cgroups hierarchy: " +
+        (exists.isError() ? stringify(exists.error()) : "does not exist"));
   }
 
   initialized->done();
@@ -201,7 +202,7 @@ bool exists()
     const Result<string> realpath = os::realpath("/sbin/init");
     if (realpath.isError() || realpath.isNone()) {
       LOG(WARNING) << "Failed to test /sbin/init for systemd environment: "
-                   << (realpath.isError() ? realpath.error()
+                   << (realpath.isError() ? stringify(realpath.error())
                                           : "does not exist");
 
       return false;
@@ -282,7 +283,8 @@ Try<Nothing> daemonReload()
 {
   Try<string> daemonReload = os::shell("systemctl daemon-reload");
   if (daemonReload.isError()) {
-    return Error("Failed to reload systemd daemon: " + daemonReload.error());
+    return Error(
+        "Failed to reload systemd daemon: " + stringify(daemonReload.error()));
   }
 
   return Nothing();
@@ -301,7 +303,7 @@ Try<Nothing> create(const Path& path, const string& data)
   Try<Nothing> write = os::write(path, data);
   if (write.isError()) {
     return Error("Failed to write systemd slice `" + path.string() + "`: " +
-                 write.error());
+                 stringify(write.error()));
   }
 
   LOG(INFO) << "Created systemd slice: `" << path << "`";
@@ -309,7 +311,7 @@ Try<Nothing> create(const Path& path, const string& data)
   Try<Nothing> reload = daemonReload();
   if (reload.isError()) {
     return Error("Failed to create systemd slice `" + path.string() + "`: " +
-                 reload.error());
+                 stringify(reload.error()));
   }
 
   return Nothing();
@@ -322,7 +324,8 @@ Try<Nothing> start(const string& name)
 
   if (start.isError()) {
     return Error(
-        "Failed to start systemd slice `" + name + "`: " + start.error());
+        "Failed to start systemd slice `" + name +
+        "`: " + stringify(start.error()));
   }
 
   LOG(INFO) << "Started systemd slice `" << name << "`";

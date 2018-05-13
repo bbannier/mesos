@@ -89,8 +89,8 @@ Try<DiskProfileAdaptor*> DiskProfileAdaptor::create(
 
   if (result.isError()) {
     return Error(
-        "Failed to initialize disk profile adaptor module: "
-        + result.error());
+        "Failed to initialize disk profile adaptor module:"
+        " " + stringify(result.error()));
   }
 
   return result;

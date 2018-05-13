@@ -113,7 +113,8 @@ Future<Nothing> CopyBackendProcess::provision(
 
   Try<Nothing> mkdir = os::mkdir(rootfs);
   if (mkdir.isError()) {
-    return Failure("Failed to create rootfs directory: " + mkdir.error());
+    return Failure(
+        "Failed to create rootfs directory: " + stringify(mkdir.error()));
   }
 
   list<Future<Nothing>> futures{Nothing()};
@@ -225,7 +226,7 @@ Future<Nothing> CopyBackendProcess::_provision(
           ::fts_close(tree);
           return Failure(
               "Failed to remove directory '" +
-              removePath.get() + "': " + rmdir.error());
+              removePath.get() + "': " + stringify(rmdir.error()));
         }
       } else {
         Try<Nothing> rm = os::rm(removePath.get());
@@ -233,7 +234,7 @@ Future<Nothing> CopyBackendProcess::_provision(
           ::fts_close(tree);
           return Failure(
               "Failed to remove file '" +
-              removePath.get() + "': " + rm.error());
+              removePath.get() + "': " + stringify(rm.error()));
         }
       }
     }
@@ -273,7 +274,7 @@ Future<Nothing> CopyBackendProcess::_provision(
       Subprocess::PIPE());
 
   if (s.isError()) {
-    return Failure("Failed to create 'cp' subprocess: " + s.error());
+    return Failure("Failed to create 'cp' subprocess: " + stringify(s.error()));
   }
 
   Subprocess cp = s.get();
@@ -295,7 +296,7 @@ Future<Nothing> CopyBackendProcess::_provision(
         if (rm.isError()) {
           return Failure(
               "Failed to remove whiteout file '" +
-              whiteout + "': " + rm.error());
+              whiteout + "': " + stringify(rm.error()));
         }
       }
 
@@ -320,7 +321,7 @@ Future<bool> CopyBackendProcess::destroy(const string& rootfs)
       Subprocess::FD(STDERR_FILENO));
 
   if (s.isError()) {
-    return Failure("Failed to create 'rm' subprocess: " + s.error());
+    return Failure("Failed to create 'rm' subprocess: " + stringify(s.error()));
   }
 
   return s->status()

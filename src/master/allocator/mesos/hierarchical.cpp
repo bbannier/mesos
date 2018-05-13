@@ -1075,7 +1075,7 @@ void HierarchicalAllocatorProcess::updateInverseOffer(
     if (timeout.isError()) {
       LOG(WARNING) << "Using the default value of 'refuse_seconds' to create"
                    << " the refused inverse offer filter because the input"
-                   << " value is invalid: " + timeout.error();
+                   << " value is invalid: " + stringify(timeout.error());
 
       timeout = Duration::create(Filters().refuse_seconds());
     }
@@ -1226,7 +1226,7 @@ void HierarchicalAllocatorProcess::recoverResources(
     if (timeout.isError()) {
       LOG(WARNING) << "Using the default value of 'refuse_seconds' to create"
                    << " the refused resources offer filter because the input"
-                   << " value is invalid: " + timeout.error();
+                   << " value is invalid: " + stringify(timeout.error());
 
       timeout = Duration::create(Filters().refuse_seconds());
     }

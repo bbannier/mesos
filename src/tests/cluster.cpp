@@ -137,7 +137,7 @@ Try<process::Owned<Master>> Master::start(
     if (_allocator.isError()) {
       return Error(
           "Failed to create an instance of HierarchicalDRFAllocator: " +
-          _allocator.error());
+          stringify(_allocator.error()));
     }
 
     master->allocator.reset(_allocator.get());
@@ -181,7 +181,7 @@ Try<process::Owned<Master>> Master::start(
     if (authorizer.isError()) {
       return Error(
           "Could not create '" + authorizerName + "' authorizer: " +
-          authorizer.error());
+          stringify(authorizer.error()));
     } else if (authorizer.isSome()) {
       master->authorizer.reset(authorizer.get());
 
@@ -287,7 +287,8 @@ Try<process::Owned<Master>> Master::start(
       return Error(
           "Invalid agent_removal_rate_limit: " +
           flags.agent_removal_rate_limit.get() +
-          ". Format is <Number of agents>/<Duration>: " + permits.error());
+          ". Format is <Number of agents>/<Duration>: " +
+          stringify(permits.error()));
     }
 
     Try<Duration> duration = Duration::parse(tokens[1]);
@@ -295,7 +296,8 @@ Try<process::Owned<Master>> Master::start(
       return Error(
           "Invalid agent_removal_rate_limit: " +
           flags.agent_removal_rate_limit.get() +
-          ". Format is <Number of agents>/<Duration>: " + duration.error());
+          ". Format is <Number of agents>/<Duration>: " +
+          stringify(duration.error()));
     }
 
     master->slaveRemovalLimiter =
@@ -431,7 +433,9 @@ Try<process::Owned<Slave>> Slave::create(
       slave::Containerizer::create(flags, true, slave->fetcher.get());
 
     if (_containerizer.isError()) {
-      return Error("Failed to create containerizer: " + _containerizer.error());
+      return Error(
+          "Failed to create containerizer: " +
+          stringify(_containerizer.error()));
     }
 
     slave->ownedContainerizer.reset(_containerizer.get());
@@ -496,7 +500,8 @@ Try<process::Owned<Slave>> Slave::create(
 
     if (_resourceEstimator.isError()) {
       return Error(
-          "Failed to create resource estimator: " + _resourceEstimator.error());
+          "Failed to create resource estimator: " +
+          stringify(_resourceEstimator.error()));
     }
 
     slave->resourceEstimator.reset(_resourceEstimator.get());
@@ -509,7 +514,8 @@ Try<process::Owned<Slave>> Slave::create(
 
     if (_qosController.isError()) {
       return Error(
-          "Failed to create QoS controller: " + _qosController.error());
+          "Failed to create QoS controller: " +
+          stringify(_qosController.error()));
     }
 
     slave->qosController.reset(_qosController.get());

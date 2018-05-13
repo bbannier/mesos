@@ -231,7 +231,7 @@ Future<list<Action>> ReplicaProcess::read(uint64_t from, uint64_t to)
 
     if (result.isError()) {
       process::Promise<list<Action>> promise;
-      promise.fail(result.error());
+      promise.fail(stringify(result.error()));
       return promise.future();
     } else if (result.isSome()) {
       actions.push_back(result.get());

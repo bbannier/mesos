@@ -60,7 +60,7 @@ Try<Nothing> Cache::recover()
     return Error(
         "Failed to list images under '" +
         paths::getImagesDir(storeDir) + "': " +
-        imageDirs.error());
+        stringify(imageDirs.error()));
   }
 
   foreach (const string& imageId, imageDirs.get()) {
@@ -86,13 +86,15 @@ Try<Nothing> Cache::add(const string& imageId)
   Try<string> read = os::read(path);
   if (read.isError()) {
     return Error(
-        "Failed to read manifest from '" + path + "': " + read.error());
+        "Failed to read manifest from '" + path +
+        "': " + stringify(read.error()));
   }
 
   Try<spec::ImageManifest> manifest = spec::parse(read.get());
   if (manifest.isError()) {
     return Error(
-        "Failed to parse manifest from '" + path + "': " + manifest.error());
+        "Failed to parse manifest from '" + path +
+        "': " + stringify(manifest.error()));
   }
 
   map<string, string> labels;

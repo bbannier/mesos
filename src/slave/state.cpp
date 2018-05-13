@@ -116,7 +116,7 @@ Try<State> recover(const string& rootDir, bool strict)
   if (!directory.isSome()) {
     return Error("Failed to find latest agent: " +
                  (directory.isError()
-                  ? directory.error()
+                  ? stringify(directory.error())
                   : "No such file or directory"));
   }
 
@@ -155,7 +155,7 @@ Try<SlaveState> SlaveState::recover(
 
   if (slaveInfo.isError()) {
     const string& message = "Failed to read agent info from '" + path + "': " +
-                            slaveInfo.error();
+                            stringify(slaveInfo.error());
     if (strict) {
       return Error(message);
     } else {
@@ -179,7 +179,7 @@ Try<SlaveState> SlaveState::recover(
 
   if (frameworks.isError()) {
     return Error("Failed to find frameworks for agent " + slaveId.value() +
-                 ": " + frameworks.error());
+                 ": " + stringify(frameworks.error()));
   }
 
   // Recover each of the frameworks.
@@ -192,7 +192,7 @@ Try<SlaveState> SlaveState::recover(
 
     if (framework.isError()) {
       return Error("Failed to recover framework " + frameworkId.value() +
-                   ": " + framework.error());
+                   ": " + stringify(framework.error()));
     }
 
     state.frameworks[frameworkId] = framework.get();
@@ -227,7 +227,7 @@ Try<FrameworkState> FrameworkState::recover(
 
   if (frameworkInfo.isError()) {
     message = "Failed to read framework info from '" + path + "': " +
-              frameworkInfo.error();
+              stringify(frameworkInfo.error());
 
     if (strict) {
       return Error(message);
@@ -259,8 +259,8 @@ Try<FrameworkState> FrameworkState::recover(
   Result<string> pid = state::read<string>(path);
 
   if (pid.isError()) {
-    message =
-      "Failed to read framework pid from '" + path + "': " + pid.error();
+    message = "Failed to read framework pid from '" + path +
+              "': " + stringify(pid.error());
 
     if (strict) {
       return Error(message);
@@ -287,7 +287,7 @@ Try<FrameworkState> FrameworkState::recover(
   if (executors.isError()) {
     return Error(
         "Failed to find executors for framework " + frameworkId.value() +
-        ": " + executors.error());
+        ": " + stringify(executors.error()));
   }
 
   // Recover the executors.
@@ -300,7 +300,7 @@ Try<FrameworkState> FrameworkState::recover(
 
     if (executor.isError()) {
       return Error("Failed to recover executor '" + executorId.value() +
-                   "': " + executor.error());
+                   "': " + stringify(executor.error()));
     }
 
     state.executors[executorId] = executor.get();
@@ -331,7 +331,7 @@ Try<ExecutorState> ExecutorState::recover(
 
   if (runs.isError()) {
     return Error("Failed to find runs for executor '" + executorId.value() +
-                 "': " + runs.error());
+                 "': " + stringify(runs.error()));
   }
 
   // Recover the runs.
@@ -343,7 +343,7 @@ Try<ExecutorState> ExecutorState::recover(
             "Failed to find latest run of executor '" +
             executorId.value() + "': " +
             (latest.isError()
-             ? latest.error()
+             ? stringify(latest.error())
              : "No such file or directory"));
       }
 
@@ -362,7 +362,7 @@ Try<ExecutorState> ExecutorState::recover(
         return Error(
             "Failed to recover run " + containerId.value() +
             " of executor '" + executorId.value() +
-            "': " + run.error());
+            "': " + stringify(run.error()));
       }
 
       state.runs[containerId] = run.get();
@@ -393,7 +393,7 @@ Try<ExecutorState> ExecutorState::recover(
 
   if (executorInfo.isError()) {
     message = "Failed to read executor info from '" + path + "': " +
-              executorInfo.error();
+              stringify(executorInfo.error());
 
     if (strict) {
       return Error(message);
@@ -449,7 +449,7 @@ Try<RunState> RunState::recover(
   if (tasks.isError()) {
     return Error(
         "Failed to find tasks for executor run " + containerId.value() +
-        ": " + tasks.error());
+        ": " + stringify(tasks.error()));
   }
 
   // Recover tasks.
@@ -462,7 +462,8 @@ Try<RunState> RunState::recover(
 
     if (task.isError()) {
       return Error(
-          "Failed to recover task " + taskId.value() + ": " + task.error());
+          "Failed to recover task " + taskId.value() + ": " +
+          stringify(task.error()));
     }
 
     state.tasks[taskId] = task.get();
@@ -483,7 +484,7 @@ Try<RunState> RunState::recover(
 
   if (pid.isError()) {
     message = "Failed to read executor forked pid from '" + path +
-              "': " + pid.error();
+              "': " + stringify(pid.error());
 
     if (strict) {
       return Error(message);
@@ -505,7 +506,7 @@ Try<RunState> RunState::recover(
   if (forkedPid.isError()) {
     return Error("Failed to parse forked pid '" + pid.get() + "' "
                  "from pid file '" + path + "': " +
-                 forkedPid.error());
+                 stringify(forkedPid.error()));
   }
 
   state.forkedPid = forkedPid.get();
@@ -519,7 +520,7 @@ Try<RunState> RunState::recover(
 
     if (pid.isError()) {
       message = "Failed to read executor libprocess pid from '" + path +
-                "': " + pid.error();
+                "': " + stringify(pid.error());
 
       if (strict) {
         return Error(message);
@@ -589,7 +590,8 @@ Try<TaskState> TaskState::recover(
   Result<Task> task = state::read<Task>(path);
 
   if (task.isError()) {
-    message = "Failed to read task info from '" + path + "': " + task.error();
+    message = "Failed to read task info from '" + path +
+              "': " + stringify(task.error());
 
     if (strict) {
       return Error(message);
@@ -624,7 +626,7 @@ Try<TaskState> TaskState::recover(
   Try<int_fd> fd = os::open(path, O_RDWR | O_CLOEXEC);
   if (fd.isError()) {
     message = "Failed to open status updates file '" + path +
-              "': " + fd.error();
+              "': " + stringify(fd.error());
 
     if (strict) {
       return Error(message);
@@ -657,7 +659,8 @@ Try<TaskState> TaskState::recover(
   if (lseek.isError()) {
     os::close(fd.get());
     return Error(
-        "Failed to lseek status updates file '" + path + "':" + lseek.error());
+        "Failed to lseek status updates file '" + path +
+        "':" + stringify(lseek.error()));
   }
 
   off_t offset = lseek.get();
@@ -672,14 +675,14 @@ Try<TaskState> TaskState::recover(
     os::close(fd.get());
     return Error(
         "Failed to truncate status updates file '" + path +
-        "': " + truncated.error());
+        "': " + stringify(truncated.error()));
   }
 
   // After reading a non-corrupted updates file, 'record' should be
   // 'none'.
   if (record.isError()) {
     message = "Failed to read status updates file  '" + path +
-              "': " + record.error();
+              "': " + stringify(record.error());
 
     os::close(fd.get());
 
@@ -715,8 +718,8 @@ Try<ResourcesState> ResourcesState::recover(
 
   Result<Resources> info = state::read<Resources>(infoPath);
   if (info.isError()) {
-    string message =
-      "Failed to read resources file '" + infoPath + "': " + info.error();
+    string message = "Failed to read resources file '" + infoPath +
+                     "': " + stringify(info.error());
 
     if (strict) {
       return Error(message);
@@ -739,8 +742,8 @@ Try<ResourcesState> ResourcesState::recover(
 
   Result<Resources> target = state::read<Resources>(targetPath);
   if (target.isError()) {
-    string message =
-      "Failed to read resources file '" + targetPath + "': " + target.error();
+    string message = "Failed to read resources file '" + targetPath +
+                     "': " + stringify(target.error());
 
     if (strict) {
       return Error(message);

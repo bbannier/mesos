@@ -71,7 +71,8 @@ Try<bool> supported(const string& fsname)
 
   Try<string> lines = os::read("/proc/filesystems");
   if (lines.isError()) {
-    return Error("Failed to read /proc/filesystems: " + lines.error());
+    return Error(
+        "Failed to read /proc/filesystems: " + stringify(lines.error()));
   }
 
   // Each line of /proc/filesystems is "nodev" + "\t" + "fsname", and the
@@ -183,7 +184,8 @@ Try<MountInfoTable> MountInfoTable::read(
   foreach (const string& line, strings::tokenize(lines, "\n")) {
     Try<Entry> parse = MountInfoTable::Entry::parse(line);
     if (parse.isError()) {
-      return Error("Failed to parse entry '" + line + "': " + parse.error());
+      return Error(
+          "Failed to parse entry '" + line + "': " + stringify(parse.error()));
     }
 
     table.entries.push_back(parse.get());
@@ -259,7 +261,7 @@ Try<MountInfoTable> MountInfoTable::read(
 
   Try<string> lines = os::read(path);
   if (lines.isError()) {
-    return Error("Failed to read mountinfo file: " + lines.error());
+    return Error("Failed to read mountinfo file: " + stringify(lines.error()));
   }
 
   return MountInfoTable::read(lines.get(), hierarchicalSort);
@@ -272,13 +274,14 @@ Try<MountInfoTable::Entry> MountInfoTable::findByTarget(
   Result<string> realTarget = os::realpath(target);
   if (!realTarget.isSome()) {
     return Error(
-        "Failed to get the realpath of '" + target + "'"
-        ": " + (realTarget.isError() ? realTarget.error() : "Not found"));
+        "Failed to get the realpath of "
+        "'" + target + "': " +
+        (realTarget.isError() ? stringify(realTarget.error()) : "Not found"));
   }
 
   Try<MountInfoTable> table = read(None(), true);
   if (table.isError()) {
-    return Error("Failed to get mount table: " + table.error());
+    return Error("Failed to get mount table: " + stringify(table.error()));
   }
 
   // Trying to find the mount entry that contains the 'realTarget'. We
@@ -538,7 +541,8 @@ Try<Nothing> unmountAll(const string& target, int flags)
 {
   Try<fs::MountTable> mountTable = fs::MountTable::read("/proc/mounts");
   if (mountTable.isError()) {
-    return Error("Failed to read mount table: " + mountTable.error());
+    return Error(
+        "Failed to read mount table: " + stringify(mountTable.error()));
   }
 
   foreach (const MountTable::Entry& entry,
@@ -628,19 +632,19 @@ Try<Nothing> importDeviceNode(const string& source, const string& target)
   // permissions after we create the device node.
   Try<mode_t> mode = os::stat::mode(source);
   if (mode.isError()) {
-    return Error("Failed to source mode: " + mode.error());
+    return Error("Failed to source mode: " + stringify(mode.error()));
   }
 
   Try<dev_t> dev = os::stat::rdev(source);
   if (dev.isError()) {
-    return Error("Failed to get source dev: " + dev.error());
+    return Error("Failed to get source dev: " + stringify(dev.error()));
   }
 
   Try<Nothing> mknod = os::mknod(target, mode.get(), dev.get());
   if (mknod.isSome()) {
     Try<Nothing> chmod = os::chmod(target, mode.get());
     if (chmod.isError()) {
-      return Error("Failed to chmod device: " + chmod.error());
+      return Error("Failed to chmod device: " + stringify(chmod.error()));
     }
 
     return Nothing();
@@ -648,12 +652,13 @@ Try<Nothing> importDeviceNode(const string& source, const string& target)
 
   Try<Nothing> touch = os::touch(target);
   if (touch.isError()) {
-    return Error("Failed to create device mount point: " + touch.error());
+    return Error(
+        "Failed to create device mount point: " + stringify(touch.error()));
   }
 
   Try<Nothing> mnt = fs::mount(source, target, None(), MS_BIND, None());
   if (mnt.isError()) {
-    return Error("Failed to bind device: " + touch.error());
+    return Error("Failed to bind device: " + stringify(touch.error()));
   }
 
   return Nothing();
@@ -812,7 +817,7 @@ Try<Nothing> mountSpecialFilesystems(const string& root)
 
       if (mkdir.isError()) {
         return Error("Failed to create mount point '" + target +
-                     "': " + mkdir.error());
+                     "': " + stringify(mkdir.error()));
       }
     }
 
@@ -833,7 +838,8 @@ Try<Nothing> mountSpecialFilesystems(const string& root)
         mount.options);
 
     if (mnt.isError()) {
-      return Error("Failed to mount '" + target + "': " + mnt.error());
+      return Error(
+          "Failed to mount '" + target + "': " + stringify(mnt.error()));
     }
   }
 
@@ -862,7 +868,7 @@ Try<Nothing> createStandardDevices(const string& root)
   Try<list<string>> nvidia = os::glob("/dev/nvidia*");
   if (nvidia.isError()) {
     return Error("Failed to glob /dev/nvidia* on the host filesystem:"
-                 " " + nvidia.error());
+                 " " + stringify(nvidia.error()));
   }
 
   foreach (const string& device, nvidia.get()) {
@@ -880,7 +886,8 @@ Try<Nothing> createStandardDevices(const string& root)
 
     if (import.isError()) {
       return Error(
-          "Failed to import device '" + device + "': " + import.error());
+          "Failed to import device '" + device +
+          "': " + stringify(import.error()));
     }
   }
 
@@ -896,7 +903,8 @@ Try<Nothing> createStandardDevices(const string& root)
     Try<Nothing> link = ::fs::symlink(symlink.original, symlink.link);
     if (link.isError()) {
       return Error("Failed to symlink '" + symlink.original +
-                   "' to '" + symlink.link + "': " + link.error());
+                   "' to "
+                   "'" + symlink.link + "': " + stringify(link.error()));
     }
   }
 
@@ -915,26 +923,27 @@ Try<Nothing> enter(const string& root)
     fs::mount(None(), "/", None(), MS_REC | MS_SLAVE, nullptr);
 
   if (mount.isError()) {
-    return Error("Failed to make slave mounts: " + mount.error());
+    return Error("Failed to make slave mounts: " + stringify(mount.error()));
   }
 
   // Bind mount 'root' itself. This is because pivot_root requires
   // 'root' to be not on the same filesystem as process' current root.
   mount = fs::mount(root, root, None(), MS_REC | MS_BIND, nullptr);
   if (mount.isError()) {
-    return Error("Failed to bind mount root itself: " + mount.error());
+    return Error(
+        "Failed to bind mount root itself: " + stringify(mount.error()));
   }
 
   // Mount special filesystems.
   mount = internal::mountSpecialFilesystems(root);
   if (mount.isError()) {
-    return Error("Failed to mount: " + mount.error());
+    return Error("Failed to mount: " + stringify(mount.error()));
   }
 
   // Create basic device nodes.
   Try<Nothing> create = internal::createStandardDevices(root);
   if (create.isError()) {
-    return Error("Failed to create devices: " + create.error());
+    return Error("Failed to create devices: " + stringify(create.error()));
   }
 
   // Prepare /tmp in the new root. Note that we cannot assume that the
@@ -949,7 +958,7 @@ Try<Nothing> enter(const string& root)
   Try<Nothing> mkdir = os::mkdir(path::join(root, "tmp"));
   if (mkdir.isError()) {
     return Error("Failed to create 'tmpfs' mount point at '" +
-                 path::join(root, "tmp") + "': " + mkdir.error());
+                 path::join(root, "tmp") + "': " + stringify(mkdir.error()));
   }
 
   // TODO(jieyu): Consider limiting the size of the tmpfs.
@@ -962,13 +971,14 @@ Try<Nothing> enter(const string& root)
 
   if (mount.isError()) {
     return Error("Failed to mount the temporary tmpfs at /tmp in new root: " +
-                 mount.error());
+                 stringify(mount.error()));
   }
 
   // Create a mount point for the old root.
   Try<string> old = os::mkdtemp(path::join(root, "tmp", "._old_root_.XXXXXX"));
   if (old.isError()) {
-    return Error("Failed to create mount point for old root: " + old.error());
+    return Error(
+        "Failed to create mount point for old root: " + stringify(old.error()));
   }
 
   // Chroot to the new root. This is done by a particular sequence of
@@ -979,33 +989,34 @@ Try<Nothing> enter(const string& root)
   // Chdir to the new root.
   Try<Nothing> chdir = os::chdir(root);
   if (chdir.isError()) {
-    return Error("Failed to chdir to new root: " + chdir.error());
+    return Error("Failed to chdir to new root: " + stringify(chdir.error()));
   }
 
   // Pivot the root to the cwd.
   Try<Nothing> pivot = fs::pivot_root(root, old.get());
   if (pivot.isError()) {
-    return Error("Failed to pivot to new root: " + pivot.error());
+    return Error("Failed to pivot to new root: " + stringify(pivot.error()));
   }
 
   // Chroot to the new "/". This is necessary to correctly set the
   // base for all paths.
   Try<Nothing> chroot = os::chroot(".");
   if (chroot.isError()) {
-    return Error("Failed to chroot to new root: " + chroot.error());
+    return Error("Failed to chroot to new root: " + stringify(chroot.error()));
   }
 
   // Ensure all references are within the new root.
   chdir = os::chdir("/");
   if (chdir.isError()) {
-    return Error("Failed to chdir to new root: " + chdir.error());
+    return Error("Failed to chdir to new root: " + stringify(chdir.error()));
   }
 
   // Unmount filesystems on the old root. Note, any filesystems that
   // were mounted to the chroot directory will be correctly pivoted.
   Try<fs::MountTable> mountTable = fs::MountTable::read("/proc/mounts");
   if (mountTable.isError()) {
-    return Error("Failed to read mount table: " + mountTable.error());
+    return Error(
+        "Failed to read mount table: " + stringify(mountTable.error()));
   }
 
   // The old root is now relative to chroot so remove the chroot path.
@@ -1027,7 +1038,8 @@ Try<Nothing> enter(const string& root)
 
   Try<Nothing> unmount = fs::unmount("/tmp");
   if (unmount.isError()) {
-    return Error("Failed to umount /tmp in the chroot: " + unmount.error());
+    return Error(
+        "Failed to umount /tmp in the chroot: " + stringify(unmount.error()));
   }
 
   return Nothing();

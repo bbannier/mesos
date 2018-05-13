@@ -140,7 +140,7 @@ Try<hashset<ContainerID>> listContainers(
     if (containerIds.isError()) {
       return Error(
           "Unable to list the containers under directory: '" +
-          containersDir + "': " + containerIds.error());
+          containersDir + "': " + stringify(containerIds.error()));
     }
 
     hashset<ContainerID> results;
@@ -169,7 +169,8 @@ Try<hashset<ContainerID>> listContainers(
           containerId);
 
       if (children.isError()) {
-        return Error("Failed to list child containers: " + children.error());
+        return Error(
+            "Failed to list child containers: " + stringify(children.error()));
       }
 
       results.insert(children->begin(), children->end());
@@ -206,7 +207,9 @@ Try<hashmap<string, hashset<string>>> listContainerRootfses(
 
   Try<list<string>> backends = os::ls(backendsDir);
   if (backends.isError()) {
-    return Error("Unable to list the container directory: " + backends.error());
+    return Error(
+        "Unable to list the container directory: " +
+        stringify(backends.error()));
   }
 
   foreach (const string& backend, backends.get()) {
@@ -224,7 +227,9 @@ Try<hashmap<string, hashset<string>>> listContainerRootfses(
 
     Try<list<string>> rootfses = os::ls(rootfsesDir);
     if (rootfses.isError()) {
-      return Error("Unable to list the backend directory: " + rootfses.error());
+      return Error(
+          "Unable to list the backend directory: " +
+          stringify(rootfses.error()));
     }
 
     hashset<string> backendResults;

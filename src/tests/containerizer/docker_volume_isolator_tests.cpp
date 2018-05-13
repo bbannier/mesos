@@ -159,7 +159,7 @@ protected:
     if (linuxIsolator_.isError()) {
       return Error(
           "Failed to create LinuxFilesystemIsolator: " +
-          linuxIsolator_.error());
+          stringify(linuxIsolator_.error()));
     }
 
     Owned<Isolator> linuxIsolator(linuxIsolator_.get());
@@ -170,7 +170,7 @@ protected:
     if (runtimeIsolator_.isError()) {
       return Error(
           "Failed to create DockerRuntimeIsolator: " +
-          runtimeIsolator_.error());
+          stringify(runtimeIsolator_.error()));
     }
 
     Owned<Isolator> runtimeIsolator(runtimeIsolator_.get());
@@ -181,21 +181,23 @@ protected:
     if (volumeIsolator_.isError()) {
       return Error(
           "Failed to create DockerVolumeIsolator: " +
-          volumeIsolator_.error());
+          stringify(volumeIsolator_.error()));
     }
 
     Owned<Isolator> volumeIsolator(volumeIsolator_.get());
 
     Try<Launcher*> launcher_ = LinuxLauncher::create(flags);
     if (launcher_.isError()) {
-      return Error("Failed to create LinuxLauncher: " + launcher_.error());
+      return Error(
+          "Failed to create LinuxLauncher: " + stringify(launcher_.error()));
     }
 
     Owned<Launcher> launcher(launcher_.get());
 
     Try<Owned<Provisioner>> provisioner = Provisioner::create(flags);
     if (provisioner.isError()) {
-      return Error("Failed to create provisioner: " + provisioner.error());
+      return Error(
+          "Failed to create provisioner: " + stringify(provisioner.error()));
     }
 
     Try<MesosContainerizer*> containerizer = MesosContainerizer::create(
@@ -209,7 +211,9 @@ protected:
          std::move(volumeIsolator)});
 
     if (containerizer.isError()) {
-      return Error("Failed to create containerizer: " + containerizer.error());
+      return Error(
+          "Failed to create containerizer: " +
+          stringify(containerizer.error()));
     }
 
     return Owned<MesosContainerizer>(containerizer.get());

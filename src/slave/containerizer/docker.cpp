@@ -170,7 +170,8 @@ Try<DockerContainerizer*> DockerContainerizer::create(
     ContainerLogger::create(flags.container_logger);
 
   if (logger.isError()) {
-    return Error("Failed to create container logger: " + logger.error());
+    return Error(
+        "Failed to create container logger: " + stringify(logger.error()));
   }
 
   Try<Owned<Docker>> create = Docker::create(
@@ -180,7 +181,7 @@ Try<DockerContainerizer*> DockerContainerizer::create(
       flags.docker_config);
 
   if (create.isError()) {
-    return Error("Failed to create docker: " + create.error());
+    return Error("Failed to create docker: " + stringify(create.error()));
   }
 
   Shared<Docker> docker = create->share();
@@ -189,7 +190,7 @@ Try<DockerContainerizer*> DockerContainerizer::create(
     Try<Nothing> validateResult = docker->validateVersion(Version(1, 5, 0));
     if (validateResult.isError()) {
       string message = "Docker with mesos images requires docker 1.5+";
-      message += validateResult.error();
+      message += stringify(validateResult.error());
       return Error(message);
     }
   }
@@ -303,7 +304,7 @@ DockerContainerizerProcess::Container::create(
   Try<Nothing> mkdir = os::mkdir(dockerSymlinkPath);
   if (mkdir.isError()) {
     return Error("Unable to create symlink folder for docker " +
-                 dockerSymlinkPath + ": " + mkdir.error());
+                 dockerSymlinkPath + ": " + stringify(mkdir.error()));
   }
 
   bool symlinked = false;
@@ -317,7 +318,7 @@ DockerContainerizerProcess::Container::create(
     if (symlink.isError()) {
       return Error(
           "Failed to symlink directory '" + containerConfig.directory() +
-          "' to '" + containerWorkdir + "': " + symlink.error());
+          "' to '" + containerWorkdir + "': " + stringify(symlink.error()));
     }
 
     symlinked = true;
@@ -492,7 +493,7 @@ Try<Nothing> DockerContainerizerProcess::updatePersistentVolumes(
     Try<Nothing> unmount = fs::unmount(target);
     if (unmount.isError()) {
       return Error("Failed to unmount persistent volume at '" + target +
-                   "': " + unmount.error());
+                   "': " + stringify(unmount.error()));
     }
 
     // TODO(tnachen): Remove mount point after unmounting. This requires
@@ -562,7 +563,7 @@ Try<Nothing> DockerContainerizerProcess::updatePersistentVolumes(
         return Error(
             "Failed to change the ownership of the persistent volume at '" +
             source + "' with uid " + stringify(uid) +
-            " and gid " + stringify(gid) + ": " + chown.error());
+            " and gid " + stringify(gid) + ": " + stringify(chown.error()));
       }
     }
 
@@ -573,7 +574,7 @@ Try<Nothing> DockerContainerizerProcess::updatePersistentVolumes(
     Try<Nothing> mkdir = os::mkdir(target);
     if (mkdir.isError()) {
       return Error("Failed to create persistent mount point at '" + target
-                     + "': " + mkdir.error());
+                     + "': " + stringify(mkdir.error()));
     }
 
     LOG(INFO) << "Mounting '" << source << "' to '" << target
@@ -585,7 +586,7 @@ Try<Nothing> DockerContainerizerProcess::updatePersistentVolumes(
     if (mount.isError()) {
       return Error(
           "Failed to mount persistent volume from '" +
-          source + "' to '" + target + "': " + mount.error());
+          source + "' to '" + target + "': " + stringify(mount.error()));
     }
 
     // If the mount needs to be read-only, do a remount.
@@ -596,7 +597,7 @@ Try<Nothing> DockerContainerizerProcess::updatePersistentVolumes(
       if (mount.isError()) {
         return Error(
             "Failed to remount persistent volume as read-only from '" +
-            source + "' to '" + target + "': " + mount.error());
+            source + "' to '" + target + "': " + stringify(mount.error()));
       }
     }
   }
@@ -653,7 +654,7 @@ Try<Nothing> DockerContainerizerProcess::unmountPersistentVolumes(
 #ifdef __linux__
   Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
   if (table.isError()) {
-    return Error("Failed to get mount table: " + table.error());
+    return Error("Failed to get mount table: " + stringify(table.error()));
   }
 
   vector<string> unmountErrors;
@@ -695,7 +696,7 @@ Try<Nothing> DockerContainerizerProcess::unmountPersistentVolumes(
         // in the end.
         unmountErrors.push_back(
             "Failed to unmount volume '" + entry.target +
-            "': " + unmount.error());
+            "': " + stringify(unmount.error()));
       }
     }
   }
@@ -1054,7 +1055,7 @@ Future<Nothing> DockerContainerizerProcess::_recover(
         } else {
           LOG(WARNING) << "Failed to connect to executor '" << executor.id
                        << "' of framework " << framework.id << ": "
-                       << connect.error().message;
+                       << connect.error();
 
           container->status.set(Future<Option<int>>(None()));
         }
@@ -1141,8 +1142,9 @@ Future<Nothing> DockerContainerizerProcess::__recover(
       foreach (const ContainerID& containerId, containerIds) {
         Try<Nothing> unmount = unmountPersistentVolumes(containerId);
         if (unmount.isError()) {
-          return Failure("Unable to unmount volumes for Docker container '" +
-                         containerId.value() + "': " + unmount.error());
+          return Failure(
+              "Unable to unmount volumes for Docker container '" +
+              containerId.value() + "': " + stringify(unmount.error()));
         }
       }
 
@@ -1185,7 +1187,8 @@ Future<Containerizer::LaunchResult> DockerContainerizerProcess::launch(
       flags);
 
   if (container.isError()) {
-    return Failure("Failed to create container: " + container.error());
+    return Failure(
+        "Failed to create container: " + stringify(container.error()));
   }
 
   containers_[containerId] = container.get();
@@ -1617,7 +1620,7 @@ Future<pid_t> DockerContainerizerProcess::launchExecutorProcess(
          Subprocess::ChildHook::CHDIR(container->containerWorkDir)});
 
     if (s.isError()) {
-      return Failure("Failed to fork executor: " + s.error());
+      return Failure("Failed to fork executor: " + stringify(s.error()));
     }
 
     return s->pid();
@@ -1643,7 +1646,8 @@ Future<pid_t> DockerContainerizerProcess::checkpointExecutor(
 
   if (checkpointed.isError()) {
     return Failure(
-        "Failed to checkpoint executor's pid: " + checkpointed.error());
+        "Failed to checkpoint executor's pid: " +
+        stringify(checkpointed.error()));
   }
 
   return pid.get();
@@ -1808,13 +1812,13 @@ Future<Nothing> DockerContainerizerProcess::__update(
   if (cpuHierarchy.isError()) {
     return Failure("Failed to determine the cgroup hierarchy "
                    "where the 'cpu' subsystem is mounted: " +
-                   cpuHierarchy.error());
+                   stringify(cpuHierarchy.error()));
   }
 
   if (memoryHierarchy.isError()) {
     return Failure("Failed to determine the cgroup hierarchy "
                    "where the 'memory' subsystem is mounted: " +
-                   memoryHierarchy.error());
+                   stringify(memoryHierarchy.error()));
   }
 
   // We need to find the cgroup(s) this container is currently running
@@ -1828,7 +1832,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
   if (cpuCgroup.isError()) {
     return Failure("Failed to determine cgroup for the 'cpu' subsystem: " +
-                   cpuCgroup.error());
+                   stringify(cpuCgroup.error()));
   } else if (cpuCgroup.isNone()) {
     LOG(WARNING) << "Container " << containerId
                  << " does not appear to be a member of a cgroup"
@@ -1853,7 +1857,8 @@ Future<Nothing> DockerContainerizerProcess::__update(
       cgroups::cpu::shares(cpuHierarchy.get(), cpuCgroup.get(), shares);
 
     if (write.isError()) {
-      return Failure("Failed to update 'cpu.shares': " + write.error());
+      return Failure(
+          "Failed to update 'cpu.shares': " + stringify(write.error()));
     }
 
     LOG(INFO) << "Updated 'cpu.shares' to " << shares
@@ -1869,7 +1874,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
       if (write.isError()) {
         return Failure("Failed to update 'cpu.cfs_period_us': " +
-                       write.error());
+                       stringify(write.error()));
       }
 
       Duration quota = std::max(CPU_CFS_PERIOD * cpuShares, MIN_CPU_CFS_QUOTA);
@@ -1880,7 +1885,8 @@ Future<Nothing> DockerContainerizerProcess::__update(
           quota);
 
       if (write.isError()) {
-        return Failure("Failed to update 'cpu.cfs_quota_us': " + write.error());
+        return Failure(
+            "Failed to update 'cpu.cfs_quota_us': " + stringify(write.error()));
       }
 
       LOG(INFO) << "Updated 'cpu.cfs_period_us' to " << CPU_CFS_PERIOD
@@ -1895,7 +1901,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
   if (memoryCgroup.isError()) {
     return Failure("Failed to determine cgroup for the 'memory' subsystem: " +
-                   memoryCgroup.error());
+                   stringify(memoryCgroup.error()));
   } else if (memoryCgroup.isNone()) {
     LOG(WARNING) << "Container " << containerId
                  << " does not appear to be a member of a cgroup"
@@ -1922,7 +1928,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
     if (write.isError()) {
       return Failure("Failed to set 'memory.soft_limit_in_bytes': " +
-                     write.error());
+                     stringify(write.error()));
     }
 
     LOG(INFO) << "Updated 'memory.soft_limit_in_bytes' to " << limit
@@ -1935,7 +1941,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
     if (currentLimit.isError()) {
       return Failure("Failed to read 'memory.limit_in_bytes': " +
-                     currentLimit.error());
+                     stringify(currentLimit.error()));
     }
 
     // Only update if new limit is higher.
@@ -1948,7 +1954,7 @@ Future<Nothing> DockerContainerizerProcess::__update(
 
       if (write.isError()) {
         return Failure("Failed to set 'memory.limit_in_bytes': " +
-                       write.error());
+                       stringify(write.error()));
       }
 
       LOG(INFO) << "Updated 'memory.limit_in_bytes' to " << limit << " at "
@@ -1995,7 +2001,8 @@ Future<ResourceStatistics> DockerContainerizerProcess::usage(
 #ifdef __linux__
     const Try<ResourceStatistics> cgroupStats = cgroupsStatistics(pid);
     if (cgroupStats.isError()) {
-      return Failure("Failed to collect cgroup stats: " + cgroupStats.error());
+      return Failure(
+          "Failed to collect cgroup stats: " + stringify(cgroupStats.error()));
     }
 
     result = cgroupStats.get();
@@ -2066,20 +2073,20 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
   if (cpuacctHierarchy.isError()) {
     return Error(
         "Failed to determine the cgroup 'cpuacct' subsystem hierarchy: " +
-        cpuacctHierarchy.error());
+        stringify(cpuacctHierarchy.error()));
   }
 
   if (memHierarchy.isError()) {
     return Error(
         "Failed to determine the cgroup 'memory' subsystem hierarchy: " +
-        memHierarchy.error());
+        stringify(memHierarchy.error()));
   }
 
   const Result<string> cpuacctCgroup = cgroups::cpuacct::cgroup(pid);
   if (cpuacctCgroup.isError()) {
     return Error(
         "Failed to determine cgroup for the 'cpuacct' subsystem: " +
-        cpuacctCgroup.error());
+        stringify(cpuacctCgroup.error()));
   } else if (cpuacctCgroup.isNone()) {
     return Error("Unable to find 'cpuacct' cgroup subsystem");
   } else if (cpuacctCgroup.get() == systemRootCgroup) {
@@ -2092,7 +2099,7 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
   if (memCgroup.isError()) {
     return Error(
         "Failed to determine cgroup for the 'memory' subsystem: " +
-        memCgroup.error());
+        stringify(memCgroup.error()));
   } else if (memCgroup.isNone()) {
     return Error("Unable to find 'memory' cgroup subsystem");
   } else if (memCgroup.get() == systemRootCgroup) {
@@ -2105,7 +2112,7 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
     cgroups::cpuacct::stat(cpuacctHierarchy.get(), cpuacctCgroup.get());
 
   if (cpuAcctStat.isError()) {
-    return Error("Failed to get cpu.stat: " + cpuAcctStat.error());
+    return Error("Failed to get cpu.stat: " + stringify(cpuAcctStat.error()));
   }
 
   const Try<hashmap<string, uint64_t>> memStats =
@@ -2114,7 +2121,7 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
   if (memStats.isError()) {
     return Error(
         "Error getting memory statistics from cgroups memory subsystem: " +
-        memStats.error());
+        stringify(memStats.error()));
   }
 
   if (!memStats->contains("rss")) {
@@ -2134,14 +2141,14 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
     if (cpuHierarchy.isError()) {
       return Error(
           "Failed to determine the cgroup 'cpu' subsystem hierarchy: " +
-          cpuHierarchy.error());
+          stringify(cpuHierarchy.error()));
     }
 
     const Result<string> cpuCgroup = cgroups::cpu::cgroup(pid);
     if (cpuCgroup.isError()) {
       return Error(
           "Failed to determine cgroup for the 'cpu' subsystem: " +
-          cpuCgroup.error());
+          stringify(cpuCgroup.error()));
     } else if (cpuCgroup.isNone()) {
       return Error("Unable to find 'cpu' cgroup subsystem");
     } else if (cpuCgroup.get() == systemRootCgroup) {
@@ -2154,7 +2161,7 @@ Try<ResourceStatistics> DockerContainerizerProcess::cgroupsStatistics(
       cgroups::stat(cpuHierarchy.get(), cpuCgroup.get(), "cpu.stat");
 
     if (stat.isError()) {
-      return Error("Failed to read cpu.stat: " + stat.error());
+      return Error("Failed to read cpu.stat: " + stringify(stat.error()));
     }
 
     Option<uint64_t> nr_periods = stat->get("nr_periods");

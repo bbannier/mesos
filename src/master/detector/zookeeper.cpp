@@ -134,7 +134,7 @@ Future<Option<MasterInfo>> ZooKeeperMasterDetectorProcess::detect(
   // Return immediately if the detector is no longer operational due
   // to a non-retryable error.
   if (error.isSome()) {
-    return Failure(error->message);
+    return Failure(error.get());
   }
 
   if (leader != previous) {
@@ -234,7 +234,7 @@ void ZooKeeperMasterDetectorProcess::fetched(
       leader = None();
       failPromises(
           &promises,
-          "Failed to parse data into valid JSON: " + object.error());
+          "Failed to parse data into valid JSON: " + stringify(object.error()));
       return;
     }
 
@@ -246,7 +246,7 @@ void ZooKeeperMasterDetectorProcess::fetched(
       failPromises(
           &promises,
           "Failed to parse JSON into a valid MasterInfo protocol buffer: " +
-          info.error());
+          stringify(info.error()));
       return;
     }
 

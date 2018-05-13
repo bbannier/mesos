@@ -266,7 +266,7 @@ Future<Nothing> TaskStatusUpdateManagerProcess::recover(
           return Failure(
               "Failed to replay status updates for task " + stringify(task.id) +
               " of framework " + stringify(framework.id) +
-              ": " + replay.error());
+              ": " + stringify(replay.error()));
         }
 
         // At the end of the replay, the stream is either terminated or
@@ -680,7 +680,8 @@ TaskStatusUpdateStream::TaskStatusUpdateStream(
     const string& dirName = Path(path.get()).dirname();
     Try<Nothing> directory = os::mkdir(dirName);
     if (directory.isError()) {
-      error = "Failed to create '" + dirName + "': " + directory.error();
+      error =
+        "Failed to create '" + dirName + "': " + stringify(directory.error());
       return;
     }
 
@@ -696,7 +697,7 @@ TaskStatusUpdateStream::TaskStatusUpdateStream(
 
     if (result.isError()) {
       error = "Failed to open '" + path.get() +
-              "' for status updates: " + result.error();
+              "' for status updates: " + stringify(result.error());
       return;
     }
 
@@ -856,7 +857,7 @@ Try<Nothing> TaskStatusUpdateStream::handle(
     Try<Nothing> write = ::protobuf::write(fd.get(), record);
     if (write.isError()) {
       error = "Failed to write task status update " + stringify(update) +
-              " to '" + path.get() + "': " + write.error();
+              " to '" + path.get() + "': " + stringify(write.error());
       return Error(error.get());
     }
   }

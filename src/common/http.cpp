@@ -1042,7 +1042,7 @@ Try<Nothing> initializeHttpAuthenticators(
     if (authenticator_.isError()) {
       return Error(
           "Failed to create HTTP authenticator module '" +
-          authenticatorNames[0] + "': " + authenticator_.error());
+          authenticatorNames[0] + "': " + stringify(authenticator_.error()));
     }
 
     CHECK_SOME(authenticator_);
@@ -1068,7 +1068,7 @@ Try<Nothing> initializeHttpAuthenticators(
       if (authenticator_.isError()) {
         return Error(
             "Failed to create HTTP authenticator module '" +
-            name + "': " + authenticator_.error());
+            name + "': " + stringify(authenticator_.error()));
       }
 
       CHECK_SOME(authenticator_);

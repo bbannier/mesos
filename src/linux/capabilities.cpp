@@ -240,7 +240,7 @@ Try<Capabilities> Capabilities::create()
   if (_lastCap.isError()) {
     return Error(
         "Failed to read '" + string(PROC_CAP_LAST_CAP) + "': " +
-        _lastCap.error());
+        stringify(_lastCap.error()));
   }
 
   Try<int> lastCap = numify<int>(strings::trim(
@@ -251,7 +251,7 @@ Try<Capabilities> Capabilities::create()
   if (lastCap.isError()) {
     return Error(
         "Failed to parse system last capability value '" +
-        _lastCap.get() + "': " + lastCap.error());
+        _lastCap.get() + "': " + stringify(lastCap.error()));
   }
 
   if (lastCap.get() >= MAX_CAPABILITY) {

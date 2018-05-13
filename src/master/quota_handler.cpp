@@ -442,7 +442,7 @@ Future<http::Response> Master::QuotaHandler::set(
   if (jsonRequest.isError()) {
     return BadRequest(
         "Failed to parse set quota request JSON '" + request.body + "': " +
-        jsonRequest.error());
+        stringify(jsonRequest.error()));
   }
 
   // Convert JSON request to the `QuotaRequest` protobuf.
@@ -452,7 +452,7 @@ Future<http::Response> Master::QuotaHandler::set(
   if (protoRequest.isError()) {
     return BadRequest(
         "Failed to validate set quota request JSON '" + request.body + "': " +
-        protoRequest.error());
+        stringify(protoRequest.error()));
   }
 
   return _set(protoRequest.get(), principal);
@@ -467,7 +467,7 @@ Future<http::Response> Master::QuotaHandler::_set(
   if (create.isError()) {
     return BadRequest(
         "Failed to create 'QuotaInfo' from set quota request: " +
-        create.error());
+        stringify(create.error()));
   }
 
   QuotaInfo quotaInfo = create.get();
@@ -477,7 +477,7 @@ Future<http::Response> Master::QuotaHandler::_set(
   if (validate.isSome()) {
     return BadRequest(
         "Failed to validate set quota request:"
-        " QuotaInfo with invalid resource: " + validate->message);
+        " QuotaInfo with invalid resource: " + stringify(validate.get()));
   }
 
   upgradeResources(&quotaInfo);
@@ -487,7 +487,7 @@ Future<http::Response> Master::QuotaHandler::_set(
     Option<Error> error = quota::validation::quotaInfo(quotaInfo);
     if (error.isSome()) {
       return BadRequest(
-          "Failed to validate set quota request: " + error->message);
+          "Failed to validate set quota request: " + stringify(error.get()));
     }
   }
 
@@ -518,7 +518,7 @@ Future<http::Response> Master::QuotaHandler::_set(
     Option<Error> error = quotaTree.validate();
     if (error.isSome()) {
       return BadRequest(
-          "Failed to validate set quota request: " + error->message);
+          "Failed to validate set quota request: " + stringify(error.get()));
     }
   }
 
@@ -562,7 +562,7 @@ Future<http::Response> Master::QuotaHandler::__set(
     if (error.isSome()) {
       return Conflict(
           "Heuristic capacity check for set quota request failed: " +
-          error->message);
+          stringify(error.get()));
     }
   }
 
@@ -662,7 +662,7 @@ Future<http::Response> Master::QuotaHandler::remove(
   if (error.isSome()) {
     return BadRequest(
         "Failed to remove quota for path '" + request.url.path +
-        "': " + error->message);
+        "': " + stringify(error.get()));
   }
 
   return _remove(role, principal);

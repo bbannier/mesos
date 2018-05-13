@@ -144,7 +144,8 @@ inline Try<std::vector<unsigned int>> parse(const std::string& value)
     Try<unsigned int> number = numify<unsigned int>(token);
 
     if (number.isError()) {
-      return Error("Failed to numify '" + token + "': " + number.error());
+      return Error(
+          "Failed to numify '" + token + "': " + stringify(number.error()));
     }
 
     result.push_back(number.get());

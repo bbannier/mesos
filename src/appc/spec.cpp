@@ -32,18 +32,18 @@ Try<ImageManifest> parse(const string& value)
 {
   Try<JSON::Object> json = JSON::parse<JSON::Object>(value);
   if (json.isError()) {
-    return Error("JSON parse failed: " + json.error());
+    return Error("JSON parse failed: " + stringify(json.error()));
   }
 
   Try<ImageManifest> manifest = protobuf::parse<ImageManifest>(json.get());
 
   if (manifest.isError()) {
-    return Error("Protobuf parse failed: " + manifest.error());
+    return Error("Protobuf parse failed: " + stringify(manifest.error()));
   }
 
   Option<Error> error = validateManifest(manifest.get());
   if (error.isSome()) {
-    return Error("Schema validation failed: " + error->message);
+    return Error("Schema validation failed: " + stringify(error.get()));
   }
 
   return manifest.get();
@@ -70,14 +70,14 @@ Try<ImageManifest> getManifest(const string& imagePath)
   if (read.isError()) {
     return Error(
         "Failed to read manifest from '" + path + "': " +
-        read.error());
+        stringify(read.error()));
   }
 
   Try<ImageManifest> parseManifest = parse(read.get());
   if (parseManifest.isError()) {
     return Error(
         "Failed to parse manifest from '" + path + "': " +
-        parseManifest.error());
+        stringify(parseManifest.error()));
   }
 
   return parseManifest.get();
@@ -134,28 +134,28 @@ Option<Error> validate(const string& imagePath)
   if (validate.isSome()) {
     return Error(
         "Image validation failed for image at '" + imagePath + "': " +
-        validate->message);
+        stringify(validate.get()));
   }
 
   Try<ImageManifest> manifest = getManifest(imagePath);
   if (manifest.isError()) {
     return Error(
         "Image validation failed for image at '" + imagePath + "': " +
-        manifest.error());
+        stringify(manifest.error()));
   }
 
   validate = validateManifest(manifest.get());
   if (validate.isSome()) {
     return Error(
         "Image validation failed for image at '" + imagePath + "': " +
-        validate->message);
+        stringify(validate.get()));
   }
 
   validate = validateImageID(Path(imagePath).basename());
   if (validate.isSome()) {
     return Error(
         "Image validation failed for image at '" + imagePath + "': " +
-         validate->message);
+         stringify(validate.get()));
   }
 
   return None();

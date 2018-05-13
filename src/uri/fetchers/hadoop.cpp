@@ -52,7 +52,7 @@ Try<Owned<Fetcher::Plugin>> HadoopFetcherPlugin::create(const Flags& flags)
 {
   Try<Owned<HDFS>> hdfs = HDFS::create(flags.hadoop_client);
   if (hdfs.isError()) {
-    return Error("Failed to create HDFS client: " + hdfs.error());
+    return Error("Failed to create HDFS client: " + stringify(hdfs.error()));
   }
 
   vector<string> schemes = strings::tokenize(
@@ -91,7 +91,7 @@ Future<Nothing> HadoopFetcherPlugin::fetch(
   if (mkdir.isError()) {
     return Failure(
         "Failed to create directory '" +
-        directory + "': " + mkdir.error());
+        directory + "': " + stringify(mkdir.error()));
   }
 
   // NOTE: We ignore the scheme prefix if the host in URI is not

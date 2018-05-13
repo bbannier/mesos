@@ -298,7 +298,7 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
       fs::mount(None(), "/", None(), MS_SLAVE | MS_REC, None());
 
     if (mnt.isError()) {
-      return Error("Failed to mark '/' as rslave: " + mnt.error());
+      return Error("Failed to mark '/' as rslave: " + stringify(mnt.error()));
     }
 
     cout << "Marked '/' as rslave" << endl;
@@ -315,7 +315,7 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
 
     Try<fs::MountInfoTable> table = fs::MountInfoTable::read();
     if (table.isError()) {
-      return Error("Failed to get mount table: " + table.error());
+      return Error("Failed to get mount table: " + stringify(table.error()));
     }
 
     foreach (const fs::MountInfoTable::Entry& entry,
@@ -331,7 +331,7 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
         if (mnt.isError()) {
           return Error(
               "Failed to mark '" + entry.target +
-              "' as slave: " + mnt.error());
+              "' as slave: " + stringify(mnt.error()));
         }
       }
     }
@@ -376,7 +376,8 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
         return Error(
             "Failed to get the realpath of the mount target '" +
             mount.target() + "': " +
-            (realTargetPath.isError() ? realTargetPath.error() : "Not found"));
+            (realTargetPath.isError() ? stringify(realTargetPath.error())
+                                      : "Not found"));
       }
 
       Try<fs::MountInfoTable::Entry> entry =
@@ -385,7 +386,7 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
       if (entry.isError()) {
         return Error(
             "Cannot find the mount containing the mount target '" +
-            mount.target() + "': " + entry.error());
+            mount.target() + "': " + stringify(entry.error()));
       }
 
       if (entry->shared().isSome()) {
@@ -406,7 +407,7 @@ static Try<Nothing> prepareMounts(const ContainerLaunchInfo& launchInfo)
     if (mnt.isError()) {
       return Error(
           "Failed to mount '" + stringify(JSON::protobuf(mount)) +
-          "': " + mnt.error());
+          "': " + stringify(mnt.error()));
     }
 
     cout << "Prepared mount '" << JSON::protobuf(mount) << "'" << endl;
@@ -428,7 +429,7 @@ static Try<Nothing> installResourceLimits(const RLimitInfo& limits)
       return Error(
           "Failed to set " +
           RLimitInfo::RLimit::Type_Name(limit.type()) + " limit: " +
-          set.error());
+          stringify(set.error()));
     }
   }
 
@@ -447,7 +448,7 @@ static Try<Nothing> enterChroot(const string& rootfs)
   if (realpath.isError()) {
     return Error(
         "Failed to determine if rootfs '" + rootfs +
-        "' is an absolute path: " + realpath.error());
+        "' is an absolute path: " + stringify(realpath.error()));
   } else if (realpath.isNone()) {
     return Error("Rootfs path '" + rootfs + "' does not exist");
   } else if (realpath.get() != rootfs) {
@@ -464,7 +465,7 @@ static Try<Nothing> enterChroot(const string& rootfs)
   if (chroot.isError()) {
     return Error(
         "Failed to enter chroot '" + rootfs + "': " +
-        chroot.error());
+        stringify(chroot.error()));
   }
 
   return Nothing();
@@ -689,7 +690,7 @@ int MesosContainerizerLaunch::execute()
     Result<uid_t> _uid = os::getuid(launchInfo.user());
     if (!_uid.isSome()) {
       cerr << "Failed to get the uid of user '" << launchInfo.user() << "': "
-           << (_uid.isError() ? _uid.error() : "not found") << endl;
+           << (_uid.isError() ? stringify(_uid.error()) : "not found") << endl;
       exitWithStatus(EXIT_FAILURE);
     }
 
@@ -699,7 +700,8 @@ int MesosContainerizerLaunch::execute()
       Result<gid_t> _gid = os::getgid(launchInfo.user());
       if (!_gid.isSome()) {
         cerr << "Failed to get the gid of user '" << launchInfo.user() << "': "
-             << (_gid.isError() ? _gid.error() : "not found") << endl;
+             << (_gid.isError() ? stringify(_gid.error()) : "not found")
+             << endl;
         exitWithStatus(EXIT_FAILURE);
       }
 
@@ -707,7 +709,8 @@ int MesosContainerizerLaunch::execute()
       if (_gids.isError()) {
         cerr << "Failed to get the supplementary gids of user '"
              << launchInfo.user() << "': "
-             << (_gids.isError() ? _gids.error() : "not found") << endl;
+             << (_gids.isError() ? stringify(_gids.error()) : "not found")
+             << endl;
         exitWithStatus(EXIT_FAILURE);
       }
 

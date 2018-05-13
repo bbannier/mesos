@@ -227,7 +227,7 @@ public:
     Option<Error> error = validation::scheduler::call::validate(devolve(call));
 
     if (error.isSome()) {
-      drop(call, error->message);
+      drop(call, stringify(error.get()));
       return;
     }
 
@@ -270,7 +270,7 @@ public:
       validation::scheduler::call::validate(devolve(callMessage));
 
     if (error.isSome()) {
-      return Failure(error->message);
+      return Failure(error.get());
     }
 
     if (callMessage.type() == Call::SUBSCRIBE) {
@@ -767,7 +767,8 @@ protected:
         if (deserializedResponse.isError()) {
           return Failure(
               "Failed to deserialize the response '" + response.status + "'" +
-              " (" + response.body + "): " + deserializedResponse.error());
+              " (" + response.body + "):"
+              " " + stringify(deserializedResponse.error()));
         }
 
         *result.mutable_response() = deserializedResponse.get();
@@ -822,7 +823,7 @@ protected:
     }
 
     if (event->isError()) {
-      error("Failed to de-serialize event: " + event->error());
+      error("Failed to de-serialize event: " + stringify(event->error()));
     } else {
       receive(event->get(), false);
     }

@@ -136,7 +136,8 @@ public:
 
       if (load.isError()) {
         return Failure(
-            "Failed to load executor logger settings: " + load.error());
+            "Failed to load executor logger settings: " +
+            stringify(load.error()));
       }
 
       // Log any flag warnings.
@@ -153,7 +154,7 @@ public:
     // of this function.
     int pipefd[2];
     if (::pipe(pipefd) == -1) {
-      return Failure(ErrnoError("Failed to create pipe").message);
+      return Failure(ErrnoError("Failed to create pipe"));
     }
 
     Subprocess::IO::InputFileDescriptors outfds;
@@ -167,7 +168,7 @@ public:
     if (cloexec.isError()) {
       os::close(outfds.read);
       os::close(outfds.write.get());
-      return Failure("Failed to cloexec: " + cloexec.error());
+      return Failure("Failed to cloexec: " + stringify(cloexec.error()));
     }
 
     // Spawn a process to handle stdout.
@@ -202,7 +203,8 @@ public:
 
     if (outProcess.isError()) {
       os::close(outfds.write.get());
-      return Failure("Failed to create logger process: " + outProcess.error());
+      return Failure(
+          "Failed to create logger process: " + stringify(outProcess.error()));
     }
 
     // NOTE: We manually construct a pipe here to properly express
@@ -210,7 +212,7 @@ public:
     if (::pipe(pipefd) == -1) {
       os::close(outfds.write.get());
       os::killtree(outProcess->pid(), SIGKILL);
-      return Failure(ErrnoError("Failed to create pipe").message);
+      return Failure(ErrnoError("Failed to create pipe"));
     }
 
     Subprocess::IO::InputFileDescriptors errfds;
@@ -225,7 +227,7 @@ public:
       os::close(errfds.read);
       os::close(errfds.write.get());
       os::killtree(outProcess->pid(), SIGKILL);
-      return Failure("Failed to cloexec: " + cloexec.error());
+      return Failure("Failed to cloexec: " + stringify(cloexec.error()));
     }
 
     // Spawn a process to handle stderr.
@@ -251,7 +253,8 @@ public:
       os::close(outfds.write.get());
       os::close(errfds.write.get());
       os::killtree(outProcess->pid(), SIGKILL);
-      return Failure("Failed to create logger process: " + errProcess.error());
+      return Failure(
+          "Failed to create logger process: " + stringify(errProcess.error()));
     }
 
     // NOTE: The ownership of these FDs is given to the caller of this function.

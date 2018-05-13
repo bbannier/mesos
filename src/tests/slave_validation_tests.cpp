@@ -114,7 +114,7 @@ TEST(AgentValidationTest, Secret)
     EXPECT_SOME(error);
     EXPECT_EQ(
         "Secret of type VALUE must have the 'value' field set",
-        error->message);
+        stringify(error.get()));
 
     secret.mutable_value()->set_data("SECRET_VALUE");
     secret.mutable_reference()->set_name("SECRET_NAME");
@@ -123,7 +123,7 @@ TEST(AgentValidationTest, Secret)
     EXPECT_SOME(error);
     EXPECT_EQ(
         "Secret of type VALUE must not have the 'reference' field set",
-        error->message);
+        stringify(error.get()));
 
     // Test the valid case.
     secret.clear_reference();
@@ -140,7 +140,7 @@ TEST(AgentValidationTest, Secret)
     EXPECT_SOME(error);
     EXPECT_EQ(
         "Secret of type REFERENCE must have the 'reference' field set",
-        error->message);
+        stringify(error.get()));
 
     secret.mutable_reference()->set_name("SECRET_NAME");
     secret.mutable_value()->set_data("SECRET_VALUE");
@@ -150,7 +150,7 @@ TEST(AgentValidationTest, Secret)
     EXPECT_EQ(
         "Secret 'SECRET_NAME' of type REFERENCE "
         "must not have the 'value' field set",
-        error->message);
+        stringify(error.get()));
 
     // Test the valid case.
     secret.clear_value();
@@ -176,7 +176,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_EQ(
         "Environment variable 'ENV_VAR_KEY' of type "
         "'SECRET' must have a secret set",
-        error->message);
+        stringify(error.get()));
 
     Secret secret;
     secret.set_type(Secret::VALUE);
@@ -190,7 +190,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_EQ(
         "Environment variable 'ENV_VAR_KEY' of type 'SECRET' "
         "must not have a value set",
-        error->message);
+        stringify(error.get()));
 
     variable->clear_value();
     char invalid_secret[5] = {'a', 'b', '\0', 'c', 'd'};
@@ -202,7 +202,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_EQ(
         "Environment variable 'ENV_VAR_KEY' specifies a secret containing "
         "null bytes, which is not allowed in the environment",
-        error->message);
+        stringify(error.get()));
 
     // Test the valid case.
     variable->mutable_secret()->mutable_value()->set_data("SECRET_VALUE");
@@ -223,7 +223,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_EQ(
         "Environment variable 'ENV_VAR_KEY' of type 'VALUE' "
         "must have a value set",
-        error->message);
+        stringify(error.get()));
 
     variable->set_value("ENV_VAR_VALUE");
 
@@ -237,7 +237,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_EQ(
         "Environment variable 'ENV_VAR_KEY' of type 'VALUE' "
         "must not have a secret set",
-        error->message);
+        stringify(error.get()));
 
     // Test the valid case.
     variable->clear_secret();
@@ -257,7 +257,7 @@ TEST(AgentValidationTest, Environment)
     EXPECT_SOME(error);
     EXPECT_EQ(
         "Environment variable of type 'UNKNOWN' is not allowed",
-        error->message);
+        stringify(error.get()));
   }
 }
 
@@ -314,7 +314,7 @@ TEST(AgentCallValidationTest, LaunchNestedContainer)
   EXPECT_EQ(
       "'launch_nested_container.command' is invalid: Environment variable "
       "'ENV_VAR_KEY' of type 'VALUE' must have a value set",
-      error->message);
+      stringify(error.get()));
 
   // Test the valid case.
   variable->set_value("env_var_value");
@@ -482,7 +482,7 @@ TEST(AgentCallValidationTest, LaunchNestedContainerSession)
   EXPECT_EQ(
       "'launch_nested_container_session.command' is invalid: Environment "
       "variable 'ENV_VAR_KEY' of type 'VALUE' must have a value set",
-      error->message);
+      stringify(error.get()));
 
   // Test the valid case.
   variable->set_value("env_var_value");

@@ -211,7 +211,7 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
         if (rmdir.isError()) {
           LOG(WARNING) << "Failed to delete '" << info->path << "': "
                        << rmdir.error();
-          info->promise.fail(rmdir.error());
+          info->promise.fail(stringify(rmdir.error()));
 
           ++failed;
         } else {

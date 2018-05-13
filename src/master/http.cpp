@@ -661,7 +661,8 @@ Future<Response> Master::Http::api(
     Try<JSON::Value> value = JSON::parse(request.body);
 
     if (value.isError()) {
-      return BadRequest("Failed to parse body into JSON: " + value.error());
+      return BadRequest(
+          "Failed to parse body into JSON: " + stringify(value.error()));
     }
 
     Try<v1::master::Call> parse =
@@ -669,7 +670,7 @@ Future<Response> Master::Http::api(
 
     if (parse.isError()) {
       return BadRequest("Failed to convert JSON into Call protobuf: " +
-                        parse.error());
+                        stringify(parse.error()));
     }
 
     v1Call = parse.get();
@@ -684,7 +685,8 @@ Future<Response> Master::Http::api(
   Option<Error> error = validation::master::call::validate(call, principal);
 
   if (error.isSome()) {
-    return BadRequest("Failed to validate master::Call: " + error->message);
+    return BadRequest(
+        "Failed to validate master::Call: " + stringify(error.get()));
   }
 
   LOG(INFO) << "Processing call " << call.type();
@@ -935,7 +937,8 @@ Future<Response> Master::Http::scheduler(
     Try<JSON::Value> value = JSON::parse(request.body);
 
     if (value.isError()) {
-      return BadRequest("Failed to parse body into JSON: " + value.error());
+      return BadRequest(
+          "Failed to parse body into JSON: " + stringify(value.error()));
     }
 
     Try<v1::scheduler::Call> parse =
@@ -943,7 +946,7 @@ Future<Response> Master::Http::scheduler(
 
     if (parse.isError()) {
       return BadRequest("Failed to convert JSON into Call protobuf: " +
-                        parse.error());
+                        stringify(parse.error()));
     }
 
     v1Call = parse.get();
@@ -959,7 +962,8 @@ Future<Response> Master::Http::scheduler(
 
   if (error.isSome()) {
     master->metrics->incrementInvalidSchedulerCalls(call);
-    return BadRequest("Failed to validate scheduler::Call: " + error->message);
+    return BadRequest(
+        "Failed to validate scheduler::Call: " + stringify(error.get()));
   }
 
   ContentType acceptType;
@@ -1212,7 +1216,8 @@ Future<Response> Master::Http::createVolumes(
     process::http::query::decode(request.body);
 
   if (decode.isError()) {
-    return BadRequest("Unable to decode query string: " + decode.error());
+    return BadRequest(
+        "Unable to decode query string: " + stringify(decode.error()));
   }
 
   const hashmap<string, string>& values = decode.get();
@@ -1238,7 +1243,7 @@ Future<Response> Master::Http::createVolumes(
   if (parse.isError()) {
     return BadRequest(
         "Error in parsing 'volumes' query parameter in the request body: " +
-        parse.error());
+        stringify(parse.error()));
   }
 
   RepeatedPtrField<Resource> volumes;
@@ -1247,7 +1252,7 @@ Future<Response> Master::Http::createVolumes(
     if (volume.isError()) {
       return BadRequest(
           "Error in parsing 'volumes' query parameter in the request body: " +
-          volume.error());
+          stringify(volume.error()));
     }
 
     volumes.Add()->CopyFrom(volume.get());
@@ -1274,7 +1279,7 @@ Future<Response> Master::Http::_createVolumes(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(
@@ -1286,7 +1291,7 @@ Future<Response> Master::Http::_createVolumes(
   if (error.isSome()) {
     return BadRequest(
         "Invalid CREATE operation on agent " + stringify(*slave) + ": " +
-        error->message);
+        stringify(error.get()));
   }
 
   return master->authorizeCreateVolume(operation.create(), principal)
@@ -1386,7 +1391,8 @@ Future<Response> Master::Http::destroyVolumes(
     process::http::query::decode(request.body);
 
   if (decode.isError()) {
-    return BadRequest("Unable to decode query string: " + decode.error());
+    return BadRequest(
+        "Unable to decode query string: " + stringify(decode.error()));
   }
 
   const hashmap<string, string>& values = decode.get();
@@ -1412,7 +1418,7 @@ Future<Response> Master::Http::destroyVolumes(
   if (parse.isError()) {
     return BadRequest(
         "Error in parsing 'volumes' query parameter in the request body: " +
-        parse.error());
+        stringify(parse.error()));
   }
 
   RepeatedPtrField<Resource> volumes;
@@ -1421,7 +1427,7 @@ Future<Response> Master::Http::destroyVolumes(
     if (volume.isError()) {
       return BadRequest(
           "Error in parsing 'volumes' query parameter in the request body: " +
-          volume.error());
+          stringify(volume.error()));
     }
 
     volumes.Add()->CopyFrom(volume.get());
@@ -1448,7 +1454,7 @@ Future<Response> Master::Http::_destroyVolumes(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(
@@ -1458,7 +1464,7 @@ Future<Response> Master::Http::_destroyVolumes(
       slave->pendingTasks);
 
   if (error.isSome()) {
-    return BadRequest("Invalid DESTROY operation: " + error->message);
+    return BadRequest("Invalid DESTROY operation: " + stringify(error.get()));
   }
 
   return master->authorizeDestroyVolume(operation.destroy(), principal)
@@ -1535,7 +1541,7 @@ Future<Response> Master::Http::growVolume(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(
@@ -1544,7 +1550,7 @@ Future<Response> Master::Http::growVolume(
   if (error.isSome()) {
     return BadRequest(
         "Invalid GROW_VOLUME operation on agent " +
-        stringify(*slave) + ": " + error->message);
+        stringify(*slave) + ": " + stringify(error.get()));
   }
 
   return master->authorizeResizeVolume(
@@ -1604,7 +1610,7 @@ Future<Response> Master::Http::shrinkVolume(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(
@@ -1613,7 +1619,7 @@ Future<Response> Master::Http::shrinkVolume(
   if (error.isSome()) {
     return BadRequest(
         "Invalid SHRINK_VOLUME operation on agent " +
-        stringify(*slave) + ": " + error->message);
+        stringify(*slave) + ": " + stringify(error.get()));
   }
 
   return master->authorizeResizeVolume(
@@ -2287,7 +2293,7 @@ Future<Response> Master::Http::redirect(const Request& request) const
     : net::getHostname(net::IP(ntohl(info.ip())));
 
   if (hostname.isError()) {
-    return InternalServerError(hostname.error());
+    return InternalServerError(stringify(hostname.error()));
   }
 
   LOG(INFO) << "Redirecting request for " << request.url
@@ -2381,7 +2387,8 @@ Future<Response> Master::Http::reserve(
     process::http::query::decode(request.body);
 
   if (decode.isError()) {
-    return BadRequest("Unable to decode query string: " + decode.error());
+    return BadRequest(
+        "Unable to decode query string: " + stringify(decode.error()));
   }
 
   const hashmap<string, string>& values = decode.get();
@@ -2408,7 +2415,7 @@ Future<Response> Master::Http::reserve(
   if (parse.isError()) {
     return BadRequest(
         "Error in parsing 'resources' query parameter in the request body: " +
-        parse.error());
+        stringify(parse.error()));
   }
 
   RepeatedPtrField<Resource> resources;
@@ -2417,7 +2424,7 @@ Future<Response> Master::Http::reserve(
     if (resource.isError()) {
       return BadRequest(
           "Error in parsing 'resources' query parameter in the request body: " +
-          resource.error());
+          stringify(resource.error()));
     }
 
     resources.Add()->CopyFrom(resource.get());
@@ -2444,7 +2451,7 @@ Future<Response> Master::Http::_reserve(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(
@@ -2453,7 +2460,7 @@ Future<Response> Master::Http::_reserve(
   if (error.isSome()) {
     return BadRequest(
         "Invalid RESERVE operation on agent " + stringify(*slave) + ": " +
-        error->message);
+        stringify(error.get()));
   }
 
   return master->authorizeReserveResources(operation.reserve(), principal)
@@ -3716,7 +3723,8 @@ Future<Response> Master::Http::teardown(
     process::http::query::decode(request.body);
 
   if (decode.isError()) {
-    return BadRequest("Unable to decode query string: " + decode.error());
+    return BadRequest(
+        "Unable to decode query string: " + stringify(decode.error()));
   }
 
   const hashmap<string, string>& values = decode.get();
@@ -4214,7 +4222,7 @@ Future<Response> Master::Http::maintenanceSchedule(
   // Parse the POST body as JSON.
   Try<JSON::Object> jsonSchedule = JSON::parse<JSON::Object>(request.body);
   if (jsonSchedule.isError()) {
-    return BadRequest(jsonSchedule.error());
+    return BadRequest(stringify(jsonSchedule.error()));
   }
 
   // Convert the schedule to a protobuf.
@@ -4222,7 +4230,7 @@ Future<Response> Master::Http::maintenanceSchedule(
     ::protobuf::parse<mesos::maintenance::Schedule>(jsonSchedule.get());
 
   if (protoSchedule.isError()) {
-    return BadRequest(protoSchedule.error());
+    return BadRequest(stringify(protoSchedule.error()));
   }
 
   return _updateMaintenanceSchedule(protoSchedule.get(), principal);
@@ -4272,7 +4280,7 @@ Future<Response> Master::Http::_updateMaintenanceSchedule(
       master->machines);
 
   if (isValid.isError()) {
-    return BadRequest(isValid.error());
+    return BadRequest(stringify(isValid.error()));
   }
 
   return ObjectApprovers::create(
@@ -4474,13 +4482,13 @@ Future<Response> Master::Http::machineDown(
   // Parse the POST body as JSON.
   Try<JSON::Array> jsonIds = JSON::parse<JSON::Array>(request.body);
   if (jsonIds.isError()) {
-    return BadRequest(jsonIds.error());
+    return BadRequest(stringify(jsonIds.error()));
   }
 
   // Convert the machines to a protobuf.
   auto ids = ::protobuf::parse<RepeatedPtrField<MachineID>>(jsonIds.get());
   if (ids.isError()) {
-    return BadRequest(ids.error());
+    return BadRequest(stringify(ids.error()));
   }
 
   return ObjectApprovers::create(
@@ -4502,7 +4510,7 @@ Future<Response> Master::Http::_startMaintenance(
   // Validate every machine in the list.
   Try<Nothing> isValid = maintenance::validation::machines(machineIds);
   if (isValid.isError()) {
-    return BadRequest(isValid.error());
+    return BadRequest(stringify(isValid.error()));
   }
 
   // Check that all machines are part of a maintenance schedule.
@@ -4637,13 +4645,13 @@ Future<Response> Master::Http::machineUp(
   // Parse the POST body as JSON.
   Try<JSON::Array> jsonIds = JSON::parse<JSON::Array>(request.body);
   if (jsonIds.isError()) {
-    return BadRequest(jsonIds.error());
+    return BadRequest(stringify(jsonIds.error()));
   }
 
   // Convert the machines to a protobuf.
   auto ids = ::protobuf::parse<RepeatedPtrField<MachineID>>(jsonIds.get());
   if (ids.isError()) {
-    return BadRequest(ids.error());
+    return BadRequest(stringify(ids.error()));
   }
 
   return ObjectApprovers::create(
@@ -4665,7 +4673,7 @@ Future<Response> Master::Http::_stopMaintenance(
   // Validate every machine in the list.
   Try<Nothing> isValid = maintenance::validation::machines(machineIds);
   if (isValid.isError()) {
-    return BadRequest(isValid.error());
+    return BadRequest(stringify(isValid.error()));
   }
 
   // Check that all machines are part of a maintenance schedule.
@@ -4964,7 +4972,8 @@ Future<Response> Master::Http::unreserve(
     process::http::query::decode(request.body);
 
   if (decode.isError()) {
-    return BadRequest("Unable to decode query string: " + decode.error());
+    return BadRequest(
+        "Unable to decode query string: " + stringify(decode.error()));
   }
 
   const hashmap<string, string>& values = decode.get();
@@ -4991,7 +5000,7 @@ Future<Response> Master::Http::unreserve(
   if (parse.isError()) {
     return BadRequest(
         "Error in parsing 'resources' query parameter in the request body: " +
-        parse.error());
+        stringify(parse.error()));
   }
 
   RepeatedPtrField<Resource> resources;
@@ -5000,7 +5009,7 @@ Future<Response> Master::Http::unreserve(
     if (resource.isError()) {
       return BadRequest(
           "Error in parsing 'resources' query parameter in the request body: " +
-          resource.error());
+          stringify(resource.error()));
     }
 
     resources.Add()->CopyFrom(resource.get());
@@ -5027,12 +5036,12 @@ Future<Response> Master::Http::_unreserve(
 
   Option<Error> error = validateAndUpgradeResources(&operation);
   if (error.isSome()) {
-    return BadRequest(error->message);
+    return BadRequest(stringify(error.get()));
   }
 
   error = validation::operation::validate(operation.unreserve());
   if (error.isSome()) {
-    return BadRequest("Invalid UNRESERVE operation: " + error->message);
+    return BadRequest("Invalid UNRESERVE operation: " + stringify(error.get()));
   }
 
   return master->authorizeUnreserveResources(operation.unreserve(), principal)

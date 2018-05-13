@@ -120,7 +120,7 @@ public:
       // Either way, retrying is not problematic.
       if (zh == nullptr && errno == EINVAL) {
         ErrnoError error("zookeeper_init failed");
-        LOG(WARNING) << error.message << " ; retrying in 1 second";
+        LOG(WARNING) << error << " ; retrying in 1 second";
         os::sleep(Seconds(1));
         continue;
       }
