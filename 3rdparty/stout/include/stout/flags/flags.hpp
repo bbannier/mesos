@@ -378,7 +378,8 @@ void FlagsBase::add(
       if (t.isSome()) {
         flags->*t1 = t.get();
       } else {
-        return Error("Failed to load value '" + value + "': " + t.error());
+        return Error(
+            "Failed to load value '" + value + "': " + stringify(t.error()));
       }
     }
 
@@ -454,7 +455,8 @@ void FlagsBase::add(
       if (t.isSome()) {
         flags->*option = Some(t.get());
       } else {
-        return Error("Failed to load value '" + value + "': " + t.error());
+        return Error(
+            "Failed to load value '" + value + "': " + stringify(t.error()));
       }
     }
 
@@ -795,7 +797,9 @@ inline Try<Warnings> FlagsBase::load(
 
     Try<Nothing> load = flag->load(this, value_);
     if (load.isError()) {
-      return Error("Failed to load flag '" + flag_name + "': " + load.error());
+      return Error(
+          "Failed to load flag "
+          "'" + flag_name + "': " + stringify(load.error()));
     }
 
     // TODO(vinod): Move this logic inside `Flag::load()`.

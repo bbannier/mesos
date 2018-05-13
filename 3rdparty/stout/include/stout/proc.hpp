@@ -297,7 +297,8 @@ inline Try<std::set<pid_t>> pids()
 
   Try<std::list<std::string>> entries = os::ls("/proc");
   if (entries.isError()) {
-    return Error("Failed to list files in /proc: " + entries.error());
+    return Error(
+        "Failed to list files in /proc: " + stringify(entries.error()));
   }
 
   foreach (const std::string& entry, entries.get()) {
@@ -324,7 +325,8 @@ inline Try<std::set<pid_t>> threads(pid_t pid)
 
   Try<std::list<std::string>> entries = os::ls(path);
   if (entries.isError()) {
-    return Error("Failed to list files in " + path + ": " + entries.error());
+    return Error(
+        "Failed to list files in " + path + ": " + stringify(entries.error()));
   }
 
   foreach (const std::string& entry, entries.get()) {
@@ -370,7 +372,8 @@ inline Try<SystemStatus> status()
         numify<unsigned long long>(line.substr(6));
 
       if (number.isError()) {
-        return Error("Failed to parse /proc/stat: " + number.error());
+        return Error(
+            "Failed to parse /proc/stat: " + stringify(number.error()));
       }
 
       btime = number.get();

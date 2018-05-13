@@ -120,8 +120,7 @@ T&& _check_not_error(
     google::LogMessageFatal(
         file,
         line,
-        new std::string(
-            std::string(message) + ": " + Error(t.error()).message));
+        new std::string(std::string(message) + ": " + stringify(t.error())));
   }
   return std::move(t).get();
 }
@@ -137,8 +136,7 @@ T& _check_not_error(
     google::LogMessageFatal(
         file,
         line,
-        new std::string(
-            std::string(message) + ": " + Error(t.error()).message));
+        new std::string(std::string(message) + ": " + stringify(t.error())));
   }
   return t.get();
 }
@@ -154,8 +152,7 @@ const T& _check_not_error(
     google::LogMessageFatal(
         file,
         line,
-        new std::string(
-            std::string(message) + ": " + Error(t.error()).message));
+        new std::string(std::string(message) + ": " + stringify(t.error())));
   }
   return t.get();
 }
@@ -271,7 +268,7 @@ struct _CheckFatal
       : file(_file),
         line(_line)
   {
-    out << type << "(" << expression << "): " << error.message << " ";
+    out << type << "(" << expression << "): " << error << " ";
   }
 
   ~_CheckFatal()

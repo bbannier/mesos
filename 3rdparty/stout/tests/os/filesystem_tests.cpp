@@ -633,7 +633,8 @@ TEST_F(FsTest, Xattr)
       0);
 
   // Only run this test if extended attribute is supported.
-  if (setxattr.isError() && setxattr.error() == os::strerror(ENOTSUP)) {
+  if (setxattr.isError() &&
+      stringify(setxattr.error()) == os::strerror(ENOTSUP)) {
     return;
   }
 

@@ -382,7 +382,8 @@ inline Try<Nothing> tar(const std::string& path, const std::string& archive)
     os::shell("tar %s %s %s", "-czf", archive.c_str(), path.c_str());
 
   if (tarOut.isError()) {
-    return Error("Failed to archive " + path + ": " + tarOut.error());
+    return Error(
+        "Failed to archive " + path + ": " + stringify(tarOut.error()));
   }
 
   return Nothing();

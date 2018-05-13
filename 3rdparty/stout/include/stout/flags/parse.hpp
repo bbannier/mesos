@@ -121,7 +121,8 @@ inline Try<JSON::Object> parse(const std::string& value)
 
     Try<std::string> read = os::read(value);
     if (read.isError()) {
-      return Error("Error reading file '" + value + "': " + read.error());
+      return Error(
+          "Error reading file '" + value + "': " + stringify(read.error()));
     }
     return JSON::parse<JSON::Object>(read.get());
   }
@@ -151,7 +152,8 @@ inline Try<JSON::Array> parse(const std::string& value)
 
     Try<std::string> read = os::read(value);
     if (read.isError()) {
-      return Error("Error reading file '" + value + "': " + read.error());
+      return Error(
+          "Error reading file '" + value + "': " + stringify(read.error()));
     }
     return JSON::parse<JSON::Array>(read.get());
   }
@@ -179,7 +181,8 @@ inline Try<SecurePathOrValue> parse(const std::string& value)
     Try<std::string> read = os::read(path);
 
     if (read.isError()) {
-      return Error("Error reading file '" + path + "': " + read.error());
+      return Error(
+          "Error reading file '" + path + "': " + stringify(read.error()));
     }
 
     result.value = read.get();

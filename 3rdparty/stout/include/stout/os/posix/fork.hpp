@@ -298,7 +298,8 @@ private:
     Try<Nothing> truncated = ftruncate(fd, sizeof(Tree::Memory));
     if (truncated.isError()) {
       return Error(
-          "Failed to set size of shared memory object: " + truncated.error());
+          "Failed to set size of shared memory object: " +
+          stringify(truncated.error()));
     }
 
     void* memory = mmap(

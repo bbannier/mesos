@@ -80,7 +80,7 @@ inline Try<Nothing> write(int_fd fd, const google::protobuf::Message& message)
 
   Try<Nothing> result = os::write(fd, bytes);
   if (result.isError()) {
-    return Error("Failed to write size: " + result.error());
+    return Error("Failed to write size: " + stringify(result.error()));
   }
 
 #ifdef __WINDOWS__
@@ -94,7 +94,7 @@ inline Try<Nothing> write(int_fd fd, const google::protobuf::Message& message)
   // of `os::close` from closing twice.
   Try<int_fd> dup = os::dup(fd);
   if (dup.isError()) {
-    return Error("Failed to duplicate handle: " + dup.error());
+    return Error("Failed to duplicate handle: " + stringify(dup.error()));
   }
 
   int crt = dup->crt();
@@ -141,7 +141,8 @@ Try<Nothing> write(const std::string& path, const T& t)
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (fd.isError()) {
-    return Error("Failed to open file '" + path + "': " + fd.error());
+    return Error(
+        "Failed to open file '" + path + "': " + stringify(fd.error()));
   }
 
   Try<Nothing> result = write(fd.get(), t);
@@ -165,7 +166,8 @@ inline Try<Nothing> append(
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (fd.isError()) {
-    return Error("Failed to open file '" + path + "': " + fd.error());
+    return Error(
+        "Failed to open file '" + path + "': " + stringify(fd.error()));
   }
 
   Try<Nothing> result = write(fd.get(), message);
@@ -243,7 +245,7 @@ struct Read
       if (undoFailed) {
         os::lseek(fd, offset, SEEK_SET);
       }
-      return Error("Failed to read size: " + result.error());
+      return Error("Failed to read size: " + stringify(result.error()));
     } else if (result.isNone()) {
       return None(); // No more protobufs to read.
     } else if (result->size() < sizeof(size)) {
@@ -272,7 +274,7 @@ struct Read
         // Restore the offset to before the size read.
         os::lseek(fd, offset, SEEK_SET);
       }
-      return Error("Failed to read message: " + result.error());
+      return Error("Failed to read message: " + stringify(result.error()));
     } else if (result.isNone() || result->size() < size) {
       // Hit EOF unexpectedly.
       if (undoFailed) {
@@ -371,7 +373,8 @@ Result<T> read(const std::string& path)
       S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
   if (fd.isError()) {
-    return Error("Failed to open file '" + path + "': " + fd.error());
+    return Error(
+        "Failed to open file '" + path + "': " + stringify(fd.error()));
   }
 
   Result<T> result = read<T>(fd.get());
@@ -475,8 +478,9 @@ struct Parser : boost::static_visitor<Try<Nothing>>
       case google::protobuf::FieldDescriptor::TYPE_BYTES: {
         Try<std::string> decode = base64::decode(string.value);
         if (decode.isError()) {
-          return Error("Failed to base64 decode bytes field"
-                       " '" + field->name() + "': " + decode.error());
+          return Error(
+              "Failed to base64 decode bytes field"
+              " '" + field->name() + "': " + stringify(decode.error()));
         }
 
         if (field->is_repeated()) {
@@ -528,8 +532,9 @@ struct Parser : boost::static_visitor<Try<Nothing>>
         Try<JSON::Number> number = JSON::parse<JSON::Number>(string.value);
         if (number.isError()) {
           return Error(
-              "Failed to parse '" + string.value + "' as a JSON number "
-              "for field '" + field->name() + "': " + number.error());
+              "Failed to parse '" + string.value +
+              "' as a JSON number for field "
+              "'" + field->name() + "': " + stringify(number.error()));
         }
 
         return operator()(number.get());
@@ -538,8 +543,9 @@ struct Parser : boost::static_visitor<Try<Nothing>>
         Try<JSON::Boolean> boolean = JSON::parse<JSON::Boolean>(string.value);
         if (boolean.isError()) {
           return Error(
-              "Failed to parse '" + string.value + "' as a JSON boolean "
-              "for field '" + field->name() + "': " + boolean.error());
+              "Failed to parse '" + string.value +
+              "' as a JSON boolean for field "
+              "'" + field->name() + "': " + stringify(boolean.error()));
         }
 
         return operator()(boolean.get());

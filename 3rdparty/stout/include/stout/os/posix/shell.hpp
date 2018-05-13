@@ -74,7 +74,7 @@ Try<std::string> shell(const std::string& fmt, const T&... t)
 {
   const Try<std::string> command = strings::internal::format(fmt, t...);
   if (command.isError()) {
-    return Error(command.error());
+    return command.error();
   }
 
   FILE* file;

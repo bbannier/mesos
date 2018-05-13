@@ -650,7 +650,7 @@ TEST(FlagsTest, Errors)
   Try<Warnings> load = flags.load("FLAGSTEST_", argc, argv);
   EXPECT_ERROR(load);
 
-  EXPECT_EQ("Failed to load unknown flag 'foo'", load.error());
+  EXPECT_EQ("Failed to load unknown flag 'foo'", stringify(load.error()));
 
   // Now try an unknown flag with a value.
   argv[1] = (char*) "--foo=value";
@@ -658,7 +658,7 @@ TEST(FlagsTest, Errors)
   load = flags.load("FLAGSTEST_", argc, argv);
   EXPECT_ERROR(load);
 
-  EXPECT_EQ("Failed to load unknown flag 'foo'", load.error());
+  EXPECT_EQ("Failed to load unknown flag 'foo'", stringify(load.error()));
 
   // Now try an unknown flag with a 'no-' prefix.
   argv[1] = (char*) "--no-foo";
@@ -666,7 +666,9 @@ TEST(FlagsTest, Errors)
   load = flags.load("FLAGSTEST_", argc, argv);
   EXPECT_ERROR(load);
 
-  EXPECT_EQ("Failed to load unknown flag 'foo' via 'no-foo'", load.error());
+  EXPECT_EQ(
+      "Failed to load unknown flag 'foo' via 'no-foo'",
+      stringify(load.error()));
 
   // Now test a boolean flag using the 'no-' prefix _and_ a value.
   argv[1] = (char*) "--no-name3=value";
@@ -675,7 +677,7 @@ TEST(FlagsTest, Errors)
   EXPECT_ERROR(load);
 
   EXPECT_EQ("Failed to load boolean flag 'name3' via "
-            "'no-name3' with value 'value'", load.error());
+            "'no-name3' with value 'value'", stringify(load.error()));
 
   // Now test a boolean flag that couldn't be parsed.
   argv[1] = (char*) "--name3=value";
@@ -683,8 +685,10 @@ TEST(FlagsTest, Errors)
   load = flags.load("FLAGSTEST_", argc, argv);
   EXPECT_ERROR(load);
 
-  EXPECT_EQ("Failed to load flag 'name3': Failed to load value 'value': "
-            "Expecting a boolean (e.g., true or false)", load.error());
+  EXPECT_EQ(
+      "Failed to load flag 'name3': Failed to load value 'value': "
+      "Expecting a boolean (e.g., true or false)",
+      stringify(load.error()));
 
   // Now test a non-boolean flag without a value.
   argv[1] = (char*) "--name1";
@@ -693,7 +697,7 @@ TEST(FlagsTest, Errors)
   EXPECT_ERROR(load);
 
   EXPECT_EQ("Failed to load non-boolean flag 'name1': "
-            "Missing value", load.error());
+            "Missing value", stringify(load.error()));
 
   // Now test a non-boolean flag using the 'no-' prefix.
   argv[1] = (char*) "--no-name2";
@@ -702,7 +706,7 @@ TEST(FlagsTest, Errors)
   EXPECT_ERROR(load);
 
   EXPECT_EQ("Failed to load non-boolean flag 'name2' "
-            "via 'no-name2'", load.error());
+            "via 'no-name2'", stringify(load.error()));
 
   // Now test a non-boolean flag using empty string value.
   argv[1] = (char*) "--name6=";
@@ -711,7 +715,7 @@ TEST(FlagsTest, Errors)
   EXPECT_ERROR(load);
 
   EXPECT_EQ("Failed to load flag 'name6': Failed to load value '': "
-            "Failed to convert into required type", load.error());
+            "Failed to convert into required type", stringify(load.error()));
 }
 
 
@@ -747,7 +751,7 @@ TEST(FlagsTest, MissingRequiredFlag)
 
   EXPECT_EQ(
       "Flag 'required_flag' is required, but it was not provided",
-      load.error());
+      stringify(load.error()));
 }
 
 
@@ -785,7 +789,8 @@ TEST(FlagsTest, Validate)
   Try<Warnings> load = flags.load("FLAGSTEST_", argc, argv);
   EXPECT_ERROR(load);
 
-  EXPECT_EQ("Expected --duration to be less than 1 hour", load.error());
+  EXPECT_EQ(
+      "Expected --duration to be less than 1 hour", stringify(load.error()));
 }
 
 

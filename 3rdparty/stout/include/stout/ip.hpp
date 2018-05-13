@@ -542,7 +542,8 @@ inline Try<IP::Network> IP::Network::parse(const std::string& value, int family)
   // Parse the IP address.
   Try<IP> address = IP::parse(tokens[0], family);
   if (address.isError()) {
-    return Error("Failed to parse the IP address: " + address.error());
+    return Error(
+        "Failed to parse the IP address: " + stringify(address.error()));
   }
 
   // Parse the subnet prefix.

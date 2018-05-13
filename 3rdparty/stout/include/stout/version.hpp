@@ -73,7 +73,7 @@ struct Version
 
       Try<std::vector<std::string>> parsed = parseLabel(buildString);
       if (parsed.isError()) {
-        return Error("Invalid build label: " + parsed.error());
+        return Error("Invalid build label: " + stringify(parsed.error()));
       }
 
       buildLabel = parsed.get();
@@ -94,7 +94,7 @@ struct Version
 
       Try<std::vector<std::string>> parsed = parseLabel(prereleaseString);
       if (parsed.isError()) {
-        return Error("Invalid prerelease label: " + parsed.error());
+        return Error("Invalid prerelease label: " + stringify(parsed.error()));
       }
 
       prereleaseLabel = parsed.get();
@@ -117,7 +117,7 @@ struct Version
       Try<uint32_t> result = parseNumericIdentifier(numericComponents[i]);
       if (result.isError()) {
         return Error("Invalid version component '" + numericComponents[i] + "'"
-                     ": " + result.error());
+                     ": " + stringify(result.error()));
       }
 
       versionNumbers[i] = result.get();

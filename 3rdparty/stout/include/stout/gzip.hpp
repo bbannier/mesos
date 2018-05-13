@@ -103,7 +103,7 @@ public:
 
     if (code != Z_OK) {
       Error error = internal::GzipError("Failed to inflateInit2", stream, code);
-      ABORT(error.message);
+      ABORT(stringify(error));
     }
   }
 
@@ -204,7 +204,7 @@ inline Try<std::string> compress(
 
   if (code != Z_OK) {
     Error error = internal::GzipError("Failed to deflateInit2", stream, code);
-    ABORT(error.message);
+    ABORT(stringify(error));
   }
 
   // Build up the compressed result.

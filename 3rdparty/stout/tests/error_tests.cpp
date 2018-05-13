@@ -93,9 +93,11 @@ TEST(ErrorTest, Errno)
 
   EXPECT_EQ(einval, ErrnoError(einval, "errno error").code);
   EXPECT_THAT(
-    ErrnoError(einval, "errno error").message, StartsWith("errno error"));
+      stringify(ErrnoError(einval, "errno error")),
+      StartsWith("errno error"));
 
   EXPECT_EQ(notsock, SocketError(notsock, "socket error").code);
   EXPECT_THAT(
-    SocketError(notsock, "socket error").message, StartsWith("socket error"));
+      stringify(SocketError(notsock, "socket error")),
+      StartsWith("socket error"));
 }

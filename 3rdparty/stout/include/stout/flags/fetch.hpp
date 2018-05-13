@@ -47,7 +47,8 @@ Try<T> fetch(const std::string& value)
 
     Try<std::string> read = os::read(path);
     if (read.isError()) {
-      return Error("Error reading file '" + path + "': " + read.error());
+      return Error(
+          "Error reading file '" + path + "': " + stringify(read.error()));
     }
 
     return parse<T>(read.get());

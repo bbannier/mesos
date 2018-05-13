@@ -121,7 +121,7 @@ public:
         if (numify.isError()) {
           state = FAILED;
           return Error("Failed to decode length '" + buffer + "': " +
-                       numify.error());
+                       stringify(numify.error()));
         }
 
         length = numify.get();

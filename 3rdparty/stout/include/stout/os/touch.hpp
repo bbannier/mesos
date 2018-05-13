@@ -38,7 +38,7 @@ inline Try<Nothing> touch(const std::string& path)
         S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
     if (fd.isError()) {
-      return Error("Failed to open file: " + fd.error());
+      return Error("Failed to open file: " + stringify(fd.error()));
     }
 
     return os::close(fd.get());

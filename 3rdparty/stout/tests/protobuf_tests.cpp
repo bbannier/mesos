@@ -481,7 +481,7 @@ TEST(ProtobufTest, ParseJSONNestedError)
   ASSERT_ERROR(parse);
 
   EXPECT_TRUE(strings::contains(
-      parse.error(), "Not expecting a JSON number for field"));
+      stringify(parse.error()), "Not expecting a JSON number for field"));
 }
 
 

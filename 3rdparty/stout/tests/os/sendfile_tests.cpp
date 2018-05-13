@@ -83,9 +83,9 @@ TEST_F(OsSendfileTest, Sendfile)
   ASSERT_ERROR(result);
 
 #ifdef __linux__
-  ASSERT_EQ(EPIPE, _errno) << result.error().message;
+  ASSERT_EQ(EPIPE, _errno) << result.error();
 #elif defined __APPLE__
-  ASSERT_EQ(ENOTCONN, _errno) << result.error().message;
+  ASSERT_EQ(ENOTCONN, _errno) << result.error();
 #endif
 
   ASSERT_SOME(os::close(fd.get()));

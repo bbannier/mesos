@@ -50,7 +50,7 @@ protected:
     Result<std::string> realpath = os::realpath(directory.get());
     ASSERT_SOME(realpath) << "Failed to get realpath of '" << directory.get()
                           << "': "
-                          << (realpath.isError() ? realpath.error()
+                          << (realpath.isError() ? stringify(realpath.error())
                                                  : "No such directory");
     sandbox = realpath.get();
 
