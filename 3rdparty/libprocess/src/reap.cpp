@@ -117,7 +117,7 @@ void ReaperProcess::notify(pid_t pid, Result<int> status)
 {
   foreach (const Owned<Promise<Option<int>>>& promise, promises.get(pid)) {
     if (status.isError()) {
-      promise->fail(status.error());
+      promise->fail(stringify(status.error()));
     } else if (status.isNone()) {
       promise->set(Option<int>::none());
     } else {

@@ -689,7 +689,7 @@ TEST(FutureTest, FromTryFuture)
   future = t;
 
   ASSERT_TRUE(future.isFailed());
-  EXPECT_EQ(t.error(), future.failure());
+  EXPECT_EQ(stringify(t.error()), future.failure());
 }
 
 

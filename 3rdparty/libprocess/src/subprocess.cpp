@@ -375,7 +375,7 @@ Try<Subprocess> subprocess(
   Try<Nothing> cloexec = internal::cloexec(stdinfds, stdoutfds, stderrfds);
   if (cloexec.isError()) {
     process::internal::close(stdinfds, stdoutfds, stderrfds);
-    return Error("Failed to cloexec: " + cloexec.error());
+    return Error("Failed to cloexec: " + stringify(cloexec.error()));
   }
 #endif // __WINDOWS__
 

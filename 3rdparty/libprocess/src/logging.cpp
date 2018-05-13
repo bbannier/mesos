@@ -45,7 +45,7 @@ Future<http::Response> Logging::toggle(
   Try<int> v = numify<int>(level.get());
 
   if (v.isError()) {
-    return http::BadRequest(v.error() + ".\n");
+    return http::BadRequest(stringify(v.error()) + ".\n");
   }
 
   if (v.get() < 0) {
@@ -59,7 +59,7 @@ Future<http::Response> Logging::toggle(
   Try<Duration> d = Duration::parse(duration.get());
 
   if (d.isError()) {
-    return http::BadRequest(d.error() + ".\n");
+    return http::BadRequest(stringify(d.error() )+ ".\n");
   }
 
   return set_level(v.get(), d.get())

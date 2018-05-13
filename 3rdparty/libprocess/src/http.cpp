@@ -238,7 +238,7 @@ Try<URL> URL::parse(const string& urlString)
   if (tokens.size() == 2) {
     Try<uint16_t> numifyPort = numify<uint16_t>(tokens[1]);
     if (numifyPort.isError()) {
-      return Error("Failed to parse port: " + numifyPort.error());
+      return Error("Failed to parse port: " + stringify(numifyPort.error()));
     }
 
     port = numifyPort.get();
@@ -1172,7 +1172,7 @@ public:
     disconnection.set(Nothing());
 
     return shutdown.isSome() ? Future<Nothing>(Nothing())
-                             : Failure(shutdown.error().message);
+                             : Failure(shutdown.error());
   }
 
   Future<Nothing> disconnected()
@@ -1412,15 +1412,16 @@ Future<Connection> connect(const network::Address& address, Scheme scheme)
       kind);
 
   if (socket.isError()) {
-    return Failure("Failed to create socket: " + socket.error());
+    return Failure("Failed to create socket: " + stringify(socket.error()));
   }
 
   return socket->connect(address)
     .then([socket, address]() -> Future<Connection> {
       Try<network::Address> localAddress = socket->address();
       if (localAddress.isError()) {
-        return Failure("Failed to get socket's local address: " +
-            localAddress.error());
+        return Failure(
+            "Failed to get socket's local address: " +
+            stringify(localAddress.error()));
       }
 
       return Connection(socket.get(), localAddress.get(), address);
@@ -1444,7 +1445,7 @@ Future<Connection> connect(const URL& url)
 
     if (ip.isError()) {
       return Failure("Failed to determine IP of domain '" +
-                     url.domain.get() + "': " + ip.error());
+                     url.domain.get() + "': " + stringify(ip.error()));
     }
 
     address.ip = ip.get();
@@ -1542,7 +1543,8 @@ Future<Nothing> sendfile(
   Try<int_fd> fd = os::open(response.path, O_CLOEXEC | O_NONBLOCK | O_RDONLY);
 
   if (fd.isError()) {
-    const string body = "Failed to open '" + response.path + "': " + fd.error();
+    const string body =
+      "Failed to open '" + response.path + "': " + stringify(fd.error());
     // TODO(benh): VLOG(1)?
     // TODO(benh): Don't send error back as part of InternalServiceError?
     // TODO(benh): Copy headers from `response`?
@@ -1552,7 +1554,7 @@ Future<Nothing> sendfile(
   const Try<Bytes> size = os::stat::size(fd.get());
   if (size.isError()) {
     const string body =
-      "Failed to fstat '" + response.path + "': " + size.error();
+      "Failed to fstat '" + response.path + "': " + stringify(size.error());
     // TODO(benh): VLOG(1)?
     // TODO(benh): Don't send error back as part of InternalServiceError?
     // TODO(benh): Copy headers from `response`?
@@ -1772,7 +1774,7 @@ Future<Nothing> receive(
   Try<network::Address> address = socket.peer();
 
   if (address.isError()) {
-    return Failure("Failed to get peer address: " + address.error());
+    return Failure("Failed to get peer address: " + stringify(address.error()));
   }
 
   const size_t size = io::BUFFERED_READ_SIZE;
@@ -2163,7 +2165,7 @@ Try<Server> Server::create(
   // `Socket::listen` has been invoked.
   Try<Nothing> listen = socket.listen(static_cast<int>(options.backlog));
   if (listen.isError()) {
-    return Error("Failed to listen on socket: " + listen.error());
+    return Error("Failed to listen on socket: " + stringify(listen.error()));
   }
 
   return Server(std::move(socket), std::move(f));
@@ -2190,14 +2192,14 @@ Try<Server> Server::create(
       kind);
 
   if (socket.isError()) {
-    return Error("Failed to create socket: " + socket.error());
+    return Error("Failed to create socket: " + stringify(socket.error()));
   }
 
   Try<network::Address> bind = socket->bind(address);
   if (bind.isError()) {
     return Error(
         "Failed to bind to address '" + stringify(address) + "': "
-        + bind.error());
+        + stringify(bind.error()));
   }
 
   return create(socket.get(), std::move(f), options);
@@ -2351,7 +2353,8 @@ Future<Response> get(
         strings::remove(query.get(), "?", strings::PREFIX));
 
     if (decode.isError()) {
-      return Failure("Failed to decode HTTP query string: " + decode.error());
+      return Failure(
+          "Failed to decode HTTP query string: " + stringify(decode.error()));
     }
 
     url.query = decode.get();
@@ -2497,7 +2500,8 @@ Future<Response> get(
         strings::remove(query.get(), "?", strings::PREFIX));
 
     if (decode.isError()) {
-      return Failure("Failed to decode HTTP query string: " + decode.error());
+      return Failure(
+          "Failed to decode HTTP query string: " + stringify(decode.error()));
     }
 
     url.query = decode.get();

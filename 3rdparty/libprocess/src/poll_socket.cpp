@@ -68,19 +68,21 @@ Future<std::shared_ptr<SocketImpl>> PollSocketImpl::accept()
       Try<Nothing> nonblock = os::nonblock(s);
       if (nonblock.isError()) {
         os::close(s);
-        return Failure("Failed to accept, nonblock: " + nonblock.error());
+        return Failure(
+            "Failed to accept, nonblock: " + stringify(nonblock.error()));
       }
 
       Try<Nothing> cloexec = os::cloexec(s);
       if (cloexec.isError()) {
         os::close(s);
-        return Failure("Failed to accept, cloexec: " + cloexec.error());
+        return Failure(
+            "Failed to accept, cloexec: " + stringify(cloexec.error()));
       }
 
       Try<Address> address = network::address(s);
       if (address.isError()) {
         os::close(s);
-        return Failure("Failed to get address: " + address.error());
+        return Failure("Failed to get address: " + stringify(address.error()));
       }
 
       // Turn off Nagle (TCP_NODELAY) so pipelined requests don't wait.
@@ -105,7 +107,7 @@ Future<std::shared_ptr<SocketImpl>> PollSocketImpl::accept()
       Try<std::shared_ptr<SocketImpl>> impl = create(s);
       if (impl.isError()) {
         os::close(s);
-        return Failure("Failed to create socket: " + impl.error());
+        return Failure("Failed to create socket: " + stringify(impl.error()));
       }
 
       return impl.get();
@@ -253,7 +255,7 @@ Future<size_t> PollSocketImpl::sendfile(int_fd fd, off_t offset, size_t size)
             // Interrupted, try again now.
             continue;
           } else if (!net::is_retryable_error(length.error().code)) {
-            VLOG(1) << length.error().message;
+            VLOG(1) << length.error();
             return Failure(length.error());
           }
 

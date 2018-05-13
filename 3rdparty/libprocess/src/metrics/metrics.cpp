@@ -71,10 +71,11 @@ MetricsProcess* MetricsProcess::create(
 
       if (requests.isError()) {
         reason = Error(
-            "Failed to parse the number of requests: " + requests.error());
+            "Failed to parse the number of requests: " +
+            stringify(requests.error()));
       } else if (interval.isError()) {
         reason = Error(
-            "Failed to parse the interval: " + interval.error());
+            "Failed to parse the interval: " + stringify(interval.error()));
       } else {
         limiter = Owned<RateLimiter>(
             new RateLimiter(requests.get(), interval.get()));
@@ -86,7 +87,7 @@ MetricsProcess* MetricsProcess::create(
           << "Failed to parse LIBPROCESS_METRICS_SNAPSHOT_ENDPOINT_RATE_LIMIT "
           << "'" << limit.get() << "'"
           << " (format is <number of requests>/<interval duration>)"
-          << (reason.isSome() ? ": " + reason->message : "");
+          << (reason.isSome() ? ": " + stringify(reason.get()): "");
     }
   }
 
@@ -181,7 +182,8 @@ Future<http::Response> MetricsProcess::_snapshot(
 
     if (duration.isError()) {
       return http::BadRequest(
-          "Invalid timeout '" + parameter + "': " + duration.error() + ".\n");
+          "Invalid timeout '" + parameter +
+          "': " + stringify(duration.error()) + ".\n");
     }
 
     timeout = duration.get();

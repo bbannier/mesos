@@ -95,7 +95,8 @@ Future<AuthenticationResult> JWTAuthenticatorProcess::authenticate(
         result.unauthorized = Unauthorized({
             "Bearer realm=\"" + realm_ + "\", "
             "error=\"invalid_token\", "
-            "error_description=\"Invalid JWT: " + jwt.error().message + "\""});
+            "error_description=\"Invalid JWT: "
+              + stringify(jwt.error()) + "\""});
         return result;
 
       case JWTError::Type::UNKNOWN:

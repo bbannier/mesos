@@ -659,17 +659,17 @@ TEST_P(HTTPTest, PathParse)
   parse = http::path::parse(pattern, "/foo/0304827484/chapters");
 
   EXPECT_ERROR(parse);
-  EXPECT_EQ("Expecting 'books' not 'foo'", parse.error());
+  EXPECT_EQ("Expecting 'books' not 'foo'", stringify(parse.error()));
 
   parse = http::path::parse(pattern, "/books/0304827484/bar");
 
   EXPECT_ERROR(parse);
-  EXPECT_EQ("Expecting 'chapters' not 'bar'", parse.error());
+  EXPECT_EQ("Expecting 'chapters' not 'bar'", stringify(parse.error()));
 
   parse = http::path::parse(pattern, "/books/0304827484/chapters/3/foo/bar");
 
   EXPECT_ERROR(parse);
-  EXPECT_EQ("Not expecting suffix 'foo/bar'", parse.error());
+  EXPECT_EQ("Not expecting suffix 'foo/bar'", stringify(parse.error()));
 }
 
 

@@ -665,7 +665,7 @@ Option<Future<T>> WeakFuture<T>::get() const
 struct Failure
 {
   explicit Failure(const std::string& _message) : message(_message) {}
-  explicit Failure(const Error& error) : message(error.message) {}
+  explicit Failure(const Error& error) : message(stringify(error)) {}
 
   const std::string message;
 };
@@ -1122,7 +1122,7 @@ Future<T>::Future(const Try<T>& t)
   if (t.isSome()){
     set(t.get());
   } else {
-    fail(t.error());
+    fail(stringify(t.error()));
   }
 }
 
@@ -1132,7 +1132,7 @@ Future<T>::Future(const Try<Future<T>>& t)
   : data(t.isSome() ? t->data : std::shared_ptr<Data>(new Data()))
 {
   if (!t.isSome()) {
-    fail(t.error());
+    fail(stringify(t.error()));
   }
 }
 

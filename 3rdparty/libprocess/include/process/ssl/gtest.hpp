@@ -175,7 +175,8 @@ protected:
     // Generate the authority key.
     private_key = process::network::openssl::generate_private_rsa_key();
     if (private_key.isError()) {
-      cleanup("Could not generate private key: " + private_key.error());
+      cleanup(
+          "Could not generate private key: " + stringify(private_key.error()));
     }
 
     // Figure out the hostname that libprocess is advertising.
@@ -184,7 +185,7 @@ protected:
     Try<std::string> hostname = net::getHostname(process::address().ip);
     if (hostname.isError()) {
       cleanup("Could not determine hostname of libprocess: " +
-              hostname.error());
+              stringify(hostname.error()));
     }
 
     // Generate an authorized certificate.
@@ -198,7 +199,8 @@ protected:
         net::IP(process::address().ip));
 
     if (certificate.isError()) {
-      cleanup("Could not generate certificate: " + certificate.error());
+      cleanup(
+          "Could not generate certificate: " + stringify(certificate.error()));
     }
 
     // Write the authority key to disk.
@@ -206,7 +208,9 @@ protected:
       process::network::openssl::write_key_file(private_key.get(), key_path());
 
     if (key_write.isError()) {
-      cleanup("Could not write private key to disk: " + key_write.error());
+      cleanup(
+          "Could not write private key to disk: " +
+          stringify(key_write.error()));
     }
 
     // Write the authorized certificate to disk.
@@ -217,13 +221,15 @@ protected:
 
     if (certificate_write.isError()) {
       cleanup("Could not write certificate to disk: " +
-              certificate_write.error());
+              stringify(certificate_write.error()));
     }
 
     // Generate a scrap key.
     scrap_key = process::network::openssl::generate_private_rsa_key();
     if (scrap_key.isError()) {
-      cleanup("Could not generate a scrap private key: " + scrap_key.error());
+      cleanup(
+          "Could not generate a scrap private key: " +
+          stringify(scrap_key.error()));
     }
 
     // Write the scrap key to disk.
@@ -232,7 +238,8 @@ protected:
         scrap_key_path());
 
     if (key_write.isError()) {
-      cleanup("Could not write scrap key to disk: " + key_write.error());
+      cleanup(
+          "Could not write scrap key to disk: " + stringify(key_write.error()));
     }
 
     // Generate a scrap certificate.
@@ -242,7 +249,7 @@ protected:
 
     if (scrap_certificate.isError()) {
       cleanup("Could not generate a scrap certificate: " +
-              scrap_certificate.error());
+              stringify(scrap_certificate.error()));
     }
 
     // Write the scrap certificate to disk.
@@ -252,7 +259,7 @@ protected:
 
     if (certificate_write.isError()) {
       cleanup("Could not write scrap certificate to disk: " +
-              certificate_write.error());
+              stringify(certificate_write.error()));
     }
 
     // Since we successfully set up all our state, we call cleanup

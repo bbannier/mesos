@@ -73,7 +73,7 @@ TEST(StateMachineTest, Transition)
 
   ASSERT_SOME(t);
   ASSERT_TRUE(t->isError());
-  EXPECT_EQ("Error", t->error());
+  EXPECT_EQ("Error", stringify(t->error()));
 
   error = state.transition<State::RUNNING, State::STOPPING>();
 

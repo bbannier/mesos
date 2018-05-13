@@ -292,7 +292,7 @@ Try<Path> getTemporaryDirectoryPath() {
   // TODO(bevers): Add an atexit-handler that cleans up the directory.
   Try<string> dir = os::mkdtemp(pathTemplate);
   if (dir.isError()) {
-    return Error(dir.error());
+    return dir.error();
   }
 
   temporaryDirectory = dir.get();
@@ -631,7 +631,8 @@ Try<MemoryProfiler::DiskArtifact> MemoryProfiler::DiskArtifact::create(
 {
   Try<Path> tmpdir = getTemporaryDirectoryPath();
   if (tmpdir.isError()) {
-    return Error("Could not determine target path: " + tmpdir.error());
+    return Error(
+        "Could not determine target path: " + stringify(tmpdir.error()));
   }
 
   const string path = path::join(tmpdir.get(), filename);
@@ -641,7 +642,7 @@ Try<MemoryProfiler::DiskArtifact> MemoryProfiler::DiskArtifact::create(
   if (result.isError()) {
     // The old file might still be fine on disk, but there's no good way to
     // verify this hence we assume that the error rendered it unusable.
-    return Error("Failed to create artifact: " + result.error());
+    return Error("Failed to create artifact: " + stringify(result.error()));
   }
 
   return MemoryProfiler::DiskArtifact(path, timestamp);
@@ -673,7 +674,8 @@ Future<http::Response> MemoryProfiler::start(
     Try<Duration> parsed = Duration::parse(durationParameter.get());
     if (parsed.isError()) {
       return http::BadRequest(
-          "Could not parse parameter 'duration': " + parsed.error() + ".\n");
+          "Could not parse parameter 'duration': " + stringify(parsed.error()) +
+          ".\n");
     }
     duration = parsed.get();
   }
@@ -738,7 +740,8 @@ Future<http::Response> MemoryProfiler::stop(
   Try<bool> active = jemalloc::profilingActive();
   if (active.isError()) {
     return http::BadRequest(
-        "Error interfacing with jemalloc: " + active.error() + ".\n");
+        "Error interfacing with jemalloc: " + stringify(active.error()) +
+        ".\n");
   }
 
   if (!currentRun.isSome() && active.get()) {
@@ -752,7 +755,7 @@ Future<http::Response> MemoryProfiler::stop(
   stopAndGenerateRawProfile();
 
   if (rawProfile.isError()) {
-    return http::BadRequest(rawProfile.error() + ".\n");
+    return http::BadRequest(stringify(rawProfile.error()) + ".\n");
   }
 
   Try<bool> stillActive = jemalloc::profilingActive();
@@ -793,7 +796,7 @@ Future<http::Response> MemoryProfiler::downloadRawProfile(
   // Verify that `id` has the correct version if it was explicitly passed.
   if (requestedId.isError()) {
     return http::BadRequest(
-        "Invalid parameter 'id': " + requestedId.error() + ".\n");
+        "Invalid parameter 'id': " + stringify(requestedId.error()) + ".\n");
   }
 
   if (currentRun.isSome() && !requestedId.isSome()) {
@@ -804,7 +807,7 @@ Future<http::Response> MemoryProfiler::downloadRawProfile(
 
   if (rawProfile.isError()) {
     return http::BadRequest(
-        "Cannot access raw profile: " + rawProfile.error() + ".\n");
+        "Cannot access raw profile: " + stringify(rawProfile.error()) + ".\n");
   }
 
   // Only requests for the latest available version are allowed.
@@ -827,7 +830,7 @@ Future<http::Response> MemoryProfiler::downloadSymbolizedProfile(
   // Verify that `id` has the correct version if it was explicitly passed.
   if (requestedId.isError()) {
     return http::BadRequest(
-        "Invalid parameter 'id': " + requestedId.error() + ".\n");
+        "Invalid parameter 'id': " + stringify(requestedId.error()) + ".\n");
   }
 
   if (currentRun.isSome() && !requestedId.isSome()) {
@@ -838,7 +841,7 @@ Future<http::Response> MemoryProfiler::downloadSymbolizedProfile(
 
   if (rawProfile.isError()) {
     return http::BadRequest(
-        "No source profile exists: " + rawProfile.error() + ".\n");
+        "No source profile exists: " + stringify(rawProfile.error()) + ".\n");
   }
 
   const string rawProfilePath = rawProfile->getPath();
@@ -868,7 +871,9 @@ Future<http::Response> MemoryProfiler::downloadSymbolizedProfile(
   if (symbolizedProfile.isSome()) {
     return symbolizedProfile->asHttp();
   } else {
-    const string message = "Cannot generate file: " + symbolizedProfile.error();
+    const string message =
+      "Cannot generate file: " + stringify(symbolizedProfile.error());
+
     LOG(WARNING) << message;
     return http::BadRequest(message + ".\n");
   }
@@ -884,7 +889,7 @@ Future<http::Response> MemoryProfiler::downloadGraphProfile(
   // Verify that `id` has the correct version if it was explicitly passed.
   if (requestedId.isError()) {
     return http::BadRequest(
-        "Invalid parameter 'id': " + requestedId.error() + ".\n");
+        "Invalid parameter 'id': " + stringify(requestedId.error()) + ".\n");
   }
 
   if (currentRun.isSome() && !requestedId.isSome()) {
@@ -895,7 +900,7 @@ Future<http::Response> MemoryProfiler::downloadGraphProfile(
 
   if (rawProfile.isError()) {
     return http::BadRequest(
-        "No source profile exists: " + rawProfile.error() + ".\n");
+        "No source profile exists: " + stringify(rawProfile.error()) + ".\n");
   }
 
   const string rawProfilePath = rawProfile->getPath();
@@ -924,7 +929,9 @@ Future<http::Response> MemoryProfiler::downloadGraphProfile(
   if (graphProfile.isSome()) {
     return graphProfile->asHttp();
   } else {
-    const string message = "Cannot generate file: " + graphProfile.error();
+    const string message =
+      "Cannot generate file: " + stringify(graphProfile.error());
+
     LOG(WARNING) << message;
     return http::BadRequest(message + ".\n");
   }
@@ -1013,7 +1020,8 @@ Future<http::Response> MemoryProfiler::state(
           "config.malloc_conf");
 
       if (builtinMallocConf.isError()) {
-        mallocConf.values["build_options"] = builtinMallocConf.error();
+        mallocConf.values["build_options"] =
+          stringify(builtinMallocConf.error());
       } else {
         mallocConf.values["build_options"] = builtinMallocConf.get();
       }
@@ -1032,7 +1040,8 @@ Future<http::Response> MemoryProfiler::state(
     Try<bool> profilingSupported = readJemallocSetting<bool>("config.prof");
 
     if (profilingSupported.isError()) {
-      jemallocState.values["profiling_enabled"] = profilingSupported.error();
+      jemallocState.values["profiling_enabled"] =
+        stringify(profilingSupported.error());
     } else {
       jemallocState.values["profiling_enabled"] = profilingSupported.get();
     }
@@ -1041,7 +1050,8 @@ Future<http::Response> MemoryProfiler::state(
     Try<bool> profilingActive = readJemallocSetting<bool>("prof.active");
 
     if (profilingActive.isError()) {
-      jemallocState.values["profiling_active"] = profilingActive.error();
+      jemallocState.values["profiling_active"] =
+        stringify(profilingActive.error());
     } else {
       jemallocState.values["profiling_active"] = profilingActive.get();
     }
@@ -1123,7 +1133,7 @@ void MemoryProfiler::stopAndGenerateRawProfile()
       });
 
   if (rawProfile.isError()) {
-    LOG(WARNING) << "Cannot dump profile: " + rawProfile.error();
+    LOG(WARNING) << "Cannot dump profile: " << rawProfile.error();
   }
 }
 

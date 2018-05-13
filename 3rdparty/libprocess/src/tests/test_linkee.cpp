@@ -118,7 +118,7 @@ int main(int argc, char** argv)
           reinterpret_cast<char*>(&on),
           sizeof(on)) < 0) {
     EXIT(EXIT_FAILURE)
-      << "Failed to setsockopt(SO_REUSEADDR): " << ErrnoError().message;
+      << "Failed to setsockopt(SO_REUSEADDR): " << ErrnoError();
   }
 
   // Bind to some random port.

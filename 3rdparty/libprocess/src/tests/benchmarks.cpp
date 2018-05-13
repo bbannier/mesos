@@ -129,19 +129,22 @@ private:
 
     Try<Bytes> messageSize = Bytes::parse(parameters["messageSize"].get());
     if (messageSize.isError()) {
-      return http::BadRequest("Invalid 'messageSize': " + messageSize.error());
+      return http::BadRequest(
+          "Invalid 'messageSize': " + stringify(messageSize.error()));
     }
     message = string(messageSize->bytes(), '1');
 
     Try<size_t> numify_ = numify<size_t>(parameters["requests"].get());
     if (numify_.isError()) {
-      return http::BadRequest("Invalid 'requests': " + numify_.error());
+      return http::BadRequest(
+          "Invalid 'requests': " + stringify(numify_.error()));
     }
     totalRequests = numify_.get();
 
     numify_ = numify<size_t>(parameters["concurrency"].get());
     if (numify_.isError()) {
-      return http::BadRequest("Invalid 'concurrency': " + numify_.error());
+      return http::BadRequest(
+          "Invalid 'concurrency': " + stringify(numify_.error()));
     }
     concurrency = numify_.get();
 

@@ -71,7 +71,7 @@ Try<std::shared_ptr<SocketImpl>> SocketImpl::create(
     network::socket(domain, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 
   if (s.isError()) {
-    return Error("Failed to create socket: " + s.error());
+    return Error("Failed to create socket: " + stringify(s.error()));
   }
 #else
   Try<int_fd> s = network::socket(domain, SOCK_STREAM, 0);

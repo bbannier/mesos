@@ -65,7 +65,7 @@ Future<size_t> read(int_fd fd, void* data, size_t size)
 
           if (!net::is_restartable_error(error.code) &&
               !net::is_retryable_error(error.code)) {
-            return Failure(error.message);
+            return Failure(error);
           }
 
           return None();
@@ -109,7 +109,7 @@ Future<size_t> write(int_fd fd, const void* data, size_t size)
 
           if (!net::is_restartable_error(error.code) &&
               !net::is_retryable_error(error.code)) {
-            return Failure(error.message);
+            return Failure(error);
           }
 
           return None();
@@ -142,7 +142,7 @@ Future<size_t> read(int_fd fd, void* data, size_t size)
   if (nonblock.isError()) {
     // The file descriptor is not valid (e.g., has been closed).
     return Failure("Failed to check if file descriptor was non-blocking: " +
-                   nonblock.error());
+                   stringify(nonblock.error()));
   } else if (!nonblock.get()) {
     // The file descriptor is not non-blocking.
     return Failure("Expected a non-blocking file descriptor");
@@ -162,7 +162,7 @@ Future<size_t> write(int_fd fd, const void* data, size_t size)
     // The file descriptor is not valid (e.g., has been closed).
     return Failure(
         "Failed to check if file descriptor was non-blocking: " +
-        nonblock.error());
+        stringify(nonblock.error()));
   } else if (!nonblock.get()) {
     // The file descriptor is not non-blocking.
     return Failure("Expected a non-blocking file descriptor");
@@ -234,7 +234,7 @@ Future<string> read(int_fd fd)
     os::close(fd);
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
-        cloexec.error());
+        stringify(cloexec.error()));
   }
 
   // Make the file descriptor non-blocking.
@@ -243,7 +243,7 @@ Future<string> read(int_fd fd)
     os::close(fd);
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
-        nonblock.error());
+        stringify(nonblock.error()));
   }
 
   // TODO(benh): Wrap up this data as a struct, use 'Owner'.
@@ -295,7 +295,7 @@ Future<Nothing> write(int_fd fd, const string& data)
     os::close(fd);
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
-        cloexec.error());
+        stringify(cloexec.error()));
   }
 
   // Make the file descriptor non-blocking.
@@ -304,7 +304,7 @@ Future<Nothing> write(int_fd fd, const string& data)
     os::close(fd);
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
-        nonblock.error());
+        stringify(nonblock.error()));
   }
 
   // We store `data.size()` so that we can just use `size` in the
@@ -349,7 +349,8 @@ Future<Nothing> redirect(
     Try<int_fd> open = os::open(os::DEV_NULL, O_WRONLY | O_CLOEXEC);
 
     if (open.isError()) {
-      return Failure("Failed to open /dev/null for writing: " + open.error());
+      return Failure(
+          "Failed to open /dev/null for writing: " + stringify(open.error()));
     }
 
     to = open.get();
@@ -379,14 +380,16 @@ Future<Nothing> redirect(
   if (cloexec.isError()) {
     os::close(from);
     os::close(to.get());
-    return Failure("Failed to set close-on-exec on 'from': " + cloexec.error());
+    return Failure(
+        "Failed to set close-on-exec on 'from': " + stringify(cloexec.error()));
   }
 
   cloexec = os::cloexec(to.get());
   if (cloexec.isError()) {
     os::close(from);
     os::close(to.get());
-    return Failure("Failed to set close-on-exec on 'to': " + cloexec.error());
+    return Failure(
+        "Failed to set close-on-exec on 'to': " + stringify(cloexec.error()));
   }
 
   // Make the file descriptors non-blocking (no-op if already set).
@@ -394,14 +397,16 @@ Future<Nothing> redirect(
   if (nonblock.isError()) {
     os::close(from);
     os::close(to.get());
-    return Failure("Failed to make 'from' non-blocking: " + nonblock.error());
+    return Failure(
+        "Failed to make 'from' non-blocking: " + stringify(nonblock.error()));
   }
 
   nonblock = os::nonblock(to.get());
   if (nonblock.isError()) {
     os::close(from);
     os::close(to.get());
-    return Failure("Failed to make 'to' non-blocking: " + nonblock.error());
+    return Failure(
+        "Failed to make 'to' non-blocking: " + stringify(nonblock.error()));
   }
 
   // NOTE: We wrap `os::close` in a lambda to disambiguate on Windows.

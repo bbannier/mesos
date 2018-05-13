@@ -186,7 +186,9 @@ inline int childMain(
 
     // If the callback failed, we should abort execution.
     if (callback.isError()) {
-      ABORT("Failed to execute Subprocess::ChildHook: " + callback.error());
+      ABORT(
+          "Failed to execute Subprocess::ChildHook: " +
+          stringify(callback.error()));
     }
   }
 
@@ -314,18 +316,17 @@ inline Try<pid_t> cloneChild(
       // If the hook callback fails, we shouldn't proceed with the
       // execution and hence the child process should be killed.
       if (parentSetup.isError()) {
-        LOG(WARNING)
-          << "Failed to execute Subprocess::ParentHook in parent for child '"
-          << pid << "': " << parentSetup.error();
+        const std::string message =
+          "Failed to execute Subprocess::ParentHook in parent for child '" +
+          stringify(pid) + "': " + stringify(parentSetup.error());
 
+        LOG(WARNING) << message;
         os::close(pipes[1]);
 
         // Ensure the child is killed.
         ::kill(pid, SIGKILL);
 
-        return Error(
-            "Failed to execute Subprocess::ParentHook in parent for child '" +
-            stringify(pid) + "': " + parentSetup.error());
+        return Error(message);
       }
     }
 

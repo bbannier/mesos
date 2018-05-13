@@ -105,7 +105,7 @@ private:
     if (load.isSome()) {
       return load->one;
     }
-    return Failure("Failed to get loadavg: " + load.error());
+    return Failure("Failed to get loadavg: " + stringify(load.error()));
   }
 
 
@@ -115,7 +115,7 @@ private:
     if (load.isSome()) {
       return load->five;
     }
-    return Failure("Failed to get loadavg: " + load.error());
+    return Failure("Failed to get loadavg: " + stringify(load.error()));
   }
 
 
@@ -125,7 +125,7 @@ private:
     if (load.isSome()) {
       return load->fifteen;
     }
-    return Failure("Failed to get loadavg: " + load.error());
+    return Failure("Failed to get loadavg: " + stringify(load.error()));
   }
 
 
@@ -135,7 +135,7 @@ private:
     if (cpus.isSome()) {
       return cpus.get();
     }
-    return Failure("Failed to get cpus: " + cpus.error());
+    return Failure("Failed to get cpus: " + stringify(cpus.error()));
   }
 
 
@@ -145,7 +145,7 @@ private:
     if (memory.isSome()) {
       return static_cast<double>(memory->total.bytes());
     }
-    return Failure("Failed to get memory: " + memory.error());
+    return Failure("Failed to get memory: " + stringify(memory.error()));
   }
 
 
@@ -155,7 +155,7 @@ private:
     if (memory.isSome()) {
       return static_cast<double>(memory->free.bytes());
     }
-    return Failure("Failed to get memory: " + memory.error());
+    return Failure("Failed to get memory: " + stringify(memory.error()));
   }
 
   // HTTP endpoints.

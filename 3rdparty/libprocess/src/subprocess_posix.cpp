@@ -76,7 +76,8 @@ Subprocess::IO Subprocess::PATH(const string& path)
       [path]() -> Try<InputFileDescriptors> {
         Try<int> open = os::open(path, O_RDONLY | O_CLOEXEC);
         if (open.isError()) {
-          return Error("Failed to open '" + path + "': " + open.error());
+          return Error(
+              "Failed to open '" + path + "': " + stringify(open.error()));
         }
 
         InputFileDescriptors fds;
@@ -90,7 +91,8 @@ Subprocess::IO Subprocess::PATH(const string& path)
             S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
         if (open.isError()) {
-          return Error("Failed to open '" + path + "': " + open.error());
+          return Error(
+              "Failed to open '" + path + "': " + stringify(open.error()));
         }
 
         OutputFileDescriptors fds;

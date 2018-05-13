@@ -1061,8 +1061,7 @@ TEST_F(ProcessRemoteLinkTest, RemoteUseStaleLink)
     if (::shutdown(linkfd.get(), SHUT_WR) != 0) {
       // These errors are expected as we are racing against the code
       // responsible for setting up the persistent socket.
-      ASSERT_TRUE(errno == EINPROGRESS || errno == ENOTCONN)
-        << ErrnoError().message;
+      ASSERT_TRUE(errno == EINPROGRESS || errno == ENOTCONN) << ErrnoError();
       continue;
     }
 
@@ -1118,8 +1117,7 @@ TEST_F(ProcessRemoteLinkTest, RemoteStaleLinkRelink)
     if (::shutdown(linkfd.get(), SHUT_WR) != 0) {
       // These errors are expected as we are racing against the code
       // responsible for setting up the persistent socket.
-      ASSERT_TRUE(errno == EINPROGRESS || errno == ENOTCONN)
-        << ErrnoError().message;
+      ASSERT_TRUE(errno == EINPROGRESS || errno == ENOTCONN) << ErrnoError();
       continue;
     }
 

@@ -483,7 +483,7 @@ Try<Time> Time::create(double seconds)
     // In production code, clock::advanced will always be zero!
     return Time(duration.get() + *clock::advanced);
   } else {
-    return Error("Argument too large for Time: " + duration.error());
+    return Error("Argument too large for Time: " + stringify(duration.error()));
   }
 }
 

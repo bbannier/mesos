@@ -760,7 +760,7 @@ static Future<MessageEvent*> parse(const Request& request)
   Try<string> decode = http::decode(request.url.path.substr(1, index));
 
   if (decode.isError()) {
-    return Failure("Failed to decode URL path: " + decode.error());
+    return Failure("Failed to decode URL path: " + stringify(decode.error()));
   }
 
   const UPID to(decode.get(), __address__);
@@ -1081,7 +1081,7 @@ bool initialize(
   Try<flags::Warnings> load = libprocess_flags->load("LIBPROCESS_");
 
   if (load.isError()) {
-    EXIT(EXIT_FAILURE) << libprocess_flags->usage(load.error());
+    EXIT(EXIT_FAILURE) << libprocess_flags->usage(stringify(load.error()));
   }
 
   // Log any flag warnings.
@@ -1655,8 +1655,7 @@ void SocketManager::link(
         // socket from the mapping of linkees and linkers.
         Try<Nothing, SocketError> shutdown = existing.shutdown();
         if (shutdown.isError()) {
-          VLOG(1) << "Failed to shutdown old link: "
-                  << shutdown.error().message;
+          VLOG(1) << "Failed to shutdown old link: " << shutdown.error();
         }
 
         connect = true;
@@ -2112,7 +2111,7 @@ Encoder* SocketManager::next(int_fd s)
                       << ", address " << (socket.address().isSome()
                                             ? stringify(socket.address().get())
                                             : "N/A")
-                      << ": " << shutdown.error().message;
+                      << ": " << shutdown.error();
           }
         }
       }
@@ -2208,7 +2207,7 @@ void SocketManager::close(int_fd s)
                    << ", address " << (socket.address().isSome()
                                          ? stringify(socket.address().get())
                                          : "N/A")
-                   << ": " << shutdown.error().message;
+                   << ": " << shutdown.error();
       }
     }
   }

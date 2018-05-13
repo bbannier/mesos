@@ -41,13 +41,13 @@ Try<JSON::Object> decode(const string& component)
   const Try<string> decoded = base64::decode_url_safe(component);
 
   if (decoded.isError()) {
-    return Error("Failed to base64url-decode: " + decoded.error());
+    return Error("Failed to base64url-decode: " + stringify(decoded.error()));
   }
 
   const Try<JSON::Object> json = JSON::parse<JSON::Object>(decoded.get());
 
   if (json.isError()) {
-    return Error("Failed to parse into JSON: " + json.error());
+    return Error("Failed to parse into JSON: " + stringify(json.error()));
   }
 
   return json;
@@ -59,7 +59,7 @@ Try<JWT::Header> parse_header(const string& component)
   Try<JSON::Object> header = decode(component);
 
   if (header.isError()) {
-    return Error("Failed to decode token header: " + header.error());
+    return Error("Failed to decode token header: " + stringify(header.error()));
   }
 
   // Validate JOSE header.
@@ -85,7 +85,7 @@ Try<JWT::Header> parse_header(const string& component)
   if (alg_json.isError()) {
     return Error(
         "Error when extracting 'alg' field from token JSON header: " +
-        alg_json.error());
+        stringify(alg_json.error()));
   }
 
   if (!alg_json->is<JSON::String>()) {
@@ -122,7 +122,8 @@ Try<JSON::Object> parse_payload(const string& component)
   Try<JSON::Object> payload = decode(component);
 
   if (payload.isError()) {
-    return Error("Failed to decode token payload: " + payload.error());
+    return Error(
+        "Failed to decode token payload: " + stringify(payload.error()));
   }
 
   // Validate standard claims.
@@ -132,7 +133,7 @@ Try<JSON::Object> parse_payload(const string& component)
   if (exp_json.isError()) {
     return Error(
         "Error when extracting 'exp' field from token JSON payload: " +
-        exp_json.error());
+        stringify(exp_json.error()));
   }
 
   if (exp_json.isSome()) {
@@ -170,7 +171,7 @@ Try<JWT, JWTError> JWT::parse(const std::string& token)
   Try<JWT::Header> header = parse_header(components[0]);
 
   if (header.isError()) {
-    return JWTError(header.error(), JWTError::Type::INVALID_TOKEN);
+    return JWTError(stringify((header.error())), JWTError::Type::INVALID_TOKEN);
   }
 
   if (header->alg != JWT::Alg::None) {
@@ -183,7 +184,7 @@ Try<JWT, JWTError> JWT::parse(const std::string& token)
   Try<JSON::Object> payload = parse_payload(components[1]);
 
   if (payload.isError()) {
-    return JWTError(payload.error(), JWTError::Type::INVALID_TOKEN);
+    return JWTError(stringify(payload.error()), JWTError::Type::INVALID_TOKEN);
   }
 
   if (!components[2].empty()) {
@@ -209,7 +210,7 @@ Try<JWT, JWTError> JWT::parse(const string& token, const string& secret)
   Try<JWT::Header> header = parse_header(components[0]);
 
   if (header.isError()) {
-    return JWTError(header.error(), JWTError::Type::INVALID_TOKEN);
+    return JWTError(stringify(header.error()), JWTError::Type::INVALID_TOKEN);
   }
 
   if (header->alg != JWT::Alg::HS256) {
@@ -222,14 +223,15 @@ Try<JWT, JWTError> JWT::parse(const string& token, const string& secret)
   Try<JSON::Object> payload = parse_payload(components[1]);
 
   if (payload.isError()) {
-    return JWTError(payload.error(), JWTError::Type::INVALID_TOKEN);
+    return JWTError(stringify(payload.error()), JWTError::Type::INVALID_TOKEN);
   }
 
   const Try<string> signature = base64::decode_url_safe(components[2]);
 
   if (signature.isError()) {
     return JWTError(
-        "Failed to base64url-decode token signature: " + signature.error(),
+        "Failed to base64url-decode token signature: " +
+          stringify(signature.error()),
         JWTError::Type::INVALID_TOKEN);
   }
 
@@ -241,7 +243,7 @@ Try<JWT, JWTError> JWT::parse(const string& token, const string& secret)
 
   if (hmac.isError()) {
     return JWTError(
-        "Failed to generate HMAC signature: " + hmac.error(),
+        "Failed to generate HMAC signature: " + stringify(hmac.error()),
         JWTError::Type::UNKNOWN);
   }
 
@@ -278,7 +280,7 @@ Try<JWT, JWTError> JWT::create(
 
   if (hmac.isError()) {
     return JWTError(
-        "Failed to generate HMAC signature: " + hmac.error(),
+        "Failed to generate HMAC signature: " + stringify(hmac.error()),
         JWTError::Type::UNKNOWN);
   }
 

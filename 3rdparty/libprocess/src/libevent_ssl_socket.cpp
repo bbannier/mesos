@@ -444,7 +444,7 @@ void LibeventSSLSocketImpl::event_callback(short events)
       SSL_free(ssl);
       bufferevent_free(bev);
       bev = nullptr;
-      current_connect_request->promise.fail(verify.error());
+      current_connect_request->promise.fail(stringify(verify.error()));
       return;
     }
 
@@ -829,7 +829,7 @@ Future<size_t> LibeventSSLSocketImpl::sendfile(
     os::close(owned_fd);
     return Failure(
         "Failed to set close-on-exec on duplicated file descriptor: " +
-        cloexec.error());
+        stringify(cloexec.error()));
   }
 
   // Make the file descriptor non-blocking.
@@ -838,7 +838,7 @@ Future<size_t> LibeventSSLSocketImpl::sendfile(
     os::close(owned_fd);
     return Failure(
         "Failed to make duplicated file descriptor non-blocking: " +
-        nonblock.error());
+        stringify(nonblock.error()));
   }
 #endif // __WINDOWS__
 
@@ -927,8 +927,8 @@ Try<Nothing> LibeventSSLSocketImpl::listen(int backlog)
 
           // Propagate the error through the listener's `accept_queue`.
           if (impl != nullptr) {
-            impl->accept_queue.put(
-                Failure("Failed to accept, cloexec: " + cloexec.error()));
+            impl->accept_queue.put(Failure(
+                "Failed to accept, cloexec: " + stringify(cloexec.error())));
           }
 
           os::close(socket);
@@ -1055,7 +1055,7 @@ void LibeventSSLSocketImpl::peek_callback(
     // instead of a `SOCKET` on Windows.
     Try<std::shared_ptr<SocketImpl>> impl = PollSocketImpl::create(int_fd(fd));
     if (impl.isError()) {
-      request->promise.fail(impl.error());
+      request->promise.fail(stringify(impl.error()));
     } else {
       request->promise.set(impl.get());
     }
@@ -1171,7 +1171,7 @@ void LibeventSSLSocketImpl::accept_SSL_callback(AcceptRequest* request)
 
           if (verify.isError()) {
             VLOG(1) << "Failed accept, verification error: " << verify.error();
-            request->promise.fail(verify.error());
+            request->promise.fail(stringify(verify.error()));
             SSL_free(ssl);
             bufferevent_free(bev);
             // TODO(jmlvanre): Clean up for readability. Consider RAII
