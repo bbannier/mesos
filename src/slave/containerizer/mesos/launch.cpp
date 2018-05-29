@@ -1122,6 +1122,8 @@ int MesosContainerizerLaunch::execute()
   // TODO(klueska): Once we move the majority of `process::subprocess()`
   // into stout, update the code below to use it.
   if (containerStatusFd.isSome()) {
+    fds->erase(containerStatusFd.get());
+
     pid_t pid = ::fork();
 
     if (pid == -1) {
