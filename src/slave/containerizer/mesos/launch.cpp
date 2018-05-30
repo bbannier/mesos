@@ -1123,7 +1123,7 @@ int MesosContainerizerLaunch::execute()
   // into stout, update the code below to use it.
   if (containerStatusFd.isSome()) {
     // FIXME(bbannier): add comment.
-    fds->erase(containerStatusFd.get());
+    // fds->erase(containerStatusFd.get());
 
     pid_t pid = ::fork();
 
