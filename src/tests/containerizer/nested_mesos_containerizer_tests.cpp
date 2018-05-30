@@ -76,6 +76,7 @@ using mesos::slave::ContainerTermination;
 using process::Future;
 using process::Owned;
 using process::Process;
+using process::Promise;
 using process::Queue;
 
 namespace http = process::http;
@@ -92,17 +93,17 @@ namespace tests {
 class Waiter : public Process<Waiter>
 {
 public:
-  Waiter() : ProcessBase("__waiter__") {}
-  Queue<Nothing> pings;
+  Waiter() : ProcessBase(process::ID::generate("waiter")) {}
+  Queue<Nothing> waited;
 
 private:
   void initialize() override
   {
     route(
-        "/ping",
+        "/waited",
         None(),
         [this](const http::Request& request) -> http::Response {
-          pings.put(Nothing());
+          waited.put(Nothing());
 
           return http::OK("");
         });
@@ -476,8 +477,17 @@ TEST_F(NestedMesosContainerizerTest,
   ContainerID containerId;
   containerId.set_value(id::UUID::random().toString());
 
-  CommandInfo command =
-    createCommandInfo("echo ${MESOS_SANDBOX} > PARENT_SANDBOX; sleep 1000");
+  Waiter* waiter = new Waiter();
+  process::spawn(waiter, true);
+  Future<Nothing> waited = waiter->waited.get();
+
+  CommandInfo command = createCommandInfo(
+      strings::format(
+          "echo ${MESOS_SANDBOX} > PARENT_SANDBOX; wget '%s/%s/waited';"
+          "sleep 1000",
+          stringify(waiter->self().address),
+          stringify(waiter->self().id))
+        .get());
 
   ExecutorInfo executor = createExecutorInfo("executor", command, "cpus:1");
 
@@ -495,6 +505,10 @@ TEST_F(NestedMesosContainerizerTest,
 
   AWAIT_ASSERT_EQ(Containerizer::LaunchResult::SUCCESS, launch);
 
+  // Wait for the parent container to start running its task
+  // before launching a debug container inside it.
+  AWAIT_READY(waited);
+
   // Launch a nested debug container that compares `MESOS_SANDBOX`
   // it sees with the one its parent sees.
   {
@@ -503,7 +517,6 @@ TEST_F(NestedMesosContainerizerTest,
     nestedContainerId.set_value(id::UUID::random().toString());
 
     CommandInfo nestedCommand = createCommandInfo(
-        "while [ ! -f PARENT_SANDBOX ]; do :; done;"
         "PARENT_SANDBOX=`cat PARENT_SANDBOX`;"
         "[ ${PARENT_SANDBOX} == ${MESOS_SANDBOX} ] && exit 0 || exit 1;");
 
@@ -568,9 +581,18 @@ TEST_F(NestedMesosContainerizerTest,
 
   const string filename = "nested_inherits_work_dir";
 
+  Waiter* waiter = new Waiter();
+  process::spawn(waiter, true);
+  Future<Nothing> waited = waiter->waited.get();
+
   ExecutorInfo executor = createExecutorInfo(
       "executor",
-      createCommandInfo("touch " + filename + "; sleep 1000"),
+      strings::format(
+          "wget '%s/%s/waited'; touch %s; sleep 1000",
+          stringify(waiter->self().address),
+          stringify(waiter->self().id),
+          filename)
+        .get(),
       "cpus:1");
 
   Try<string> directory = environment->mkdtemp();
@@ -591,6 +613,10 @@ TEST_F(NestedMesosContainerizerTest,
           containerId));
 
   AWAIT_ASSERT_EQ(Containerizer::LaunchResult::SUCCESS, launch);
+
+  // Wait for the parent container to start running its task
+  // before launching a debug container inside it.
+  AWAIT_READY(waited);
 
   Future<ContainerStatus> status = containerizer->status(containerId);
   AWAIT_READY(status);
@@ -657,10 +683,7 @@ TEST_F(NestedMesosContainerizerTest,
     Future<Containerizer::LaunchResult> launchNested = containerizer->launch(
         nestedContainerId,
         createContainerConfig(
-            createCommandInfo(
-                strings::format(
-                    "while [ ! -f %s ]; do :; done; ls %s", filename, filename)
-                  .get()),
+            createCommandInfo("ls " + filename),
             None(),
             ContainerClass::DEBUG),
         map<string, string>(),
@@ -989,9 +1012,9 @@ TEST_F(NestedMesosContainerizerTest,
   AWAIT_READY(offers);
   ASSERT_EQ(1u, offers->size());
 
-  Waiter *waiter = new Waiter();
+  Waiter* waiter = new Waiter();
   process::spawn(waiter, true);
-  Future<Nothing> ping = waiter->pings.get();
+  Future<Nothing> waited = waiter->waited.get();
 
   // Launch a command task within the `alpine` docker image and
   // synchronize its launch with the launch of a debug container below.
@@ -999,7 +1022,7 @@ TEST_F(NestedMesosContainerizerTest,
       offers->front().slave_id(),
       offers->front().resources(),
       strings::format(
-          "wget %s/%s/ping; sleep 1000",
+          "wget '%s/%s/waited'; sleep 1000",
           stringify(waiter->self().address),
           stringify(waiter->self().id))
         .get());
@@ -1021,11 +1044,13 @@ TEST_F(NestedMesosContainerizerTest,
   AWAIT_READY_FOR(statusRunning, Seconds(120));
   ASSERT_EQ(TASK_RUNNING, statusRunning->state());
 
+  // Wait for the parent container to start running its task
+  // before launching a debug container inside it.
+  AWAIT_READY(waited);
+
   ASSERT_TRUE(statusRunning->has_slave_id());
   ASSERT_TRUE(statusRunning->has_container_status());
   ASSERT_TRUE(statusRunning->container_status().has_container_id());
-
-  AWAIT_READY(ping);
 
   // Launch a nested debug container.
   ContainerID nestedContainerId;
@@ -1355,21 +1380,17 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentExit)
   ContainerID containerId;
   containerId.set_value(id::UUID::random().toString());
 
-  Try<std::array<int_fd, 2>> pipes_ = os::pipe();
-  ASSERT_SOME(pipes_);
+  // Create a remote the task can connect to. Since the process is not
+  // spawned this will block the task until we destroy the process
+  // which will cause a task failure.
+  Owned<Waiter> waiter(new Waiter());
 
-  const std::array<int_fd, 2>& pipes = pipes_.get();
-
-  // NOTE: We use a non-shell command here to use 'bash -c' to execute
-  // the 'read', which deals with the file descriptor, because of a bug
-  // in ubuntu dash. Multi-digit file descriptor is not supported in
-  // ubuntu dash, which executes the shell command.
-  CommandInfo command;
-  command.set_shell(false);
-  command.set_value("/bin/bash");
-  command.add_arguments("bash");
-  command.add_arguments("-c");
-  command.add_arguments("read key <&" + stringify(pipes[0]));
+  CommandInfo command = createCommandInfo(
+      strings::format(
+          "wget '%s/%s/waited'",
+          stringify(waiter->self().address),
+          stringify(waiter->self().id))
+        .get());
 
   ExecutorInfo executor = createExecutorInfo("executor", command, "cpus:1");
 
@@ -1381,8 +1402,6 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentExit)
       createContainerConfig(None(), executor, directory.get()),
       map<string, string>(),
       None());
-
-  close(pipes[0]); // We're never going to read.
 
   AWAIT_ASSERT_EQ(Containerizer::LaunchResult::SUCCESS, launch);
 
@@ -1404,7 +1423,8 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentExit)
   Future<Option<ContainerTermination>> nestedWait = containerizer->wait(
       nestedContainerId);
 
-  close(pipes[1]); // Force the 'read key' to exit!
+  // Reset the remote process which causes the HTTP GET in the task to fail.
+  waiter.reset();
 
   AWAIT_READY(wait);
   ASSERT_SOME(wait.get());
@@ -1449,23 +1469,16 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentSigterm)
   ContainerID containerId;
   containerId.set_value(id::UUID::random().toString());
 
-  // Use a pipe to synchronize with the top-level container.
-  Try<std::array<int_fd, 2>> pipes_ = os::pipe();
-  ASSERT_SOME(pipes_);
+  Waiter* waiter = new Waiter();
+  process::spawn(waiter, true);
+  Future<Nothing> waited = waiter->waited.get();
 
-  const std::array<int_fd, 2>& pipes = pipes_.get();
-
-  // NOTE: We use a non-shell command here to use 'bash -c' to execute
-  // the 'echo', which deals with the file descriptor, because of a bug
-  // in ubuntu dash. Multi-digit file descriptor is not supported in
-  // ubuntu dash, which executes the shell command.
-  CommandInfo command;
-  command.set_shell(false);
-  command.set_value("/bin/bash");
-  command.add_arguments("bash");
-  command.add_arguments("-c");
-  command.add_arguments(
-      "echo running >&" + stringify(pipes[1]) + ";" + "sleep 1000");
+  CommandInfo command = createCommandInfo(
+      strings::format(
+          "wget '%s/%s/waited'; sleep 1000",
+          stringify(waiter->self().address),
+          stringify(waiter->self().id))
+        .get());
 
   ExecutorInfo executor = createExecutorInfo("executor", command, "cpus:1");
 
@@ -1479,8 +1492,6 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentSigterm)
       None());
 
   AWAIT_ASSERT_EQ(Containerizer::LaunchResult::SUCCESS, launch);
-
-  close(pipes[1]);
 
   // Now launch nested container.
   ContainerID nestedContainerId;
@@ -1506,8 +1517,7 @@ TEST_F(NestedMesosContainerizerTest, ROOT_CGROUPS_ParentSigterm)
 
   // Wait for the parent container to start running its executor
   // process before sending it a signal.
-  AWAIT_READY(process::io::poll(pipes[0], process::io::READ));
-  close(pipes[0]);
+  AWAIT_READY(waited);
 
   ASSERT_EQ(0, os::kill(status->executor_pid(), SIGTERM));
 
