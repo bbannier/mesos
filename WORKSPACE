@@ -1,24 +1,21 @@
 new_http_archive(
     name = "boost",
-    urls = ["file:3rdparty/boost-1.53.0.tar.gz"],
-    strip_prefix = "boost-1.53.0",
-    build_file_content =
-"""
+    urls = ["file:3rdparty/boost-1.65.0.tar.gz"],
+    strip_prefix = "boost-1.65.0",
+    build_file_content = """
 cc_library(
-    name = "headers",
+    name = "boost",
     hdrs = glob(["boost/**"]),
     includes = ["."],
     visibility = ["//visibility:public"],
-)
-"""
+)"""
 )
 
 new_http_archive(
     name = "gtest",
     urls = ["file:3rdparty/googletest-release-1.8.0.tar.gz"],
     strip_prefix = "googletest-release-1.8.0",
-    build_file_content =
-"""
+    build_file_content = """
 genrule(
     name = "gtest_genrule",
     srcs = glob(["*", "**/*"]),
@@ -33,16 +30,14 @@ cc_library(
     includes = ["googletest/include"],
     strip_include_prefix = "googletest/include",
     visibility = ["//visibility:public"],
-)
-""",
+)"""
 )
 
 new_http_archive(
     name = "gmock",
     urls = ["file:3rdparty/googletest-release-1.8.0.tar.gz"],
     strip_prefix = "googletest-release-1.8.0",
-    build_file_content =
-"""
+    build_file_content = """
 genrule(
     name = "gmock_genrule",
     srcs = glob(["*", "**/*"]),
@@ -57,8 +52,7 @@ cc_library(
     includes = ["googlemock/include"],
     strip_include_prefix = "googlemock/include",
     visibility = ["//visibility:public"],
-)
-""",
+)"""
 )
 
 http_archive(
@@ -82,13 +76,43 @@ new_http_archive(
     name = "picojson",
     urls = ["https://github.com/kazuho/picojson/archive/34b04e71bbd2ee6349f853ad83628a07ab2498f3.zip"],
     strip_prefix = "picojson-34b04e71bbd2ee6349f853ad83628a07ab2498f3",
-    build_file_content =
-"""
+    build_file_content = """
 cc_library(
-  name = "headers",
+  name = "picojson",
   hdrs = ["picojson.h"],
   includes = ["."],
   visibility = ["//visibility:public"],
+)"""
 )
-"""
+
+http_archive(
+    name = "protobuf",
+    urls = ["https://github.com/google/protobuf/archive/143851ed257b7c24e945396cb4acc0da697dff65.zip"],
+    strip_prefix = "protobuf-143851ed257b7c24e945396cb4acc0da697dff65",
+)
+
+new_local_repository(
+    name = "apr",
+    path = "/",
+    build_file_content = """
+cc_library(
+    name = "apr",
+    hdrs = glob(["usr/include/apr-1/*.h"]),
+    includes = ["usr/include/apr-1"],
+    srcs = ["usr/lib64/libapr-1.so"],
+    visibility = ["//visibility:public"],
+)"""
+)
+
+new_local_repository(
+    name = "svn",
+    path = "/",
+    build_file_content = """
+cc_library(
+    name = "svn",
+    hdrs = glob(["usr/include/subversion-1/*.h"]),
+    srcs = glob(["usr/lib64/libsvn*.so"]),
+    includes = ["usr/include/subversion-1"],
+    visibility = ["//visibility:public"],
+)"""
 )
