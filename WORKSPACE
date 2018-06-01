@@ -4,7 +4,7 @@ new_http_archive(
     strip_prefix = "boost-1.65.0",
     build_file_content = """
 cc_library(
-    name = "boost",
+    name = "all",
     hdrs = glob(["boost/**"]),
     includes = ["."],
     visibility = ["//visibility:public"],
@@ -24,7 +24,7 @@ genrule(
 )
 
 cc_library(
-    name = "gtest",
+    name = "all",
     srcs = ["libgtest.a"],
     hdrs = glob(["googletest/include/**/*.h*"]),
     includes = ["googletest/include"],
@@ -46,7 +46,7 @@ genrule(
 )
 
 cc_library(
-    name = "gmock",
+    name = "all",
     srcs = ["libgmock.a"],
     hdrs = glob(["googlemock/include/gmock/**/*.h*"]),
     includes = ["googlemock/include"],
@@ -94,26 +94,69 @@ http_archive(
 
 new_local_repository(
     name = "apr",
-    path = "/",
+    path = "/usr",
     build_file_content = """
 cc_library(
-    name = "apr",
-    hdrs = glob(["usr/include/apr-1/*.h"]),
-    includes = ["usr/include/apr-1"],
-    srcs = ["usr/lib64/libapr-1.so"],
+    name = "all",
+    hdrs = glob(["include/apr-1/*.h"]),
+    includes = ["include/apr-1"],
+    srcs = ["lib64/libapr-1.so"],
     visibility = ["//visibility:public"],
 )"""
 )
 
 new_local_repository(
     name = "svn",
-    path = "/",
+    path = "/usr",
     build_file_content = """
 cc_library(
-    name = "svn",
-    hdrs = glob(["usr/include/subversion-1/*.h"]),
-    srcs = glob(["usr/lib64/libsvn*.so"]),
-    includes = ["usr/include/subversion-1"],
+    name = "all",
+    hdrs = glob(["include/subversion-1/*.h"]),
+    srcs = glob(["lib64/libsvn*.so"]),
+    includes = ["include/subversion-1"],
+    visibility = ["//visibility:public"],
+)"""
+)
+
+new_local_repository(
+    name = "openssl",
+    path = "/usr",
+    build_file_content = """
+cc_library(
+    name = "openssl",
+    hdrs = glob(["include/openssl/*.h"]),
+    srcs = ["lib64/libssl.so", "lib64/libcrypto.so"],
+    includes = ["include/openssl"],
+    visibility = ["//visibility:public"],
+)"""
+)
+
+new_local_repository(
+    name = "event",
+    path = "/usr",
+    build_file_content = """
+cc_library(
+    name = "all",
+    srcs = [
+      "lib64/libevent.so",
+      "lib64/libevent_pthreads.so",
+      "lib64/libevent_openssl.so"],
+    linkopts = ["-lz"],
+    visibility = ["//visibility:public"],
+)"""
+)
+
+
+new_http_archive(
+    name = "http_parser",
+    urls = ["https://github.com/nodejs/http-parser/archive/5b76466c6b9063e2c5982423962a16f7319c81f8.zip"],
+    strip_prefix = "http-parser-5b76466c6b9063e2c5982423962a16f7319c81f8",
+    build_file_content = """
+cc_library(
+    name = "http_parser",
+    srcs = ["http_parser.c", "http_parser.h"],
+    hdrs = ["http_parser.h"],
+    includes = ["."],
     visibility = ["//visibility:public"],
 )"""
 )
