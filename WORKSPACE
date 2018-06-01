@@ -82,11 +82,12 @@ cc_library(
   hdrs = ["picojson.h"],
   includes = ["."],
   visibility = ["//visibility:public"],
+  defines = ["PICOJSON_USE_INT64", "__STDC_FORMAT_MACROS"]
 )"""
 )
 
 http_archive(
-    name = "protobuf",
+    name = "com_google_protobuf",
     urls = ["https://github.com/google/protobuf/archive/143851ed257b7c24e945396cb4acc0da697dff65.zip"],
     strip_prefix = "protobuf-143851ed257b7c24e945396cb4acc0da697dff65",
 )
