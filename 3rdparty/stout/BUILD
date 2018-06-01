@@ -1,3 +1,7 @@
+load('@glog//:bazel/glog.bzl', 'glog_library')
+
+glog_library(with_gflags=0)
+
 cc_library(
     name = "stout",
     hdrs = glob(["include/stout/**/*.hpp"]),
@@ -13,6 +17,7 @@ cc_test(
         "@gmock//:gmock",
         "@glog//:glog",
         "@boost//:headers",
+        "@picojson//:headers",
     ],
     srcs = glob(["tests/**/*.cpp"])
 )

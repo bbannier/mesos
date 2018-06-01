@@ -61,39 +61,34 @@ cc_library(
 """,
 )
 
-new_http_archive(
+http_archive(
     name = "glog",
-    urls = ["file:3rdparty/glog-0.3.3_patched.tar.gz"],
-    strip_prefix = "glog-0.3.3",
-    build_file_content =
-"""
-genrule(
-    name = "glog_genrule",
-    srcs = glob(["*", "**/*"]),
-    outs = [
-      "libglog.a",
-      "src/glog/logging.h",
-      "src/glog/raw_logging.h",
-      "src/glog/stl_logging.h",
-      "src/glog/vlog_is_on.h",
-    ],
-    tools = ["configure"],
-    cmd = "$(location :configure) GTEST_CONFIG=no" +
-      "&& make install" +
-      "&& cp -v .libs/libglog.a $(location libglog.a)" +
-      "&& cp -v src/glog/logging.h $(location src/glog/logging.h)" +
-      "&& cp -v src/glog/raw_logging.h $(location src/glog/raw_logging.h)" +
-      "&& cp -v src/glog/stl_logging.h $(location src/glog/stl_logging.h)" +
-      "&& cp -v src/glog/vlog_is_on.h $(location src/glog/vlog_is_on.h)",
+    url = "https://github.com/google/glog/archive/abce78806c8a93d99cf63a5a44ff09873f46b56f.zip",
+    strip_prefix = "glog-abce78806c8a93d99cf63a5a44ff09873f46b56f",
 )
 
+# Needs to be declared for glog.
+http_archive(
+    name = "com_github_gflags_gflags",
+    sha256 = "6e16c8bc91b1310a44f3965e616383dbda48f83e8c1eaa2370a215057b00cabe",
+    strip_prefix = "gflags-77592648e3f3be87d6c7123eb81cbad75f9aef5a",
+    urls = [
+        "https://mirror.bazel.build/github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
+        "https://github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
+    ],
+)
+
+new_http_archive(
+    name = "picojson",
+    urls = ["https://github.com/kazuho/picojson/archive/34b04e71bbd2ee6349f853ad83628a07ab2498f3.zip"],
+    strip_prefix = "picojson-34b04e71bbd2ee6349f853ad83628a07ab2498f3",
+    build_file_content =
+"""
 cc_library(
-    name = "glog",
-    srcs = ["libglog.a"],
-    hdrs = ["src/glog/logging.h"],
-    includes = ["src/glog"],
-    strip_include_prefix = "src",
-    visibility = ["//visibility:public"],
+  name = "headers",
+  hdrs = ["picojson.h"],
+  includes = ["."],
+  visibility = ["//visibility:public"],
 )
 """
 )
