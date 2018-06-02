@@ -24,7 +24,7 @@ cc_library(
 )
 
 cc_test(
-    name = "tests",
+    name = "process_tests",
     shard_count=10,
     deps = [
         ":process",
@@ -32,11 +32,14 @@ cc_test(
         "@gtest//:gtest",
         "@com_google_protobuf//:protobuf",
     ],
+    defines = [
+        'BUILD_DIR=\\".\\"',
+    ],
     includes = ["src"],
+
     # srcs = glob([
-    #     "src/tests/main.cpp",
-    #     "src/tests/encoder_tests.cpp",
-    #     "src/tests/decoder_tests.cpp",
+    #   "src/tests/main.cpp",
+    #   "src/tests/socket_tests.cpp",
     # ]),
 
     # srcs = glob(
@@ -48,6 +51,7 @@ cc_test(
     #         "src/tests/grprc_tests.cpp", # FIXME(bbannier)
     #         "src/tests/benchmarks.cpp",
     # ]),
+
     srcs = [
       "src/tests/after_tests.cpp",
       "src/tests/collect_tests.cpp",
@@ -72,7 +76,7 @@ cc_test(
       "src/tests/rwlock_tests.cpp",
       "src/tests/sequence_tests.cpp",
       "src/tests/shared_tests.cpp",
-      # "src/tests/socket_tests.cpp", # FIXME(bbannier)
+      "src/tests/socket_tests.cpp",
       # "src/tests/ssl_tests.cpp", # FIXME(bbannier)
       "src/tests/state_machine_tests.cpp",
       "src/tests/statistics_tests.cpp",
@@ -81,6 +85,7 @@ cc_test(
       "src/tests/time_tests.cpp",
       "src/tests/timeseries_tests.cpp",
     ]
+
 )
 
 cc_binary(
@@ -142,4 +147,12 @@ cc_test(
         "@gtest//:gtest",
     ],
     testonly = 1,
+)
+
+test_suite(
+    name = "tests",
+    tests = [
+        ":process_tests",
+        ":ssl_client",
+    ],
 )
