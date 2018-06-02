@@ -32,6 +32,10 @@ cc_test(
         "@gtest//:gtest",
         "@com_google_protobuf//:protobuf",
     ],
+    data = [
+        ":ssl_client",
+        ":test-linkee",
+    ],
     defines = [
         'BUILD_DIR=\\".\\"',
     ],
@@ -60,7 +64,7 @@ cc_test(
       "src/tests/encoder_tests.cpp",
       "src/tests/future_tests.cpp",
       # "src/tests/grpc_tests.cpp", # FIXME(bbannier)
-      # "src/tests/http_tests.cpp", # FIXME(bbannier)
+      "src/tests/http_tests.cpp",
       "src/tests/io_tests.cpp",
       "src/tests/jwt_tests.cpp",
       "src/tests/limiter_tests.cpp",
@@ -69,7 +73,7 @@ cc_test(
       "src/tests/metrics_tests.cpp",
       "src/tests/mutex_tests.cpp",
       "src/tests/owned_tests.cpp",
-      # "src/tests/process_tests.cpp", # FIXME(bbannier)
+      "src/tests/process_tests.cpp",
       "src/tests/profiler_tests.cpp",
       "src/tests/queue_tests.cpp",
       "src/tests/reap_tests.cpp",
@@ -117,13 +121,11 @@ cc_library(
 )
 
 cc_binary(
-    name = "test_linkee",
+    name = "test-linkee",
     srcs = ["src/tests/test_linkee.cpp"],
     includes = ["src"],
     deps = [
         ":process",
-        # "@gmock//:gmock",
-        # "@gtest//:gtest",
     ],
     testonly = 1,
 )
@@ -151,8 +153,4 @@ cc_test(
 
 test_suite(
     name = "tests",
-    tests = [
-        ":process_tests",
-        ":ssl_client",
-    ],
 )
