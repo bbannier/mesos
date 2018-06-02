@@ -9,8 +9,6 @@ cc_library(
             "src/libev.cpp",
             "src/libev_poll.cpp",
             "src/subprocess_windows.cpp",
-            "src/test-master.cpp",
-            "src/test-slave.cpp",
             "src/tests/**",
             ]
     ),
@@ -22,7 +20,7 @@ cc_library(
         "@http_parser//:http_parser",
         "@openssl//:openssl",
     ],
-    defines = ["USE_SSL_SOCKET=1"]
+    defines = ["USE_SSL_SOCKET=1"],
 )
 
 cc_test(
@@ -45,8 +43,6 @@ cc_test(
     #     [
     #       "src/tests/*.*pp",
     #       "src/*.hpp",
-    #       # "src/test-master.cpp", # FIXME(bbannier)
-    #       # "src/test-slave.cpp", # FIXME(bbannier)
     #     ],
     #     exclude = [
     #         "src/tests/grprc_tests.cpp", # FIXME(bbannier)
@@ -77,14 +73,11 @@ cc_test(
       "src/tests/sequence_tests.cpp",
       "src/tests/shared_tests.cpp",
       # "src/tests/socket_tests.cpp", # FIXME(bbannier)
-      # "src/tests/ssl_client.cpp", FIXME(bbannier)
       # "src/tests/ssl_tests.cpp", # FIXME(bbannier)
       "src/tests/state_machine_tests.cpp",
       "src/tests/statistics_tests.cpp",
       "src/tests/subprocess_tests.cpp",
       "src/tests/system_tests.cpp",
-      # "src/tests/test_echo.cpp", # FIXME(bbannier)
-      # "src/tests/test_linkee.cpp", # FIXME(bbannier)
       "src/tests/time_tests.cpp",
       "src/tests/timeseries_tests.cpp",
     ]
@@ -99,17 +92,54 @@ cc_binary(
         "@gmock//:gmock",
         "@gtest//:gtest",
     ],
+    testonly = 1,
 )
 proto_library(
-      name = "benchmarks",
-      srcs = ["src/tests/benchmarks.proto"],
+    name = "benchmarks",
+    srcs = ["src/tests/benchmarks.proto"],
+    testonly = 1,
 )
 cc_proto_library(
-      name = "cc_benchmarks",
-      deps = [":benchmarks"],
+    name = "cc_benchmarks",
+    deps = [":benchmarks"],
+    testonly = 1,
 )
 cc_library(
-      name = "cc_benchmarks_",
-      deps = [":cc_benchmarks"],
-      includes = ["src/tests"],
+    name = "cc_benchmarks_",
+    deps = [":cc_benchmarks"],
+    includes = ["src/tests"],
+    testonly = 1,
+)
+
+cc_binary(
+    name = "test_linkee",
+    srcs = ["src/tests/test_linkee.cpp"],
+    includes = ["src"],
+    deps = [
+        ":process",
+        # "@gmock//:gmock",
+        # "@gtest//:gtest",
+    ],
+    testonly = 1,
+)
+
+cc_binary(
+    name = "test_echo",
+    srcs = ["src/tests/test_echo.cpp"],
+    deps = [
+        ":process",
+    ],
+    testonly = 1,
+)
+
+cc_test(
+    name = "ssl_client",
+    srcs = ["src/tests/ssl_client.cpp"],
+    includes = ["src"],
+    deps = [
+        ":process",
+        "@gmock//:gmock",
+        "@gtest//:gtest",
+    ],
+    testonly = 1,
 )
