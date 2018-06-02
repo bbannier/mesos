@@ -4,7 +4,7 @@ new_http_archive(
     strip_prefix = "boost-1.65.0",
     build_file_content = """
 cc_library(
-    name = "all",
+    name = "boost",
     hdrs = glob(["boost/**"]),
     includes = ["."],
     visibility = ["//visibility:public"],
@@ -24,7 +24,7 @@ genrule(
 )
 
 cc_library(
-    name = "all",
+    name = "gtest",
     srcs = ["libgtest.a"],
     hdrs = glob(["googletest/include/**/*.h*"]),
     includes = ["googletest/include"],
@@ -46,7 +46,7 @@ genrule(
 )
 
 cc_library(
-    name = "all",
+    name = "gmock",
     srcs = ["libgmock.a"],
     hdrs = glob(["googlemock/include/gmock/**/*.h*"]),
     includes = ["googlemock/include"],
@@ -97,7 +97,7 @@ new_local_repository(
     path = "/usr",
     build_file_content = """
 cc_library(
-    name = "all",
+    name = "apr",
     hdrs = glob(["include/apr-1/*.h"]),
     includes = ["include/apr-1"],
     srcs = ["lib64/libapr-1.so"],
@@ -110,7 +110,7 @@ new_local_repository(
     path = "/usr",
     build_file_content = """
 cc_library(
-    name = "all",
+    name = "svn",
     hdrs = glob(["include/subversion-1/*.h"]),
     srcs = glob(["lib64/libsvn*.so"]),
     includes = ["include/subversion-1"],
@@ -136,7 +136,7 @@ new_local_repository(
     path = "/usr",
     build_file_content = """
 cc_library(
-    name = "all",
+    name = "event",
     srcs = [
       "lib64/libevent.so",
       "lib64/libevent_pthreads.so",

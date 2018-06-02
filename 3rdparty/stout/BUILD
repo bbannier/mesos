@@ -3,13 +3,19 @@ load('@glog//:bazel/glog.bzl', 'glog_library')
 glog_library(with_gflags=0)
 
 cc_library(
-    name = "all",
+    name = "stout",
     hdrs = glob(["include/stout/**/*.hpp"]),
     includes = glob(["include/stout"]),
     strip_include_prefix = "include",
     deps = [
         "@picojson//:picojson",
+        "@glog//:glog",
+        "@boost//:boost",
+        "@apr//:apr",
+        "@svn//:svn",
+        "@com_google_protobuf//:protobuf",
     ],
+    copts = ["-Wno-unused-local-typedefs"],
     linkopts = ["-lrt", "-ldl"],
     visibility = ["//visibility:public"],
 )
@@ -17,15 +23,10 @@ cc_library(
 cc_test(
     name = "tests",
     deps = [
-        ":all",
+        ":stout",
         ":cc_protobuf_tests_",
-        "@gtest//:all",
-        "@gmock//:all",
-        "@glog//:glog",
-        "@boost//:all",
-        "@apr//:all",
-        "@svn//:all",
-        "@com_google_protobuf//:protobuf",
+        "@gtest//:gtest",
+        "@gmock//:gmock",
     ],
     srcs = glob(["tests/**/*.cpp"]),
 )
