@@ -30,7 +30,6 @@ cc_test(
         ":process",
         "@gmock//:gmock",
         "@gtest//:gtest",
-        "@com_google_protobuf//:protobuf",
     ],
     data = [
         ":ssl_client",
@@ -41,55 +40,18 @@ cc_test(
     ],
     includes = ["src"],
 
-    # srcs = glob([
-    #   "src/tests/main.cpp",
-    #   "src/tests/socket_tests.cpp",
-    # ]),
-
-    # srcs = glob(
-    #     [
-    #       "src/tests/*.*pp",
-    #       "src/*.hpp",
-    #     ],
-    #     exclude = [
-    #         "src/tests/grprc_tests.cpp", # FIXME(bbannier)
-    #         "src/tests/benchmarks.cpp",
-    # ]),
-
-    srcs = [
-      "src/tests/after_tests.cpp",
-      "src/tests/collect_tests.cpp",
-      "src/tests/count_down_latch_tests.cpp",
-      "src/tests/decoder_tests.cpp",
-      "src/tests/encoder_tests.cpp",
-      "src/tests/future_tests.cpp",
-      # "src/tests/grpc_tests.cpp", # FIXME(bbannier)
-      "src/tests/http_tests.cpp",
-      "src/tests/io_tests.cpp",
-      "src/tests/jwt_tests.cpp",
-      "src/tests/limiter_tests.cpp",
-      "src/tests/loop_tests.cpp",
-      "src/tests/main.cpp",
-      "src/tests/metrics_tests.cpp",
-      "src/tests/mutex_tests.cpp",
-      "src/tests/owned_tests.cpp",
-      "src/tests/process_tests.cpp",
-      "src/tests/profiler_tests.cpp",
-      "src/tests/queue_tests.cpp",
-      "src/tests/reap_tests.cpp",
-      "src/tests/rwlock_tests.cpp",
-      "src/tests/sequence_tests.cpp",
-      "src/tests/shared_tests.cpp",
-      "src/tests/socket_tests.cpp",
-      # "src/tests/ssl_tests.cpp", # FIXME(bbannier)
-      "src/tests/state_machine_tests.cpp",
-      "src/tests/statistics_tests.cpp",
-      "src/tests/subprocess_tests.cpp",
-      "src/tests/system_tests.cpp",
-      "src/tests/time_tests.cpp",
-      "src/tests/timeseries_tests.cpp",
-    ]
-
+    srcs = glob(
+        [
+          "src/tests/*.*pp",
+          "src/*.hpp",
+        ],
+        exclude = [
+            "src/tests/grpc_tests.cpp", # FIXME(bbannier)
+            "src/tests/benchmarks.cpp",
+            "src/tests/ssl_client.cpp",
+            "src/tests/test_linkee.cpp",
+            "src/tests/test_echo.cpp",
+    ]),
 )
 
 cc_binary(
