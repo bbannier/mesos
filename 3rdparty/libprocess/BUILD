@@ -10,11 +10,7 @@ cc_library(
             "src/libev_poll.cpp",
             "src/subprocess_windows.cpp",
             "src/tests/**",
-
-            # TODO(bbannier): These files should be removed.
-            "src/test-master.cpp",
-            "src/test-slave.cpp",
-            ]
+        ]
     ),
     deps = [
         "//3rdparty/stout",
