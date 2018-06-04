@@ -10,6 +10,10 @@ cc_library(
             "src/libev_poll.cpp",
             "src/subprocess_windows.cpp",
             "src/tests/**",
+
+            # TODO(bbannier): These files should be removed.
+            "src/test-master.cpp",
+            "src/test-slave.cpp",
             ]
     ),
     deps = [
@@ -24,15 +28,15 @@ cc_library(
 )
 
 cc_test(
-    name = "process_tests",
-    shard_count=10,
+    name = "tests",
+    shard_count = 10,
     deps = [
         ":process",
         "@gmock//:gmock",
         "@gtest//:gtest",
     ],
     data = [
-        ":ssl_client",
+        ":ssl-client",
         ":test-linkee",
     ],
     defines = [
@@ -101,8 +105,8 @@ cc_binary(
     testonly = 1,
 )
 
-cc_test(
-    name = "ssl_client",
+cc_binary(
+    name = "ssl-client",
     srcs = ["src/tests/ssl_client.cpp"],
     includes = ["src"],
     deps = [
@@ -111,8 +115,4 @@ cc_test(
         "@gtest//:gtest",
     ],
     testonly = 1,
-)
-
-test_suite(
-    name = "tests",
 )
