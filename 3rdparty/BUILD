@@ -1,7 +1,7 @@
 test_suite(
-        name = "tests",
+        name = "test",
         tests = [
-                "//3rdparty/stout:tests",
-                "//3rdparty/libprocess:tests",
+                "//3rdparty/stout:test",
+                "//3rdparty/libprocess:test",
         ],
 )

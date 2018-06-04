@@ -21,7 +21,7 @@ cc_library(
 )
 
 cc_test(
-    name = "tests",
+    name = "test",
     deps = [
         ":stout",
         ":cc_protobuf_tests_",

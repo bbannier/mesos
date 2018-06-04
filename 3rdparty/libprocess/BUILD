@@ -24,7 +24,7 @@ cc_library(
 )
 
 cc_test(
-    name = "tests",
+    name = "test",
     shard_count = 10,
     deps = [
         ":process",
