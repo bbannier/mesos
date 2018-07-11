@@ -248,7 +248,6 @@ If all goes well, you should see something like the following in the
     | N/A   34C    P0    39W / 150W |     34MiB /  7679MiB |      0%      Default |
     +-------------------------------+----------------------+----------------------+
 
-<a name="external-dependencies"></a>
 ## External Dependencies
 
 Any host running a Mesos agent with Nvidia GPU support **MUST** have a

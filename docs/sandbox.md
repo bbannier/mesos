@@ -22,7 +22,7 @@ The sandbox holds:
 executors and tasks should never create files outside of the sandbox.  However,
 some containerizers do not enforce this sandboxing.
 
-## <a name="where-is-it"></a>Where is the sandbox?
+## Where is the sandbox?
 
 The sandbox is located within the agent's working directory (which is specified
 via the `--work_dir` flag).  To find a particular executor's sandbox, you must
@@ -56,7 +56,7 @@ unexpectedly.
 ### Via a file browser
 
 If you have access to the machine running the agent, you can [navigate to the
-sandbox directory directly](#where-is-it).
+sandbox directory directly](#where-is-the-sandbox).
 
 ### Via the Mesos web UI
 

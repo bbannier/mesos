@@ -23,13 +23,12 @@ is deprecated.
 The master `/weights` HTTP endpoint enables operators to configure weights. The
 endpoint currently offers a REST-like interface and supports the following operations:
 
-* [Updating](#putRequest) weights with PUT.
-* [Querying](#getRequest) the currently set weights with GET.
+* [Updating](#update) weights with PUT.
+* [Querying](#query) the currently set weights with GET.
 
 The endpoint can optionally use authentication and authorization. See the
 [authentication guide](authentication.md) for details.
 
-<a name="putRequest"></a>
 ## Update
 
 The operator can update the weights by sending an HTTP PUT request to the `/weights`
@@ -69,7 +68,6 @@ The operator will receive one of the following HTTP response codes:
 * `401 Unauthorized`: Unauthenticated request.
 * `403 Forbidden`: Unauthorized request.
 
-<a name="getRequest"></a>
 ## Query
 
 The operator can query the configured weights by sending an HTTP GET request

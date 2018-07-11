@@ -14,7 +14,6 @@ and authorized __frameworks__ to dynamically reserve resources in the cluster.
 In both types of reservations, resources are reserved for a [__role__](roles.md).
 
 
-<a name="static-reservation"></a>
 ## Static Reservation
 
 An operator can configure a slave with resources reserved for a role.
@@ -132,7 +131,6 @@ restarts).
 
 ### Framework Scheduler API
 
-<a name="offer-operation-reserve"></a>
 #### `Offer::Operation::Reserve` (__without__ `RESERVATION_REFINEMENT`)
 
 A framework can reserve resources through the resource offer cycle. The
@@ -241,12 +239,13 @@ following reserved resources:
 
 #### `Offer::Operation::Unreserve` (__without__ `RESERVATION_REFINEMENT`)
 
-A framework can unreserve resources through the resource offer cycle.
-In [Offer::Operation::Reserve](#offer-operation-reserve), we reserved 8 CPUs
-and 4096 MB of RAM on a particular slave for one of our subscribed roles
-(e.g. `"engineering"`). The master will continue to only offer these reserved
-resources to the reservation's `role`. Suppose we would like to unreserve
-these resources. First, we receive a resource offer (copy/pasted from above):
+A framework can unreserve resources through the resource offer cycle. In
+[Offer::Operation::Reserve](#offeroperationreserve-without-reservation_refinement),
+we reserved 8 CPUs and 4096 MB of RAM on a particular slave for one of our
+subscribed roles (e.g. `"engineering"`). The master will continue to only offer
+these reserved resources to the reservation's `role`. Suppose we would like to
+unreserve these resources. First, we receive a resource offer (copy/pasted from
+above):
 
         {
           "allocation_info": { "role": "engineering" },
@@ -312,8 +311,7 @@ field which we can use to specify the resources to be unreserved.
 
 The unreserved resources may now be offered to other frameworks.
 
-<a name="offer-operation-reserve-reservation-refinement"></a>
-#### `Offer::Operation::Reserve` (__with__ `RESERVATION_REFNEMENT`)
+#### `Offer::Operation::Reserve` (__with__ `RESERVATION_REFINEMENT`)
 
 A framework that wants to create a refined reservation needs to enable
 the `RESERVATION_REFINEMENT` capability. Doing so will allow the framework
@@ -482,14 +480,13 @@ following reserved resources:
 
 #### `Offer::Operation::Unreserve` (__with__ `RESERVATION_REFINEMENT`)
 
-A framework can unreserve resources through the resource offer cycle.
-In [Offer::Operation::Reserve](#offer-operation-reserve-reservation-refinement),
+A framework can unreserve resources through the resource offer cycle. In
+[Offer::Operation::Reserve](#offeroperationreserve-with-reservation_refinement),
 we reserved 8 CPUs and 4096 MB of RAM on a particular slave for one of our
 subscribed roles (i.e. `"engineering/backend"`), previously reserved for
 `"engineering"`. When we unreserve these resources, they are returned to
-`"engineering"`, by the last `ReservationInfo` added to
-the `reservations` field being __popped__. First, we receive a resource offer
-(copy/pasted from above):
+`"engineering"`, by the last `ReservationInfo` added to the `reservations` field
+being __popped__. First, we receive a resource offer (copy/pasted from above):
 
         {
           "allocation_info": { "role": "engineering/backend" },

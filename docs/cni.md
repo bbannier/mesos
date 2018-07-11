@@ -20,19 +20,19 @@ default.
 - [Motivation](#motivation)
 - [Usage](#usage)
   - [Configuring CNI networks](#configuring-cni-networks)
-  - [Adding/Deleting/Modifying CNI networks](#adding-modifying-deleting)
+  - [Adding/Deleting/Modifying CNI networks](#addingdeletingmodifying-cni-networks)
   - [Attaching containers to CNI networks](#attaching-containers-to-cni-networks)
   - [Accessing container network namespace](#accessing-container-network-namespace)
   - [Passing network labels and port-mapping information to CNI plugins](#passing-network-labels-and-port-mapping-information-to-cni-plugins)
-- [Networking Recipes](#networking-recipes)
+  - [Networking Recipes](#networking-recipes)
   - [A bridge network](#a-bridge-network)
-  - [A port-mapper plugin for CNI networks](#a-port-mapper-plugin)
+  - [A port-mapper plugin for CNI networks](#a-port-mapper-plugin-for-cni-networks)
   - [A Calico network](#a-calico-network)
   - [A Cilium network](#a-cilium-network)
   - [A Weave network](#a-weave-network)
 
 
-### <a name="motivation"></a>Motivation
+### Motivation
 
 Having a separate network namespace for each container is attractive
 for orchestration engines such as Mesos, since it provides containers
@@ -75,7 +75,7 @@ isolator provides Mesos with tremendous flexibility to orchestrate
 containers on a wide variety of network technologies.
 
 
-### <a name="usage"></a>Usage
+### Usage
 
 The `network/cni` isolator is enabled by default.  However, to use the
 isolator there are certain actions required by the operator and the
@@ -83,7 +83,7 @@ frameworks. In this section we specify the steps required by the
 operator to configure CNI networks on Mesos and the steps required by
 frameworks to attach containers to a CNI network.
 
-#### <a name="configuring-cni-networks"></a>Configuring CNI networks
+#### Configuring CNI networks
 
 In order to configure the `network/cni` isolator the operator
 specifies two flags at Agent startup as follows:
@@ -103,7 +103,7 @@ after Agent startup, the Agent needs to be restarted. The
 and hence restarting the Agent (and therefore the `network/cni`
 isolator) will not affect container orchestration.
 
-#### <a name="adding-modifying-deleting"></a>Adding/Deleting/Modifying CNI networks
+#### Adding/Deleting/Modifying CNI networks
 
 The `network/cni` isolator learns about all the CNI networks by
 reading the CNI configuration specified in `--network_cni_config_dir`.
@@ -135,7 +135,7 @@ operator deletes a CNI network the `network/cni` isolator will
 network when it started) in case a framework tries to launch a
 container on the deleted CNI network.
 
-#### <a name="attaching-containers-to-cni-networks"></a>Attaching containers to CNI networks
+#### Attaching containers to CNI networks
 
 Frameworks can specify the CNI network to which they want their
 containers to be attached by setting the `name` field in the
@@ -165,7 +165,7 @@ will need to attach the container to a CNI network (such as
 bridge/macvlan) that, in turn, is attached to the host network.
 ```
 
-#### <a name="network-labels-and-port-mapping">Passing network labels and port-mapping information to CNI plugins</a>
+#### Passing network labels and port-mapping information to CNI plugins
 
 When invoking CNI plugins (e.g., with command ADD), the isolator will
 pass on some Mesos meta-data to the plugins by specifying the `args`
@@ -208,7 +208,7 @@ information as they see fit while attaching/detaching containers to a CNI
 network. E.g., CNI plugins could use `labels` to enforce domain
 specific policies, or `port_mappings` to implement NAT rules.
 
-#### <a name="accessing-container-network-namespace"></a>Accessing container network namespace
+#### Accessing container network namespace
 
 The `network/cni` isolator allocates a network namespace to a
 container when it needs to attach the container to a CNI network. The
@@ -254,7 +254,7 @@ would be simplified and we will no longer have a dependency on the
 `iproute2` package to debug Mesos container networking.
 
 
-### <a name="networking-recipes"></a>Networking Recipes
+### Networking Recipes
 
 This section presents examples for launching containers on different
 CNI networks. For each of the examples the assumption is that the CNI
@@ -285,7 +285,7 @@ framework to launch containers on the specified network. You can find
 the `mesos-execute` framework in your Mesos installation directory at
 `<mesos installation>/bin/mesos-execute`.
 
-#### <a name="a-bridge-network"></a>A bridge network
+#### A bridge network
 
 The
 [bridge](https://github.com/containernetworking/cni/blob/master/Documentation/bridge.md)
@@ -383,7 +383,7 @@ default via 192.168.0.1 dev eth0
 192.168.0.0/16 dev eth0  proto kernel  scope link  src 192.168.0.2
 ```
 
-#### <a name="a-port-mapper-plugin">A port-mapper plugin for CNI networks</a>
+#### A port-mapper plugin for CNI networks
 
 For private, isolated, networks such as a bridge network where the IP
 address of a container is not routeable from outside the host it
@@ -469,7 +469,7 @@ by Mesos to the port-mapper plugin. Please refer to the "[Passing
 network labels and port-mapping information to CNI
 plugins](#passing-network-labels-and-port-mapping-information-to-cni-plugins)" section for more details.
 
-#### <a name="a-calico-network">A Calico network</a>
+#### A Calico network
 
 [Calico](https://projectcalico.org/) provides 3rd-party CNI plugin
 that works out-of-the-box with Mesos CNI.
@@ -487,7 +487,7 @@ For information on setting up and using Calico-CNI, see [Calico's
 guide on integerating with
 Mesos](https://docs.projectcalico.org/v2.6/getting-started/mesos/).
 
-#### <a name="a-cilium-network">A Cilium network</a>
+#### A Cilium network
 
 [Cilium](https://www.cilium.io) provides a CNI plugin that works with Mesos.
 
@@ -499,7 +499,7 @@ network-layer and HTTP-layer security policies.
 For more information on using Cilium with Mesos, check out the
 [Getting Started Using Mesos Guide](http://docs.cilium.io/try-mesos).
 
-#### <a name="a-weave-network">A Weave network</a>
+#### A Weave network
 
 [Weave](https://weave.works) provides a CNI implementation that works
 out-of-the-box with Mesos.

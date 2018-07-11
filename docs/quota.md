@@ -54,7 +54,7 @@ on; in other words, a minimum share a role is entitled to receive.
 ﻿**NOTE:** The built-in wDRF allocator extends this contract, and based on the
 definition above, treats quota as the pair of both the minimal and maximal share
 a role is entitled to receive. See
-[wDRF implementation notes](#allocatorEnforcement) for details.
+[wDRF implementation notes](#enforcement-by-wdrf-allocator) for details.
 
 
 ## Motivation and Limitations
@@ -93,9 +93,9 @@ The master [/quota](endpoints/master/quota.md) HTTP endpoint enables operators
 to configure quotas. The endpoint currently offers a REST-like interface and
 supports the following operations:
 
-* [Setting](#setRequest) a new quota with POST.
-* [Removing](#removeRequest) an existing quota with DELETE.
-* [Querying](#statusRequest) the currently set quota with GET.
+* [Setting](#set) a new quota with POST.
+* [Removing](#remove) an existing quota with DELETE.
+* [Querying](#status) the currently set quota with GET.
 
 Currently it is not possible to update previously configured quotas. This means
 in order to update a quota for a given role, the operator has to remove the
@@ -105,7 +105,6 @@ The endpoint can optionally use authentication and authorization. See
 [authentication guide](authentication.md) for details.
 
 
-<a name="setRequest"></a>
 ### Set
 
 The operator can set a new quota by sending an HTTP POST request to the `/quota`
@@ -139,7 +138,7 @@ A set request is only valid for roles for which no quota is currently set.
 However if the master is configured without an explicit
 [role whitelist](roles.md), a set request can introduce new roles.
 
-In order to bypass the [capacity heuristic](#capacityHeuristic) check the
+In order to bypass the [capacity heuristic](#capacity-heuristic-check) check the
 operator should set an optional `force` field:
 
      {
@@ -159,7 +158,6 @@ The operator will receive one of the following HTTP response codes:
   resources.
 
 
-<a name="removeRequest"></a>
 ### Remove
 
 The operator can remove a previously set quota by sending an HTTP DELETE request
@@ -177,7 +175,6 @@ The operator will receive one of the following HTTP response codes:
 * `403 Forbidden`: Unauthorized request.
 
 
-<a name="statusRequest"></a>
 ### Status
 
 The operator can query the configured quotas by sending an HTTP GET request
@@ -223,8 +220,8 @@ role(s), the result will not include corresponding quota information.
 ## How Does It Work?
 
 There are several stages in the lifetime of a quota issued by operator. First
-the [quota set request is handled by the master](#requestProcessing), after that
-the [allocator enforces the quota](#allocatorEnforcement).
+the [quota set request is handled by the master](#quota-request-processing),
+after that the [allocator enforces the quota](#enforcement-by-wdrf-allocator).
 Quotas can be [removed](#removeProcessing) by the operator.
 
 It is important to understand that the enforcement of quota depends on
@@ -239,7 +236,6 @@ Also note, that quota is only applicable for scalar resources (e.g., it is not
 possible to set quota for port resources).
 
 
-<a name="requestProcessing"></a>
 ## Quota Request Processing
 
 When an operator submits a quota set request via the master `/quota` HTTP
@@ -247,24 +243,23 @@ endpoint, the following steps are triggered:
 
 1. [Authenticate](authentication.md) the HTTP request.
 2. Parse and validate the request.
-   See [description of possible error codes](#setRequest).
+   See [description of possible error codes](#set).
 3. [Authorize](authentication.md) the HTTP request if authorization is enabled.
-4. Run the [capacity heuristic](#capacityHeuristic) if not disabled by
-   [the `force` flag](#setRequest).
+4. Run the [capacity heuristic](#capacity-heuristic-check) if not disabled by
+   [the `force` flag](#set).
 5. Reliably store quota. See [details on failover recovery](#failover).
-6. [Rescind outstanding offers](#rescindOffers).
+6. [Rescind outstanding offers](#rescinding-outstanding-offers).
 
 <a name="removeProcessing"></a>
 The quota remove request processing is simpler and triggers the following steps:
 
 1. [Authenticate](authentication.md) the HTTP request.
 2. Validate the request.
-   See [description of potential error codes](#removeRequest).
+   See [description of potential error codes](#remove).
 3. [Authorize](authentication.md) the HTTP request if authorization is enabled.
 4. Reliably remove quota.
 
 
-<a name="capacityHeuristic"></a>
 ### Capacity Heuristic Check
 
 Misconfigured quota can render a cluster into a state where no offers are made
@@ -285,13 +280,12 @@ Please be advised that even if there are enough resources at the moment of
 this check, agents may terminate at any time, rendering the cluster incapable
 of satisfying the configured quotas.
 
-A [`force` flag](#setRequest) can be set to bypass this check. For example, this
+A [`force` flag](#set) can be set to bypass this check. For example, this
 flag can be useful when the operator would like to configure a quota that
 exceeds the current cluster capacity, but they know that additional cluster
 resources will be added shortly.
 
 
-<a name="rescindOffers"></a>
 ### Rescinding Outstanding Offers
 
 When setting a new quota, the master rescinds outstanding offers. This avoids
@@ -310,7 +304,6 @@ outstanding offers with the following rules:
   due to fair sharing) each framework subscribed to the role to receive an offer.
 
 
-<a name="allocatorEnforcement"></a>
 ## Enforcement by wDRF Allocator
 
 The wDRF allocator first allocates (or lays away if offers are declined)
@@ -348,7 +341,6 @@ The default wDRF allocator considers only non-revocable resources as applicable
 towards quota.
 
 
-<a name="failover"></a>
 ## Failover
 
 If there is at least one role with quota set, the master failover recovery
@@ -375,4 +367,4 @@ suspension---ends when either:
 * Quota is not allowed for the default role '*' (see
   [MESOS-3938](https://issues.apache.org/jira/browse/MESOS-3938)).
 * Currently it is not possible to update previously configured quotas. See
-  [quota set request](#setRequest) for details.
+  [quota set request](#set) for details.

@@ -17,14 +17,14 @@ steps for enabling Docker volume isolator, and required framework changes.
 - [How does it work?](#how-does-it-work)
 - [Configuration](#configuration)
   - [Pre-conditions](#pre-conditions)
-  - [Configuring Docker Volume Isolator](#configure-Docker-volume-isolator)
-  - [Enabling frameworks to use Docker volumes](#enable-frameworks)
+  - [Configuring Docker Volume Isolator](#configuring-docker-volume-isolator)
+  - [Enabling frameworks to use Docker volumes](#enabling-frameworks-to-use-docker-volumes)
     - [Volume Protobuf](#volume-protobuf)
     - [Examples](#examples)
 - [Limitations](#limitations)
 - [Test it out!](#test-it-out)
 
-## <a name="motivation"></a>Motivation
+## Motivation
 
 The integration of external storage in Mesos is an attractive feature.  The
 Mesos [persistent volume](../persistent-volume.md) primitives allow stateful
@@ -49,7 +49,7 @@ Therefore, introducing support for external storage in Mesos through the
 `docker/volume` isolator provides Mesos with tremendous flexibility to
 orchestrate containers on a wide variety of external storage technologies.
 
-## <a name="how-does-it-work"></a>How does it work?
+## How does it work?
 
 ![Docker Volume Isolator Architecture](images/docker-volume-isolator.png)
 
@@ -90,14 +90,14 @@ The detailed workflow for the `docker/volume` isolator is as follows:
    [dvdcli](https://github.com/emccode/dvdcli) to unmount all mount points for
    the container.
 
-## <a name="configuration"></a>Configuration
+## Configuration
 
 To use the `docker/volume` isolator, there are certain actions required by
 operators and framework developers. In this section we list the steps required
 by the operator to configure `docker/volume` isolator and the steps required by
 framework developers to specify the Docker volumes.
 
-### <a name="pre-conditions"></a>Pre-conditions
+### Pre-conditions
 
 - Install `dvdcli` version
   [0.1.0](https://github.com/emccode/dvdcli/releases/tag/v0.1.0) on each agent.
@@ -111,7 +111,7 @@ on each agent.
   [dvdcli](https://github.com/emccode/dvdcli) but the volumes may not fit into
   framework resource requirement well.
 
-### <a name="configure-Docker-volume-isolator"></a>Configuring Docker Volume Isolator
+### Configuring Docker Volume Isolator
 
 In order to configure the `docker/volume` isolator, the operator needs to
 configure two flags at agent startup as follows:
@@ -137,9 +137,9 @@ the default `--docker_volume_checkpoint_dir` will be cleaned up after agent
 restart. Therefore, it is recommended to set `--docker_volume_checkpoint_dir` to
 a directory which will survive agent restart.
 
-### <a name="enable-frameworks"></a>Enabling frameworks to use Docker volumes
+### Enabling frameworks to use Docker volumes
 
-#### <a name="volume-protobuf"></a>Volume Protobuf
+#### Volume Protobuf
 
 The `Volume` protobuf message has been updated to support Docker volumes.
 
@@ -211,7 +211,7 @@ The following table summarizes the above rules for `container_path`:
   </tr>
 </table>
 
-#### <a name="examples"></a>Examples
+#### Examples
 
 1. Launch a task with one Docker volume using the default command executor.
 
@@ -285,7 +285,7 @@ The following table summarizes the above rules for `container_path`:
 **NOTE**: The task launch will be failed if one container uses multiple Docker
 volumes with the same `driver` and `name`.
 
-## <a name="limitations"></a>Limitations
+## Limitations
 
 Using the same Docker volume in both the [Docker
 Containerizer](../docker-containerizer.md) and the [Mesos
@@ -295,7 +295,7 @@ counting to decide when to unmount a Docker volume. Otherwise, it
 would be problematic if a Docker volume is unmounted by
 MesosContainerizer but the DockerContainerizer is still using it.
 
-## <a name="test-it-out"></a>Test it out!
+## Test it out!
 
 This section presents examples for launching containers with Docker volumes.
 The following example is using [convoy](https://github.com/rancher/convoy/)
@@ -366,8 +366,8 @@ Create another task to verify the file `myfile` was created successfully.
     --volumes=<path>/myvolume.json
 ```
 
-Check the [sandbox](../sandbox.md#where-is-it)
-for the second task to check the file `myfile` was created successfully.
+Check the [sandbox](../sandbox.md#where-is-the-sandbox) for the second
+task to check the file `myfile` was created successfully.
 
 ```{.console}
   $ cat stdout

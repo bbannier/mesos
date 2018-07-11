@@ -16,7 +16,7 @@ Roughly, these categories are:
   Frameworks and [ZooKeeper](high-availability.md).  These are expected to
   implement their own logging solution.
 
-## <a name="Internal"></a>Internal
+## Internal
 
 The Mesos Master and Agent use the
 [Google's logging library](https://github.com/google/glog).
@@ -37,14 +37,14 @@ The effect is analogous to setting the `GLOG_v` environment variable prior
 to starting the Master/Agent, except the logging level will revert to the
 original level after the given duration.
 
-## <a name="Containers"></a>Containers
+## Containers
 
 For background, see [the containerizer documentation](containerizers.md).
 
 Mesos does not assume any structured logging for entities running inside
 containers.  Instead, Mesos will store the stdout and stderr of containers
 into plain files ("stdout" and "stderr") located inside
-[the sandbox](sandbox.md#where-is-it).
+[the sandbox](sandbox.md#where-is-the-sandbox).
 
 In some cases, the default Container logger behavior of Mesos is not ideal:
 
@@ -81,8 +81,8 @@ specified maximum number of files is reached.
 
 The `LogrotateContainerLogger` can be loaded by specifying the library
 `liblogrotate_container_logger.so` in the
-[`--modules` flag](modules.md#Invoking) when starting the Agent and by
-setting the `--container_logger` Agent flag to
+[`--modules` flag](modules.md#invoking-mesos-modules) when starting the Agent
+and by setting the `--container_logger` Agent flag to
 `org_apache_mesos_LogrotateContainerLogger`.
 
 #### Module parameters

@@ -34,7 +34,7 @@ Modules can be specified for master, agent and tests. Modules can also be used
 with schedulers that link against libmesos. Currently, modules cannot be
 used with executors.
 
-## <a name="Invoking"></a>Invoking Mesos modules
+## Invoking Mesos modules
 There are two ways to specify a list of modules to be loaded and be available to
 the internal subsystems.
 

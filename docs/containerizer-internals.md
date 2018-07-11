@@ -93,7 +93,6 @@ Containerizer will handle any executor/task that does not specify
   will first execute any preparation commands from isolators and then
   exec the executor.
 
-<a name="Launcher"></a>
 ##### Launcher
 
 Launcher is responsible for forking/destroying containers.
@@ -167,7 +166,6 @@ container.
 
 ###### Posix launcher (TBD)
 
-<a name="Isolators"></a>
 ##### [Isolators](mesos-containerizer.md#isolators)
 
 [Isolators](mesos-containerizer.md#isolators) are responsible for creating
