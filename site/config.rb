@@ -14,12 +14,13 @@
 require "middleman-blog"
 require "htmlentities"
 
-set :markdown_engine, :rdiscount
+set :markdown_engine, :kramdown
 set :markdown, :layout_engine => :erb,
                :tables => true,
                :autolink => true,
                :smartypants => true,
-               :fenced_code_blocks => true
+               :fenced_code_blocks => true,
+               :input => 'GFM'
 
 set :build_dir, 'publish'
 

@@ -12,7 +12,7 @@ gem 'middleman-blog', '3.5.3'
 # correctly declares its requirements.
 gem 'tzinfo-data'
 
-gem 'rdiscount', '2.2.0.1'
+gem 'kramdown'
 
 gem 'htmlentities'
 
