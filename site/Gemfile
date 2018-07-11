@@ -19,3 +19,5 @@ gem 'htmlentities'
 gem 'therubyracer'
 
 gem 'rake'
+
+gem 'html-proofer'

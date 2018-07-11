@@ -56,3 +56,22 @@ page "/api/*", :directory_index => false
 activate :directory_indexes
 activate :syntax
 activate :livereload
+
+
+require 'html-proofer'
+
+after_build do |builder|
+  begin
+    HTMLProofer.check_directory(
+      config[:build_dir],
+      {
+        :assume_extension => true,
+        :allow_hash_href => true,
+        :alt_ignore => [/.*/],
+        :file_ignore => [/api\//],
+        :disable_external => true,
+      }).run
+  rescue RuntimeError => e
+    puts e
+  end
+end
