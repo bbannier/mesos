@@ -29,10 +29,6 @@ set :js_dir, 'assets/js'
 set :images_dir, 'assets/img'
 set :font_dir, 'assets/font'
 
-configure :build do
-  activate :relative_assets
-end
-
 activate :blog do |blog|
   blog.prefix = "blog"
   blog.sources = "{year}-{month}-{day}-{title}"
