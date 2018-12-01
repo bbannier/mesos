@@ -20,10 +20,10 @@
 #include <string>
 #include <vector>
 
-#include "foreach.hpp"
-#include "format.hpp"
-#include "option.hpp"
-#include "stringify.hpp"
+#include <stout/foreach.hpp>
+#include <stout/format.hpp>
+#include <stout/option.hpp>
+#include <stout/stringify.hpp>
 
 namespace strings {
 
@@ -43,28 +43,29 @@ inline std::string remove(
     const std::string& substring,
     Mode mode = ANY)
 {
-  std::string result = from;
-
   switch (mode) {
     case PREFIX:
       if (from.find(substring) == 0) {
-        result = from.substr(substring.size());
+        return from.substr(substring.size());
       }
       break;
     case SUFFIX:
       if (from.rfind(substring) == from.size() - substring.size()) {
-        result = from.substr(0, from.size() - substring.size());
+        return from.substr(0, from.size() - substring.size());
       }
       break;
     case ANY:
+      std::string result = from;
+
       size_t index;
       while ((index = result.find(substring)) != std::string::npos) {
         result = result.erase(index, substring.size());
       }
-      break;
+
+      return result;
   }
 
-  return result;
+  return from;
 }
 
 
@@ -123,12 +124,13 @@ inline std::string replace(
     const std::string& from,
     const std::string& to)
 {
-  std::string result = s;
   size_t index = 0;
 
   if (from.empty()) {
-    return result;
+    return s;
   }
+
+  std::string result = s;
 
   while ((index = result.find(from, index)) != std::string::npos) {
     result.replace(index, from.length(), to);
@@ -169,11 +171,11 @@ inline std::vector<std::string> tokenize(
     // or we've found enough tokens.
     if (delim == std::string::npos ||
         (maxTokens.isSome() && tokens.size() == maxTokens.get() - 1)) {
-      tokens.push_back(s.substr(nonDelim));
+      tokens.emplace_back(s.substr(nonDelim));
       break;
     }
 
-    tokens.push_back(s.substr(nonDelim, delim - nonDelim));
+    tokens.emplace_back(s.substr(nonDelim, delim - nonDelim));
     offset = delim;
   }
 
@@ -208,11 +210,11 @@ inline std::vector<std::string> split(
     // or we've found enough tokens.
     if (next == std::string::npos ||
         (maxTokens.isSome() && tokens.size() == maxTokens.get() - 1)) {
-      tokens.push_back(s.substr(offset));
+      tokens.emplace_back(s.substr(offset));
       break;
     }
 
-    tokens.push_back(s.substr(offset, next - offset));
+    tokens.emplace_back(s.substr(offset, next - offset));
     offset = next + 1;
   }
 
@@ -239,7 +241,7 @@ inline std::map<std::string, std::vector<std::string>> pairs(
   foreach (const std::string& token, tokens) {
     const std::vector<std::string> pairs = tokenize(token, delims2);
     if (pairs.size() == 2) {
-      result[pairs[0]].push_back(pairs[1]);
+      result[pairs[0]].emplace_back(pairs[1]);
     }
   }
 
