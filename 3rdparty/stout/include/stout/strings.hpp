@@ -45,19 +45,23 @@ inline std::string remove(
 {
   std::string result = from;
 
-  if (mode == PREFIX) {
-    if (from.find(substring) == 0) {
-      result = from.substr(substring.size());
-    }
-  } else if (mode == SUFFIX) {
-    if (from.rfind(substring) == from.size() - substring.size()) {
-      result = from.substr(0, from.size() - substring.size());
-    }
-  } else {
-    size_t index;
-    while ((index = result.find(substring)) != std::string::npos) {
-      result = result.erase(index, substring.size());
-    }
+  switch (mode) {
+    case PREFIX:
+      if (from.find(substring) == 0) {
+        result = from.substr(substring.size());
+      }
+      break;
+    case SUFFIX:
+      if (from.rfind(substring) == from.size() - substring.size()) {
+        result = from.substr(0, from.size() - substring.size());
+      }
+      break;
+    case ANY:
+      size_t index;
+      while ((index = result.find(substring)) != std::string::npos) {
+        result = result.erase(index, substring.size());
+      }
+      break;
   }
 
   return result;
@@ -72,13 +76,17 @@ inline std::string trim(
   size_t start = 0;
   Option<size_t> end = None();
 
-  if (mode == ANY) {
-    start = from.find_first_not_of(chars);
-    end = from.find_last_not_of(chars);
-  } else if (mode == PREFIX) {
-    start = from.find_first_not_of(chars);
-  } else if (mode == SUFFIX) {
-    end = from.find_last_not_of(chars);
+  switch (mode) {
+    case ANY:
+      start = from.find_first_not_of(chars);
+      end = from.find_last_not_of(chars);
+      break;
+    case PREFIX:
+      start = from.find_first_not_of(chars);
+      break;
+    case SUFFIX:
+      end = from.find_last_not_of(chars);
+      break;
   }
 
   // Bail early if 'from' contains only characters in 'chars'.
