@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstdlib>
 #include <memory>
 #include <numeric>
 #include <utility>
@@ -49,7 +48,6 @@
 
 #include <mesos/v1/resource_provider.hpp>
 
-#include <stout/exit.hpp>
 #include <stout/foreach.hpp>
 #include <stout/hashmap.hpp>
 #include <stout/hashset.hpp>
@@ -655,15 +653,9 @@ void StorageLocalResourceProviderProcess::initialize()
 void StorageLocalResourceProviderProcess::fatal()
 {
   // Force the disconnection early.
-  //
-  // NOTE: We cannot `wait` for the process to terminate since we
-  // terminate ourself. Waiting would introduce a loop.
   driver.reset();
 
   process::terminate(self());
-
-  EXIT(EXIT_FAILURE)
-    << "Encountered a fatal resource provider error, failing over";
 }
 
 
@@ -2056,9 +2048,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
           }
         }
 
-        // We currently do support being restarted, so we return a
-        // failure here which potentially causes a fatal error below.
-        return Failure("CSI plugin container exited unexpectedly");
+        return Nothing();
       })));
 
   if (daemon.isError()) {
@@ -2070,10 +2060,7 @@ Future<csi::v0::Client> StorageLocalResourceProviderProcess::getService(
   auto die = [=](const string& message) {
     LOG(ERROR)
       << "Container daemon for '" << containerId << "' failed: " << message;
-
-    // Defer invoking the fatal error as we might end in here during provider
-    // destruction in which case we would not want to trigger a fatal error.
-    defer(self(), &StorageLocalResourceProviderProcess::fatal);
+    fatal();
   };
 
   daemons[containerId] = daemon.get();

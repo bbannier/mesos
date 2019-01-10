@@ -2504,13 +2504,12 @@ TEST_F(StorageLocalResourceProviderTest, ROOT_PublishResourcesReboot)
 }
 
 
-// This test verifies that the storage local resource provider can restart
-// its CSI plugin after it is killed and continue to work properly.
-//
-// TODO(bbannier): Reenable this test when we support proper plugin restarts.
+// This test verifies that the storage local resource provider can
+// restart its CSI plugin after it is killed and continue to work
+// properly.
 TEST_F(
     StorageLocalResourceProviderTest,
-    DISABLED_ROOT_PublishUnpublishResourcesPluginKilled)
+    ROOT_PublishUnpublishResourcesPluginKilled)
 {
   const string profilesPath = path::join(sandbox.get(), "profiles.json");
 
