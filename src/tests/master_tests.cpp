@@ -14,20 +14,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <gmock/gmock.h>
 #include <unistd.h>
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include <gmock/gmock.h>
-
-#include <mesos/executor.hpp>
-#include <mesos/scheduler.hpp>
-
-#include <mesos/allocator/allocator.hpp>
-
-#include <mesos/scheduler/scheduler.hpp>
+#include <stout/json.hpp>
+#include <stout/net.hpp>
+#include <stout/option.hpp>
+#include <stout/os.hpp>
+#include <stout/strings.hpp>
+#include <stout/try.hpp>
 
 #include <process/clock.hpp>
 #include <process/future.hpp>
@@ -8981,7 +8981,7 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
   Owned<EndpointDetector> endpointDetector(
       resource_provider::createEndpointDetector(agent.get()->pid));
 
-  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
   ASSERT_TRUE(resourceProvider->info.has_id());
@@ -9102,7 +9102,7 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 

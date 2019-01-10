@@ -16,6 +16,7 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include <mesos/http.hpp>
 
@@ -229,7 +230,7 @@ TEST_P(MasterAPITest, GetAgents)
 
   updateAgentMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.start(endpointDetector, contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1101,7 +1102,7 @@ TEST_P(MasterAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.start(endpointDetector, contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -7979,7 +7980,7 @@ TEST_P(AgentAPITest, GetResourceProviders)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.start(endpointDetector, contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -8072,7 +8073,7 @@ TEST_P(AgentAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.start(endpointDetector, contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.

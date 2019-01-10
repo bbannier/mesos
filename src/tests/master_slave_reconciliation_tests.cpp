@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <vector>
+#include <utility>
 
 #include <gmock/gmock.h>
 
@@ -523,7 +524,7 @@ TEST_F(
 
   ContentType contentType = ContentType::PROTOBUF;
 
-  resourceProvider->start(endpointDetector, contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
