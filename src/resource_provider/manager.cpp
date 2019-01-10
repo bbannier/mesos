@@ -33,8 +33,9 @@
 #include <process/id.hpp>
 #include <process/process.hpp>
 
-#include <process/metrics/pull_gauge.hpp>
 #include <process/metrics/metrics.hpp>
+#include <process/metrics/pull_gauge.hpp>
+#include <process/metrics/push_gauge.hpp>
 
 #include <stout/hashmap.hpp>
 #include <stout/nothing.hpp>
@@ -93,6 +94,7 @@ using process::http::UnsupportedMediaType;
 using process::http::authentication::Principal;
 
 using process::metrics::PullGauge;
+using process::metrics::PushGauge;
 
 namespace mesos {
 namespace internal {
@@ -244,6 +246,8 @@ private:
     ~Metrics();
 
     PullGauge subscribed;
+    PushGauge subscriptions;
+    PushGauge disconnections;
   };
 
   Owned<Registrar> registrar;
@@ -852,6 +856,8 @@ void ResourceProviderManagerProcess::_subscribe(
       message.disconnect = std::move(disconnect);
 
       messages.put(std::move(message));
+
+      ++metrics.disconnections;
     }));
 
   if (!resourceProviders.known.contains(resourceProviderId)) {
@@ -875,6 +881,7 @@ void ResourceProviderManagerProcess::_subscribe(
       std::move(resourceProvider));
 
   messages.put(std::move(message));
+  ++metrics.subscriptions;
 }
 
 
@@ -992,16 +999,22 @@ double ResourceProviderManagerProcess::gaugeSubscribed()
 ResourceProviderManagerProcess::Metrics::Metrics(
     const ResourceProviderManagerProcess& manager)
   : subscribed(
-      "resource_provider_manager/subscribed",
-      defer(manager, &ResourceProviderManagerProcess::gaugeSubscribed))
+        "resource_provider_manager/subscribed",
+        defer(manager, &ResourceProviderManagerProcess::gaugeSubscribed)),
+    subscriptions("resource_provider_manager/subscriptions"),
+    disconnections("resource_provider_manager/disconnections")
 {
   process::metrics::add(subscribed);
+  process::metrics::add(subscriptions);
+  process::metrics::add(disconnections);
 }
 
 
 ResourceProviderManagerProcess::Metrics::~Metrics()
 {
   process::metrics::remove(subscribed);
+  process::metrics::remove(subscriptions);
+  process::metrics::remove(disconnections);
 }
 
 

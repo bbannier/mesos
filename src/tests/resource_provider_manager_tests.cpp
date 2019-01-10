@@ -1465,6 +1465,19 @@ TEST_F(ResourceProviderManagerHttpApiTest, Metrics)
 
   AWAIT_READY(updateSlaveMessage);
 
+  JSON::Object snapshot = Metrics();
+
+  ASSERT_TRUE(
+      snapshot.values.count("resource_provider_manager/subscribed"));
+  ASSERT_TRUE(
+      snapshot.values.count("resource_provider_manager/subscriptions"));
+  ASSERT_TRUE(
+      snapshot.values.count("resource_provider_manager/disconnections"));
+
+  EXPECT_EQ(0, snapshot.values.at("resource_provider_manager/subscribed"));
+  EXPECT_EQ(0, snapshot.values.at("resource_provider_manager/subscriptions"));
+  EXPECT_EQ(0, snapshot.values.at("resource_provider_manager/disconnections"));
+
   mesos::v1::ResourceProviderInfo resourceProviderInfo;
   resourceProviderInfo.set_type("org.apache.mesos.rp.test");
   resourceProviderInfo.set_name("test");
@@ -1480,13 +1493,27 @@ TEST_F(ResourceProviderManagerHttpApiTest, Metrics)
   EXPECT_CALL(*resourceProvider, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed));
 
-  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(subscribed);
 
-  const JSON::Object snapshot = Metrics();
+  snapshot = Metrics();
 
   EXPECT_EQ(1, snapshot.values.at("resource_provider_manager/subscribed"));
+  EXPECT_EQ(1, snapshot.values.at("resource_provider_manager/subscriptions"));
+  EXPECT_EQ(0, snapshot.values.at("resource_provider_manager/disconnections"));
+
+  updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
+  resourceProvider.reset();
+
+  // Make sure the resource provider manager processes the disconnection.
+  Clock::settle();
+
+  snapshot = Metrics();
+
+  EXPECT_EQ(0, snapshot.values.at("resource_provider_manager/subscribed"));
+  EXPECT_EQ(1, snapshot.values.at("resource_provider_manager/subscriptions"));
+  EXPECT_EQ(1, snapshot.values.at("resource_provider_manager/disconnections"));
 }
 
 
