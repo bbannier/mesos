@@ -31,7 +31,6 @@ target_link_libraries(
   protobuf
   rapidjson
   Threads::Threads
-  zlib
   $<$<PLATFORM_ID:Linux>:rt dl svn>
   $<$<PLATFORM_ID:Darwin>:svn>
   $<$<PLATFORM_ID:Windows>:Ws2_32 IPHlpAPI Mswsock Secur32 Userenv>

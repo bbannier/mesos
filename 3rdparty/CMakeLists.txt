@@ -55,7 +55,6 @@ if (WIN32)
   # exclusively in the 3rdparty repo.
   set(CURL_URL    ${3RDPARTY_DEPENDENCIES}/curl-${CURL_VERSION}.tar.gz)
   set(LIBAPR_URL  ${3RDPARTY_DEPENDENCIES}/libapr-${LIBAPR_VERSION}.tar.gz)
-  set(ZLIB_URL    ${3RDPARTY_DEPENDENCIES}/zlib-${ZLIB_VERSION}.tar.gz)
   set(SASL2_URL   ${3RDPARTY_DEPENDENCIES}/cyrus-sasl-${SASL2_VERSION}.tar.gz)
   set(WCLAYER_URL ${3RDPARTY_DEPENDENCIES}/wclayer.exe)
 endif ()
@@ -941,121 +940,8 @@ endif ()
 # xz: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
 # https://tukaani.org/xz/
 ########################################################################
-if (WIN32)
-  EXTERNAL(xz ${XZ_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(xz STATIC IMPORTED)
-  add_dependencies(xz ${XZ_TARGET})
-
-  set_target_properties(
-    xz PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${XZ_ROOT};${XZ_ROOT}-build")
-
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      xz PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${XZ_ROOT}-build/Debug/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${XZ_ROOT}-build/Release/lzma${XZ_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${XZ_ROOT}-build/Debug/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${XZ_ROOT}-build/Release/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  else ()
-    set_target_properties(
-      xz PROPERTIES
-      IMPORTED_LOCATION ${XZ_ROOT}-build/lzma${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  endif ()
-
-  PATCH_CMD(XZ_PATCH_CMD xz-${XZ_VERSION}.patch)
-
-  MAKE_INCLUDE_DIR(xz)
-  GET_BYPRODUCTS(xz)
-
-  set(XZ_CMAKE_ARGS
-    ${CMAKE_FORWARD_ARGS}
-    ${CMAKE_C_FORWARD_ARGS}
-    -DXZ_INSTALL_DIR=${XZ_ROOT}-lib)
-
-  ExternalProject_Add(
-    ${XZ_TARGET}
-    PREFIX            ${XZ_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${XZ_BYPRODUCTS}
-    PATCH_COMMAND     ${XZ_PATCH_CMD}
-    CMAKE_ARGS        ${XZ_CMAKE_ARGS}
-    INSTALL_DIR       ${XZ_ROOT}-lib
-    URL               ${XZ_URL}
-    URL_HASH          ${XZ_HASH})
-endif ()
-
-# zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library.
-# https://zlib.net
-##########################################################################
-if (WIN32)
-  EXTERNAL(zlib ${ZLIB_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-  add_library(zlib ${LIBRARY_LINKAGE} IMPORTED)
-  add_dependencies(zlib ${ZLIB_TARGET})
-
-  # Zlib generates different libraries depending on the linkage
-  # and configuration.  i.e.:
-  #   * For a static Debug build: `zlibstaticd.lib`.
-  #   * For a shared Release build: `zlib1.lib`.
-  if (NOT BUILD_SHARED_LIBS)
-    set(ZLIB_STATIC static)
-  else ()
-    set(ZLIB_SHARED 1)
-  endif ()
-
-  # NOTE: We install Zlib under `${ZLIB_ROOT}-lib` so CMake's `FindZLIB` module
-  # can find all required headers and library files.
-  set(ZLIB_CMAKE_ARGS
-    ${CMAKE_C_FORWARD_ARGS}
-    -DCMAKE_INSTALL_PREFIX=${ZLIB_ROOT}-lib)
-
-  set_target_properties(
-    zlib PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_ROOT}-lib/include)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      zlib PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}d${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  else ()
-    # This is for single-configuration generators such as Ninja.
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-      set(ZLIB_SUFFIX "d")
-    endif ()
-
-    set_target_properties(
-      zlib PROPERTIES
-      IMPORTED_LOCATION ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${ZLIB_SHARED}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${ZLIB_ROOT}-lib/lib/zlib${ZLIB_STATIC}${ZLIB_SUFFIX}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-  endif ()
-
-  MAKE_INCLUDE_DIR(zlib)
-  GET_BYPRODUCTS(zlib)
-
-  ExternalProject_Add(
-    ${ZLIB_TARGET}
-    PREFIX            ${ZLIB_CMAKE_ROOT}
-    BUILD_BYPRODUCTS  ${ZLIB_BYPRODUCTS}
-    CMAKE_ARGS        ${ZLIB_CMAKE_ARGS}
-    INSTALL_DIR       ${ZLIB_ROOT}-lib
-    URL               ${ZLIB_URL}
-    URL_HASH          ${ZLIB_HASH})
-else ()
-  find_package(ZLIB REQUIRED)
-  add_library(zlib SHARED IMPORTED)
-
-  set_target_properties(
-    zlib PROPERTIES
-    IMPORTED_LOCATION ${ZLIB_LIBRARIES}
-    INTERFACE_INCLUDE_DIRECTORIES ${ZLIB_INCLUDE_DIRS})
-endif ()
-
-set_target_properties(
-  zlib PROPERTIES
-  INTERFACE_COMPILE_DEFINITIONS HAVE_LIBZ)
+hunter_add_package(ZLIB)
+find_package(ZLIB CONFIG REQUIRED)
 
 # libarchive: Multi-format archive and compression library.
 # https://github.com/libarchive/libarchive
@@ -1098,8 +984,8 @@ if (NOT UNBUNDLED_LIBARCHIVE)
       # RELEASE paths.
       IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/archive_static${LIBRARY_SUFFIX}
       INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
-      INTERFACE_LINK_LIBRARIES "bzip2;xz;zlib")
-    set(LIBARCHIVE_DEPENDS bzip2 xz zlib)
+      INTERFACE_LINK_LIBRARIES "bzip2;xz")
+    set(LIBARCHIVE_DEPENDS bzip2 xz)
 
     # Make libarchive link against the same zlib the rest of the build
     # links to. This is necessary because the zlib project
@@ -1116,8 +1002,7 @@ if (NOT UNBUNDLED_LIBARCHIVE)
       libarchive PROPERTIES
       IMPORTED_LOCATION ${LIBARCHIVE_ROOT}-build/lib/libarchive${CMAKE_STATIC_LIBRARY_SUFFIX}
       INTERFACE_INCLUDE_DIRECTORIES ${LIBARCHIVE_ROOT}-build/include
-      INTERFACE_LINK_LIBRARIES "zlib")
-    set(LIBARCHIVE_DEPENDS zlib)
+      INTERFACE_LINK_LIBRARIES "ZLIB::zlib")
   endif ()
 
   MAKE_INCLUDE_DIR(libarchive)
@@ -1125,7 +1010,6 @@ if (NOT UNBUNDLED_LIBARCHIVE)
 
   ExternalProject_Add(
     ${LIBARCHIVE_TARGET}
-    DEPENDS           ${LIBARCHIVE_DEPENDS}
     PREFIX            ${LIBARCHIVE_CMAKE_ROOT}
     BUILD_BYPRODUCTS  ${LIBARCHIVE_BYPRODUCTS}
     PATCH_COMMAND     ${LIBARCHIVE_PATCH_CMD}
@@ -1438,7 +1322,7 @@ GET_BYPRODUCTS(grpc_cpp_plugin)
 
 ExternalProject_Add(
   ${GRPC_TARGET}
-  DEPENDS          protobuf protoc zlib
+  DEPENDS          protobuf protoc
   PREFIX           ${GRPC_CMAKE_ROOT}
   PATCH_COMMAND    ${GRPC_PATCH_CMD}
   BUILD_BYPRODUCTS ${LIBGPR_BYPRODUCTS};${LIBGRPC_BYPRODUCTS};${LIBGRPC++_BYPRODUCTS};${GRPC_CPP_PLUGIN_BYPRODUCTS}
