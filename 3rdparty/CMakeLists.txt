@@ -23,7 +23,6 @@ else ()
 endif ()
 
 # TODO(andschwa): Move each URL to the dependency itself.
-set(BOOST_URL           ${FETCH_URL}/boost-${BOOST_VERSION}.tar.gz)
 set(BZIP2_URL           ${FETCH_URL}/bzip2-${BZIP2_VERSION}.tar.gz)
 set(CONCURRENTQUEUE_URL ${FETCH_URL}/concurrentqueue-${CONCURRENTQUEUE_VERSION}.tar.gz)
 set(CSI_V0_URL          ${FETCH_URL}/csi-${CSI_V0_VERSION}.tar.gz)
@@ -193,30 +192,8 @@ endfunction()
 # Boost: C++ Libraries.
 # http://www.boost.org
 #######################
-EXTERNAL(boost ${BOOST_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-add_library(boost INTERFACE)
-add_dependencies(boost ${BOOST_TARGET})
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU OR CMAKE_CXX_COMPILER_ID MATCHES Clang)
-  # Headers including Boost 1.65.0 fail to compile with GCC 7.2 and
-  # CLang 3.6 without `-Wno-unused-local-typedefs`.
-  # TODO(andschwa): Remove this when Boost has a resolution.
-  target_compile_options(boost INTERFACE -Wno-unused-local-typedefs)
-endif ()
-target_include_directories(boost INTERFACE ${BOOST_ROOT})
-
-# Patch Boost to avoid repeated "Unknown compiler warnings" on Windows.
-PATCH_CMD(BOOST_PATCH_CMD boost-${BOOST_VERSION}.patch)
-
-ExternalProject_Add(
-  ${BOOST_TARGET}
-  PREFIX            ${BOOST_CMAKE_ROOT}
-  PATCH_COMMAND     ${BOOST_PATCH_CMD}
-  CONFIGURE_COMMAND ${CMAKE_NOOP}
-  BUILD_COMMAND     ${CMAKE_NOOP}
-  INSTALL_COMMAND   ${CMAKE_NOOP}
-  URL               ${BOOST_URL}
-  URL_HASH          ${BOOST_HASH})
-
+hunter_add_package(Boost)
+find_package(Boost CONFIG REQUIRED)
 
 # moodycamel::ConcurrentQueue: An industrial-strength lock-free queue.
 # https://github.com/cameron314/concurrentqueue

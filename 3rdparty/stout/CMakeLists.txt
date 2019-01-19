@@ -22,7 +22,7 @@ target_include_directories(stout INTERFACE include)
 target_link_libraries(
   stout INTERFACE
   apr
-  boost
+  Boost::boost
   elfio
   glog::glog
   libarchive
