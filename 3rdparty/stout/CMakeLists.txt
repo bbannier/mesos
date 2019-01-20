@@ -29,7 +29,7 @@ target_link_libraries(
   libcurl
   picojson
   protobuf
-  rapidjson
+  RapidJSON::rapidjson
   Threads::Threads
   $<$<PLATFORM_ID:Linux>:rt dl svn>
   $<$<PLATFORM_ID:Darwin>:svn>
