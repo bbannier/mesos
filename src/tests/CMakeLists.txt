@@ -278,11 +278,13 @@ endif ()
 
 # THE TEST AND HELPER EXECUTABLES.
 ##################################
+find_package(GMock CONFIG REQUIRED)
+
 add_library(mesos-tests-interface INTERFACE)
 target_link_libraries(
   mesos-tests-interface INTERFACE
   mesos
-  googletest)
+  GMock::main)
 
 if (NOT WIN32)
   target_link_libraries(
