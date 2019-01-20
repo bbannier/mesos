@@ -24,7 +24,7 @@ target_link_libraries(
   apr
   boost
   elfio
-  glog
+  glog::glog
   libarchive
   libcurl
   picojson
