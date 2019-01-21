@@ -26,8 +26,8 @@ include("cmake/HunterGate.cmake")
 HunterGate(
     URL "https://github.com/ruslo/hunter/archive/v0.23.89.tar.gz"
     SHA1 "a370290a8b32987755a36d64807bf8c7f5b61730"
-)
-set(HUNTER_BUILD_SHARED_LIBS ON)
+    LOCAL)
+# set(HUNTER_BUILD_SHARED_LIBS ON)
 
 project(Mesos)
 set(MESOS_MAJOR_VERSION 1)

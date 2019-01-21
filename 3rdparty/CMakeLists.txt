@@ -87,15 +87,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(External)
 include(PatchCommand)
 
-# Variables for current specified linkage.
-# NOTE: Not all third-party dependencies will respect this.
-if (BUILD_SHARED_LIBS)
-  set(LIBRARY_LINKAGE SHARED)
-  set(LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-else ()
-  set(LIBRARY_LINKAGE STATIC)
-  set(LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
-endif ()
+set(LIBRARY_LINKAGE STATIC)
+set(LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 # Sets a variable CMAKE_NOOP as noop operation.
 #
@@ -120,7 +113,7 @@ list(APPEND CMAKE_FORWARD_ARGS
   # `ExternalProject_Add`.
   -G${CMAKE_GENERATOR}
   -DCMAKE_POSITION_INDEPENDENT_CODE=${CMAKE_POSITION_INDEPENDENT_CODE}
-  -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS})
+  -DBUILD_SHARED_LIBS=OFF)
 
 # This only matters for single-configuration generators.
 # E.g. Makefile, but not Visual Studio.
@@ -424,8 +417,6 @@ if (ENABLE_LIBEVENT)
     set(LIBEVENT_CMAKE_FORWARD_ARGS
       ${CMAKE_C_FORWARD_ARGS}
       ${CMAKE_SSL_FORWARD_ARGS}
-      # NOTE: Libevent does not respect the BUILD_SHARED_LIBS global flag.
-      -DEVENT__BUILD_SHARED_LIBRARIES=${BUILD_SHARED_LIBS}
       -DEVENT__DISABLE_OPENSSL=$<NOT:$<BOOL:${ENABLE_SSL}>>
       -DEVENT__DISABLE_BENCHMARK=ON
       -DEVENT__DISABLE_REGRESS=ON
@@ -621,15 +612,12 @@ if (WIN32)
     -DCURL_DISABLE_LDAP=ON
     -DBUILD_TESTING=OFF)
 
-  # NOTE: cURL does not respect BUILD_SHARED_LIBS.
-  if (NOT BUILD_SHARED_LIBS)
-    # This is both a CMake argument and a pre-processor definition.
-    list(APPEND CURL_CMAKE_FORWARD_ARGS -DCURL_STATICLIB=ON)
+  # This is both a CMake argument and a pre-processor definition.
+  list(APPEND CURL_CMAKE_FORWARD_ARGS -DCURL_STATICLIB=ON)
 
-    set_target_properties(
-      libcurl PROPERTIES
-      INTERFACE_COMPILE_DEFINITIONS CURL_STATICLIB)
-  endif ()
+  set_target_properties(
+    libcurl PROPERTIES
+    INTERFACE_COMPILE_DEFINITIONS CURL_STATICLIB)
 
   set_target_properties(
     libcurl PROPERTIES
@@ -871,215 +859,14 @@ find_package(GMock CONFIG REQUIRED)
 # Protocol Buffers: Google's data interchange format.
 # https://developers.google.com/protocol-buffers/
 #####################################################
-EXTERNAL(protobuf ${PROTOBUF_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-
-# TODO(andschwa): Move protobufs so these don't have to be GLOBAL.
-add_library(protobuf ${LIBRARY_LINKAGE} IMPORTED GLOBAL)
-
-add_dependencies(protobuf ${PROTOBUF_TARGET})
-add_executable(protoc IMPORTED GLOBAL)
-add_dependencies(protoc ${PROTOBUF_TARGET})
-
-set_target_properties(
-  protobuf PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${PROTOBUF_ROOT}/src)
-
-set(PROTOBUF_CMAKE_FORWARD_ARGS ${CMAKE_CXX_FORWARD_ARGS}
-  -Dprotobuf_BUILD_TESTS=OFF)
-
-if (WIN32)
-  PATCH_CMD(PROTOBUF_PATCH_CMD protobuf-${PROTOBUF_VERSION}.patch)
-
-  # Link to the CRT dynamically.
-  list(APPEND PROTOBUF_CMAKE_FORWARD_ARGS
-    -Dprotobuf_MSVC_STATIC_RUNTIME=OFF)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      protobuf PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/libprotobufd${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/libprotobuf${LIBRARY_SUFFIX})
-
-    set_target_properties(
-      protoc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${PROTOBUF_ROOT}-build/Debug/protoc.exe
-      IMPORTED_LOCATION_RELEASE ${PROTOBUF_ROOT}-build/Release/protoc.exe)
-  else ()
-    # This is for single-configuration generators such as Ninja.
-    if (CMAKE_BUILD_TYPE MATCHES Debug)
-      set(PROTOBUF_SUFFIX "d")
-    endif ()
-
-    set_target_properties(
-      protobuf PROPERTIES
-      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
-
-    set_target_properties(
-      protoc PROPERTIES
-      IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc.exe)
-  endif ()
-else ()
-  # This is for single-configuration generators such as GNU Make.
-  if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(PROTOBUF_SUFFIX d)
-  endif ()
-
-  set_target_properties(
-    protobuf PROPERTIES
-    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/libprotobuf${PROTOBUF_SUFFIX}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    protoc PROPERTIES
-    IMPORTED_LOCATION ${PROTOBUF_ROOT}-build/protoc)
-endif ()
-
-MAKE_INCLUDE_DIR(protobuf)
-GET_BYPRODUCTS(protobuf)
-
-ExternalProject_Add(
-  ${PROTOBUF_TARGET}
-  PREFIX            ${PROTOBUF_CMAKE_ROOT}
-  PATCH_COMMAND     ${PROTOBUF_PATCH_CMD}
-  BUILD_BYPRODUCTS  ${PROTOBUF_BYPRODUCTS}
-  SOURCE_SUBDIR     cmake
-  CMAKE_ARGS        ${PROTOBUF_CMAKE_FORWARD_ARGS}
-  INSTALL_COMMAND   ${CMAKE_NOOP}
-  URL               ${PROTOBUF_URL}
-  URL_HASH          ${PROTOBUF_HASH})
-
+hunter_add_package(Protobuf)
+find_package(Protobuf CONFIG REQUIRED)
 
 # gRPC: Google's high performance, open-source universal RPC framework.
 # https://grpc.io/
 #######################################################################
-EXTERNAL(grpc ${GRPC_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-
-add_library(libgpr ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgpr ${GRPC_TARGET})
-add_library(libgrpc ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgrpc ${GRPC_TARGET})
-add_library(libgrpc++ ${LIBRARY_LINKAGE} IMPORTED)
-add_dependencies(libgrpc++ ${GRPC_TARGET})
-
-add_library(grpc INTERFACE)
-target_link_libraries(grpc INTERFACE libgrpc++ libgrpc libgpr)
-
-# TODO(chhsiao): Move grpc so these don't have to be GLOBAL.
-add_executable(grpc_cpp_plugin IMPORTED GLOBAL)
-add_dependencies(grpc_cpp_plugin ${GRPC_TARGET})
-
-set(GRPC_CMAKE_ARGS
-  ${CMAKE_C_FORWARD_ARGS}
-  ${CMAKE_CXX_FORWARD_ARGS}
-  -DCMAKE_PREFIX_PATH=${PROTOBUF_ROOT}-build
-  -DgRPC_PROTOBUF_PROVIDER=package
-  -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
-  -DgRPC_ZLIB_PROVIDER=package)
-
-if (ENABLE_SSL)
-  set(GRPC_VARIANT "")
-  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=package ${CMAKE_SSL_FORWARD_ARGS})
-else ()
-  set(GRPC_VARIANT "_unsecure")
-  list(APPEND GRPC_CMAKE_ARGS -DgRPC_SSL_PROVIDER=none)
-endif ()
-
-set(GRPC_BUILD_CMD
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target gpr &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc${GRPC_VARIANT} &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc++${GRPC_VARIANT} &&
-  ${CMAKE_COMMAND} --build . --config $<CONFIG> --target grpc_cpp_plugin)
-
-set_target_properties(
-  grpc PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${GRPC_ROOT}/include)
-
-PATCH_CMD(GRPC_PATCH_CMD grpc-${GRPC_VERSION}.patch)
-
-if (WIN32)
-  list(APPEND GRPC_CMAKE_ARGS -DZLIB_ROOT=${ZLIB_ROOT}-lib)
-
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/gpr${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc++ PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_DEBUG ${GRPC_ROOT}-build/Debug/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB_RELEASE ${GRPC_ROOT}-build/Release/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      grpc_cpp_plugin PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${GRPC_ROOT}-build/Debug/grpc_cpp_plugin.exe
-      IMPORTED_LOCATION_RELEASE ${GRPC_ROOT}-build/Release/grpc_cpp_plugin.exe)
-  else ()
-    set_target_properties(
-      libgpr PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/gpr${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/gpr${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      libgrpc++ PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${LIBRARY_SUFFIX}
-      IMPORTED_IMPLIB ${GRPC_ROOT}-build/grpc++${GRPC_VARIANT}${CMAKE_IMPORT_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      grpc_cpp_plugin PROPERTIES
-      IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin.exe)
-  endif()
-else ()
-  set_target_properties(
-    libgpr PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgpr${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    libgrpc PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc${GRPC_VARIANT}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    libgrpc++ PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/libgrpc++${GRPC_VARIANT}${LIBRARY_SUFFIX})
-
-  set_target_properties(
-    grpc_cpp_plugin PROPERTIES
-    IMPORTED_LOCATION ${GRPC_ROOT}-build/grpc_cpp_plugin)
-endif ()
-
-MAKE_INCLUDE_DIR(grpc)
-GET_BYPRODUCTS(libgpr)
-GET_BYPRODUCTS(libgrpc)
-GET_BYPRODUCTS(libgrpc++)
-GET_BYPRODUCTS(grpc_cpp_plugin)
-
-ExternalProject_Add(
-  ${GRPC_TARGET}
-  DEPENDS          protobuf protoc
-  PREFIX           ${GRPC_CMAKE_ROOT}
-  PATCH_COMMAND    ${GRPC_PATCH_CMD}
-  BUILD_BYPRODUCTS ${LIBGPR_BYPRODUCTS};${LIBGRPC_BYPRODUCTS};${LIBGRPC++_BYPRODUCTS};${GRPC_CPP_PLUGIN_BYPRODUCTS}
-  CMAKE_ARGS       ${GRPC_CMAKE_ARGS}
-  BUILD_COMMAND    ${GRPC_BUILD_CMD}
-  INSTALL_COMMAND  ${CMAKE_NOOP}
-  URL              ${GRPC_URL}
-  URL_HASH         ${GRPC_HASH})
-
+hunter_add_package(gRPC)
+find_package(gRPC CONFIG REQUIRED)
 
 # Jemalloc: General-purpose malloc implementation.
 # http://jemalloc.net

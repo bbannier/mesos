@@ -28,7 +28,7 @@ target_link_libraries(
   libarchive
   libcurl
   picojson
-  protobuf
+  protobuf::libprotobuf
   RapidJSON::rapidjson
   Threads::Threads
   $<$<PLATFORM_ID:Linux>:rt dl svn>

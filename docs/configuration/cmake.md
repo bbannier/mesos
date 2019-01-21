@@ -31,15 +31,6 @@ See more information in the [CMake documentation](../cmake.md).
   </tr>
   <tr>
     <td>
-      -DBUILD_SHARED_LIBS=(TRUE|FALSE)
-    </td>
-    <td>
-      Build shared libraries (where possible).
-      [default=FALSE for Windows, TRUE otherwise]
-    </td>
-  </tr>
-  <tr>
-    <td>
       -DENABLE_GC_UNUSED=(TRUE|FALSE)
     </td>
     <td>

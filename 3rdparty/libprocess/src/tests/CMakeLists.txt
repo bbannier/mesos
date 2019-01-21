@@ -25,6 +25,7 @@ set(PROCESS_TESTS_SRC
   encoder_tests.cpp
   future_tests.cpp
   grpc_tests.cpp
+  grpc_tests.proto
   http_tests.cpp
   io_tests.cpp
   limiter_tests.cpp
@@ -64,7 +65,7 @@ list(APPEND PROCESS_TESTS_SRC
 
 add_custom_command(
   OUTPUT ${GRPC_TESTS_PROTOS}
-  COMMAND protoc
+  COMMAND protobuf::protoc
     -I${CMAKE_CURRENT_SOURCE_DIR}
     --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
     --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
@@ -117,20 +118,17 @@ add_test(NAME ProcessTests COMMAND libprocess-tests)
 
 # LIBPROCESS BENCHMARK TESTS.
 #############################
-add_custom_command(
-  OUTPUT benchmarks.pb.h benchmarks.pb.cc
-  COMMAND protoc
-    -I${CMAKE_CURRENT_SOURCE_DIR}
-    --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks.proto
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks.proto)
-
 add_executable(benchmarks
   EXCLUDE_FROM_ALL
   benchmarks.cpp
-  benchmarks.pb.cc)
-target_link_libraries(benchmarks PRIVATE process-interface)
+  benchmarks.proto)
+target_link_libraries(benchmarks PRIVATE process-interface protobuf::libprotobuf)
 target_include_directories(benchmarks PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+protobuf_generate(
+  LANGUAGE cpp
+  TARGET benchmarks
+  ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks.proto)
 
 # Add dependency of `libprocess-tests` on `benchmarks`. This is done
 # to make sure that `benchmarks` is built as part of the `tests`

@@ -23,16 +23,6 @@ option(VERBOSE
   TRUE)
 set(CMAKE_VERBOSE_MAKEFILE ${VERBOSE})
 
-if (NOT WIN32)
-  set(DEFAULT_BUILD_SHARED_LIBS TRUE)
-else ()
-  set(DEFAULT_BUILD_SHARED_LIBS FALSE)
-endif ()
-
-option(BUILD_SHARED_LIBS
-  "Build shared libraries."
-  ${DEFAULT_BUILD_SHARED_LIBS})
-
 option(ENABLE_PRECOMPILED_HEADERS
   "Enable auto-generated precompiled headers using cotire"
   ${WIN32})
@@ -510,12 +500,6 @@ if (WIN32)
   # Fix Warning C4530: C++ exception handler used, but unwind semantics are not
   # enabled.
   add_compile_options(/EHsc)
-
-  # Build against the multi-threaded version of the C runtime library (CRT).
-  if (BUILD_SHARED_LIBS)
-    message(WARNING "Building with shared libraries is a work-in-progress.")
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-  endif ()
 
   if (ENABLE_SSL)
     # NOTE: We don't care about using the debug version because OpenSSL includes

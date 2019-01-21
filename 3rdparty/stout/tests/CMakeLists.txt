@@ -47,8 +47,6 @@ set(STOUT_ROOT_TESTS_SRC
   os_tests.cpp
   path_tests.cpp
   protobuf_tests.cpp
-  protobuf_tests.pb.cc
-  protobuf_tests.pb.h
   protobuf_tests.proto
   recordio_tests.cpp
   result_tests.cpp
@@ -94,19 +92,14 @@ set(STOUT_TESTS_SRC
   ${STOUT_ROOT_TESTS_SRC}
   ${STOUT_OS_TESTS_SRC})
 
-# THE C++ PROTOCOL BUFFER CODE (protobuf_tests.pb.h and protobuf_tests.pb.cc).
-##############################################################################
-add_custom_command(
-  OUTPUT protobuf_tests.pb.h protobuf_tests.pb.cc
-  COMMAND protoc
-    -I${CMAKE_CURRENT_SOURCE_DIR}
-    --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/protobuf_tests.proto
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/protobuf_tests.proto)
-
 add_executable(stout-tests EXCLUDE_FROM_ALL ${STOUT_TESTS_SRC})
 target_link_libraries(stout-tests PRIVATE stout GMock::main)
 target_include_directories(stout-tests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
+protobuf_generate(
+  LANGUAGE cpp
+  TARGET stout-tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/protobuf_tests.proto)
 
 # ADD TEST TARGET (runs when you do, e.g., `make check`).
 #########################################################
