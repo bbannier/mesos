@@ -113,13 +113,8 @@ class ReviewError(Exception):
 
 def shell(command, working_dir=None):
     """Run a shell command."""
-    try:
-        out = subprocess.check_output(
-            command, stderr=subprocess.STDOUT, cwd=working_dir, shell=True)
-    except subprocess.CalledProcessError as err:
-        error = err.output.decode("utf-8")
-        print("Error running command '%s': %s" % (command, error))
-        exit(1)
+    out = subprocess.check_output(
+        command, stderr=subprocess.STDOUT, cwd=working_dir, shell=True)
     return out.decode(sys.stdout.encoding)
 
 
@@ -179,6 +174,12 @@ def apply_reviews(review_request, reviews):
     for review in review_request["depends_on"]:
         review_url = review["href"]
         print("Dependent review: %s " % review_url)
+
+        # TODO(bbannier): It is currently not possible to distinguish
+        # which review failed due to the recursive implementation used
+        # here; this could lead to situations where we see the error
+        # on a dependent instead of on the original review. This
+        # should be cleaned up.
         apply_reviews(api(review_url)["review_request"], reviews)
 
     # Now apply this review if not yet submitted.
