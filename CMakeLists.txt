@@ -58,6 +58,12 @@ include(MesosConfigure)
 # SUBDIRECTORIES.
 #################
 add_subdirectory(3rdparty)
+
+# FIXME(bbannier): moved this up to make target visible, probably
+# should have all deps in a file on this level.
+hunter_add_package(gRPC)
+find_package(gRPC CONFIG REQUIRED)
+
 add_subdirectory(src)
 
 

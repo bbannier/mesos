@@ -69,7 +69,7 @@ add_custom_command(
     -I${CMAKE_CURRENT_SOURCE_DIR}
     --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
     --grpc_out=${CMAKE_CURRENT_BINARY_DIR}
-    --plugin=protoc-gen-grpc=gRPC::grpc_cpp_plugin
+    --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
     ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/grpc_tests.proto)
 

@@ -100,7 +100,7 @@ target_link_libraries(
   process PUBLIC
   stout
   http-parser::http_parser
-  grpc
+  gRPC::grpc++
   $<$<BOOL:${ENABLE_SSL}>:OpenSSL::SSL>
   $<$<BOOL:${ENABLE_SSL}>:OpenSSL::Crypto>)
 
