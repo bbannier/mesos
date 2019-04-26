@@ -175,7 +175,7 @@ function(PROTOC_GENERATE)
   # Compile the .proto file.
   add_custom_command(
     OUTPUT ${CC} ${H} ${GRPC_CC} ${GRPC_H} ${JAVA}
-    COMMAND protoc ${PROTOC_OPTIONS} ${PROTO}
+    COMMAND $<TARGET_FILE:protobuf::protoc> ${PROTOC_OPTIONS} ${PROTO}
     DEPENDS ${PROTOC_DEPENDS} ${PROTO}
     WORKING_DIRECTORY ${MESOS_BIN})
 endfunction()

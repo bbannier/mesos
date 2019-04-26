@@ -109,8 +109,8 @@ add_library(
   ${INTERNAL_PROTOBUF_SRC})
 
 target_link_libraries(mesos-protobufs PUBLIC
-  protobuf
-  grpc)
+  protobuf::libprotobuf
+  gRPC::grpc++)
 
 target_include_directories(
   mesos-protobufs
