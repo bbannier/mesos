@@ -41,7 +41,6 @@ set(PICOJSON_URL        ${FETCH_URL}/picojson-${PICOJSON_VERSION}.tar.gz)
 set(PROTOBUF_URL        ${FETCH_URL}/protobuf-${PROTOBUF_VERSION}.tar.gz)
 set(RAPIDJSON_URL       ${FETCH_URL}/rapidjson-${RAPIDJSON_VERSION}.tar.gz)
 set(XZ_URL              ${FETCH_URL}/xz-${XZ_VERSION}-modified.tar.gz)
-set(ZOOKEEPER_URL       ${FETCH_URL}/zookeeper-${ZOOKEEPER_VERSION}.tar.gz)
 
 # NOTE: libevent doesn't come rebundled, so this URL is always the same. But,
 # it's only downloaded if `ENABLE_LIBEVENT` is set.
@@ -899,67 +898,8 @@ endif ()
 # Apache ZooKeeper: C Client Library to ZooKeeper.
 # https://zookeeper.apache.org/
 ##################################################
-# TODO(andschwa): Move zookeeper so these don't have to be GLOBAL.
-EXTERNAL(zookeeper ${ZOOKEEPER_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-add_library(zookeeper STATIC IMPORTED GLOBAL)
-add_library(zk-hashtable STATIC IMPORTED GLOBAL)
-add_dependencies(zookeeper ${ZOOKEEPER_TARGET})
-
-set(ZOOKEEPER_COMPILE_DEFINITIONS ZOOKEEPER_VERSION="${ZOOKEEPER_VERSION}" USE_STATIC_LIB)
-set_target_properties(
-  zookeeper PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${ZOOKEEPER_ROOT}/src/c/include;${ZOOKEEPER_ROOT}/src/c/generated"
-  INTERFACE_LINK_LIBRARIES zk-hashtable
-  INTERFACE_COMPILE_DEFINITIONS "${ZOOKEEPER_COMPILE_DEFINITIONS}")
-
-set(ZOOKEEPER_CMAKE_FORWARD_ARGS ${CMAKE_CXX_FORWARD_ARGS} -DWANT_CPPUNIT=OFF)
-
-PATCH_CMD(ZOOKEEPER_PATCH_CMD zookeeper-${ZOOKEEPER_VERSION}.patch)
-
-if (WIN32)
-  if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_target_properties(
-      zookeeper PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${ZOOKEEPER_ROOT}-build/Debug/zookeeper${CMAKE_STATIC_LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${ZOOKEEPER_ROOT}-build/Release/zookeeper${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      zk-hashtable PROPERTIES
-      IMPORTED_LOCATION_DEBUG ${ZOOKEEPER_ROOT}-build/Debug/hashtable${CMAKE_STATIC_LIBRARY_SUFFIX}
-      IMPORTED_LOCATION_RELEASE ${ZOOKEEPER_ROOT}-build/Release/hashtable${CMAKE_STATIC_LIBRARY_SUFFIX})
-  else ()
-    set_target_properties(
-      zookeeper PROPERTIES
-      IMPORTED_LOCATION ${ZOOKEEPER_ROOT}-build/zookeeper${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-    set_target_properties(
-      zk-hashtable PROPERTIES
-      IMPORTED_LOCATION ${ZOOKEEPER_ROOT}-build/hashtable${CMAKE_STATIC_LIBRARY_SUFFIX})
-  endif ()
-else ()
-  set_target_properties(
-    zookeeper PROPERTIES
-    IMPORTED_LOCATION ${ZOOKEEPER_ROOT}-build/libzookeeper${CMAKE_STATIC_LIBRARY_SUFFIX})
-
-  set_target_properties(
-    zk-hashtable PROPERTIES
-    IMPORTED_LOCATION ${ZOOKEEPER_ROOT}-build/libhashtable${CMAKE_STATIC_LIBRARY_SUFFIX})
-endif ()
-
-MAKE_INCLUDE_DIR(zookeeper)
-GET_BYPRODUCTS(zookeeper)
-GET_BYPRODUCTS(zk-hashtable)
-
-ExternalProject_Add(
-  ${ZOOKEEPER_TARGET}
-  PREFIX            ${ZOOKEEPER_CMAKE_ROOT}
-  BUILD_BYPRODUCTS  ${ZOOKEEPER_BYPRODUCTS};${ZK-HASHTABLE_BYPRODUCTS}
-  PATCH_COMMAND     ${ZOOKEEPER_PATCH_CMD}
-  SOURCE_SUBDIR     src/c
-  CMAKE_ARGS        ${ZOOKEEPER_CMAKE_FORWARD_ARGS}
-  INSTALL_COMMAND   ${CMAKE_NOOP}
-  URL               ${ZOOKEEPER_URL}
-  URL_HASH          ${ZOOKEEPER_HASH})
+hunter_add_package(zookeeper)
+find_package(zookeeper CONFIG REQUIRED)
 
 
 # LevelDB: A fast key-value storage library.

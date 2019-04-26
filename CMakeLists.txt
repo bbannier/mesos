@@ -69,6 +69,9 @@ if (NOT WIN32)
   find_package(leveldb CONFIG REQUIRED)
 endif ()
 
+hunter_add_package(zookeeper)
+find_package(zookeeper CONFIG REQUIRED)
+
 add_subdirectory(src)
 
 

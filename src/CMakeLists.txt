@@ -594,7 +594,7 @@ target_link_libraries(
   mesos PUBLIC
   process
   sasl2
-  zookeeper
+  zookeeper::zookeeper_mt
   mesos-protobufs
   $<$<PLATFORM_ID:Linux>:nvml>
   $<$<BOOL:${HAS_JAVA}>:mesos-java>)
