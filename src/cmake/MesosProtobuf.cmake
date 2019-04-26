@@ -172,11 +172,6 @@ function(PROTOC_GENERATE)
     list(APPEND PROTOC_DEPENDS make_bin_java_dir)
   endif ()
 
-  # Make sure that the gRPC plugin is built.
-  if (PROTOC_GRPC)
-    list(APPEND PROTOC_DEPENDS grpc_cpp_plugin)
-  endif ()
-
   # Compile the .proto file.
   add_custom_command(
     OUTPUT ${CC} ${H} ${GRPC_CC} ${GRPC_H} ${JAVA}
