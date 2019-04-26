@@ -64,6 +64,11 @@ add_subdirectory(3rdparty)
 hunter_add_package(gRPC)
 find_package(gRPC CONFIG REQUIRED)
 
+if (NOT WIN32)
+  hunter_add_package(leveldb)
+  find_package(leveldb CONFIG REQUIRED)
+endif ()
+
 add_subdirectory(src)
 
 

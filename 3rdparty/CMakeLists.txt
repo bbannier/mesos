@@ -33,7 +33,6 @@ set(GOOGLETEST_URL      ${FETCH_URL}/googletest-release-${GOOGLETEST_VERSION}.ta
 set(GRPC_URL            ${FETCH_URL}/grpc-${GRPC_VERSION}.tar.gz)
 set(HTTP_PARSER_URL     ${FETCH_URL}/http-parser-${HTTP_PARSER_VERSION}.tar.gz)
 set(JEMALLOC_URL        ${FETCH_URL}/jemalloc-${JEMALLOC_VERSION}.tar.gz)
-set(LEVELDB_URL         ${FETCH_URL}/leveldb-${LEVELDB_VERSION}.tar.gz)
 set(LIBARCHIVE_URL      ${FETCH_URL}/libarchive-${LIBARCHIVE_VERSION}.tar.gz)
 set(LIBEV_URL           ${FETCH_URL}/libev-${LIBEV_VERSION}.tar.gz)
 set(LIBSECCOMP_URL      ${FETCH_URL}/libseccomp-${LIBSECCOMP_VERSION}.tar.gz)
