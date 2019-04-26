@@ -119,7 +119,7 @@ function(PROTOC_GENERATE)
   if (PROTOC_GRPC)
     list(APPEND PROTOC_OPTIONS
       --grpc_out=${CPP_OUT}
-      --plugin=protoc-gen-grpc=$<TARGET_FILE:grpc_cpp_plugin>)
+      --plugin=protoc-gen-grpc=gRPC::grpc_cpp_plugin)
   endif ()
 
   if (JAVA_OUT)
