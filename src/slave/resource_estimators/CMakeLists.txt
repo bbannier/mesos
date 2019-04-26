@@ -18,5 +18,5 @@
 ###############################
 # NOTE: This library uses underscores because of a hard-coded expectation of
 # `src/tests/oversubscription_tests.cpp`.
-add_library(fixed_resource_estimator fixed.cpp)
+add_library(fixed_resource_estimator SHARED fixed.cpp)
 target_link_libraries(fixed_resource_estimator PRIVATE mesos)

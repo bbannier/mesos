@@ -567,7 +567,7 @@ endif ()
 
 # THE MESOS LIBRARY
 ###################
-add_library(mesos ${MESOS_SRC})
+add_library(mesos SHARED ${MESOS_SRC})
 
 set_target_properties(
   mesos PROPERTIES

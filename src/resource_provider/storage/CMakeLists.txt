@@ -17,5 +17,5 @@
 # THE URI DISK PROFILE ADAPTOR LIBRARY.
 #######################################
 # NOTE: This library uses underscores to be consistent with other modules.
-add_library(uri_disk_profile_adaptor uri_disk_profile_adaptor.cpp)
+add_library(uri_disk_profile_adaptor SHARED uri_disk_profile_adaptor.cpp)
 target_link_libraries(uri_disk_profile_adaptor PRIVATE mesos)
