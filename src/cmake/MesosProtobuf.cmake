@@ -103,7 +103,7 @@ function(PROTOC_GENERATE)
 
   get_target_property(
     PROTOBUF_INCLUDE_DIR
-    protobuf
+    protobuf::libprotobuf
     INTERFACE_INCLUDE_DIRECTORIES)
 
   set(PROTOC_OPTIONS
