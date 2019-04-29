@@ -42,10 +42,6 @@ set(PROTOBUF_URL        ${FETCH_URL}/protobuf-${PROTOBUF_VERSION}.tar.gz)
 set(RAPIDJSON_URL       ${FETCH_URL}/rapidjson-${RAPIDJSON_VERSION}.tar.gz)
 set(XZ_URL              ${FETCH_URL}/xz-${XZ_VERSION}-modified.tar.gz)
 
-# NOTE: libevent doesn't come rebundled, so this URL is always the same. But,
-# it's only downloaded if `ENABLE_LIBEVENT` is set.
-set(LIBEVENT_URL ${3RDPARTY_DEPENDENCIES}/libevent-release-${LIBEVENT_VERSION}.tar.gz)
-
 if (WIN32)
   # NOTE: These dependencies are only rebundled on Windows because they
   # are available as installable packages on Linux; so they live
@@ -386,69 +382,8 @@ if (ENABLE_LIBEVENT)
   # libevent: An event notification library.
   # http://libevent.org/
   ##########################################
-  if (NOT UNBUNDLED_LIBEVENT)
-    EXTERNAL(libevent ${LIBEVENT_VERSION} ${CMAKE_CURRENT_BINARY_DIR})
-    add_library(libevent ${LIBRARY_LINKAGE} IMPORTED)
-    add_dependencies(libevent ${LIBEVENT_TARGET})
-
-    set_target_properties(
-      libevent PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${LIBEVENT_ROOT}/include;${LIBEVENT_ROOT}-build/include")
-
-    if (WIN32)
-      if (CMAKE_GENERATOR MATCHES "Visual Studio")
-        set_target_properties(
-          libevent PROPERTIES
-          IMPORTED_LOCATION_DEBUG ${LIBEVENT_ROOT}-build/lib/Debug/event${LIBRARY_SUFFIX}
-          IMPORTED_LOCATION_RELEASE ${LIBEVENT_ROOT}-build/lib/Release/event${LIBRARY_SUFFIX})
-      else ()
-        set_target_properties(
-          libevent PROPERTIES
-          IMPORTED_LOCATION ${LIBEVENT_ROOT}-build/lib/event${LIBRARY_SUFFIX})
-      endif ()
-    else ()
-      set_target_properties(
-        libevent PROPERTIES
-        IMPORTED_LOCATION ${LIBEVENT_ROOT}-build/lib/libevent${LIBRARY_SUFFIX})
-    endif ()
-
-    set(LIBEVENT_CMAKE_FORWARD_ARGS
-      ${CMAKE_C_FORWARD_ARGS}
-      ${CMAKE_SSL_FORWARD_ARGS}
-      -DEVENT__DISABLE_OPENSSL=$<NOT:$<BOOL:${ENABLE_SSL}>>
-      -DEVENT__DISABLE_BENCHMARK=ON
-      -DEVENT__DISABLE_REGRESS=ON
-      -DEVENT__DISABLE_SAMPLES=ON
-      -DEVENT__DISABLE_TESTS=ON)
-
-    if (CMAKE_C_COMPILER_ID MATCHES GNU OR CMAKE_C_COMPILER_ID MATCHES Clang)
-      list(APPEND LIBEVENT_CMAKE_FORWARD_ARGS -DCMAKE_C_FLAGS=-fPIC)
-    endif ()
-
-    MAKE_INCLUDE_DIR(libevent)
-    GET_BYPRODUCTS(libevent)
-
-    ExternalProject_Add(
-      ${LIBEVENT_TARGET}
-      PREFIX            ${LIBEVENT_CMAKE_ROOT}
-      BUILD_BYPRODUCTS  ${LIBEVENT_BYPRODUCTS}
-      CMAKE_ARGS        ${LIBEVENT_CMAKE_FORWARD_ARGS}
-      INSTALL_COMMAND   ${CMAKE_NOOP}
-      URL               ${LIBEVENT_URL}
-      URL_HASH          ${LIBEVENT_HASH})
-  else ()
-    find_package(LIBEVENT REQUIRED)
-    add_library(libevent INTERFACE)
-
-    foreach (lib ${LIBEVENT_LIBS})
-      get_filename_component(LIBEVENT_LIB ${lib} NAME_WE)
-      add_library(${LIBEVENT_LIB} SHARED IMPORTED)
-      set_target_properties(${LIBEVENT_LIB} PROPERTIES
-        IMPORTED_LOCATION ${lib}
-        INTERFACE_INCLUDE_DIRECTORIES ${LIBEVENT_INCLUDE_DIR})
-      target_link_libraries(libevent INTERFACE ${LIBEVENT_LIB})
-    endforeach ()
-  endif ()
+  hunter_add_package(Libevent)
+  find_package(Libevent CONFIG REQUIRED)
 elseif (NOT WIN32) # Windows defaults to `libwinio`, a native implementation.
   # libev: Full-featured high-performance event loop.
   # https://github.com/enki/libev

@@ -107,7 +107,7 @@ target_link_libraries(
 target_link_libraries(
   process PRIVATE
   concurrentqueue
-  $<IF:$<BOOL:${ENABLE_LIBEVENT}>,libevent,$<$<NOT:$<PLATFORM_ID:Windows>>:libev>>)
+  $<IF:$<BOOL:${ENABLE_LIBEVENT}>,Libevent::event,$<$<NOT:$<PLATFORM_ID:Windows>>:libev>>)
 
 target_compile_definitions(
   process PRIVATE

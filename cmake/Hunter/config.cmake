@@ -5,6 +5,7 @@ hunter_config(Protobuf VERSION ${HUNTER_Protobuf_VERSION} CMAKE_ARGS CMAKE_POSIT
 hunter_config(http-parser VERSION ${HUNTER_http-parser_VERSION} CMAKE_ARGS CMAKE_POSITION_INDEPENDENT_CODE=TRUE)
 hunter_config(leveldb VERSION ${HUNTER_leveldb_VERSION} CMAKE_ARGS CMAKE_POSITION_INDEPENDENT_CODE=TRUE)
 hunter_config(zookeeper VERSION ${HUNTER_zookeeper_VERSION} CMAKE_ARGS CMAKE_POSITION_INDEPENDENT_CODE=TRUE)
-# hunter_config(gRPC VERSION 1.12.1-p0)
+hunter_config(Libevent VERSION ${HUNTER_Libevent_VERSION} CMAKE_ARGS CMAKE_POSITION_INDEPENDENT_CODE=TRUE)
+
 
 # hunter_default_version(concurrentqueue VERSION 7b69a8f)
