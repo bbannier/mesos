@@ -9072,7 +9072,7 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
   EXPECT_CALL(*scheduler, offers(_, _))
     .WillOnce(FutureArg<1>(&offers));
 
-  resourceProvider->process->send(call);
+  resourceProvider->send(call);
 
   AWAIT_READY(updateSlaveMessage);
 

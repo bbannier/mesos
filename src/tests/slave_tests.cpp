@@ -10535,7 +10535,7 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
     call.mutable_subscribe()->mutable_resource_provider_info()->CopyFrom(
         resourceProviderInfo);
 
-    resourceProvider.process->send(call);
+    resourceProvider.send(call);
   }
 
   // The subscription event contains the assigned resource provider id.
@@ -10565,7 +10565,7 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
     updateState->mutable_resource_version_uuid()->set_value(
         resourceVersionUuid);
 
-    resourceProvider.process->send(call);
+    resourceProvider.send(call);
   }
 
   AWAIT_READY(updateSlaveMessage);
@@ -10888,7 +10888,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
     operation->add_statuses()->CopyFrom(operation->latest_status());
 
-    AWAIT_READY(resourceProvider.process->send(call));
+    AWAIT_READY(resourceProvider.send(call));
   }
 
   // Once the master has seen that there is no resource managed
@@ -11292,7 +11292,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
 
     _operation->add_statuses()->CopyFrom(*lastStatus);
 
-    AWAIT_READY(resourceProvider.process->send(call));
+    AWAIT_READY(resourceProvider.send(call));
   }
 
   AWAIT_READY(updateSlaveMessage);
@@ -11425,7 +11425,7 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
         evolve(protobuf::createUUID()));
     updateState->mutable_resources()->CopyFrom(resourceProviderResources_);
 
-    AWAIT_READY(resourceProvider.process->send(call));
+    AWAIT_READY(resourceProvider.send(call));
   }
 
   AWAIT_READY(updateSlaveMessage);

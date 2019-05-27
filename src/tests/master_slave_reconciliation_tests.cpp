@@ -505,7 +505,7 @@ TEST_F(
           ->mutable_resource_provider_id()
           ->CopyFrom(resourceProvider->process->info.id());
 
-        resourceProvider->process->send(call);
+        resourceProvider->send(call);
       }
     };
 

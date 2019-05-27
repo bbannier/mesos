@@ -3352,6 +3352,12 @@ public:
     process::terminate(*process);
   }
 
+  process::Future<Nothing> send(const Call& call)
+  {
+    return process::dispatch(
+        *process, &MockResourceProviderProcessT::send, call);
+  }
+
   // Made public for mocking.
   using MockResourceProviderProcessT = MockResourceProviderProcess<
       mesos::v1::resource_provider::Event,
