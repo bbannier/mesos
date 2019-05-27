@@ -487,7 +487,7 @@ TEST_F(
 
         call.set_type(v1::resource_provider::Call::UPDATE_OPERATION_STATUS);
         call.mutable_resource_provider_id()->CopyFrom(
-            resourceProvider->info.id());
+            resourceProvider->process->info.id());
 
         v1::resource_provider::Call::UpdateOperationStatus*
           updateOperationStatus = call.mutable_update_operation_status();
@@ -498,18 +498,18 @@ TEST_F(
         updateOperationStatus->mutable_operation_uuid()->CopyFrom(
             operationUuid);
 
-        ASSERT_TRUE(resourceProvider->info.has_id())
+        ASSERT_TRUE(resourceProvider->process->info.has_id())
           << "Asked to reconcile before subscription was finished";
 
         updateOperationStatus->mutable_status()
           ->mutable_resource_provider_id()
-          ->CopyFrom(resourceProvider->info.id());
+          ->CopyFrom(resourceProvider->process->info.id());
 
         resourceProvider->send(call);
       }
     };
 
-  EXPECT_CALL(*resourceProvider, reconcileOperations(_))
+  EXPECT_CALL(*resourceProvider->process, reconcileOperations(_))
     .WillOnce(Invoke(reconcileOperations));
 
   Owned<EndpointDetector> endpointDetector(

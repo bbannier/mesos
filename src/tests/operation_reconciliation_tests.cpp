@@ -821,7 +821,7 @@ TEST_P(OperationReconciliationTest, AgentPendingOperationAfterMasterFailover)
   // We override the mock resource provider's default action, so the operation
   // will stay in `OPERATION_PENDING`.
   Future<resource_provider::Event::ApplyOperation> applyOperation;
-  EXPECT_CALL(*resourceProvider, applyOperation(_))
+  EXPECT_CALL(*resourceProvider->process, applyOperation(_))
     .WillOnce(FutureArg<0>(&applyOperation));
 
   Owned<EndpointDetector> endpointDetector(
@@ -1659,7 +1659,7 @@ TEST_P(OperationReconciliationTest, OperationOnUnsubscribedProvider)
 
   AWAIT_READY(applyOperationMessage);
 
-  // Terminate the resource provider.
+  // Tear the resource provider down.
   resourceProvider.reset();
 
   // Make sure the resource provider manager processes the disconnection.
@@ -1757,9 +1757,9 @@ TEST_P(
   ASSERT_TRUE(updateSlaveMessage->has_resource_providers());
   ASSERT_EQ(1, updateSlaveMessage->resource_providers().providers_size());
 
-  ASSERT_TRUE(resourceProvider->info.has_id());
+  ASSERT_TRUE(resourceProvider->process->info.has_id());
 
-  resourceProviderInfo = resourceProvider->info;
+  resourceProviderInfo = resourceProvider->process->info;
 
   Clock::pause();
 

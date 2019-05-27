@@ -1168,7 +1168,7 @@ TEST_P(MasterAPITest, GetOperations)
 
   // The operation is still pending when we receive this event.
   Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   // Start an operation.
@@ -8835,9 +8835,11 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
 
   Future<mesos::v1::resource_provider::Event::Subscribed> subscribed;
 
-  EXPECT_CALL(resourceProvider, subscribed(_))
+  EXPECT_CALL(*resourceProvider.process, subscribed(_))
     .WillOnce(DoAll(
-        Invoke(&resourceProvider, &v1::MockResourceProvider::subscribedDefault),
+        Invoke(
+            resourceProvider.process.get(),
+            &v1::MockResourceProviderProcess::subscribedDefault),
         FutureArg<0>(&subscribed)))
     .WillRepeatedly(Return());
 
@@ -8866,7 +8868,7 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
     // connection is broken will does not succeed, we might observe other
     // `disconnected` events.
     Future<Nothing> disconnected;
-    EXPECT_CALL(resourceProvider, disconnected())
+    EXPECT_CALL(*resourceProvider.process, disconnected())
       .WillOnce(FutureSatisfy(&disconnected))
       .WillRepeatedly(Return());
 
@@ -9031,7 +9033,7 @@ TEST_P(AgentAPITest, GetOperations)
 
   // The operation is still pending when we receive this event.
   Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   // Start an operation.

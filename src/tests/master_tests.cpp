@@ -9014,9 +9014,9 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
   resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
-  ASSERT_TRUE(resourceProvider->info.has_id());
+  ASSERT_TRUE(resourceProvider->process->info.has_id());
 
-  disk1.mutable_provider_id()->CopyFrom(resourceProvider->info.id());
+  disk1.mutable_provider_id()->CopyFrom(resourceProvider->process->info.id());
 
   // Start and register a framework.
   auto scheduler = std::make_shared<v1::MockHTTPScheduler>();
@@ -9051,10 +9051,11 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
   // of the new resource.
   v1::Resource disk2 = v1::createDiskResource(
       "100", "*", None(), None(), v1::createDiskSourceBlock());
-  disk2.mutable_provider_id()->CopyFrom(resourceProvider->info.id());
+  disk2.mutable_provider_id()->CopyFrom(resourceProvider->process->info.id());
 
   v1::resource_provider::Call call;
-  call.mutable_resource_provider_id()->CopyFrom(resourceProvider->info.id());
+  call.mutable_resource_provider_id()->CopyFrom(
+      resourceProvider->process->info.id());
   call.set_type(v1::resource_provider::Call::UPDATE_STATE);
 
   v1::resource_provider::Call::UpdateState* updateState =
@@ -9180,7 +9181,7 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
           frameworkInfo.roles(0), DEFAULT_CREDENTIAL.principal()));
 
   Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   // Drop the operation updates for the finished operations.
@@ -9243,7 +9244,7 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
   EXPECT_CALL(sched, disconnected(&driver));
 
   // Finish the pending operation.
-  resourceProvider.operationDefault(operation.get());
+  resourceProvider.process->operationDefault(operation.get());
 
   AWAIT_READY(updateOperationStatusMessage1);
   AWAIT_READY(updateOperationStatusMessage2);
@@ -9373,7 +9374,7 @@ TEST_F(MasterTest, OperationUpdateCompletedFramework)
 
   AWAIT_READY(updateSlaveMessage);
 
-  ASSERT_TRUE(resourceProvider.info.has_id());
+  ASSERT_TRUE(resourceProvider.process->info.has_id());
 
   // Start a framework to operate on offers.
   auto scheduler = std::make_shared<v1::MockHTTPScheduler>();
@@ -9444,7 +9445,7 @@ TEST_F(MasterTest, OperationUpdateCompletedFramework)
   operationId.set_value("operation");
 
   Future<mesos::v1::resource_provider::Event::ApplyOperation> applyOperation;
-  EXPECT_CALL(resourceProvider, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&applyOperation));
 
   mesos->send(v1::createCallAccept(
@@ -9466,10 +9467,10 @@ TEST_F(MasterTest, OperationUpdateCompletedFramework)
     FUTURE_PROTOBUF(AcknowledgeOperationStatusMessage(), _, slave.get()->pid);
 
   Future<Nothing> acknowledgeOperationStatus;
-  EXPECT_CALL(resourceProvider, acknowledgeOperationStatus(_))
+  EXPECT_CALL(*resourceProvider.process, acknowledgeOperationStatus(_))
     .WillOnce(FutureSatisfy(&acknowledgeOperationStatus));
 
-  resourceProvider.operationDefault(applyOperation.get());
+  resourceProvider.process->operationDefault(applyOperation.get());
 
   // We expect the master to acknowledge the operation status update.
   AWAIT_READY(acknowledgeOperationStatusMessage);
