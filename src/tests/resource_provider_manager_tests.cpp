@@ -1024,7 +1024,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, ConvertResources)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1157,16 +1157,16 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
 
   const ContentType contentType = GetParam();
 
-  resourceProvider->process.start(std::move(endpointDetector), contentType);
+  resourceProvider->process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources. At this point the resource provider
   // will have an ID assigned by the agent.
   AWAIT_READY(updateSlaveMessage);
 
-  ASSERT_TRUE(resourceProvider->process.info.has_id());
+  ASSERT_TRUE(resourceProvider->process->info.has_id());
 
-  resourceProviderInfo = resourceProvider->process.info;
+  resourceProviderInfo = resourceProvider->process->info;
 
   // Resource provider failover by opening a new connection.
   // The assigned resource provider ID will be used to resubscribe.
@@ -1174,12 +1174,12 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
       new v1::MockResourceProvider(resourceProviderInfo, v1::Resources(disk)));
 
   Future<Event::Subscribed> subscribed1;
-  EXPECT_CALL(resourceProvider->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider->process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed1));
 
   endpointDetector =
     resource_provider::createEndpointDetector(agent.get()->pid);
-  resourceProvider->process.start(std::move(endpointDetector), contentType);
+  resourceProvider->process->start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(subscribed1);
   EXPECT_EQ(resourceProviderInfo.id(), subscribed1->provider_id());
@@ -1190,7 +1190,7 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
   // got disconnected. This avoids it to in turn resubscribe racing
   // with the newly created resource provider.
   Future<Nothing> disconnected;
-  EXPECT_CALL(resourceProvider->process, disconnected())
+  EXPECT_CALL(*resourceProvider->process, disconnected())
     .WillOnce(DoAll(
         Invoke([&resourceProvider]() { resourceProvider.reset(); }),
         FutureSatisfy(&disconnected)))
@@ -1216,10 +1216,10 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
       Some(v1::Resources(disk))));
 
   Future<Event::Subscribed> subscribed2;
-  EXPECT_CALL(resourceProvider->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider->process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed2));
 
-  resourceProvider->process.start(std::move(endpointDetector), contentType);
+  resourceProvider->process->start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(subscribed2);
   EXPECT_EQ(resourceProviderInfo.id(), subscribed2->provider_id());
@@ -1267,7 +1267,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResubscribeUnknownID)
   // We explicitly reset the resource provider after the expected
   // disconnect to prevent it from resubscribing indefinitely.
   Future<Nothing> disconnected;
-  EXPECT_CALL(resourceProvider->process, disconnected())
+  EXPECT_CALL(*resourceProvider->process, disconnected())
     .WillOnce(DoAll(
         Invoke([&resourceProvider]() { resourceProvider.reset(); }),
         FutureSatisfy(&disconnected)));
@@ -1278,7 +1278,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResubscribeUnknownID)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider->process.start(std::move(endpointDetector), contentType);
+  resourceProvider->process->start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(disconnected);
 }
@@ -1331,7 +1331,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResourceProviderDisconnect)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider->process.start(std::move(endpointDetector), contentType);
+  resourceProvider->process->start(std::move(endpointDetector), contentType);
 
   {
     // Wait until the agent's resources have been updated to include
@@ -1339,8 +1339,8 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResourceProviderDisconnect)
     // provider will have an ID assigned by the agent.
     AWAIT_READY(updateSlaveMessage);
 
-    ASSERT_TRUE(resourceProvider->process.info.has_id());
-    disk.mutable_provider_id()->CopyFrom(resourceProvider->process.info.id());
+    ASSERT_TRUE(resourceProvider->process->info.has_id());
+    disk.mutable_provider_id()->CopyFrom(resourceProvider->process->info.id());
 
     const Resources& totalResources =
       updateSlaveMessage->resource_providers().providers(0).total_resources();
@@ -1397,10 +1397,10 @@ TEST_F(ResourceProviderManagerHttpApiTest, ResourceProviderSubscribeDisconnect)
       resource_provider::createEndpointDetector(agent.get()->pid));
 
   Future<Event::Subscribed> subscribed1;
-  EXPECT_CALL(resourceProvider1->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider1->process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed1));
 
-  resourceProvider1->process.start(
+  resourceProvider1->process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(subscribed1);
@@ -1417,19 +1417,19 @@ TEST_F(ResourceProviderManagerHttpApiTest, ResourceProviderSubscribeDisconnect)
   // that it got disconnected. This avoids it to in turn resubscribe
   // racing with the other resource provider.
   Future<Nothing> disconnected1;
-  EXPECT_CALL(resourceProvider1->process, disconnected())
+  EXPECT_CALL(*resourceProvider1->process, disconnected())
     .WillOnce(DoAll(
         Invoke([&resourceProvider1]() { resourceProvider1.reset(); }),
         FutureSatisfy(&disconnected1)))
     .WillRepeatedly(Return()); // Ignore spurious calls concurrent with `reset`.
 
   Future<Event::Subscribed> subscribed2;
-  EXPECT_CALL(resourceProvider2->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider2->process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed2));
 
   endpointDetector =
     resource_provider::createEndpointDetector(agent.get()->pid);
-  resourceProvider2->process.start(
+  resourceProvider2->process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(disconnected1);
@@ -1487,10 +1487,10 @@ TEST_F(ResourceProviderManagerHttpApiTest, Metrics)
       resource_provider::createEndpointDetector(agent.get()->pid));
 
   Future<Event::Subscribed> subscribed;
-  EXPECT_CALL(resourceProvider->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider->process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed));
 
-  resourceProvider->process.start(
+  resourceProvider->process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(subscribed);

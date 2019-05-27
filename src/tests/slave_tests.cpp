@@ -10511,19 +10511,19 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
   v1::MockResourceProvider resourceProvider(resourceProviderInfo);
 
   Future<Nothing> connected;
-  EXPECT_CALL(resourceProvider.process, connected())
+  EXPECT_CALL(*resourceProvider.process, connected())
     .WillOnce(FutureSatisfy(&connected));
 
   Owned<EndpointDetector> endpointDetector(
       resource_provider::createEndpointDetector(slave.get()->pid));
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(connected);
 
   Future<mesos::v1::resource_provider::Event::Subscribed> subscribed;
-  EXPECT_CALL(resourceProvider.process, subscribed(_))
+  EXPECT_CALL(*resourceProvider.process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed));
 
   Future<UpdateSlaveMessage> updateSlaveMessage =
@@ -10536,7 +10536,7 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
     call.mutable_subscribe()->mutable_resource_provider_info()->CopyFrom(
         resourceProviderInfo);
 
-    resourceProvider.process.send(call);
+    resourceProvider.process->send(call);
   }
 
   // The subscription event contains the assigned resource provider id.
@@ -10566,7 +10566,7 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
     updateState->mutable_resource_version_uuid()->set_value(
         resourceVersionUuid);
 
-    resourceProvider.process.send(call);
+    resourceProvider.process->send(call);
   }
 
   AWAIT_READY(updateSlaveMessage);
@@ -10623,7 +10623,7 @@ TEST_F(SlaveTest, ResourceProviderPublishAll)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
@@ -10672,14 +10672,14 @@ TEST_F(SlaveTest, ResourceProviderPublishAll)
 
     // Two PUBLISH_RESOURCES events will be received: one for launching the
     // executor, and the other for launching the task.
-    EXPECT_CALL(resourceProvider.process, publishResources(_))
+    EXPECT_CALL(*resourceProvider.process, publishResources(_))
       .WillOnce(Invoke(
-          &resourceProvider.process,
+          resourceProvider.process.get(),
           &v1::MockResourceProviderProcess::publishDefault))
       .WillOnce(DoAll(
           FutureArg<0>(&publish),
           Invoke(
-              &resourceProvider.process,
+              resourceProvider.process.get(),
               &v1::MockResourceProviderProcess::publishDefault)));
 
     Future<TaskStatus> taskStarting;
@@ -10761,7 +10761,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
@@ -10817,7 +10817,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
   // Create a pending operation.
   Future<v1::resource_provider::Event::ApplyOperation> applyOperation;
-  EXPECT_CALL(resourceProvider.process, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&applyOperation));
 
   v1::OperationID operationId;
@@ -10836,10 +10836,10 @@ TEST_F(SlaveTest, RemoveResourceProvider)
   AWAIT_READY(applyOperation);
 
   // A resource provider cannot be removed while it still has resources.
-  ASSERT_TRUE(resourceProvider.process.info.has_id());
+  ASSERT_TRUE(resourceProvider.process->info.has_id());
 
   const mesos::v1::ResourceProviderID& resourceProviderId =
-    resourceProvider.process.info.id();
+    resourceProvider.process->info.id();
 
   v1::agent::Call v1Call;
   v1Call.set_type(v1::agent::Call::MARK_RESOURCE_PROVIDER_GONE);
@@ -10870,7 +10870,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
     Call call;
     call.set_type(Call::UPDATE_STATE);
     call.mutable_resource_provider_id()->CopyFrom(
-        resourceProvider.process.info.id());
+        resourceProvider.process->info.id());
 
     Call::UpdateState* update = call.mutable_update_state();
     update->mutable_resources()->Clear();
@@ -10891,7 +10891,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
     operation->add_statuses()->CopyFrom(operation->latest_status());
 
-    AWAIT_READY(resourceProvider.process.send(call));
+    AWAIT_READY(resourceProvider.process->send(call));
   }
 
   // Once the master has seen that there is no resource managed
@@ -10908,26 +10908,26 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
   // The resource provider will receive a TEARDOWN event on being marked gone.
   Future<Nothing> teardown;
-  EXPECT_CALL(resourceProvider.process, teardown())
+  EXPECT_CALL(*resourceProvider.process, teardown())
     .WillOnce(FutureSatisfy(&teardown));
 
   // We expect at least two disconnection events, one initially when the
   // connected resource provider gets removed, and when the automatic attempt
   // to resubscribe fails and leads the remote to close the connection.
   Future<Nothing> disconnected;
-  EXPECT_CALL(resourceProvider.process, disconnected())
+  EXPECT_CALL(*resourceProvider.process, disconnected())
     .WillOnce(DoDefault())
     .WillOnce(FutureSatisfy(&disconnected))
     .WillRepeatedly(Return()); // Ignore additional ddisconnection events.
 
   // The resource provider will automatically attempt to reconnect.
   Future<Nothing> connected;
-  EXPECT_CALL(resourceProvider.process, connected())
+  EXPECT_CALL(*resourceProvider.process, connected())
     .WillOnce(DoDefault())
     .WillRepeatedly(Return());
 
   // The resource provider should never successfully resubscribe.
-  EXPECT_CALL(resourceProvider.process, subscribed(_))
+  EXPECT_CALL(*resourceProvider.process, subscribed(_))
     .Times(Exactly(0));
 
   response = process::http::post(
@@ -11168,7 +11168,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
@@ -11222,7 +11222,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
   // We now perform a `RESERVE` operation on the offered resources,
   // but let the operation fail in the resource provider.
   Future<v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider.process, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   {
@@ -11259,12 +11259,12 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
   // Fail the operation in the resource provider. This should trigger
   // an `UpdateSlaveMessage` to the master.
   {
-    ASSERT_TRUE(resourceProvider.process.info.has_id());
+    ASSERT_TRUE(resourceProvider.process->info.has_id());
 
     v1::Resources resourceProviderResources_;
     foreach (v1::Resource resource, resourceProviderResources) {
       resource.mutable_provider_id()->CopyFrom(
-          resourceProvider.process.info.id());
+          resourceProvider.process->info.id());
 
       resourceProviderResources_ += resource;
     }
@@ -11276,7 +11276,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
 
     call.set_type(v1::resource_provider::Call::UPDATE_STATE);
     call.mutable_resource_provider_id()->CopyFrom(
-        resourceProvider.process.info.id());
+        resourceProvider.process->info.id());
 
     v1::resource_provider::Call::UpdateState* updateState =
       call.mutable_update_state();
@@ -11296,7 +11296,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
 
     _operation->add_statuses()->CopyFrom(*lastStatus);
 
-    AWAIT_READY(resourceProvider.process.send(call));
+    AWAIT_READY(resourceProvider.process->send(call));
   }
 
   AWAIT_READY(updateSlaveMessage);
@@ -11378,7 +11378,7 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
@@ -11408,12 +11408,12 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
 
   // Update resource version of the resource provider.
   {
-    CHECK(resourceProvider.process.info.has_id());
+    CHECK(resourceProvider.process->info.has_id());
 
     v1::Resources resourceProviderResources_;
     foreach (v1::Resource resource, resourceProviderResources) {
       resource.mutable_provider_id()->CopyFrom(
-          resourceProvider.process.info.id());
+          resourceProvider.process->info.id());
 
       resourceProviderResources_ += resource;
     }
@@ -11421,7 +11421,7 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
     v1::resource_provider::Call call;
     call.set_type(v1::resource_provider::Call::UPDATE_STATE);
     call.mutable_resource_provider_id()->CopyFrom(
-        resourceProvider.process.info.id());
+        resourceProvider.process->info.id());
 
     v1::resource_provider::Call::UpdateState* updateState =
       call.mutable_update_state();
@@ -11430,7 +11430,7 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
         evolve(protobuf::createUUID()));
     updateState->mutable_resources()->CopyFrom(resourceProviderResources_);
 
-    AWAIT_READY(resourceProvider.process.send(call));
+    AWAIT_READY(resourceProvider.process->send(call));
   }
 
   AWAIT_READY(updateSlaveMessage);
@@ -11642,7 +11642,7 @@ TEST_F(SlaveTest, AgentFailoverHTTPExecutorUsingResourceProviderResources)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(
+  resourceProvider.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
@@ -11770,7 +11770,7 @@ TEST_F(SlaveTest, AgentFailoverHTTPExecutorUsingResourceProviderResources)
 
   // Fail over the agent. We expect the executor to resubscribe successfully
   // even if the resource provider does not resubscribe.
-  EXPECT_CALL(resourceProvider.process, disconnected())
+  EXPECT_CALL(*resourceProvider.process, disconnected())
     .Times(AtMost(1));
 
   EXPECT_NO_FUTURE_DISPATCHES(_, &Slave::executorTerminated);
@@ -11778,7 +11778,7 @@ TEST_F(SlaveTest, AgentFailoverHTTPExecutorUsingResourceProviderResources)
   slave.get()->terminate();
 
   // Stop the mock resource provider so it won't resubscribe.
-  resourceProvider.process.stop();
+  resourceProvider.process->stop();
 
   // The following future will be satisfied when an HTTP executor subscribes.
   Future<Nothing> executorSubscribed = FUTURE_DISPATCH(_, &Slave::___run);

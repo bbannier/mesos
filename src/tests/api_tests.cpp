@@ -238,7 +238,7 @@ TEST_P(MasterAPITest, GetAgents)
 
   updateAgentMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1110,7 +1110,7 @@ TEST_P(MasterAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1168,7 +1168,7 @@ TEST_P(MasterAPITest, GetOperations)
 
   // The operation is still pending when we receive this event.
   Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider.process, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   // Start an operation.
@@ -5192,7 +5192,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponAgentGone)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->process.start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->process->start(endpointDetector, ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -5363,7 +5363,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponUnreachable)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->process.start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->process->start(endpointDetector, ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -8747,7 +8747,7 @@ TEST_P(AgentAPITest, GetResourceProviders)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -8835,10 +8835,10 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
 
   Future<mesos::v1::resource_provider::Event::Subscribed> subscribed;
 
-  EXPECT_CALL(resourceProvider.process, subscribed(_))
+  EXPECT_CALL(*resourceProvider.process, subscribed(_))
     .WillOnce(DoAll(
         Invoke(
-            &resourceProvider.process,
+            resourceProvider.process.get(),
             &v1::MockResourceProviderProcess::subscribedDefault),
         FutureArg<0>(&subscribed)))
     .WillRepeatedly(Return());
@@ -8847,7 +8847,7 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
   // triggers an `UpdateSlaveMessage`.
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(subscribed);
   AWAIT_READY(updateSlaveMessage);
@@ -8868,7 +8868,7 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
     // connection is broken will does not succeed, we might observe other
     // `disconnected` events.
     Future<Nothing> disconnected;
-    EXPECT_CALL(resourceProvider.process, disconnected())
+    EXPECT_CALL(*resourceProvider.process, disconnected())
       .WillOnce(FutureSatisfy(&disconnected))
       .WillRepeatedly(Return());
 
@@ -8975,7 +8975,7 @@ TEST_P(AgentAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.process.start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -9033,7 +9033,7 @@ TEST_P(AgentAPITest, GetOperations)
 
   // The operation is still pending when we receive this event.
   Future<mesos::v1::resource_provider::Event::ApplyOperation> operation;
-  EXPECT_CALL(resourceProvider.process, applyOperation(_))
+  EXPECT_CALL(*resourceProvider.process, applyOperation(_))
     .WillOnce(FutureArg<0>(&operation));
 
   // Start an operation.
