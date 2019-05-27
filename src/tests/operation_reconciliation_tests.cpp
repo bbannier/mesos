@@ -118,7 +118,7 @@ TEST_P(OperationReconciliationTest, PendingOperation)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->start(std::move(endpointDetector), contentType);
+  resourceProvider->process.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -821,7 +821,7 @@ TEST_P(OperationReconciliationTest, AgentPendingOperationAfterMasterFailover)
   // We override the mock resource provider's default action, so the operation
   // will stay in `OPERATION_PENDING`.
   Future<resource_provider::Event::ApplyOperation> applyOperation;
-  EXPECT_CALL(*resourceProvider, applyOperation(_))
+  EXPECT_CALL(resourceProvider->process, applyOperation(_))
     .WillOnce(FutureArg<0>(&applyOperation));
 
   Owned<EndpointDetector> endpointDetector(
@@ -836,7 +836,7 @@ TEST_P(OperationReconciliationTest, AgentPendingOperationAfterMasterFailover)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->start(std::move(endpointDetector), contentType);
+  resourceProvider->process.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1589,7 +1589,7 @@ TEST_P(OperationReconciliationTest, OperationOnUnsubscribedProvider)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->start(std::move(endpointDetector), contentType);
+  resourceProvider->process.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1748,7 +1748,7 @@ TEST_P(
 
   ContentType contentType = GetParam();
 
-  resourceProvider->start(std::move(endpointDetector), contentType);
+  resourceProvider->process.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources. At this point the resource provider
@@ -1757,9 +1757,9 @@ TEST_P(
   ASSERT_TRUE(updateSlaveMessage->has_resource_providers());
   ASSERT_EQ(1, updateSlaveMessage->resource_providers().providers_size());
 
-  ASSERT_TRUE(resourceProvider->info.has_id());
+  ASSERT_TRUE(resourceProvider->process.info.has_id());
 
-  resourceProviderInfo = resourceProvider->info;
+  resourceProviderInfo = resourceProvider->process.info;
 
   Clock::pause();
 

@@ -3351,7 +3351,10 @@ template <
 class MockResourceProvider
 {
 public:
-  MockResourceProvider()
+  MockResourceProvider(
+      const ResourceProviderInfo& _info,
+      const Option<Resources>& _resources = None())
+    : process(_info, _resources)
   {
     process::spawn(process);
   }
@@ -3363,7 +3366,7 @@ public:
   }
 
   // Made public for mocking.
-  MockResourceProviderProcess<
+  using MockResourceProviderProcessT = MockResourceProviderProcess<
       mesos::v1::resource_provider::Event,
       mesos::v1::resource_provider::Call,
       mesos::v1::resource_provider::Driver,
@@ -3373,8 +3376,9 @@ public:
       mesos::v1::ResourceProviderID,
       mesos::v1::OperationState,
       mesos::v1::Offer::Operation,
-      mesos::v1::Resource::DiskInfo::Source>
-    process;
+      mesos::v1::Resource::DiskInfo::Source>;
+
+  MockResourceProviderProcessT process;
 };
 
 inline process::Owned<EndpointDetector> createEndpointDetector(
@@ -3411,7 +3415,7 @@ using Event = mesos::v1::resource_provider::Event;
 
 } // namespace resource_provider {
 
-using MockResourceProvider =
+using MockResourceProviderProcess =
   tests::resource_provider::MockResourceProviderProcess<
       mesos::v1::resource_provider::Event,
       mesos::v1::resource_provider::Call,
@@ -3423,6 +3427,18 @@ using MockResourceProvider =
       mesos::v1::OperationState,
       mesos::v1::Offer::Operation,
       mesos::v1::Resource::DiskInfo::Source>;
+
+using MockResourceProvider = tests::resource_provider::MockResourceProvider<
+    mesos::v1::resource_provider::Event,
+    mesos::v1::resource_provider::Call,
+    mesos::v1::resource_provider::Driver,
+    mesos::v1::ResourceProviderInfo,
+    mesos::v1::Resource,
+    mesos::v1::Resources,
+    mesos::v1::ResourceProviderID,
+    mesos::v1::OperationState,
+    mesos::v1::Offer::Operation,
+    mesos::v1::Resource::DiskInfo::Source>;
 
 } // namespace v1 {
 
