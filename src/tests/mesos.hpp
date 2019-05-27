@@ -3337,9 +3337,45 @@ private:
   std::unique_ptr<Driver> driver;
 };
 
+template <
+    typename Event,
+    typename Call,
+    typename Driver,
+    typename ResourceProviderInfo,
+    typename Resource,
+    typename Resources,
+    typename ResourceProviderID,
+    typename OperationState,
+    typename Operation,
+    typename Source>
+class MockResourceProvider
+{
+public:
+  MockResourceProvider()
+  {
+    process::spawn(process);
+  }
 
+  ~MockResourceProvider()
+  {
+    process::terminate(process);
+    process::wait(process);
+  }
 
-
+  // Made public for mocking.
+  MockResourceProviderProcess<
+      mesos::v1::resource_provider::Event,
+      mesos::v1::resource_provider::Call,
+      mesos::v1::resource_provider::Driver,
+      mesos::v1::ResourceProviderInfo,
+      mesos::v1::Resource,
+      mesos::v1::Resources,
+      mesos::v1::ResourceProviderID,
+      mesos::v1::OperationState,
+      mesos::v1::Offer::Operation,
+      mesos::v1::Resource::DiskInfo::Source>
+    process;
+};
 
 inline process::Owned<EndpointDetector> createEndpointDetector(
     const process::UPID& pid)
