@@ -3116,6 +3116,10 @@ public:
 
   process::Future<Nothing> send(const Call& call)
   {
+    if (driver== nullptr) {
+      return process::Failure("Driver is not active");
+    }
+
     return driver->send(call);
   }
 
