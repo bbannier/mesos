@@ -11777,8 +11777,8 @@ TEST_F(SlaveTest, AgentFailoverHTTPExecutorUsingResourceProviderResources)
 
   slave.get()->terminate();
 
-  // Stop the mock resource provider so it won't resubscribe.
-  resourceProvider.process->stop();
+  // Terminate the mock resource provider so it won't resubscribe.
+  resourceProvider.terminate();
 
   // The following future will be satisfied when an HTTP executor subscribes.
   Future<Nothing> executorSubscribed = FUTURE_DISPATCH(_, &Slave::___run);

@@ -3179,11 +3179,6 @@ public:
     driver->start();
   }
 
-  void stop()
-  {
-    driver.reset();
-  }
-
   void connectedDefault()
   {
     // Do nothing if this is asynchronously called after `stop` is invoked.
