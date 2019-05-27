@@ -1192,9 +1192,9 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
   Future<Nothing> disconnected;
   EXPECT_CALL(*resourceProvider->process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider]() { resourceProvider.reset(); }),
+        Invoke([&resourceProvider]() { resourceProvider->terminate(); }), // FIXME(bbannier): no ptr.
         FutureSatisfy(&disconnected)))
-    .WillRepeatedly(Return()); // Ignore spurious calls concurrent with `reset`.
+    .WillRepeatedly(Return()); // Ignore spurious calls concurrent with `terminate`.
 
   // The agent failover.
   agent->reset();
@@ -1264,12 +1264,12 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResubscribeUnknownID)
   Owned<v1::MockResourceProvider> resourceProvider(
       new v1::MockResourceProvider(resourceProviderInfo));
 
-  // We explicitly reset the resource provider after the expected
+  // We explicitly terminate the resource provider after the expected
   // disconnect to prevent it from resubscribing indefinitely.
   Future<Nothing> disconnected;
   EXPECT_CALL(*resourceProvider->process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider]() { resourceProvider.reset(); }),
+        Invoke([&resourceProvider]() { resourceProvider->terminate(); }), // FIXME(bbannier): no ptr.
         FutureSatisfy(&disconnected)));
 
   // Start and register a resource provider.
@@ -1419,9 +1419,12 @@ TEST_F(ResourceProviderManagerHttpApiTest, ResourceProviderSubscribeDisconnect)
   Future<Nothing> disconnected1;
   EXPECT_CALL(*resourceProvider1->process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider1]() { resourceProvider1.reset(); }),
+        Invoke([&resourceProvider1]() {
+          resourceProvider1->terminate();
+        }), // FIXME(bbannier): no ptr.
         FutureSatisfy(&disconnected1)))
-    .WillRepeatedly(Return()); // Ignore spurious calls concurrent with `reset`.
+    .WillRepeatedly(
+        Return()); // Ignore spurious calls concurrent with `terminate`.
 
   Future<Event::Subscribed> subscribed2;
   EXPECT_CALL(*resourceProvider2->process, subscribed(_))

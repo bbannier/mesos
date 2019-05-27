@@ -3354,15 +3354,20 @@ public:
   MockResourceProvider(
       const ResourceProviderInfo& _info,
       const Option<Resources>& _resources = None())
-    : process(_info, _resources)
+    : process(new MockResourceProviderProcessT(_info, _resources))
   {
-    process::spawn(process);
+    process::spawn(*process);
   }
 
   ~MockResourceProvider()
   {
-    process::terminate(process);
-    process::wait(process);
+    terminate();
+    process::wait(*process);
+  }
+
+  void terminate()
+  {
+    process::terminate(*process);
   }
 
   // Made public for mocking.
@@ -3378,7 +3383,7 @@ public:
       mesos::v1::Offer::Operation,
       mesos::v1::Resource::DiskInfo::Source>;
 
-  MockResourceProviderProcessT process;
+  std::unique_ptr<MockResourceProviderProcessT> process;
 };
 
 inline process::Owned<EndpointDetector> createEndpointDetector(
