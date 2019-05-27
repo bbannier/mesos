@@ -524,7 +524,7 @@ TEST_F(
 
   ContentType contentType = ContentType::PROTOBUF;
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.

@@ -238,7 +238,7 @@ TEST_P(MasterAPITest, GetAgents)
 
   updateAgentMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(std::move(endpointDetector), contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1110,7 +1110,7 @@ TEST_P(MasterAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.process->start(std::move(endpointDetector), contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -5192,7 +5192,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponAgentGone)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->process->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -5363,7 +5363,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponUnreachable)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->process->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -8747,7 +8747,7 @@ TEST_P(AgentAPITest, GetResourceProviders)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(std::move(endpointDetector), contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -8847,7 +8847,7 @@ TEST_P(AgentAPITest, MarkResourceProviderGone)
   // triggers an `UpdateSlaveMessage`.
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(std::move(endpointDetector), contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(subscribed);
   AWAIT_READY(updateSlaveMessage);
@@ -8975,7 +8975,7 @@ TEST_P(AgentAPITest, GetOperations)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider.process->start(std::move(endpointDetector), contentType);
+  resourceProvider.start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.

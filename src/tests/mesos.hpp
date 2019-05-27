@@ -3360,6 +3360,17 @@ public:
     process::wait(*process);
   }
 
+  void start(
+      process::Owned<mesos::internal::EndpointDetector> detector,
+      ContentType contentType)
+  {
+    process::dispatch(
+        *process,
+        &MockResourceProviderProcessT::start,
+        std::move(detector),
+        contentType);
+  }
+
   void terminate()
   {
     process::terminate(*process);

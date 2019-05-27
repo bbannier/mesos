@@ -10517,8 +10517,7 @@ TEST_F(SlaveTest, ResourceProviderSubscribe)
   Owned<EndpointDetector> endpointDetector(
       resource_provider::createEndpointDetector(slave.get()->pid));
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(connected);
 
@@ -10623,8 +10622,7 @@ TEST_F(SlaveTest, ResourceProviderPublishAll)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
@@ -10761,8 +10759,7 @@ TEST_F(SlaveTest, RemoveResourceProvider)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
@@ -11168,8 +11165,7 @@ TEST_F(SlaveTest, ResourceProviderReconciliation)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
@@ -11378,8 +11374,7 @@ TEST_F(SlaveTest, RunTaskResourceVersions)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
@@ -11642,8 +11637,7 @@ TEST_F(SlaveTest, AgentFailoverHTTPExecutorUsingResourceProviderResources)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 

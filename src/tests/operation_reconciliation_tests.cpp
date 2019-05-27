@@ -118,7 +118,7 @@ TEST_P(OperationReconciliationTest, PendingOperation)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -836,7 +836,7 @@ TEST_P(OperationReconciliationTest, AgentPendingOperationAfterMasterFailover)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1589,7 +1589,7 @@ TEST_P(OperationReconciliationTest, OperationOnUnsubscribedProvider)
 
   ContentType contentType = GetParam();
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -1748,7 +1748,7 @@ TEST_P(
 
   ContentType contentType = GetParam();
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider->start(std::move(endpointDetector), contentType);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources. At this point the resource provider

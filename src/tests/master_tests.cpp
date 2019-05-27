@@ -9011,8 +9011,7 @@ TEST_F(MasterTest, UpdateSlaveMessageWithPendingOffers)
   Owned<EndpointDetector> endpointDetector(
       resource_provider::createEndpointDetector(agent.get()->pid));
 
-  resourceProvider->process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
   ASSERT_TRUE(resourceProvider->process->info.has_id());
@@ -9135,8 +9134,7 @@ TEST_F(MasterTest, OperationUpdateDuringFailover)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(
-      std::move(endpointDetector), ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
@@ -9372,7 +9370,7 @@ TEST_F(MasterTest, OperationUpdateCompletedFramework)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.process->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider.start(endpointDetector, ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 
