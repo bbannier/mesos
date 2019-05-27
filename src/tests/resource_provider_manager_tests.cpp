@@ -1192,9 +1192,10 @@ TEST_P_TEMP_DISABLED_ON_WINDOWS(
   Future<Nothing> disconnected;
   EXPECT_CALL(*resourceProvider->process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider]() { resourceProvider->terminate(); }), // FIXME(bbannier): no ptr.
+        Invoke([&resourceProvider]() { resourceProvider->terminate(); }),
         FutureSatisfy(&disconnected)))
-    .WillRepeatedly(Return()); // Ignore spurious calls concurrent with `terminate`.
+    .WillRepeatedly(
+        Return()); // Ignore spurious calls concurrent with `terminate`.
 
   // The agent failover.
   agent->reset();
@@ -1261,15 +1262,14 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResubscribeUnknownID)
   resourceProviderInfo.set_type("org.apache.mesos.rp.test");
   resourceProviderInfo.set_name("test");
 
-  Owned<v1::MockResourceProvider> resourceProvider(
-      new v1::MockResourceProvider(resourceProviderInfo));
+  v1::MockResourceProvider resourceProvider(resourceProviderInfo);
 
   // We explicitly terminate the resource provider after the expected
   // disconnect to prevent it from resubscribing indefinitely.
   Future<Nothing> disconnected;
-  EXPECT_CALL(*resourceProvider->process, disconnected())
+  EXPECT_CALL(*resourceProvider.process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider]() { resourceProvider->terminate(); }), // FIXME(bbannier): no ptr.
+        Invoke([&resourceProvider]() { resourceProvider.terminate(); }),
         FutureSatisfy(&disconnected)));
 
   // Start and register a resource provider.
@@ -1278,7 +1278,7 @@ TEST_P(ResourceProviderManagerHttpApiTest, ResubscribeUnknownID)
 
   const ContentType contentType = GetParam();
 
-  resourceProvider->process->start(std::move(endpointDetector), contentType);
+  resourceProvider.process->start(std::move(endpointDetector), contentType);
 
   AWAIT_READY(disconnected);
 }
@@ -1389,18 +1389,17 @@ TEST_F(ResourceProviderManagerHttpApiTest, ResourceProviderSubscribeDisconnect)
   resourceProviderInfo.set_type("org.apache.mesos.rp.test");
   resourceProviderInfo.set_name("test");
 
-  Owned<v1::MockResourceProvider> resourceProvider1(
-      new v1::MockResourceProvider(resourceProviderInfo));
+  v1::MockResourceProvider resourceProvider1(resourceProviderInfo);
 
   // Start and register a resource provider.
   Owned<EndpointDetector> endpointDetector(
       resource_provider::createEndpointDetector(agent.get()->pid));
 
   Future<Event::Subscribed> subscribed1;
-  EXPECT_CALL(*resourceProvider1->process, subscribed(_))
+  EXPECT_CALL(*resourceProvider1.process, subscribed(_))
     .WillOnce(FutureArg<0>(&subscribed1));
 
-  resourceProvider1->process->start(
+  resourceProvider1.process->start(
       std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(subscribed1);
@@ -1417,11 +1416,9 @@ TEST_F(ResourceProviderManagerHttpApiTest, ResourceProviderSubscribeDisconnect)
   // that it got disconnected. This avoids it to in turn resubscribe
   // racing with the other resource provider.
   Future<Nothing> disconnected1;
-  EXPECT_CALL(*resourceProvider1->process, disconnected())
+  EXPECT_CALL(*resourceProvider1.process, disconnected())
     .WillOnce(DoAll(
-        Invoke([&resourceProvider1]() {
-          resourceProvider1->terminate();
-        }), // FIXME(bbannier): no ptr.
+        Invoke([&resourceProvider1]() { resourceProvider1.terminate(); }),
         FutureSatisfy(&disconnected1)))
     .WillRepeatedly(
         Return()); // Ignore spurious calls concurrent with `terminate`.

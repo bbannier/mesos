@@ -1659,7 +1659,7 @@ TEST_P(OperationReconciliationTest, OperationOnUnsubscribedProvider)
 
   AWAIT_READY(applyOperationMessage);
 
-  // Terminate the resource provider.
+  // Tear the resource provider down.
   resourceProvider.reset();
 
   // Make sure the resource provider manager processes the disconnection.
