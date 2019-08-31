@@ -9,7 +9,7 @@ Blog
       <span class="author">
         <% if current_page.data.post_author.gravatar %>
           <img src="http://www.gravatar.com/avatar/<%= current_page.data.post_author.gravatar %>?s=80"
-               class="author_gravatar">
+               class="author_gravatar" alt='Author Gravatar">
         <% end %>
         <span class="author_contact">
           <p><strong><%= current_page.data.post_author.display_name %></strong></p>
