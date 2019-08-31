@@ -14,10 +14,11 @@
 require "middleman-blog"
 require "htmlentities"
 
-set :markdown_engine, :rdiscount
+set :markdown_engine, :redcarpet
 set :markdown, :layout_engine => :erb,
                :tables => true,
                :autolink => true,
+               :with_toc_data => true,
                :smartypants => true,
                :fenced_code_blocks => true
 
