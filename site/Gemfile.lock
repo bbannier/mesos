@@ -34,6 +34,8 @@ GEM
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0.6.0)
     erubis (2.7.0)
+    ethon (0.12.0)
+      ffi (>= 1.3.0)
     eventmachine (1.2.7)
     execjs (2.7.0)
     ffi (1.11.1)
@@ -43,6 +45,15 @@ GEM
     hike (1.2.3)
     hooks (0.4.1)
       uber (~> 0.0.14)
+    html-proofer (3.11.1)
+      activesupport (>= 4.2, < 6.0)
+      addressable (~> 2.3)
+      mercenary (~> 0.3.2)
+      nokogiri (~> 1.9)
+      parallel (~> 1.3)
+      rainbow (~> 3.0)
+      typhoeus (~> 1.3)
+      yell (~> 2.0)
     htmlentities (4.3.4)
     http_parser.rb (0.6.0)
     i18n (0.7.0)
@@ -52,6 +63,7 @@ GEM
     listen (3.0.8)
       rb-fsevent (~> 0.9, >= 0.9.4)
       rb-inotify (~> 0.9, >= 0.9.7)
+    mercenary (0.3.6)
     middleman (3.4.1)
       coffee-script (~> 2.2)
       compass (>= 1.0.0, < 2.0.0)
@@ -105,11 +117,13 @@ GEM
       tilt (>= 1.4.1, < 3)
     padrino-support (0.12.9)
       activesupport (>= 3.1)
+    parallel (1.17.0)
     rack (1.6.11)
     rack-livereload (0.3.17)
       rack
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
+    rainbow (3.0.0)
     rake (12.3.3)
     rb-fsevent (0.10.3)
     rb-inotify (0.10.0)
@@ -135,6 +149,8 @@ GEM
     thor (0.20.3)
     thread_safe (0.3.6)
     tilt (1.4.1)
+    typhoeus (1.3.1)
+      ethon (>= 0.9.0)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
     tzinfo-data (1.2019.2)
@@ -145,11 +161,13 @@ GEM
       json (>= 1.8.0)
     xpath (2.1.0)
       nokogiri (~> 1.3)
+    yell (2.2.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  html-proofer
   htmlentities
   middleman (~> 3)
   middleman-blog (~> 3)

@@ -1,8 +1,9 @@
 require 'rubygems'
 require 'rake/clean'
 require 'fileutils'
+require 'html-proofer'
 
-task :default => [:update_docs, :doxygen, :javadoc, :build, :clean]
+task :default => [:update_docs, :doxygen, :javadoc, :build, :test, :clean]
 
 CLEAN.include("**/.DS_Store")
 
@@ -97,4 +98,27 @@ end
 desc "Run the site in development mode. Preview available at http://localhost:4567/"
 task :dev do
   system("middleman server")
+end
+
+desc "Test test site"
+task :test do
+  options = {
+    :assume_extension => true,
+    :url_ignore => [
+      '#',
+      # Known broken links.
+      '../examples/acls_template.json',
+      '/documentation/latest/./standalone-container/',
+      '/documentation/latest/./operations/',
+    ],
+    :cache => { :timeframe => '30d' },
+    :parallel => { :in_processes => 12},
+    :disable_external => true,
+    :file_ignore => [%r{publish/api}],
+    :url_swap => {
+      %r{../assets/img/blog} => '../../assets/img/blog',
+      %r{../../assets/img/documentation} => '../../../assets/img/documentation',
+    },
+  }
+  HTMLProofer.check_directory("./publish", options).run
 end
