@@ -9,34 +9,32 @@ Stout is a header-only C++ library. Simply add the `include` folder to your incl
 >  - Google's protobuf (version 3.3.x - 3.5.x is required to run tests)
 >  - Google's gmock/gtest
 
-There are a handful of data structures provided within the library (including some collections), as well as some namespaced and miscellaneous utilities. Also included are abstractions for [command line flags](#flags).
+There are a handful of data structures provided within the library (including some collections), as well as some namespaced and miscellaneous utilities. Also included are abstractions for [command line flags](#command-line-flags).
 
-Stout provides and heavily leverages some monadic structures including [Option](#option) and [Try](#try).
+Stout provides and heavily leverages some monadic structures including [Option](#option-some-and-none) and [Try](#try-result-and-error).
 
 Note that the library is designed to completely avoid exceptions. See [exceptions](#exceptions) for further discussion.
 
-* <a href="#option">Option, Some, and None</a>
-* <a href="#try">Try, Result, and Error</a>
-* <a href="#nothing">Nothing</a>
-* <a href="#fs">fs::</a>
-* <a href="#gzip">gzip::</a>
-* <a href="#json">JSON::</a>
-* <a href="#jsonify">`jsonify`</a>
-* <a href="#lambda">lambda::</a>
-* <a href="#net">net::</a>
-* <a href="#os">os::</a>
-* <a href="#path">path::</a>
-* <a href="#proc">proc::</a>
-* <a href="#protobuf">protobuf::</a>
-* <a href="#strings">strings::</a>
-* <a href="#flags">Command Line Flags</a>
-* <a href="#collections">Collections</a>
-* <a href="#miscellaneous">Miscellaneous</a>
-* <a href="#testing">Testing</a>
-* <a href="#philosophy">Philosophy</a>
+* [`Option`, `Some`, and `None`](#option-some-and-none)
+* [`Try`, `Result`, and `Error`](#try-result-and-error)
+* [`Nothing`](#nothing)
+* [`fs::`](#fs)
+* [`gzip::`](#gzip)
+* [`JSON::`](#json)
+* [`jsonify`](#jsonify)
+* [`lambda::`](#lambda)
+* [`net::`](#net)
+* [`os::`](#os)
+* [`path::`](#path)
+* [`proc::`](#proc)
+* [`protobuf::`](#protobuf)
+* [`strings::`](#strings)
+* [Command Line Flags](#command-line-flags)
+* [Collections](#collections)
+* [Miscellaneous](#miscellaneous)
+* [Testing](#testing)
+* [Philosophy](#philosophy)
 
-
-<a href="option"></a>
 
 ## `Option`, `Some`, and `None`
 
@@ -61,7 +59,7 @@ Note that the current implementation *copies* the underlying values (see [Philos
     Option<std::string*> o = new std::string("hello world");
 ~~~
 
-The `None` type acts as "syntactic sugar" to make using [Option](#option) less verbose. For example:
+The `None` type acts as "syntactic sugar" to make using [Option](#option-some-and-none) less verbose. For example:
 
 ~~~{.cpp}
     Option<T> foo(const Option<T>& o)
@@ -88,8 +86,6 @@ Similar to `None`, the `Some` type can be used to construct an `Option` as well.
     values["value2"] = Some("42");
 ~~~
 
-
-<a href="try"></a>
 
 ## `Try`, `Result`, and `Error`
 
@@ -139,24 +135,19 @@ You can also use `None` and `Some` with `Result` just like with `Option`:
 
 
 
-<a href="nothing"></a>
-
 ## `Nothing`
 
 A lot of functions that return `void` can also "return" an
 error. Since we don't use exceptions (see [Exceptions](#exceptions))
-we capture this pattern using `Try<Nothing>` (see [Try](#try)).
+we capture this pattern using `Try<Nothing>` (see
+[Try](#try-result-and-error)).
 
 
-
-<a href="fs"></a>
 
 ## `fs::`
 
 A collection of utilities for working with a filesystem. Currently we provide `fs::size`, `fs::usage`, and `fs::symlink`.
 
-
-<a href="gzip"></a>
 
 ## `gzip::`
 
@@ -166,8 +157,6 @@ A collection of utilities for doing gzip compression and decompression using `gz
   gzip::decompress(gzip::compress("hello world"));
 ~~~
 
-
-<a href="json"></a>
 
 ## `JSON::`
 
@@ -218,8 +207,6 @@ Of course, nesting of a `JSON::Value` is also permitted as per the JSON specific
 
 You can "render" a JSON value using `std::ostream operator<<` (or by using `stringify` (see [here](#stringify)).
 
-
-<a href="jsonify"></a>
 
 ## `jsonify`
 
@@ -284,21 +271,16 @@ std::cout << jsonify([&customer](JSON::ObjectWriter* writer) {
 // prints: {"first name":"michael","last name":"park","age":25}
 ~~~
 
-<a href="lambda"></a>
 
 ## `lambda::`
 
 To help deal with compatibility issues between C++98/03 and C++11 we wrap some of the TR1 types from `functional` in `lambda`. That way, when using `lambda::bind` you'll get `std::tr1::bind` where TR1 is available and `std::bind` when C++11 is available.
 
 
-<a href="net"></a>
-
 ## `net::`
 
 A collection of utilities for working with the networking subsystem. Currently we provide `net::download` and `net::getHostname`.
 
-
-<a href="os"></a>
 
 ## `os::`
 
@@ -334,14 +316,10 @@ There are a handful of wrappers that make working with signals easier, including
 ~~~
 
 
-<a href="path"></a>
-
 ## `path::`
 
 The `path` namespace provides the `path::join` function for joining together filesystem paths. Additionally to the `path` namespace there also exists the class `Path`. `Path` provides `basename()` and `dirname()` as thread safe replacements for standard `::basename()` and `::dirname()`.
 
-
-<a href="proc"></a>
 
 ## `proc::`
 
@@ -349,8 +327,6 @@ The `path` namespace provides the `path::join` function for joining together fil
 
 The `proc` namespace provides some abstractions for working with the Linux `proc` filesystem. The key abstractions are `proc::ProcessStatus` which models the data provided in `/proc/[pid]/stat` and `proc::SystemStatus` which models the data provided in `/proc/stat`.
 
-
-<a href="protobuf"></a>
 
 ## `protobuf::`
 
@@ -367,17 +343,12 @@ There is also a protobuf to JSON converter via `JSON::protobuf` that enables ser
 ~~~
 
 
-<a href="strings"></a>
-
 ## `strings::`
 
 Utilities for inspecting and manipulating strings are available in the `strings` namespace. This includes varying tokenization techniques via `strings::tokenize`, `strings::split`, and `strings::pairs`.
 
 String formatting is provided via `strings::format`. The `strings::format` functions produces strings based on the `printf` family of functions. Except, unlike the `printf` family of functions, the `strings::format` routines attempt to "stringify" (see [here](#stringify)) any arguments that are not POD types (i.e., "plain old data": primitives, pointers, certain structs/classes and unions, etc). This enables passing structs/classes to `strings::format` provided there is a definition/specialization of `std::ostream operator<<` available for that type. Note that the `%s` format specifier is expected for each argument that gets passed. A specialization for `std::string` is also provided so that `std::string::c_str` is not necessary (but again, `%s` is expected as the format specifier).
 
-
-
-<a href="flags"></a>
 
 ## Command Line Flags
 
@@ -430,9 +401,6 @@ Then both PREFIX_foo and PREFIX_bar will be loaded from the environment as well 
 There are various ways to deal with unknown flags (i.e., `--baz` in our example above) and duplicates (i.e., `--foo` on the command line twice or once in the environment and once on the command line). See the header files for the various `load` overloads.
 
 
-
-<a href="collections"></a>
-
 ## Collections
 
 Many of the collections and containers provided either by Boost or the C++ standard are cumbersome to use or yield brittle, hard to maintain code. For many of the standard data structures we provide wrappers with modified interfaces often simplified or enhanced using types like `Try` and `Option`. These wrappers include `hashmap`, `hashset`, `multihashmap`, and `multimap`.
@@ -445,7 +413,6 @@ There is also a `Cache` implementation that provides a templated implementation 
 
 Finally, we provide some overloaded operators for doing set union (`|`), set intersection (`&`), and set appending (`+`) using `std::set`.
 
-<a href="miscellaneous"></a>
 
 ## Miscellaneous
 
@@ -552,8 +519,6 @@ Macros for looping over collections:
 Wraps `boost::lexical_cast` for converting strings to numbers but returns a `Try` rather than throwing exceptions.
 
 
-<a href="stringify"></a>
-
 #### `stringify`
 
 Converts arbitrary types into strings by attempting to use an overloaded `std::ostream operator<<` (otherwise compilation fails). Note that `stringify` aborts the program if the stringification process fails.
@@ -574,8 +539,6 @@ You can give every thread its own copy of some data using the `ThreadLocal` abst
 ~~~
 
 
-<a href="testing"></a>
-
 ## Testing
 
 
@@ -593,8 +556,6 @@ There are some macros provided for integration with gtest that make the tests le
 
 There available macros include `ASSERT_SOME`, `EXPECT_SOME`, `ASSERT_NONE`, `EXPECT_NONE`, `ASSERT_ERROR`, `EXPECT_ERROR`, `ASSERT_SOME_EQ`, `EXPECT_SOME_EQ`, `ASSERT_SOME_TRUE`, `EXPECT_SOME_TRUE`, `ASSERT_SOME_FALSE`, `EXPECT_SOME_FALSE`.
 
-
-<a href="philosophy"></a>
 
 ## Philosophy
 
@@ -615,10 +576,8 @@ the performance overhead incurred via any extra copying is your
 bottleneck, and if it is we'd love to hear from you!
 
 
-<a href="exceptions"></a>
-
 ### Exceptions
 
 The library WILL NEVER throw exceptions and will attempt to capture
 any exceptions thrown by underlying C++ functions and convert them
-into an [Error](#error).
+into an [Error](#try-result-and-error).
