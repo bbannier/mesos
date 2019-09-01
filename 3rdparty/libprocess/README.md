@@ -10,31 +10,31 @@ libprocess provides general primitives and abstractions for asynchronous program
 * [Overview](#overview)
 * [Futures and Promises](#futures-and-promises)
 * [HTTP](#http)
-* [Processes (aka Actors)](#processes)
-* [Clock Management and Timeouts](#clock)
+* [Processes (aka Actors)](#processes-aka-actors)
+* [Clock Management and Timeouts](#clock-management-and-timeouts)
 * [Miscellaneous Primitives](#miscellaneous-primitives)
-* [Optimized Run Queue and Event Queue](#optimized-run-queue-event-queue)
+* [Optimized Run Queue and Event Queue](#optimized-run-queue-and-event-queue)
 
 ---
 
-## <a name="presentations"></a> Presentations
+## Presentations
 
 The following talks are recommended to get an overview of libprocess:
 
 * [libprocess, a concurrent and asynchronous programming library (San Francisco C++ Meetup)](https://www.youtube.com/watch?v=KjqaZYP0T2U)
 
 
-## <a name="overview"></a> Overview
+## Overview
 
 This user guide is meant to help understand the constructs within the libprocess library. The main constructs are:
 
 1. [Futures and Promises](#futures-and-promises) which are used to build ...
 2. [HTTP](#http) abstractions, which make the foundation for ...
-3. [Processes (aka Actors)](#processes).
+3. [Processes (aka Actors)](#processes-aka-actors).
 
 For most people processes (aka actors) are the most foreign of the concepts, but they are arguably the most critical part of the library (they library is named after them!). Nevertheless, we organized this guide to walk through futures/promises and HTTP before processes because the former two are prerequisites for the latter.
 
-## <a name="futures-and-promises"></a> Futures and Promises
+## Futures and Promises
 
 The `Future` and `Promise` primitives are used to enable programmers to write asynchronous, non-blocking, and highly concurrent software.
 
@@ -42,16 +42,16 @@ A `Future` acts as the read-side of a result which might be computed asynchronou
 
 Looking for a specific topic?
 
-* [Basics](#futures-and-promises-basics)
-* [States](#futures-and-promises-states)
-* [Disarding a Future (aka Cancellation)](#futures-and-promises-discarding-a-future)
-* [Abandoned Futures](#futures-and-promises-abandoned-futures)
-* [Composition: `Future::then()`, `Future::repair()`, and `Future::recover()`](#futures-and-promises-composition)
-* [Discarding and Composition](#futures-and-promises-discarding-and-composition)
-* [Callback Semantics](#futures-and-promises-callback-semantics)
-* [`CHECK()` Overloads](#futures-and-promises-check-overloads)
+* [Basics](#basics)
+* [States](#states)
+* [Disarding a Future (aka Cancellation)](#discarding-a-future-aka-cancellation)
+* [Abandoned Futures](#abandoned-futures)
+* [Composition: `Future::then()`, `Future::repair()`, and `Future::recover()`](#composition-future-then-future-repair-and-future-recover)
+* [Discarding and Composition](#discarding-and-composition)
+* [Callback Semantics](#callback-semantics)
+* [`CHECK()` Overloads](#check-overloads)
 
-### <a name="futures-and-promises-basics"></a> Basics
+### Basics
 
 A `Promise` is templated by the type that it will "contain". A `Promise` is not copyable or assignable in order to encourage strict ownership rules between processes (i.e., it's hard to reason about multiple actors concurrently trying to complete a `Promise`, even if it's safe to do so concurrently).
 
@@ -83,13 +83,13 @@ int main(int argc, char** argv)
 }
 ```
 
-### <a name="futures-and-promises-states"></a> States
+### States
 
 A promise starts in the `PENDING` state and can then transition to any of the `READY`, `FAILED`, or `DISCARDED` states. You can check the state using `Future::isPending()`, `Future::isReady()`, `Future::isFailed()`, and `Future::isDiscarded()`.
 
 > <br> We typically refer to transitioning to `READY` as _completing the promise/future_. <br><br>
 
-You can also add a callback to be invoked when (or if) a transition occurs (or has occcured) by using the `Future::onReady()`, `Future::onFailed()`, and `Future::onDiscarded()`. As a _catch all_ you can use `Future::onAny()` which will invoke it's callbacks on a transition to all of `READY`, `FAILED`, and `DISCARDED`. **See [Callback Semantics](#futures-and-promises-callback-semantics) for a discussion of how/when these callbacks get invoked.**
+You can also add a callback to be invoked when (or if) a transition occurs (or has occcured) by using the `Future::onReady()`, `Future::onFailed()`, and `Future::onDiscarded()`. As a _catch all_ you can use `Future::onAny()` which will invoke it's callbacks on a transition to all of `READY`, `FAILED`, and `DISCARDED`. **See [Callback Semantics](#callback-semantics) for a discussion of how/when these callbacks get invoked.**
 
 The following table is meant to capture these transitions:
 
@@ -99,11 +99,11 @@ The following table is meant to capture these transitions:
 | `FAILED`    | `Promise::fail(const std::string&)` | `Future::isFailed()`    | `Future::onFailed(F&&)`    |
 | `DISCARDED` | `Promise::discard()`                | `Future::isDiscarded()` | `Future::onDiscarded(F&&)` |
 
-> <br> Code Style: prefer [composition](#futures-and-promises-composition) using `Future::then()` and `Future::recover()` over `Future::onReady()`, `Future::onFailed()`, `Future::onDiscarded()`, and `Future::onAny()`. A good rule of thumb is if you find yourself creating your own instance of a `Promise` to compose an asynchronous operation you should use [composition](#futures-and-promises-composition) instead! <br><br>
+> <br> Code Style: prefer [composition](#composition-future-then-future-repair-and-future-recover) using `Future::then()` and `Future::recover()` over `Future::onReady()`, `Future::onFailed()`, `Future::onDiscarded()`, and `Future::onAny()`. A good rule of thumb is if you find yourself creating your own instance of a `Promise` to compose an asynchronous operation you should use [composition](#composition-future-then-future-repair-and-future-recover) instead! <br><br>
 
-We use the macros `CHECK_PENDING()`, `CHECK_READY()`, `CHECK_FAILED()`, `CHECK_DISCARDED()` throughout our examples. See [`CHECK()` Overloads](#futures-and-promises-check-overloads) for more details about these macros.
+We use the macros `CHECK_PENDING()`, `CHECK_READY()`, `CHECK_FAILED()`, `CHECK_DISCARDED()` throughout our examples. See [`CHECK()` Overloads](#check-overloads) for more details about these macros.
 
-### <a name="futures-and-promises-discarding-a-future"></a> Discarding a Future (aka Cancellation)
+### Discarding a Future (aka Cancellation)
 
 You can "cancel" the result of some asynchronous operation by discarding a future. Unlike doing a discard on a promise, _discarding a future is a request that may or may not be be satisfiable_. You discard a future using `Future::discard()`. You can determine if a future has a discard request by using `Future::hasDiscard()` or set up a callback using `Future::onDiscard()`. Here's an example:
 
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 }
 ```
 
-### <a name="futures-and-promises-abandoned-futures"></a> Abandoned Futures
+### Abandoned Futures
 
 An instance of `Promise` that is deleted before it has transitioned out of `PENDING` is considered abandoned. The concept of abandonment was added late to the library so for backwards compatibility reasons we could not add a new state but instead needed to have it be a sub-state of `PENDING`.
 
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 }
 ```
 
-### <a name="futures-and-promises-composition"></a> Composition: `Future::then()`, `Future::repair()`, and `Future::recover()`
+### Composition: `Future::then()`, `Future::repair()`, and `Future::recover()`
 
 You can compose together asynchronous function calls using `Future::then()`, `Future::repair()`, and `Future::recover()`. To help understand the value of composition, we'll start with an example of how you might manually do this composition:
 
@@ -273,13 +273,13 @@ Future<Person> parent(const std::string& name)
 }
 ```
 
-> <br> **Be careful what you capture in your callbacks! Depending on the state of the future the callback may be executed from a different scope and what ever you captured may no longer be valid; see [Callback Semantics](#futures-and-promises-callback-semantics) for more details.** <br><br>
+> <br> **Be careful what you capture in your callbacks! Depending on the state of the future the callback may be executed from a different scope and what ever you captured may no longer be valid; see [Callback Semantics](#callback-semantics) for more details.** <br><br>
 
-### <a name="futures-and-promises-discarding-and-composition"></a> Discarding and Composition
+### Discarding and Composition
 
 Doing a `Future::discard()` will _propagate_ through each of the futures composed with `Future::then()`, `Future::recover()`, etc. This is usually what you want, but there are two important caveats to look out for:
 
-#### <a name="futures-and-promises-then-discards"></a> 1. `Future::then()` enforces discards
+#### 1. `Future::then()` enforces discards
 
 The future returned by `Future::then()` _will not execute the callback if a discard has been requested._ That is, even if the future transitions to `READY`, `Future::then()` will still enforce the request to discard and transition the future to `DISCARDED`.
 
@@ -312,7 +312,7 @@ int main(int argc, char** argv)
 }
 ```
 
-#### <a name="futures-and-promises-undiscardable"></a> 2. Sometimes you want something to be `undiscardable()`
+#### 2. Sometimes you want something to be `undiscardable()`
 
 You may find yourself in a circumstance when you're referencing (or composing) futures but _you don't want a disard to propagate to the referenced future!_ Consider some code that needs to complete some expensive initialization before other functions can be called. We can model that by composing each function with the initialization, for example:
 
@@ -345,7 +345,7 @@ Future<T> foo()
 }
 ```
 
-### <a name="futures-and-promises-callback-semantics"></a> Callback Semantics
+### Callback Semantics
 
 There are two possible ways in which the callbacks to the `Future::onReady()` family of functions as well as the composition functions like `Future::then()` get invoked:
 
@@ -362,7 +362,7 @@ We call these callback semantics _synchronous_, as opposed to _asynchronous_. Yo
 
 > <br> Note that after the callbacks are invoked they are deleted, so any resources that you might be holding on to inside the callback will properly be released after the future transitions and it's callbacks are invoked. <br><br>
 
-### <a name="futures-and-promises-check-overloads"></a> `CHECK()` Overloads
+### `CHECK()` Overloads
 
 `CHECK()` is a macro from [Google Test](https://github.com/google/googletest) which acts like an `assert` but prints a stack trace and does better signal management. In addition to `CHECK()`, we've also created wrapper macros `CHECK_PENDING()`, `CHECK_READY()`, `CHECK_FAILED()`, `CHECK_DISCARDED()` which enables you to more concisely do things like `CHECK_READY(future)` in your tests.
 
@@ -374,7 +374,7 @@ We call these callback semantics _synchronous_, as opposed to _asynchronous_. Yo
 --->
 
 
-## <a name="http"></a> HTTP
+## HTTP
 
 libprocess provides facilities for communicating between actors via HTTP
 messages. With the advent of the HTTP API, HTTP is becoming the preferred mode
@@ -477,7 +477,7 @@ Future<Response> response = connection.send(request);
 It's also worth noting that if multiple requests are sent in succession on a
 `Connection`, they will be automatically pipelined.
 
-## <a name="processes"></a> Processes (aka Actors)
+## Processes (aka Actors)
 
 An actor in libprocess is called a *process* (not to be confused by an operating system process).
 
@@ -659,7 +659,7 @@ TODO.
 
 TODO.
 
-### <a name="async-pimpl"></a> Processes and the Asynchronous Pimpl Pattern
+### Processes and the Asynchronous Pimpl Pattern
 
 It's tedious to require everyone to have to explicitly `spawn()`, `terminate()`, and `wait()` for a process. Having everyone call `dispatch()` when they really just want to invoke a function (albeit asynchronously) is unfortnate too! To alleviate these burdenes, a common pattern that is used is to wrap a process within another class that performs the `spawn()`, `terminate()`, `wait()`, and `dispatch()`'s for you. Here's a typical example:
 
@@ -705,7 +705,7 @@ int main(int argc, char** argv)
 
 Anyone using `Foo` uses it similarly to how they would work with any other _synchronous_ object where they don't know, or need to know, the implementation details under the covers (i.e., that it's implemented using a process). This is similar to the [Pimpl](https://en.wikipedia.org/wiki/Opaque_pointer) pattern, except we need to `spawn()` and `terminate()/wait()` and rather than _synchronously_ invoking the underlying object we're _asynchronously_ invoking the underlying object using `dispatch()`.
 
-## <a name="clock"></a> Clock Management and Timeouts
+## Clock Management and Timeouts
 
 Asynchronous programs often use timeouts, e.g., because a process that initiates
 an asynchronous operation wants to take action if the operation hasn't completed
@@ -788,7 +788,7 @@ int main()
 }
 ```
 
-## <a name="miscellaneous-primitives"></a> Miscellaneous Primitives
+## Miscellaneous Primitives
 
 ### `async`
 
@@ -796,7 +796,7 @@ Async defines a function template for asynchronously executing
 function closures. It provides their results as
 [futures](#futures-and-promises).
 
-## <a name="optimized-run-queue-event-queue"></a> Optimized Run Queue and Event Queue
+## Optimized Run Queue and Event Queue
 
 There are a handful of compile-time optimizations that can be
 configured to improve the run queue and event queue performance. These
