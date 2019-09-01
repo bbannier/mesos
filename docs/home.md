@@ -112,6 +112,8 @@ layout: documentation
     * [Clang-Format](clang-format.md) for automatic formatting.
   * [Doxygen Style Guide](doxygen-style-guide.md)
   * [Markdown Style Guide](markdown-style-guide.md)
+* [stout](stout.md)
+* [libprocess](libprocess.md)
 * [Testing Patterns](testing-patterns.md) for tips and tricks used in Mesos tests.
 * [C++ Doxygen Reference](/api/latest/c++/) for internal APIs.
 * [Committers and Maintainers](committers.md) a listing of project committers and component maintainers; useful when seeking feedback.
