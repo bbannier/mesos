@@ -59,8 +59,9 @@ see [MESOS-7258](https://issues.apache.org/jira/browse/MESOS-7258).
 
 ### Seccomp Isolator
 
-A new `linux/seccomp` [isolator](docs/isolators/linux-seccomp) was added. This
-isolator makes use of the
+A new `linux/seccomp`
+[isolator](../../../documentation/latest/isolators/linux-seccomp) was
+added. This isolator makes use of the
 [seccomp](https://www.kernel.org/doc/Documentation/prctl/seccomp_filter.txt)
 facility provided by recent linux kernels.
 

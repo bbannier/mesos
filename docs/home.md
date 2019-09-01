@@ -72,7 +72,7 @@ layout: documentation
 * [Container Storage Interface (CSI) Support](csi.md)
 
 ## APIs
-* [HTTP Endpoints](endpoints/) for available HTTP endpoints.
+* [HTTP Endpoints](endpoints/index.md) for available HTTP endpoints.
 * [API Client Libraries](api-client-libraries.md) lists client libraries for the HTTP APIs.
 * [API Versioning](versioning.md#api-versioning) describes HTTP API and release versioning.
 * [RecordIO](recordio.md) describes the RecordIO format used by the streaming endpoints of the HTTP API.

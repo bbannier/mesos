@@ -155,7 +155,7 @@ To load a custom allocator into Mesos master, you need to:
 
 - Select it as the allocator via the `--allocator` flag.
 
-For example, the following command will run the Mesos master with `ExternalAllocatorModule` (see [this section](#Example-JSON-strings) for JSON format):
+For example, the following command will run the Mesos master with `ExternalAllocatorModule` (see [this section](#example-json-strings) for JSON format):
 
     ./bin/mesos-master.sh --work_dir=m/work --modules="file://<modules-including-allocator>.json" --allocator=ExternalAllocatorModule
 

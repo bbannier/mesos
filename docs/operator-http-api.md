@@ -23,7 +23,7 @@ This API contains all the calls accepted by the master. The canonical source of 
 
 Below are the example calls to master that result in synchronous responses from the API.
 
-### GET_HEALTH
+### `GET_HEALTH`
 
 This call retrieves the health status of master.
 
@@ -56,7 +56,7 @@ Content-Type: application/json
 
 ```
 
-### GET_FLAGS
+### `GET_FLAGS`
 
 This call retrieves the master's overall flag configuration.
 
@@ -238,7 +238,7 @@ Content-Type: application/json
 
 ```
 
-### GET_VERSION
+### `GET_VERSION`
 
 This call retrieves the master's version information.
 
@@ -276,7 +276,7 @@ Content-Type: application/json
 
 ```
 
-### GET_METRICS
+### `GET_METRICS`
 
 This call gives the snapshot of current metrics to the end user. If `timeout` is
 set in the call, it will be used to determine the maximum amount of time the
@@ -754,7 +754,7 @@ Content-Type: application/json
 
 ```
 
-### GET_LOGGING_LEVEL
+### `GET_LOGGING_LEVEL`
 
 This call retrieves the master's logging level.
 
@@ -787,7 +787,7 @@ Content-Type: application/json
 
 ```
 
-### SET_LOGGING_LEVEL
+### `SET_LOGGING_LEVEL`
 
 Sets the logging verbosity level for a specified duration for master. Mesos uses
 [glog](https://github.com/google/glog) for logging. The library only uses
@@ -820,7 +820,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### LIST_FILES
+### `LIST_FILES`
 
 This call retrieves the file listing for a directory in master.
 
@@ -890,7 +890,7 @@ Content-Type: application/json
 
 ```
 
-### READ_FILE
+### `READ_FILE`
 
 Reads data from a file on the master. This call takes the path of the
 file to be read, the offset to start reading, and the maximum number of
@@ -931,7 +931,7 @@ Content-Type: application/json
 
 ```
 
-### GET_STATE
+### `GET_STATE`
 
 This call retrieves the overall cluster state.
 
@@ -1222,7 +1222,7 @@ Content-Type: application/json
 
 ```
 
-### GET_AGENTS
+### `GET_AGENTS`
 
 This call retrieves information about all the agents known to the master.
 
@@ -1349,7 +1349,7 @@ Content-Type: application/json
 
 ```
 
-### GET_FRAMEWORKS
+### `GET_FRAMEWORKS`
 
 This call retrieves information about all the frameworks known to the master.
 
@@ -1405,7 +1405,7 @@ Content-Type: application/json
 
 ```
 
-### GET_EXECUTORS
+### `GET_EXECUTORS`
 
 Queries about all the executors known to the master.
 
@@ -1456,7 +1456,7 @@ Content-Type: application/json
 
 ```
 
-### GET_TASKS
+### `GET_TASKS`
 
 Query about all the tasks known to the master.
 
@@ -1575,7 +1575,7 @@ Content-Type: application/json
 
 ```
 
-### GET_ROLES
+### `GET_ROLES`
 
 Query the information about roles.
 
@@ -1661,7 +1661,7 @@ Content-Type: application/json
 
 ```
 
-### GET_OPERATIONS
+### `GET_OPERATIONS`
 
 Returns a list of all offer operations throughout the cluster, not including
 `LAUNCH` or `LAUNCH_GROUP` operations which can be retrieved with `GET_TASKS`.
@@ -1748,7 +1748,7 @@ Content-Type: application/json
 
 ```
 
-### GET_WEIGHTS
+### `GET_WEIGHTS`
 
 This call retrieves the information about role weights.
 
@@ -1786,7 +1786,7 @@ Content-Type: application/json
 
 ```
 
-### UPDATE_WEIGHTS
+### `UPDATE_WEIGHTS`
 
 This call updates weights for specific role. This call takes `weight_infos`
 which needs `role` value and `weight` value.
@@ -1819,7 +1819,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### GET_MASTER
+### `GET_MASTER`
 
 This call retrieves information about the master.
 
@@ -1864,7 +1864,7 @@ Content-Type: application/json
 
 ```
 
-### RESERVE_RESOURCES
+### `RESERVE_RESOURCES`
 
 This call reserve resources dynamically on a specific agent. This call takes
 `agent_id` and `resources` details like the following.
@@ -1918,7 +1918,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### UNRESERVE_RESOURCES
+### `UNRESERVE_RESOURCES`
 
 This call unreserve resources dynamically on a specific agent. This call takes
 `agent_id` and `resources` details like the following.
@@ -1972,7 +1972,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### CREATE_VOLUMES
+### `CREATE_VOLUMES`
 
 This call create [persistent volumes](persistent-volume.md) on reserved
 resources. The request is forwarded asynchronously to the Mesos agent where the
@@ -2025,7 +2025,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### DESTROY_VOLUMES
+### `DESTROY_VOLUMES`
 
 This call destroys [persistent volumes](persistent-volume.md). The request is
 forwarded asynchronously to the Mesos agent where the volumes are located.
@@ -2075,7 +2075,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### GROW_VOLUME
+### `GROW_VOLUME`
 
 This call grows the size of a [persistent volume](persistent-volume.md). The
 request is forwarded asynchronously to the Mesos agent where the volume is
@@ -2132,7 +2132,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### SHRINK_VOLUME
+### `SHRINK_VOLUME`
 
 This call shrinks the size of a [persistent volume](persistent-volume.md).
 The request is forwarded asynchronously to the Mesos agent where the volume
@@ -2185,7 +2185,7 @@ HTTP/1.1 202 Accepted
 ```
 
 
-### GET_MAINTENANCE_STATUS
+### `GET_MAINTENANCE_STATUS`
 
 This call retrieves the cluster's maintenance status.
 
@@ -2231,7 +2231,7 @@ Content-Type: application/json
 
 ```
 
-### GET_MAINTENANCE_SCHEDULE
+### `GET_MAINTENANCE_SCHEDULE`
 
 This call retrieves the cluster's maintenance schedule.
 
@@ -2282,7 +2282,7 @@ Content-Type: application/json
 
 ```
 
-### UPDATE_MAINTENANCE_SCHEDULE
+### `UPDATE_MAINTENANCE_SCHEDULE`
 
 This call updates the cluster's maintenance schedule.
 
@@ -2327,7 +2327,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### START_MAINTENANCE
+### `START_MAINTENANCE`
 
 This call starts the maintenance of the cluster, this would bring a set of machines
 down.
@@ -2360,7 +2360,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### STOP_MAINTENANCE
+### `STOP_MAINTENANCE`
 
 Stops the maintenance of the cluster, this would bring a set of machines
 back up.
@@ -2393,7 +2393,7 @@ HTTP/1.1 202 Accepted
 
 ```
 
-### GET_QUOTA
+### `GET_QUOTA`
 
 This call retrieves the cluster's configured quotas.
 
@@ -2441,7 +2441,7 @@ Content-Type: application/json
 
 ```
 
-### UPDATE_QUOTA
+### `UPDATE_QUOTA`
 
 This call updates the quota for the specified role(s).
 These configurations are applied in an all-or-nothing manner.
@@ -2488,7 +2488,7 @@ HTTP/1.1 200 OK
 
 ```
 
-### MARK_AGENT_GONE
+### `MARK_AGENT_GONE`
 
 This call can be used by operators to assert that an agent instance has
 failed and is never coming back (e.g., ephemeral instance from cloud provider).
@@ -2523,7 +2523,7 @@ MARK_AGENT_GONE HTTP Response (JSON):
 HTTP/1.1 200 OK
 ```
 
-### DRAIN_AGENT
+### `DRAIN_AGENT`
 
 Initiates [draining](maintenance.md) on the specified agent.
 
@@ -2552,7 +2552,7 @@ DRAIN_AGENT HTTP Response (JSON):
 HTTP/1.1 200 OK
 ```
 
-### DEACTIVATE_AGENT
+### `DEACTIVATE_AGENT`
 
 Deactivates the specified agent, preventing offers for that agent's resources
 from being sent to schedulers until the agent is reactivated.
@@ -2580,7 +2580,7 @@ DEACTIVATE_AGENT HTTP Response (JSON):
 HTTP/1.1 200 OK
 ```
 
-### REACTIVATE_AGENT
+### `REACTIVATE_AGENT`
 
 Reactivates the specified agent, resuming offers for that agent's resources if
 the agent was previously deactivated.
@@ -2646,11 +2646,11 @@ The client is expected to keep a **persistent** connection open to the endpoint 
 
 The following events are currently sent by the master. The canonical source of this information is at [master.proto](https://github.com/apache/mesos/blob/master/include/mesos/v1/master/master.proto). Note that when sending JSON encoded events, master encodes raw bytes in Base64 and strings in UTF-8.
 
-### SUBSCRIBED
+### `SUBSCRIBED`
 
 The first event sent by the master when a client sends a `SUBSCRIBE` request on the persistent connection. This includes a snapshot of the cluster state. See `SUBSCRIBE` above for details. Subsequent changes to the cluster state can result in more events (currently only `TASK_ADDED` and `TASK_UPDATED` are supported).
 
-### HEARTBEAT
+### `HEARTBEAT`
 
 Periodically sent by the master to the subscriber according to 'Subscribed.heartbeat_interval_seconds'. If the subscriber does not receive any events (including heartbeats) for an extended period of time (e.g., 5 x heartbeat_interval_seconds), it is likely that the connection is lost or there is a network partition. In that case, the subscriber should close the existing subscription connection and resubscribe using a backoff strategy.
 
@@ -2663,7 +2663,7 @@ HEARTBEAT Event (JSON)
 }
 ```
 
-### TASK_ADDED
+### `TASK_ADDED`
 
 Sent whenever a task has been added to the master. This can happen either when a new task launch is processed by the master or when an agent reregisters with a failed over master.
 
@@ -2694,7 +2694,7 @@ TASK_ADDED Event (JSON)
 }
 ```
 
-### TASK_UPDATED
+### `TASK_UPDATED`
 
 Sent whenever the state of the task changes in the master. This can happen when a status update is received or generated by the master. Since status updates are retried by the agent, not all status updates received by the master result in the event being sent.
 
@@ -2727,7 +2727,7 @@ TASK_UPDATED Event (JSON)
 }
 ```
 
-### FRAMEWORK_ADDED
+### `FRAMEWORK_ADDED`
 
 Sent whenever a framework becomes known to the master. This can happen when a new framework registers with the master.
 
@@ -2771,7 +2771,7 @@ FRAMEWORK_ADDED Event (JSON)
 }
 ```
 
-### FRAMEWORK_UPDATED
+### `FRAMEWORK_UPDATED`
 
 Sent whenever a framework reregisters with the master upon a disconnection (network error) or upon a master failover.
 
@@ -2815,7 +2815,7 @@ FRAMEWORK_UPDATED Event (JSON)
 }
 ```
 
-### FRAMEWORK_REMOVED
+### `FRAMEWORK_REMOVED`
 
 Sent whenever a framework is removed. This can happen when a framework is explicitly teardown by the operator or if it fails to reregister with the master within the failover timeout.
 
@@ -2846,7 +2846,7 @@ FRAMEWORK_REMOVED Event (JSON)
 }
 ```
 
-### AGENT_ADDED
+### `AGENT_ADDED`
 
 Sent whenever an agent becomes known to it. This can happen when an agent registered for the first time, or reregistered after a master failover.
 
@@ -2895,7 +2895,7 @@ AGENT_ADDED Event (JSON)
 }
 ```
 
-### AGENT_REMOVED
+### `AGENT_REMOVED`
 
 Sent whenever a agent is removed. This can happen when the agent is scheduled for maintenance. (NOTE: It's possible that an agent might become active once it has been removed, i.e. if the master has gc'ed its list of known "dead" agents. See MESOS-5965 for context).
 
@@ -2922,11 +2922,11 @@ This API contains all the calls accepted by the agent. The canonical source of t
 
 Below are the example calls to agent that result in synchronous responses from the API.
 
-### GET_HEALTH
+### `GET_HEALTH`
 
 Request and Response are similar to GET_HEALTH call to master.
 
-### GET_FLAGS
+### `GET_FLAGS`
 
 This call retrieves the agent's flag configuration.
 
@@ -3212,31 +3212,31 @@ Content-Type: application/json
 
 ```
 
-### GET_VERSION
+### `GET_VERSION`
 
 Request and Response are similar to GET_VERSION call to master.
 
-### GET_METRICS
+### `GET_METRICS`
 
 Request and Response are similar to GET_METRICS call to master.
 
-### GET_LOGGING_LEVEL
+### `GET_LOGGING_LEVEL`
 
 Request and Response are similar to GET_LOGGING_LEVEL call to master.
 
-### SET_LOGGING_LEVEL
+### `SET_LOGGING_LEVEL`
 
 Request and Response are similar to SET_LOGGING_LEVEL call to master.
 
-### LIST_FILES
+### `LIST_FILES`
 
 Request and Response are similar to LIST_FILES call to master.
 
-### READ_FILE
+### `READ_FILE`
 
 Request and Response are similar to READ_FILE call to master.
 
-### GET_STATE
+### `GET_STATE`
 
 This call retrieves full state of the agent i.e. information about the tasks,
 frameworks and executors running in the cluster.
@@ -3416,7 +3416,7 @@ Content-Type: application/json
 
 ```
 
-### GET_CONTAINERS
+### `GET_CONTAINERS`
 
 This call retrieves information about containers running on this agent. It contains
 ContainerStatus and ResourceStatistics along with some metadata of the containers.
@@ -3487,7 +3487,7 @@ Content-Type: application/json
 
 ```
 
-### GET_FRAMEWORKS
+### `GET_FRAMEWORKS`
 
 This call retrieves information about all the frameworks known to the agent.
 
@@ -3535,7 +3535,7 @@ Content-Type: application/json
 
 ```
 
-### GET_EXECUTORS
+### `GET_EXECUTORS`
 
 This call retrieves information about all the executors known to the agent.
 
@@ -3607,7 +3607,7 @@ Content-Type: application/json
 
 ```
 
-### GET_TASKS
+### `GET_TASKS`
 
 This call retrieves information about all the tasks known to the agent.
 
@@ -3724,7 +3724,7 @@ Content-Type: application/json
 
 ```
 
-### GET_OPERATIONS
+### `GET_OPERATIONS`
 
 Returns a list of all offer operations known to the agent, not including
 `LAUNCH` or `LAUNCH_GROUP` operations which can be retrieved with `GET_TASKS`.
@@ -3811,7 +3811,7 @@ Content-Type: application/json
 
 ```
 
-### LAUNCH_NESTED_CONTAINER
+### `LAUNCH_NESTED_CONTAINER`
 
 This call launches a nested container. Any authorized entity,
 including the executor itself, its tasks, or the operator can use this
@@ -3867,7 +3867,7 @@ HTTP/1.1 200 OK
 
 ```
 
-### WAIT_NESTED_CONTAINER
+### `WAIT_NESTED_CONTAINER`
 
 This call waits for a nested container to terminate or exit. Any
 authorized entity, including the executor itself, its tasks, or the
@@ -3909,7 +3909,7 @@ Content-Type: application/json
 
 ```
 
-### KILL_NESTED_CONTAINER
+### `KILL_NESTED_CONTAINER`
 
 This call initiates the destruction of a nested container. Any
 authorized entity, including the executor itself, its tasks, or the
@@ -3942,7 +3942,7 @@ HTTP/1.1 200 OK
 
 ```
 
-### LAUNCH_NESTED_CONTAINER_SESSION
+### `LAUNCH_NESTED_CONTAINER_SESSION`
 
 This call launches a nested container whose lifetime is tied to the
 lifetime of the HTTP call establishing this connection. The STDOUT and
@@ -4020,7 +4020,7 @@ Message-Content-Type: application/json
 
 ```
 
-### ATTACH_CONTAINER_INPUT
+### `ATTACH_CONTAINER_INPUT`
 
 This call attaches to the STDIN of the primary process of a container
 and streams input to it. This call can only be made against containers
@@ -4113,7 +4113,7 @@ HTTP/1.1 200 OK
 
 ```
 
-### ATTACH_CONTAINER_OUTPUT
+### `ATTACH_CONTAINER_OUTPUT`
 
 This call attaches to the STDOUT and STDERR of the primary process of
 a container and streams its output back to the client. This call can
@@ -4176,7 +4176,7 @@ Message-Content-Type: application/json
 
 ```
 
-### REMOVE_NESTED_CONTAINER
+### `REMOVE_NESTED_CONTAINER`
 
 This call triggers the removal of a nested container and its artifacts
 (e.g., the sandbox and runtime directories). This call can only be made
@@ -4210,7 +4210,7 @@ REMOVE_NESTED_CONTAINER HTTP Response (JSON):
 HTTP/1.1 200 OK
 ```
 
-### GET_RESOURCE_PROVIDERS
+### `GET_RESOURCE_PROVIDERS`
 
 This call retrieves information about all the resource providers known
 to the agent.
@@ -4285,7 +4285,7 @@ Content-Type: application/json
 ```
 
 
-### ADD_RESOURCE_PROVIDER_CONFIG
+### `ADD_RESOURCE_PROVIDER_CONFIG`
 
 This call launches a Local Resource Provider on the agent with the specified
 `ResourceProviderInfo`.
@@ -4358,10 +4358,10 @@ Possible responses:
 * `500 Internal Server Error`: If an unexpected error occurs.
 
 
-### UPDATE_RESOURCE_PROVIDER_CONFIG
+### `UPDATE_RESOURCE_PROVIDER_CONFIG`
 
-This call updates a Local Resource Provider on the agent with the specified
-`ResourceProviderInfo`.
+This call updates a Local Resource Provider on the agent with the
+specified `ResourceProviderInfo`.
 
 ```
 UPDATE_RESOURCE_PROVIDER_CONFIG HTTP Request (JSON):
@@ -4431,7 +4431,7 @@ Possible responses:
 * `500 Internal Server Error`: If an unexpected error occurs.
 
 
-### REMOVE_RESOURCE_PROVIDER_CONFIG
+### `REMOVE_RESOURCE_PROVIDER_CONFIG`
 
 This call terminates a given Local Resource Provider on the agent and prevents
 it from being launched again until the config is added back. The master and the
@@ -4483,7 +4483,7 @@ Possible responses:
 * `500 Internal Server Error`: If an unexpected error occurs.
 
 
-### PRUNE_IMAGES
+### `PRUNE_IMAGES`
 
 This call triggers garbage collection for container images. This call can
 only be made when all running containers are launched with Mesos version 1.5

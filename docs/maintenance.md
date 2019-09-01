@@ -119,7 +119,7 @@ tasks running on the agent to kill those tasks manually. To verify that all
 tasks on the agent have terminated and their terminal status updates have been
 acknowledged by the schedulers, ensure that the `pending_tasks`, `queued_tasks`,
 and `launched_tasks` fields in the response to the
-[`GET_TASKS`](operator-http-api.md#get_tasks-1) agent operator API call are
+[`GET_TASKS`](operator-http-api.md#get_tasks) agent operator API call are
 empty:
 
     $ curl -X POST -d '{"type": "GET_TASKS"}' agenthost:5051/api/v1
@@ -127,7 +127,7 @@ empty:
 If you are making use of volumes backed by network storage on the target agent,
 it's possible that there may be a long-running offer operation on the agent
 which has not yet finished. To check if this is the case, issue the agent
-operator API [`GET_OPERATIONS`](operator-http-api.md#get_operations-1) call to
+operator API [`GET_OPERATIONS`](operator-http-api.md#get_operations) call to
 the agent:
 
     $ curl -X POST -d '{"type": "GET_OPERATIONS"}' agenthost:5051/api/v1

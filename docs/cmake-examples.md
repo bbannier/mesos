@@ -89,7 +89,7 @@ Fourth, we declare the Boost target.
 
 To make things easier, we invoke our custom CMake function `EXTERNAL` to setup
 some variables for us: `BOOST_TARGET`, `BOOST_ROOT`, and `BOOST_CMAKE_ROOT`. See
-[the docs](cmake.md#EXTERNAL) for more explanation of `EXTERNAL`.
+[the docs](cmake.md#external) for more explanation of `EXTERNAL`.
 
 Then we call `add_library(boost INTERFACE)`. This creates a header-only CMake
 target, usable like any other library. We use `add_dependencies(boost
