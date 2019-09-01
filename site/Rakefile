@@ -122,5 +122,5 @@ task :test do
       %r{../../assets/img/documentation} => '../../../assets/img/documentation',
     },
   }
-  HTMLProofer.check_directory("./publish", options).run
+  HTMLProofer.check_directory("./publish/", options).run
 end

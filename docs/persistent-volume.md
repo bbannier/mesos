@@ -75,7 +75,6 @@ interfaces described above.
 
 ## Framework API
 
-<a name="offer-operation-create"></a>
 ### `Offer::Operation::Create`
 
 A framework can create volumes through the resource offer cycle.  Suppose we
@@ -263,7 +262,6 @@ contain the following reserved disk resources:
 Those reserved resources can then be used as normal: e.g., they can be used to
 create another persistent volume or can be unreserved.
 
-<a name="offer-operation-grow-volume"></a>
 ### `Offer::Operation::GrowVolume`
 
 Sometimes, a framework or an operator may find that the size of an existing
@@ -378,7 +376,6 @@ A subsequent resource offer will contain the grown volume:
       ]
     }
 
-<a name="offer-operation-shrink-volume"></a>
 ### `Offer::Operation::ShrinkVolume`
 
 Similarly, a framework or an operator may find that the size of an existing
@@ -490,8 +487,8 @@ disk resources with the same reservation information:
 
 
 Some restrictions about resizing a volume (applicable to both
-[Offer::Operation::GrowVolume](#offer-operation-grow-volume) and
-[Offer::Operation::ShrinkVolume](#offer-operation-shrink-volume)):
+[Offer::Operation::GrowVolume](#offer-operation-growvolume) and
+[Offer::Operation::ShrinkVolume](#offer-operation-shrinkvolume)):
 
 * Only persistent volumes created on an agent's local disk space with `ROOT` or
   `PATH` type can be resized;

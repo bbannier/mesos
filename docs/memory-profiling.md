@@ -18,7 +18,6 @@ HTTP endpoints described below that allow operators to generate the desired data
 at runtime.
 
 
-<a name="requirements"></a>
 ## Requirements
 
 A prerequisite for memory profiling is a suitable allocator. Currently only

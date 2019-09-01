@@ -400,7 +400,6 @@ If `MESOS_CHECKPOINT` is set (i.e., if framework checkpointing is enabled), the 
 
 NOTE: Additionally, the executor also inherits all the agent's environment variables.
 
-<a name="disconnections"></a>
 ## Disconnections
 
 An executor considers itself disconnected if the persistent subscription connection (opened via SUBSCRIBE request) to "/executor" breaks. The disconnection can happen due to an agent process failure etc.
@@ -417,7 +416,6 @@ Upon agent startup, an agent performs [recovery](agent-recovery.md). This allows
 * **reconnect** (default): This mode allows the agent to reconnect with any of it's old live executors provided the framework has enabled checkpointing. The recovery of the agent is only marked complete once all the disconnected executors have connected and hung executors have been destroyed. Hence, it is mandatory that every executor retries at least once within the interval (`MESOS_SUBSCRIPTION_BACKOFF_MAX`) to ensure it is not shutdown by the agent due to being hung/unresponsive.
 * **cleanup**: This mode kills any old live executors and then exits the agent. This is usually done by operators when making a non-compatible agent/executor upgrade. Upon receiving a `SUBSCRIBE` request from the executor of a framework with checkpointing enabled, the agent would send it a `SHUTDOWN` event as soon as it reconnects. For hung executors, the agent would wait for a duration of `--executor_shutdown_grace_period` (configurable at agent startup) and then forcefully kill the container where the executor is running in.
 
-<a name="backoff-strategies"></a>
 ## Backoff Strategies
 
 Executors are encouraged to retry subscription using a suitable backoff strategy like linear backoff, when they notice a disconnection with the agent. A disconnection typically happens when the agent process terminates (e.g., restarted for an upgrade). Each retry interval should be bounded by the value of `MESOS_SUBSCRIPTION_BACKOFF_MAX` which is set as an environment variable.

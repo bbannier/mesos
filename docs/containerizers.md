@@ -25,15 +25,14 @@ container technologies (e.g., docker and mesos).
 
 Mesos implements the following containerizers:
 
-* [Composing](#Composing)
-* [Docker](#Docker)
-* [Mesos (default)](#Mesos)
+* [Composing](#composing-containerizer)
+* [Docker](#docker-containerizer)
+* [Mesos (default)](#mesos-containerizer)
 
 User can specify the types of containerizers to use via the agent flag
 `--containerizers`.
 
 
-<a name="Composing"></a>
 ### Composing containerizer
 
 This feature allows multiple container technologies to play together. It is
@@ -51,7 +50,6 @@ Use cases:
   just changing the container parameters for the task.
 
 
-<a name="Docker"></a>
 ### Docker containerizer
 
 Docker containerizer allows tasks to be run inside docker container. This
@@ -66,7 +64,6 @@ Use cases:
 For more details, see
 [Docker Containerizer](docker-containerizer.md).
 
-<a name="Mesos"></a>
 ### Mesos containerizer
 
 This containerizer allows tasks to be run with an array of pluggable isolators

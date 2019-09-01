@@ -26,9 +26,9 @@ there are several disadvantages in the way it is usually implemented:
   health checks for every task can cause scheduler performance problems.
 
 To address the aforementioned problems, Mesos 1.2.0 introduced
-[the Mesos-native health check design](#mesos-native-checking), defined
+[the Mesos-native health check design](#mesos-native-task-checking), defined
 common API for [command](#command-health-checks),
-[HTTP(S)](#http-health-checks), and [TCP](#tcp-health-checks) health checks,
+[HTTP(S)](#http-s-health-checks), and [TCP](#tcp-health-checks) health checks,
 and provided reference implementations for all built-in executors.
 
 Mesos 1.4.0 introduced [a generalized check](#anatomy-of-a-check), which
@@ -48,7 +48,6 @@ This document describes supported check and health check types, touches on
 relevant implementation details, and mentions limitations and caveats.
 
 
-<a name="mesos-native-checking"></a>
 ## Mesos-native Task Checking
 
 In contrast to the state-of-the-art "scheduler health check" pattern mentioned
@@ -85,7 +84,7 @@ It is the responsibility of the executor to interpret `CheckInfo` and
 `HealthCheckInfo` and perform checks appropriately. All built-in executors
 support health checking their tasks and all except the docker executor support
 generalized checks (see [implementation details](#under-the-hood) and
-[limitations](#current-limitations)).
+[limitations](#current-limitations-and-caveats)).
 
 **NOTE:** It is up to the executor how---and whether at all---to honor the
 `CheckInfo` and `HealthCheck` fields in `TaskInfo`. Implementations may vary
@@ -143,7 +142,6 @@ backward compatibility reasons; in the future the `HealthCheck` message will be
 based on `CheckInfo`.
 
 
-<a name="anatomy-of-a-check"></a>
 ## Anatomy of a Check
 
 A `CheckStatusInfo` message is added to the task status update to convey the
@@ -174,7 +172,6 @@ executors adheres to the following conventions:
 same principles built-in executors use for consistency.
 
 
-<a name="command-checks"></a>
 ### Command Checks
 
 Command checks are described by the `CommandInfo` protobuf wrapped in the
@@ -203,13 +200,12 @@ task.mutable_check()->CopyFrom(check);
 ~~~
 
 
-<a name="http-checks"></a>
 ### HTTP Checks
 
 HTTP checks are described by the `CheckInfo.Http` protobuf with `port` and
 `path` fields. A `GET` request is sent to `http://<host>:port/path` using the
 `curl` command. Note that `<host>` is currently not configurable and is set
-automatically to `127.0.0.1` (see [limitations](#current-limitations)), hence
+automatically to `127.0.0.1` (see [limitations](#current-limitations-and-caveats)), hence
 the checked task must listen on the loopback interface along with any other
 routeable interface it might be listening on. Field `port` must specify an
 actual port the task is listening on, not a mapped one. The result of the check
@@ -238,7 +234,6 @@ task.mutable_check()->CopyFrom(check);
 ~~~
 
 
-<a name="tcp-checks"></a>
 ### TCP Checks
 
 TCP checks are described by the `CheckInfo.Tcp` protobuf, which has a single
@@ -246,7 +241,7 @@ TCP checks are described by the `CheckInfo.Tcp` protobuf, which has a single
 mapped one. The task is probed using Mesos' `mesos-tcp-connect` command, which
 tries to establish a TCP connection to `<host>:port`. Note that `<host>` is
 currently not configurable and is set automatically to `127.0.0.1`
-(see [limitations](#current-limitations)), hence the checked task must listen on
+(see [limitations](#current-limitations-and-caveats)), hence the checked task must listen on
 the loopback interface along with any other routeable interface it might be
 listening on. Field `port` must specify an actual port the task is listening on,
 not a mapped one. The result of the check is the boolean value indicating
@@ -282,7 +277,7 @@ be performed by an executor:
   i.e., the absence of the check result, is reported.
 
 **NOTE:** Since each time a check is performed a helper command is launched
-(see [limitations](#current-limitations)), setting `timeout_seconds` to a small
+(see [limitations](#current-limitations-and-caveats)), setting `timeout_seconds` to a small
 value, e.g., `<5s`, may lead to intermittent failures.
 
 **NOTE:** Launching a check is not a free operation. To avoid unpredictable
@@ -326,7 +321,7 @@ task.mutable_check()->CopyFrom(check);
 ## Anatomy of a Health Check
 
 The boolean `healthy` field is used to convey health status, which
-[may be insufficient](#current-limitations) in certain cases. This means a task
+[may be insufficient](#current-limitations-and-caveats) in certain cases. This means a task
 that has failed health checks will be `RUNNING` with `healthy` set to `false`.
 Currently, the `healthy` field is only set for `TASK_RUNNING` status updates.
 
@@ -339,7 +334,7 @@ consecutive failures defined in the `consecutive_failures` field of the
 **NOTE:** While a scheduler currently cannot cancel a task kill due to failing
 health checks, it may issue a `killTask` command itself. This may be helpful to
 emulate a "global" policy for handling tasks with failing health checks (see
-[limitations](#current-limitations)). Alternatively, the scheduler might use
+[limitations](#current-limitations-and-caveats)). Alternatively, the scheduler might use
 [generalized checks](#anatomy-of-a-check) instead.
 
 Built-in executors forward all unhealthy status updates, as well as the first
@@ -348,7 +343,6 @@ after one or more unhealthy updates have occurred. Note that custom executors
 may use a different strategy.
 
 
-<a name="command-health-checks"></a>
 ### Command Health Checks
 
 Command health checks are described by the `CommandInfo` protobuf; some fields
@@ -376,14 +370,13 @@ task.mutable_health_check()->CopyFrom(healthCheck);
 ~~~
 
 
-<a name="http-health-checks"></a>
 ### HTTP(S) Health Checks
 
 HTTP(S) health checks are described by the `HealthCheck.HTTPCheckInfo` protobuf
 with `scheme`, `port`, `path`, and `statuses` fields. A `GET` request is sent to
 `scheme://<host>:port/path` using the `curl` command. Note that `<host>` is
 currently not configurable and is set automatically to `127.0.0.1` (see
-[limitations](#current-limitations)), hence the health checked task must listen
+[limitations](#current-limitations-and-caveats)), hence the health checked task must listen
 on the loopback interface along with any other routeable interface it might be
 listening on. The `scheme` field supports `"http"` and `"https"` values only.
 Field `port` must specify an actual port the task is listening on, not a mapped
@@ -415,7 +408,6 @@ task.mutable_health_check()->CopyFrom(healthCheck);
 ~~~
 
 
-<a name="tcp-health-checks"></a>
 ### TCP Health Checks
 
 TCP health checks are described by the `HealthCheck.TCPCheckInfo` protobuf,
@@ -423,7 +415,7 @@ which has a single `port` field, which must specify an actual port the task is
 listening on, not a mapped one. The task is probed using Mesos'
 `mesos-tcp-connect` command, which tries to establish a TCP connection to
 `<host>:port`. Note that `<host>` is currently not configurable and is set
-automatically to `127.0.0.1` (see [limitations](#current-limitations)), hence
+automatically to `127.0.0.1` (see [limitations](#current-limitations-and-caveats)), hence
 the health checked task must listen on the loopback interface along with any
 other routeable interface it might be listening on. Field `port` must specify an
 actual port the task is listening on, not a mapped one.
@@ -467,7 +459,7 @@ check must be performed and interpreted by an executor:
   no effect.
 
 **NOTE:** Since each time a health check is performed a helper command is
-launched (see [limitations](#current-limitations)), setting `timeout_seconds`
+launched (see [limitations](#current-limitations-and-caveats)), setting `timeout_seconds`
 to a small value, e.g., `<5s`, may lead to intermittent failures.
 
 As an example, the code below specifies a task which is a Docker container with
@@ -506,7 +498,6 @@ task.mutable_health_check()->CopyFrom(healthCheck);
 ~~~
 
 
-<a name="under-the-hood"></a>
 ## Under the Hood
 
 All built-in executors rely on the checker library, which lives in
@@ -555,7 +546,6 @@ executor launches a container with the [`mesos/windows-health-check`](https://hu
 image and enters the original container's network namespace through the
 `--network=container:<ID>` parameter in `docker run`.
 
-<a name="current-limitations"></a>
 ## Current Limitations and Caveats
 
 * Docker executor does not support generalized checks (see

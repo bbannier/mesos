@@ -3,14 +3,14 @@
 ### Table of contents
 
 - [Introduction](#introduction)
-- [Attaching containers to IP networks](#attaching-containers)
-  - [Mesos containerizer](#attaching-containers-mesos)
-  - [Docker containerizer](#attaching-containers-docker)
-  - [Limitations of Docker containerizer](#limitations-docker)
-- [Retrieving network information for a container](#retrieve-network-info)
+- [Attaching containers to IP networks](#attaching-containers-to-ip-networks)
+  - [Mesos containerizer](#mesos-containerizer)
+  - [Docker containerizer](#docker-containerizer)
+  - [Limitations of Docker containerizer](#limitations-of-docker-containerizer)
+- [Retrieving network information for a container](#retrieving-network-information-for-a-container)
 
 
-### <a name="introduction"></a>Introduction
+### Introduction
 
 Mesos supports two container runtime engines, the `MesosContainerizer`
 and the `DockerContainerizer`. Both the container run time engines
@@ -64,9 +64,9 @@ information for a container, once the container has been attached to
 an IP network.
 
 
-### <a name="attaching-containers"></a>Attaching containers to IP networks
+### Attaching containers to IP networks
 
-#### <a name="attaching-containers-mesos"></a>Mesos containerizer
+#### Mesos containerizer
 
 `MesosContainerizer` has the [`network/cni`](cni.md) isolator enabled
 by default, which implements CNI (Container Network Interface). The
@@ -78,7 +78,7 @@ of Mesos containers with CNI networks can be found in the
 documentation describing ["CNI support for Mesos containers"](cni.md).
 
 
-#### <a name="attaching-containers-docker"></a>Docker containerizer
+#### Docker containerizer
 
 Starting docker 1.9, there are four networking modes available in
 Docker: NONE, HOST, BRIDGE and USER. ["Docker container
@@ -124,7 +124,7 @@ called `NAT`, so on Windows agents, the `BRIDGE` mode will be interpretted as
 `NAT`. If the network mode is not specified, then the default mode will be
 chosen, which is `HOST` on Linux and `NAT` on Windows.
 
-#### <a name="limitations-docker"></a>Limitations of Docker containerizer
+#### Limitations of Docker containerizer
 
 One limitation that the `DockerContainerizer` imposes on the
 containers using the USER network mode is that these containers cannot
@@ -136,7 +136,7 @@ current implementation of the `DockerContainerizer` and hence the
 restriction of limiting docker container to a single network.
 
 
-### <a name="retrieve-network-info"></a>Retrieving network information for a container
+### Retrieving network information for a container
 
 Whenever a task runs on a Mesos agent, the executor associated with
 the task returns a `TaskStatus` protobuf associated with the task.
