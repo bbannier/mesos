@@ -582,7 +582,7 @@ There are 5 different kinds of events that can be enqueued for a process:
 * `MessageEvent`: a `Message` has been received.
 * `DispatchEvent`: a method on the process has been "dispatched".
 * `HttpEvent`: an `http::Request` has been received.
-* `ExitedEvent`: another process which has been [linked](#links) has terminated.
+* `ExitedEvent`: another process which has been linked has terminated.
 * `TerminateEvent`: the process has been requested to terminate.
 
 An event is serviced one at a time by invoking the process' `serve()` method which by default invokes the process' `visit()` method corresponding to the underlying event type. Most actors don't need to override the implementation of `serve()` or `visit()` but can rely on higher-level abstractions that simplify serving the event (e.g., `route()`, which make it easy to set up handlers for an `HttpEvent`, discussed below in [HTTP](#http)).
