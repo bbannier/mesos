@@ -12858,6 +12858,137 @@ TEST_F(SlaveTest, CheckpointedDrainInfo)
   EXPECT_EQ(TaskStatus::REASON_SLAVE_DRAINING, statusKilled->reason());
 }
 
+
+// FIXME(bbannier): document.
+TEST_F(SlaveTest, NOPE_CompletedTasks)
+{
+  Clock::pause();
+
+  master::Flags masterFlags = MesosTest::CreateMasterFlags();
+  Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
+
+  ExecutorInfo executorInfo1 = createExecutorInfo("1", "");
+  MockExecutor executor1(executorInfo1.executor_id());
+  ExecutorInfo executorInfo2 = createExecutorInfo("2", "");
+  MockExecutor executor2(executorInfo2.executor_id());
+  TestContainerizer containerizer(
+      {{executorInfo1.executor_id(), &executor1},
+       {executorInfo2.executor_id(), &executor2}});
+
+  slave::Flags agentFlags = CreateSlaveFlags();
+  Owned<MasterDetector> detector = master.get()->createDetector();
+
+  // We use the same process ID so the executor can resubscribe.
+  auto slaveOptions = SlaveOptions(detector.get())
+                        .withContainerizer(&containerizer)
+                        .withFlags(agentFlags)
+                        .withId(process::ID::generate("slave"));
+
+  Try<Owned<cluster::Slave>> agent = StartSlave(slaveOptions);
+
+  ASSERT_SOME(agent);
+
+  Clock::advance(agentFlags.registration_backoff_factor);
+  Clock::advance(masterFlags.allocation_interval);
+
+  FrameworkInfo frameworkInfo = DEFAULT_FRAMEWORK_INFO;
+  frameworkInfo.set_checkpoint(true);
+
+  MockScheduler sched;
+  MesosSchedulerDriver driver(
+      &sched, frameworkInfo, master.get()->pid, DEFAULT_CREDENTIAL);
+
+  Future<FrameworkID> frameworkId;
+  EXPECT_CALL(sched, registered(_, _, _))
+    .WillOnce(FutureArg<1>(&frameworkId));
+
+  Future<vector<Offer>> offers;
+  EXPECT_CALL(sched, resourceOffers(_, _))
+    .WillRepeatedly(FutureArg<1>(&offers));
+
+  driver.start();
+
+  AWAIT_READY(frameworkId);
+
+  AWAIT_READY(offers);
+  ASSERT_FALSE(offers->empty());
+  const Offer& offer = offers->at(0);
+
+  TaskInfo task1;
+  task1.set_name("task1");
+  task1.mutable_task_id()->set_value(task1.name());
+  task1.mutable_slave_id()->MergeFrom(offer.slave_id());
+  task1.mutable_resources()->MergeFrom(*Resources::parse("cpus:0.01;mem:32"));
+  task1.mutable_executor()->MergeFrom(executorInfo1);
+
+  TaskInfo task2;
+  task2.set_name("task2");
+  task2.mutable_task_id()->set_value(task2.name());
+  task2.mutable_slave_id()->MergeFrom(offer.slave_id());
+  task2.mutable_resources()->MergeFrom(*Resources::parse("cpus:0.01;mem:32"));
+  task2.mutable_executor()->MergeFrom(executorInfo2);
+
+  EXPECT_CALL(executor1, registered(_, _, _, _));
+  EXPECT_CALL(executor2, registered(_, _, _, _));
+
+  // FIXME(bbannier):
+  // Make sure the task passes through its `TASK_FINISHED`
+  // state properly. We force this state change through
+  // the launchTask() callback on our MockExecutor.
+  Future<TaskStatus> status1;
+  Future<TaskStatus> status2;
+
+  EXPECT_CALL(executor1, launchTask(_, _))
+    .WillOnce(SendStatusUpdateFromTask(TASK_FAILED));
+
+  EXPECT_CALL(executor2, launchTask(_, _))
+    .WillOnce(SendStatusUpdateFromTask(TASK_RUNNING));
+
+  EXPECT_CALL(sched, statusUpdate(_, _))
+    .WillOnce(FutureArg<1>(&status1))
+    .WillOnce(FutureArg<1>(&status2))
+    .WillRepeatedly(Return());
+
+  driver.launchTasks({offer.id()}, {task1, task2});
+
+  AWAIT_READY(status1);
+  AWAIT_READY(status2);
+
+  // Complete executor1.
+  EXPECT_CALL(sched, executorLost(_, _, _, _));
+  containerizer.destroy(frameworkId.get(), executorInfo1.executor_id());
+
+  // Ensure the agent processes the executor termination.
+  Clock::settle();
+
+  EXPECT_CALL(executor2, shutdown(_))
+    .Times(AtMost(1));
+
+  ///// FIXME(bbannier): /////////////////////////////////////
+
+  // Fail over the agent.
+  agent.get()->terminate();
+
+  Future<ReregisterSlaveMessage> reregisterSlave =
+    FUTURE_PROTOBUF(ReregisterSlaveMessage(), _, _);
+
+  EXPECT_CALL(executor2, reregistered(_, _))
+    .WillOnce(DoDefault());
+
+  agent = StartSlave(slaveOptions);
+
+  Clock::advance(std::max(
+      agentFlags.registration_backoff_factor,
+      agentFlags.executor_reregistration_timeout));
+  AWAIT_READY(reregisterSlave);
+
+  ASSERT_TRUE(reregisterSlave->completed_frameworks().empty());
+  ASSERT_EQ(1, reregisterSlave->frameworks_size());
+
+  EXPECT_EQ(1, reregisterSlave->executor_infos_size())
+    << reregisterSlave->DebugString();
+}
+
 } // namespace tests {
 } // namespace internal {
 } // namespace mesos {

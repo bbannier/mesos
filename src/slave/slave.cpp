@@ -1897,7 +1897,16 @@ void Slave::doReliableRegistration(Duration maxBackoff)
         }
       }
 
-      foreachvalue (Executor* executor, framework->executors) {
+      hashmap<ExecutorID, Executor*> executors = framework->executors;
+      std::for_each(
+          framework->completedExecutors.begin(),
+          framework->completedExecutors.end(),
+          [&executors](const Owned<Executor>& executor) {
+            return; // FIXME(bbannier)
+            executors.insert({executor->id, executor.get()});
+          });
+
+      foreachvalue (Executor* executor, executors) {
         // Add launched, terminated, and queued tasks.
         // Note that terminated executors will only have terminated
         // unacknowledged tasks.
