@@ -27,7 +27,7 @@
 
 namespace strings {
 
-const std::string WHITESPACE = " \t\n\r";
+constexpr char WHITESPACE[] = " \t\n\r";
 
 // Flags indicating how 'remove' or 'trim' should operate.
 enum Mode
