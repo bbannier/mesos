@@ -12967,14 +12967,9 @@ TEST_F(SlaveTest, NOPE_CompletedTasks)
   ///// FIXME(bbannier): /////////////////////////////////////
 
   // Fail over the agent.
-  agent.get()->terminate();
-
-  Future<Nothing> reregistered;
-  EXPECT_CALL(executor2, reregistered(_, _))
-    .WillOnce(DoAll(
-        Invoke(&executor2, &MockExecutor::reregistered),
-        FutureSatisfy(&reregistered)))
-    .WillRepeatedly(DoDefault());
+  master->reset();
+  master = StartMaster();
+  ASSERT_SOME(master);
 
   Future<ReregisterSlaveMessage> reregisterSlave =
     FUTURE_PROTOBUF(ReregisterSlaveMessage(), _, _);
@@ -12984,8 +12979,6 @@ TEST_F(SlaveTest, NOPE_CompletedTasks)
 
   agent = StartSlave(slaveOptions);
   ASSERT_SOME(agent);
-
-  AWAIT_READY(reregistered);
 
   Clock::advance(agentFlags.executor_reregistration_timeout);
   Clock::settle();
