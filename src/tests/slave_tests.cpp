@@ -12867,9 +12867,9 @@ TEST_F(SlaveTest, NOPE_CompletedTasks)
   master::Flags masterFlags = MesosTest::CreateMasterFlags();
   Try<Owned<cluster::Master>> master = StartMaster(masterFlags);
 
-  ExecutorInfo executorInfo1 = createExecutorInfo("1", "");
+  ExecutorInfo executorInfo1 = createExecutorInfo("1", SLEEP_COMMAND(1000));
   MockExecutor executor1(executorInfo1.executor_id());
-  ExecutorInfo executorInfo2 = createExecutorInfo("2", "");
+  ExecutorInfo executorInfo2 = createExecutorInfo("2", SLEEP_COMMAND(1000));
   MockExecutor executor2(executorInfo2.executor_id());
   TestContainerizer containerizer(
       {{executorInfo1.executor_id(), &executor1},
@@ -12969,24 +12969,64 @@ TEST_F(SlaveTest, NOPE_CompletedTasks)
   // Fail over the agent.
   agent.get()->terminate();
 
+  Future<Nothing> reregistered;
+  EXPECT_CALL(executor2, reregistered(_, _))
+    .WillOnce(DoAll(
+        Invoke(&executor2, &MockExecutor::reregistered),
+        FutureSatisfy(&reregistered)))
+    .WillRepeatedly(DoDefault());
+
   Future<ReregisterSlaveMessage> reregisterSlave =
     FUTURE_PROTOBUF(ReregisterSlaveMessage(), _, _);
 
-  EXPECT_CALL(executor2, reregistered(_, _))
-    .WillOnce(DoDefault());
+  Future<SlaveReregisteredMessage> reregisteredSlave =
+    FUTURE_PROTOBUF(SlaveReregisteredMessage(), _, _);
 
   agent = StartSlave(slaveOptions);
+  ASSERT_SOME(agent);
 
-  Clock::advance(std::max(
-      agentFlags.registration_backoff_factor,
-      agentFlags.executor_reregistration_timeout));
+  AWAIT_READY(reregistered);
+
+  Clock::advance(agentFlags.executor_reregistration_timeout);
+  Clock::settle();
+
+  Clock::advance(agentFlags.registration_backoff_factor);
+
   AWAIT_READY(reregisterSlave);
 
   ASSERT_TRUE(reregisterSlave->completed_frameworks().empty());
   ASSERT_EQ(1, reregisterSlave->frameworks_size());
+  EXPECT_EQ(2, reregisterSlave->executor_infos_size());
 
-  EXPECT_EQ(1, reregisterSlave->executor_infos_size())
-    << reregisterSlave->DebugString();
+  AWAIT_READY(reregisteredSlave);
+
+  {
+    ContentType contentType = ContentType::PROTOBUF;
+
+    process::http::Headers headers = createBasicAuthHeaders(DEFAULT_CREDENTIAL);
+    headers["Accept"] = stringify(contentType);
+
+    v1::master::Call v1Call;
+    v1Call.set_type(v1::master::Call::GET_EXECUTORS);
+
+    Future<process::http::Response> response = process::http::post(
+        master.get()->pid,
+        "api/v1",
+        headers,
+        serialize(contentType, v1Call),
+        stringify(contentType));
+
+    AWAIT_ASSERT_RESPONSE_STATUS_EQ(process::http::OK().status, response);
+
+    Future<v1::master::Response> v1Response =
+      deserialize<v1::master::Response>(contentType, response->body);
+
+    AWAIT_READY(v1Response);
+    ASSERT_TRUE(v1Response->IsInitialized());
+    ASSERT_EQ(v1::master::Response::GET_EXECUTORS, v1Response->type());
+    EXPECT_EQ(2, v1Response->get_executors().executors_size())
+      << v1Response->get_executors().DebugString(); // FIXME(bbannier)
+  }
 }
 
 } // namespace tests {

@@ -1902,7 +1902,6 @@ void Slave::doReliableRegistration(Duration maxBackoff)
           framework->completedExecutors.begin(),
           framework->completedExecutors.end(),
           [&executors](const Owned<Executor>& executor) {
-            return; // FIXME(bbannier)
             executors.insert({executor->id, executor.get()});
           });
 
@@ -1931,14 +1930,12 @@ void Slave::doReliableRegistration(Duration maxBackoff)
         if (!executor->isGeneratedForCommandTask()) {
           // Ignore terminated executors because they do not consume
           // any resources.
-          if (executor->state != Executor::TERMINATED) {
-            ExecutorInfo* executorInfo = message.add_executor_infos();
-            executorInfo->MergeFrom(executor->info);
+          ExecutorInfo* executorInfo = message.add_executor_infos();
+          executorInfo->MergeFrom(executor->info);
 
-            // Scheduler Driver will ensure the framework id is set in
-            // ExecutorInfo, effectively making it a required field.
-            CHECK(executorInfo->has_framework_id());
-          }
+          // Scheduler Driver will ensure the framework id is set in
+          // ExecutorInfo, effectively making it a required field.
+          CHECK(executorInfo->has_framework_id());
         }
       }
     }

@@ -7420,6 +7420,7 @@ void Master::reregisterSlave(
   LOG(INFO) << "Received reregister agent message from agent "
             << slaveInfo.id() << " at " << from << " ("
             << slaveInfo.hostname() << ")";
+  LOG(INFO) << "NOPE1: " << reregisterSlaveMessage.DebugString();
 
   // TODO(bevers): Create a guard object calling `insert()` in its constructor
   // and `erase()` in its destructor, to avoid the manual bookkeeping.
@@ -7640,6 +7641,8 @@ void Master::_reregisterSlave(
     // Skip updating the registry if `slaveInfo` did not change from its
     // previously known state.
     if (slaveInfo == slave->info) {
+    LOG(INFO) << "NOPE2: " << reregisterSlaveMessage.executor_infos();;
+
       ___reregisterSlave(
           pid,
           std::move(reregisterSlaveMessage),
@@ -7888,6 +7891,8 @@ void Master::__reregisterSlave(
       std::move(*reregisterSlaveMessage.mutable_checkpointed_resources()));
   vector<ExecutorInfo> executorInfos = google::protobuf::convert(
       std::move(*reregisterSlaveMessage.mutable_executor_infos()));
+
+  LOG(INFO) << "NOPE :" << executorInfos;
 
   Option<UUID> resourceVersion;
   if (reregisterSlaveMessage.has_resource_version_uuid()) {
