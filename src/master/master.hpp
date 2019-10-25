@@ -651,9 +651,13 @@ protected:
 
   void _failoverFramework(Framework* framework);
 
+  // FIXME(bbannier): these docs need an update.
   // Kill all of a framework's tasks, delete the framework object, and
   // reschedule offers that were assigned to this framework.
   void removeFramework(Framework* framework);
+
+  // FIXME(bbannier): docs!
+  void cleanupFramework(Framework* framework);
 
   // Remove a framework from the slave, i.e., remove its tasks and
   // executors and recover the resources.

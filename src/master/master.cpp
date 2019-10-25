@@ -11220,6 +11220,45 @@ void Master::removeFramework(Framework* framework)
   // Remove the pending tasks from the framework.
   framework->pendingTasks.clear();
 
+  // TODO(benh): Similar code between removeFramework and
+  // failoverFramework needs to be shared!
+
+  // TODO(benh): unlink(framework->pid);
+
+  // For http frameworks, close the connection.
+  if (framework->http.isSome()) {
+    framework->http->close();
+  }
+
+  framework->unregisteredTime = Clock::now();
+
+  // TODO(anand): This only works for pid based frameworks. We would
+  // need similar authentication logic for http frameworks.
+  if (framework->pid.isSome()) {
+    authenticated.erase(framework->pid.get());
+
+    CHECK(frameworks.principals.contains(framework->pid.get()));
+    Option<string> principal = frameworks.principals[framework->pid.get()];
+
+    frameworks.principals.erase(framework->pid.get());
+
+    // Remove the metrics for the principal if this framework is the
+    // last one with this principal.
+    if (principal.isSome() &&
+        !frameworks.principals.contains_value(principal.get())) {
+      CHECK(metrics->frameworks.contains(principal.get()));
+      metrics->frameworks.erase(principal.get());
+    }
+  }
+
+  cleanupFramework(framework);
+}
+
+
+void Master::cleanupFramework(Framework* framework)
+{
+  CHECK_NOTNULL(framework);
+
   // Remove pointers to the framework's tasks in slaves and mark those
   // tasks as completed.
   foreachvalue (Task* task, utils::copy(framework->tasks)) {
@@ -11335,39 +11374,8 @@ void Master::removeFramework(Framework* framework)
     framework->removeOperation(operation);
   }
 
-  // TODO(benh): Similar code between removeFramework and
-  // failoverFramework needs to be shared!
-
-  // TODO(benh): unlink(framework->pid);
-
-  // For http frameworks, close the connection.
-  if (framework->http.isSome()) {
-    framework->http->close();
-  }
-
-  framework->unregisteredTime = Clock::now();
-
   foreach (const string& role, framework->roles) {
     framework->untrackUnderRole(role);
-  }
-
-  // TODO(anand): This only works for pid based frameworks. We would
-  // need similar authentication logic for http frameworks.
-  if (framework->pid.isSome()) {
-    authenticated.erase(framework->pid.get());
-
-    CHECK(frameworks.principals.contains(framework->pid.get()));
-    Option<string> principal = frameworks.principals[framework->pid.get()];
-
-    frameworks.principals.erase(framework->pid.get());
-
-    // Remove the metrics for the principal if this framework is the
-    // last one with this principal.
-    if (principal.isSome() &&
-        !frameworks.principals.contains_value(principal.get())) {
-      CHECK(metrics->frameworks.contains(principal.get()));
-      metrics->frameworks.erase(principal.get());
-    }
   }
 
   // Prevent any allocations from occurring between the multiple resource
