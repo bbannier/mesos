@@ -2486,7 +2486,10 @@ struct Framework
 
     // Framework is connected and eligible to receive offers. No
     // offers will be made to frameworks that are not active.
-    ACTIVE
+    ACTIVE,
+
+    // FIXME(bbannier): this needs docs.
+    REMOVING
   };
 
   Framework(Master* const master,
@@ -2581,6 +2584,7 @@ struct Framework
   bool active() const;
   bool connected() const;
   bool recovered() const;
+  bool removing() const;
 
   bool isTrackedUnderRole(const std::string& role) const;
   void trackUnderRole(const std::string& role);
@@ -2759,6 +2763,12 @@ inline bool Framework::connected() const
 inline bool Framework::recovered() const
 {
   return state == RECOVERED;
+}
+
+
+inline bool Framework::removing() const
+{
+  return state == REMOVING;
 }
 
 

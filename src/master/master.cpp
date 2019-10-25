@@ -11194,6 +11194,10 @@ void Master::removeFramework(Framework* framework)
 {
   CHECK_NOTNULL(framework);
 
+  if (framework->removing()) {
+    return; // FIXME(bbannier): and log
+  }
+
   LOG(INFO) << "Removing framework " << *framework;
 
   if (framework->active()) {
