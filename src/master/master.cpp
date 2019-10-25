@@ -11214,6 +11214,8 @@ void Master::removeFramework(Framework* framework)
     deactivate(framework, false);
   }
 
+  framework->setFrameworkState(Framework::State::REMOVING);
+
   // The framework's offers should have been removed when the
   // framework was deactivated.
   CHECK(framework->offers.empty());
