@@ -2817,6 +2817,7 @@ void Master::_subscribe(
     // it may or may not currently be connected.
 
     updateFramework(framework, frameworkInfo, suppressedRoles);
+    framework->setFrameworkState(Framework::State::ACTIVE);
     framework->reregisteredTime = Clock::now();
 
     // Always failover the old framework connection. See MESOS-4712 for details.
@@ -8226,19 +8227,26 @@ void Master::updateSlaveFrameworks(
     Framework* framework = getFramework(frameworkInfo.id());
 
     if (framework != nullptr) {
-      // TODO(bmahler): Copying the framework info here can be
-      // expensive, consider only sending this message when
-      // there has been a change vs what the agent reported.
-      UpdateFrameworkMessage message;
-      message.mutable_framework_id()->CopyFrom(framework->id());
-      message.mutable_framework_info()->CopyFrom(framework->info);
+      if (framework->removing()) {
+        // Tell slaves to shutdown the framework.
+        ShutdownFrameworkMessage message;
+        message.mutable_framework_id()->MergeFrom(framework->id());
+        send(slave->pid, message);
+      } else {
+        // TODO(bmahler): Copying the framework info here can be
+        // expensive, consider only sending this message when
+        // there has been a change vs what the agent reported.
+        UpdateFrameworkMessage message;
+        message.mutable_framework_id()->CopyFrom(framework->id());
+        message.mutable_framework_info()->CopyFrom(framework->info);
 
-      // TODO(anand): We set 'pid' to UPID() for http frameworks
-      // as 'pid' was made optional in 0.24.0. In 0.25.0, we
-      // no longer have to set pid here for http frameworks.
-      message.set_pid(framework->pid.getOrElse(UPID()));
+        // TODO(anand): We set 'pid' to UPID() for http frameworks
+        // as 'pid' was made optional in 0.24.0. In 0.25.0, we
+        // no longer have to set pid here for http frameworks.
+        message.set_pid(framework->pid.getOrElse(UPID()));
 
-      send(slave->pid, message);
+        send(slave->pid, message);
+      }
     } else {
       // The agent is running a framework that the master doesn't know
       // about. Recover the framework using the `FrameworkInfo`
