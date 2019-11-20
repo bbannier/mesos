@@ -105,6 +105,22 @@ public:
         resourceKey,
         JSON::protobuf(resources)).get();
   }
+
+  string createRequestBody(
+      const SlaveID& slaveId,
+      const string& resourceKey1,
+      const RepeatedPtrField<Resource>& resources1,
+      const string& resourceKey2,
+      const RepeatedPtrField<Resource>& resources2) const
+  {
+    return strings::format(
+        "slaveId=%s&%s=%s&%s=%s",
+        slaveId.value(),
+        resourceKey1,
+        JSON::protobuf(resources1),
+        resourceKey2,
+        JSON::protobuf(resources2)).get();
+  }
 };
 
 
@@ -323,6 +339,179 @@ TEST_F(PersistentVolumeEndpointsTest, DynamicReservation)
 
   driver.stop();
   driver.join();
+}
+
+
+// This tests that an operator can create a persistent volume from
+// dynamically reserved resources, and can then update the reservation
+// for that volume.
+TEST_F(PersistentVolumeEndpointsTest, ReservationUpdate)
+{
+  Try<Owned<cluster::Master>> master = StartMaster();
+  ASSERT_SOME(master);
+
+  slave::Flags slaveFlags = CreateSlaveFlags();
+  slaveFlags.resources = "disk(*):1024";
+
+  Future<SlaveRegisteredMessage> slaveRegisteredMessage =
+    FUTURE_PROTOBUF(SlaveRegisteredMessage(), master.get()->pid, _);
+
+  Owned<MasterDetector> detector = master.get()->createDetector();
+  Try<Owned<cluster::Slave>> slave = StartSlave(detector.get(), slaveFlags);
+  ASSERT_SOME(slave);
+
+  AWAIT_READY(slaveRegisteredMessage);
+  const SlaveID& slaveId = slaveRegisteredMessage->slave_id();
+
+  Resources unreserved = Resources::parse("disk:1024").get();
+  Resources dynamicallyReserved =
+    unreserved.pushReservation(createDynamicReservationInfo(
+        "foo", DEFAULT_CREDENTIAL.principal()));
+
+  Future<Response> response = process::http::post(
+      master.get()->pid,
+      "reserve",
+      createBasicAuthHeaders(DEFAULT_CREDENTIAL),
+      createRequestBody(
+          slaveId,
+          "resources",
+          dynamicallyReserved));
+
+  AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
+
+  Resources volume = createPersistentVolume(
+      Megabytes(64),
+      "foo",
+      "id1",
+      "path1",
+      DEFAULT_CREDENTIAL.principal(),
+      None(),
+      DEFAULT_CREDENTIAL.principal());
+
+  response = process::http::post(
+      master.get()->pid,
+      "create-volumes",
+      createBasicAuthHeaders(DEFAULT_CREDENTIAL),
+      createRequestBody(slaveId, "volumes", volume));
+
+  AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
+
+  Resources volumeUnreserved = volume.popReservation();
+  Resources volumeReservedToBar = volumeUnreserved.pushReservation(
+      createDynamicReservationInfo("bar", DEFAULT_CREDENTIAL.principal()));
+
+  // Update the reservation containing the volume.
+  response = process::http::post(
+      master.get()->pid,
+      "reserve",
+      createBasicAuthHeaders(DEFAULT_CREDENTIAL),
+      createRequestBody(
+          slaveId,
+          "source",
+          volume,
+          "resources",
+          volumeReservedToBar));
+
+  AWAIT_EXPECT_RESPONSE_STATUS_EQ(Accepted().status, response);
+
+  // Verify that we cannot unreserve the persistent volume.
+  response = process::http::post(
+      master.get()->pid,
+      "reserve",
+      createBasicAuthHeaders(DEFAULT_CREDENTIAL),
+      createRequestBody(
+          slaveId,
+          "source",
+          volumeReservedToBar,
+          "resources",
+          volumeUnreserved));
+
+  AWAIT_EXPECT_RESPONSE_STATUS_EQ(BadRequest().status, response);
+
+  // Verify that the disk reservation was correctly updated using the
+  // `/slaves` endpoint.
+
+  response = process::http::get(
+      master.get()->pid,
+      "slaves",
+      None(),
+      createBasicAuthHeaders(DEFAULT_CREDENTIAL));
+
+  AWAIT_EXPECT_RESPONSE_STATUS_EQ(OK().status, response);
+  AWAIT_EXPECT_RESPONSE_HEADER_EQ(APPLICATION_JSON, "Content-Type", response);
+
+  Try<JSON::Object> parse = JSON::parse<JSON::Object>(response->body);
+
+  ASSERT_SOME(parse);
+
+  JSON::Object slavesObject = parse.get();
+
+  ASSERT_TRUE(slavesObject.values["slaves"].is<JSON::Array>());
+  JSON::Array slaveArray = slavesObject.values["slaves"].as<JSON::Array>();
+
+  EXPECT_EQ(1u, slaveArray.values.size());
+
+  ASSERT_TRUE(slaveArray.values[0].is<JSON::Object>());
+  JSON::Object slaveObject = slaveArray.values[0].as<JSON::Object>();
+
+
+  Try<JSON::Value> expectedReserved = JSON::parse(
+      R"~(
+      {
+        "foo": [
+          {
+            "name": "disk",
+            "type": "SCALAR",
+            "scalar": {
+              "value": 960.0
+            },
+            "role": "foo",
+            "reservation": {
+              "principal": "test-principal"
+            },
+            "reservations": [
+              {
+                "principal": "test-principal",
+                "role": "foo",
+                "type": "DYNAMIC"
+              }
+            ]
+          }],
+        "bar": [
+          {
+            "name": "disk",
+            "type": "SCALAR",
+            "scalar": {
+              "value": 64.0
+            },
+            "role": "bar",
+            "reservation": {
+              "principal": "test-principal"
+            },
+            "reservations": [
+              {
+                "principal": "test-principal",
+                "role": "bar",
+                "type": "DYNAMIC"
+              }
+            ],
+            "disk": {
+              "persistence": {
+                "id": "id1",
+                "principal": "test-principal"
+              },
+              "volume": {
+                "mode": "RW",
+                "container_path": "path1"
+              }
+            }
+          }
+        ]
+      })~");
+
+  ASSERT_SOME(expectedReserved);
+  JSON::Value reservedValue = slaveObject.values["reserved_resources_full"];
+  EXPECT_EQ(expectedReserved.get(), reservedValue);
 }
 
 
