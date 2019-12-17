@@ -36,7 +36,8 @@ public:
   // NOTE: We don't provide `operator[]`, unlike LinkedHashMap,
   // because it would be difficult to implement correctly for bounded
   // maps with zero capacity.
-  void set(const Key& key, const Value& value)
+  template <typename V>
+  void set(const Key& key, V&& value)
   {
     if (capacity_ == 0) {
       return;
@@ -44,8 +45,8 @@ public:
 
     if (!keys_.contains(key)) {
       // Insert a new list entry and get a "pointer" to its location.
-      typename list::iterator iter =
-        entries_.insert(entries_.end(), std::make_pair(key, value));
+      typename list::iterator iter = entries_.insert(
+        entries_.end(), std::make_pair(key, std::forward<V>(value)));
 
       keys_[key] = iter;
 
@@ -60,7 +61,7 @@ public:
         CHECK(keys_.size() == capacity_);
       }
     } else {
-      keys_[key]->second = value;
+      keys_[key]->second = std::forward<V>(value);
     }
   }
 
