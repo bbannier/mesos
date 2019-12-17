@@ -14,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/provisioner.hpp"
+
+#include <utility>
+
 #ifndef __WINDOWS__
 #include <fts.h>
 #endif // __WINDOWS__
@@ -51,7 +55,6 @@
 #include "slave/containerizer/mesos/provisioner/constants.hpp"
 #include "slave/containerizer/mesos/provisioner/backend.hpp"
 #include "slave/containerizer/mesos/provisioner/paths.hpp"
-#include "slave/containerizer/mesos/provisioner/provisioner.hpp"
 #include "slave/containerizer/mesos/provisioner/store.hpp"
 
 using std::string;
@@ -326,7 +329,7 @@ Try<Owned<Provisioner>> Provisioner::create(
 
 
 Provisioner::Provisioner(Owned<ProvisionerProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }
@@ -546,7 +549,7 @@ Future<ProvisionInfo> ProvisionerProcess::provision(
               image,
               defaultBackend,
               lambda::_1))
-          .onAny(defer(self(), [=](const Future<ProvisionInfo>& provisionInfo) {
+          .onAny(defer(self(), PROCESS_OWNED_COPY_UNSAFE([=])(const Future<ProvisionInfo>& provisionInfo) {
             CHECK(!provisionInfo.isPending());
 
             if (provisionInfo.isReady()) {
@@ -559,7 +562,11 @@ Future<ProvisionInfo> ProvisionerProcess::provision(
           }));
 
       return promise->future()
-        .onDiscard([promise, future]() mutable {
+        .onDiscard(
+            PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+            [promise, future]() mutable
+            PROCESS_UNSAFE_ALLOW_OWNED_COPY_END
+            {
           promise->discard();
           future.discard();
         });
@@ -723,7 +730,7 @@ Future<bool> ProvisionerProcess::_destroy(
   const Owned<Info>& info = infos[containerId];
 
   info->provisioning
-    .onAny(defer(self(), [=](const Future<ProvisionInfo>&) -> void {
+    .onAny(defer(self(), PROCESS_OWNED_COPY_UNSAFE([=])(const Future<ProvisionInfo>&) -> void {
       vector<Future<bool>> futures;
       foreachkey (const string& backend, info->rootfses) {
         if (!backends.contains(backend)) {

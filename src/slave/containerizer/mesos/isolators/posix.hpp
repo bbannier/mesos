@@ -17,6 +17,8 @@
 #ifndef __POSIX_ISOLATOR_HPP__
 #define __POSIX_ISOLATOR_HPP__
 
+#include <utility>
+
 #include <process/future.hpp>
 #include <process/id.hpp>
 
@@ -147,7 +149,7 @@ public:
     process::Owned<MesosIsolatorProcess> process(
         new PosixCpuIsolatorProcess());
 
-    return new MesosIsolator(process);
+    return new MesosIsolator(std::move(process));
   }
 
   process::Future<ResourceStatistics> usage(
@@ -181,7 +183,7 @@ public:
     process::Owned<MesosIsolatorProcess> process(
         new PosixMemIsolatorProcess());
 
-    return new MesosIsolator(process);
+    return new MesosIsolator(std::move(process));
   }
 
   process::Future<ResourceStatistics> usage(

@@ -14,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/backends/aufs.hpp"
+
+#include <utility>
+
 #include <process/dispatch.hpp>
 #include <process/id.hpp>
 #include <process/process.hpp>
@@ -25,8 +29,6 @@
 #include <stout/os/realpath.hpp>
 
 #include "linux/fs.hpp"
-
-#include "slave/containerizer/mesos/provisioner/backends/aufs.hpp"
 
 using process::Failure;
 using process::Future;
@@ -81,7 +83,7 @@ AufsBackend::~AufsBackend()
 
 
 AufsBackend::AufsBackend(Owned<AufsBackendProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

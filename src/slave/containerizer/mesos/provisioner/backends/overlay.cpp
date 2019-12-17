@@ -16,6 +16,8 @@
 
 #include "slave/containerizer/mesos/provisioner/backends/overlay.hpp"
 
+#include <utility>
+
 #include <process/dispatch.hpp>
 #include <process/id.hpp>
 #include <process/process.hpp>
@@ -101,7 +103,7 @@ OverlayBackend::~OverlayBackend()
 
 
 OverlayBackend::OverlayBackend(Owned<OverlayBackendProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

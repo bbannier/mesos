@@ -16,6 +16,7 @@
 
 #include "slave/containerizer/mesos/isolators/environment_secret.hpp"
 
+#include <utility>
 #include <vector>
 
 #include <mesos/secret/resolver.hpp>
@@ -53,7 +54,7 @@ Try<Isolator*> EnvironmentSecretIsolatorProcess::create(
       flags,
       secretResolver));;
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

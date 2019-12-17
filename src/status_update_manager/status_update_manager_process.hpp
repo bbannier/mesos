@@ -457,7 +457,8 @@ private:
       return None();
     }
 
-    process::Owned<StatusUpdateStream> stream = std::get<0>(result.get());
+    process::Owned<StatusUpdateStream> stream(
+        std::get<0>(result.get()).release());
     typename StatusUpdateStream::State& streamState = std::get<1>(result.get());
 
     if (stream->terminated) {

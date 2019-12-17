@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/filesystem/linux.hpp"
+
 #include <sys/mount.h>
 
 #include <sstream>
@@ -50,8 +52,6 @@
 
 #include "slave/containerizer/mesos/mount.hpp"
 #include "slave/containerizer/mesos/paths.hpp"
-
-#include "slave/containerizer/mesos/isolators/filesystem/linux.hpp"
 
 using namespace process;
 
@@ -553,7 +553,7 @@ Try<Isolator*> LinuxFilesystemIsolatorProcess::create(
   Owned<MesosIsolatorProcess> process(
       new LinuxFilesystemIsolatorProcess(flags, volumeGidManager));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

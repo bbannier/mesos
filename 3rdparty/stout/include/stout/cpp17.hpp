@@ -14,6 +14,10 @@
 
 #include <utility>
 
+// FIXME(bbannier): Disable warnings from this file as it is used in
+// many other contexts.
+#pragma GCC system_header
+
 // This file contains implementation of C++17 standard library features.
 // Once we adopt C++17, this file should be removed and usages of its
 // functionality should be replaced with the standard library equivalents

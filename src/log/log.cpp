@@ -190,7 +190,7 @@ Future<Shared<Replica>> LogProcess::recover()
     recovering =
       log::recover(
           quorum,
-          replica.own().get(),
+          PROCESS_OWNED_COPY_UNSAFE(Owned<Replica>(replica.own().get())),
           network,
           autoInitialize)
       .onAny(defer(self(), &Self::_recover));
@@ -229,7 +229,7 @@ void LogProcess::_recover()
 
     // Pull out the replica but need to make a copy since we get a
     // 'const &' from 'Try::get'.
-    replica = Owned<Replica>(future.get()).share();
+    PROCESS_OWNED_COPY_UNSAFE(replica = Owned<Replica>(future.get()).share());
 
     // Mark the success of the recovery.
     recovered.set(Nothing());

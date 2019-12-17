@@ -19,6 +19,7 @@
 
 #include <set>
 #include <string>
+#include <utility>
 
 #include <process/owned.hpp>
 
@@ -65,7 +66,7 @@ private:
   HadoopFetcherPlugin(
       process::Owned<HDFS> _hdfs,
       const std::set<std::string>& _schemes)
-    : hdfs(_hdfs),
+    : hdfs(std::move(_hdfs)),
       schemes_(_schemes) {}
 
   process::Owned<HDFS> hdfs;

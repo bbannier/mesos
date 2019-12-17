@@ -59,7 +59,7 @@ Try<Owned<Fetcher::Plugin>> HadoopFetcherPlugin::create(const Flags& flags)
       flags.hadoop_client_supported_schemes, ",");
 
   return Owned<Fetcher::Plugin>(new HadoopFetcherPlugin(
-      hdfs.get(),
+      Owned<HDFS>(hdfs->release()),
       set<string>(schemes.begin(), schemes.end())));
 }
 

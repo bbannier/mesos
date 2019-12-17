@@ -14,6 +14,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/gpu/isolator.hpp"
+
 #include <stdint.h>
 
 #include <sys/mount.h>
@@ -31,6 +33,7 @@ extern "C" {
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <process/collect.hpp>
@@ -59,7 +62,6 @@ extern "C" {
 #include "slave/containerizer/mesos/isolators/cgroups/constants.hpp"
 
 #include "slave/containerizer/mesos/isolators/gpu/allocator.hpp"
-#include "slave/containerizer/mesos/isolators/gpu/isolator.hpp"
 #include "slave/containerizer/mesos/isolators/gpu/nvml.hpp"
 
 #include "slave/containerizer/mesos/paths.hpp"
@@ -235,7 +237,7 @@ Try<Isolator*> NvidiaGpuIsolatorProcess::create(
           components.volume,
           deviceEntries));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

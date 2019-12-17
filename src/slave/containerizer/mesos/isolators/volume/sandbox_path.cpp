@@ -14,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/volume/sandbox_path.hpp"
+
+#include <utility>
+
 #include <sys/mount.h>
 
 #include <glog/logging.h>
@@ -40,8 +44,6 @@
 #ifdef __linux__
 #include "linux/fs.hpp"
 #endif // __linux__
-
-#include "slave/containerizer/mesos/isolators/volume/sandbox_path.hpp"
 
 using std::string;
 using std::vector;
@@ -81,7 +83,7 @@ Try<Isolator*> VolumeSandboxPathIsolatorProcess::create(
 #endif // __linux__
           bindMountSupported));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

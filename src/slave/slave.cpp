@@ -2203,7 +2203,8 @@ void Slave::run(
       Owned<Framework>& completedFramework =
         completedFrameworks.at(frameworkId);
 
-      framework->completedExecutors = completedFramework->completedExecutors;
+      framework->completedExecutors =
+        std::move(completedFramework->completedExecutors);
       completedFrameworks.erase(frameworkId);
     }
   }
@@ -9406,7 +9407,7 @@ Future<ResourceUsage> Slave::usage()
   usage->mutable_total()->CopyFrom(totalResources);
 
   return await(futures).then(
-      [usage](const vector<Future<ResourceStatistics>>& futures) {
+      PROCESS_OWNED_COPY_UNSAFE([usage])(const vector<Future<ResourceStatistics>>& futures) {
         // NOTE: We add ResourceUsage::Executor to 'usage' the same
         // order as we push future to 'futures'. So the variables
         // 'future' and 'executor' below should be in sync.

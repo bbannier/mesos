@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 
   Owned<mesos::internal::docker::DockerExecutor> executor(
       new mesos::internal::docker::DockerExecutor(
-          docker.get(),
+          Owned<Docker>(docker->release()),
           flags.container.get(),
           flags.sandbox_directory.get(),
           flags.mapped_directory.get(),

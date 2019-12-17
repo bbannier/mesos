@@ -2018,7 +2018,7 @@ private:
         ReadOnlyRequestHandler handler,
         const Option<process::http::authentication::Principal>& principal,
         const hashmap<std::string, std::string>& queryParameters,
-        const process::Owned<ObjectApprovers>& approvers) const;
+        process::Owned<ObjectApprovers> approvers) const;
 
     void processRequestsBatch() const;
 
@@ -2644,7 +2644,7 @@ struct Framework
   // fixed-size cache to avoid consuming too much memory. We use
   // circular_buffer rather than BoundedHashMap because there
   // can be multiple completed tasks with the same task ID.
-  circular_buffer<process::Owned<Task>> completedTasks;
+  circular_buffer<std::unique_ptr<Task>> completedTasks;
 
   // When an agent is marked unreachable, tasks running on it are stored
   // here. We only keep a fixed-size cache to avoid consuming too much memory.

@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 
 #include <stout/foreach.hpp>
 #include <stout/lambda.hpp>
@@ -78,9 +79,9 @@ Try<Owned<Fetcher>> create(const Option<Flags>& _flags)
 
 } // namespace fetcher {
 
-Fetcher::Fetcher(const vector<Owned<Plugin>>& plugins)
+Fetcher::Fetcher(vector<Owned<Plugin>>& plugins)
 {
-  foreach (Owned<Plugin> _plugin, plugins) {
+  foreach (Owned<Plugin>& _plugin, plugins) {
     Shared<Plugin> plugin = _plugin.share();
 
     if (pluginsByName.contains(plugin->name())) {

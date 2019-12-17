@@ -14,21 +14,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/filesystem/shared.hpp"
+
 #include <sys/mount.h>
 
 #include <set>
-
-#include <process/id.hpp>
+#include <utility>
 
 #include <stout/os.hpp>
 
 #include <stout/os/strerror.hpp>
 
+#include <process/id.hpp>
+
 #include "common/protobuf_utils.hpp"
 
 #include "linux/ns.hpp"
-
-#include "slave/containerizer/mesos/isolators/filesystem/shared.hpp"
 
 using namespace process;
 
@@ -72,7 +73,7 @@ Try<Isolator*> SharedFilesystemIsolatorProcess::create(const Flags& flags)
   process::Owned<MesosIsolatorProcess> process(
       new SharedFilesystemIsolatorProcess(flags));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

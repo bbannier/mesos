@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -146,13 +147,13 @@ Try<Owned<slave::Store>> Store::create(
 
   return Owned<slave::Store>(new Store(Owned<StoreProcess>(new StoreProcess(
       rootDir.get(),
-      cache.get(),
-      fetcher.get()))));
+      Owned<Cache>(cache->release()),
+      Owned<Fetcher>(fetcher->release())))));
 }
 
 
 Store::Store(Owned<StoreProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }
@@ -183,8 +184,8 @@ StoreProcess::StoreProcess(
     Owned<Fetcher> _fetcher)
   : ProcessBase(process::ID::generate("appc-provisioner-store")),
     rootDir(_rootDir),
-    cache(_cache),
-    fetcher(_fetcher) {}
+    cache(std::move(_cache)),
+    fetcher(std::move(_fetcher)) {}
 
 
 Future<Nothing> StoreProcess::recover()

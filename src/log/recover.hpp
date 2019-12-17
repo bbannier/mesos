@@ -61,8 +61,8 @@ process::Future<Option<RecoverResponse>> runRecoverProtocol(
 // replicated log without explicitly using an initialization tool.
 extern process::Future<process::Owned<Replica>> recover(
     size_t quorum,
-    const process::Owned<Replica>& replica,
-    const process::Shared<Network>& network,
+    process::Owned<Replica> replica,
+    process::Shared<Network> network,
     bool autoInitialize = false);
 
 } // namespace log {

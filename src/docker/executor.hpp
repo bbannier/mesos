@@ -115,7 +115,7 @@ class DockerExecutor : public Executor
 {
 public:
   DockerExecutor(
-      const process::Owned<Docker>& docker,
+      process::Owned<Docker> docker,
       const std::string& container,
       const std::string& sandboxDirectory,
       const std::string& mappedDirectory,

@@ -16,6 +16,7 @@
 
 #include <queue>
 #include <string>
+#include <utility>
 
 #include <mesos/v1/executor.hpp>
 #include <mesos/v1/mesos.hpp>
@@ -638,7 +639,7 @@ protected:
           lambda::bind(deserialize<Event>, contentType, lambda::_1),
           reader));
 
-      subscribed = SubscribedResponse {reader, decoder};
+      subscribed = SubscribedResponse {reader, std::move(decoder)};
 
       read();
       return;

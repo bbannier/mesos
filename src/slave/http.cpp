@@ -505,7 +505,8 @@ Future<Response> Http::api(
     return reader->read()
       .then(defer(
           slave->self(),
-          [=](const Result<mesos::agent::Call>& call) -> Future<Response> {
+          PROCESS_OWNED_COPY_UNSAFE([=])(const Result<mesos::agent::Call>& call) mutable
+            -> Future<Response> {
             if (call.isNone()) {
               return BadRequest("Received EOF while reading request body");
             }
@@ -2203,7 +2204,7 @@ Future<JSON::Array> Http::__containers(
     bool showStandaloneContainers) const
 {
   return slave->containerizer->containers()
-    .then(defer(slave->self(), [=](const hashset<ContainerID> containerIds) {
+    .then(defer(slave->self(), PROCESS_OWNED_COPY_UNSAFE([=])(const hashset<ContainerID> containerIds) {
       Owned<vector<JSON::Object>> metadata(new vector<JSON::Object>());
       vector<Future<ContainerStatus>> statusFutures;
       vector<Future<ResourceStatistics>> statsFutures;
@@ -2303,7 +2304,7 @@ Future<JSON::Array> Http::__containers(
       }
 
       return await(await(statusFutures), await(statsFutures)).then(
-          [metadata](const tuple<
+         PROCESS_OWNED_COPY_UNSAFE([metadata])(const tuple<
               Future<vector<Future<ContainerStatus>>>,
               Future<vector<Future<ResourceStatistics>>>>& t)
               -> Future<JSON::Array> {
@@ -3308,8 +3309,10 @@ Future<Response> Http::attachContainerInput(
       {ATTACH_CONTAINER_INPUT})
     .then(defer(
         slave->self(),
-        [this, call, decoder, mediaTypes](
-            const Owned<ObjectApprovers>& approvers) -> Future<Response> {
+        PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+        [this, call, decoder, mediaTypes]
+        PROCESS_UNSAFE_ALLOW_OWNED_COPY_END
+        (const Owned<ObjectApprovers>& approvers) -> Future<Response> {
           const ContainerID& containerId =
               call.attach_container_input().container_id();
 
@@ -3328,7 +3331,7 @@ Future<Response> Http::attachContainerInput(
             return Forbidden();
           }
 
-          Owned<Reader<mesos::agent::Call>> decoder_ = decoder;
+          PROCESS_OWNED_COPY_UNSAFE(Owned<Reader<mesos::agent::Call>> decoder_ = decoder);
 
           return _attachContainerInput(
               call, std::move(decoder_), mediaTypes);

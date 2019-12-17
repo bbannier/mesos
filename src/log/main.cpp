@@ -44,9 +44,9 @@ using std::string;
 static hashmap<string, Owned<tool::Tool>> tools;
 
 
-static void add(const Owned<tool::Tool>& tool)
+static void add(Owned<tool::Tool> tool)
 {
-  tools[tool->name()] = tool;
+  tools[tool->name()] = std::move(tool);
 }
 
 

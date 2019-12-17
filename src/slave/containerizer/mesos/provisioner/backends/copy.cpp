@@ -14,6 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <utility>
 #include <vector>
 
 #ifndef __WINDOWS__
@@ -77,7 +78,7 @@ CopyBackend::~CopyBackend()
 
 
 CopyBackend::CopyBackend(Owned<CopyBackendProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

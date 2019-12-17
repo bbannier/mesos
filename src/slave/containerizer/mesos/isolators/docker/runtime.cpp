@@ -16,6 +16,7 @@
 
 #include <list>
 #include <string>
+#include <utility>
 
 #include <glog/logging.h>
 
@@ -76,7 +77,7 @@ Try<Isolator*> DockerRuntimeIsolatorProcess::create(const Flags& flags)
   process::Owned<MesosIsolatorProcess> process(
       new DockerRuntimeIsolatorProcess(flags));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

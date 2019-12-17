@@ -17,6 +17,7 @@
 #ifndef __MESOS_CONTAINERIZER_HPP__
 #define __MESOS_CONTAINERIZER_HPP__
 
+#include <utility>
 #include <vector>
 
 #include <mesos/secret/resolver.hpp>
@@ -82,7 +83,7 @@ public:
       bool local,
       Fetcher* fetcher,
       GarbageCollector* gc,
-      const process::Owned<Launcher>& launcher,
+      process::Owned<Launcher> launcher,
       const process::Shared<Provisioner>& provisioner,
       const std::vector<process::Owned<mesos::slave::Isolator>>& isolators,
       VolumeGidManager* volumeGidManager = nullptr);
@@ -130,7 +131,7 @@ public:
 
 private:
   explicit MesosContainerizer(
-      const process::Owned<MesosContainerizerProcess>& process);
+      process::Owned<MesosContainerizerProcess> process);
 
   process::Owned<MesosContainerizerProcess> process;
 };
@@ -145,7 +146,7 @@ public:
       Fetcher* _fetcher,
       GarbageCollector* _gc,
       IOSwitchboard* _ioSwitchboard,
-      const process::Owned<Launcher>& _launcher,
+      process::Owned<Launcher> _launcher,
       const process::Shared<Provisioner>& _provisioner,
       const std::vector<process::Owned<mesos::slave::Isolator>>& _isolators,
       VolumeGidManager* _volumeGidManager,
@@ -156,7 +157,7 @@ public:
       fetcher(_fetcher),
       gc(_gc),
       ioSwitchboard(_ioSwitchboard),
-      launcher(_launcher),
+      launcher(std::move(_launcher)),
       provisioner(_provisioner),
       isolators(_isolators),
       volumeGidManager(_volumeGidManager),

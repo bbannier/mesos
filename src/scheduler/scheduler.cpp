@@ -35,6 +35,7 @@
 #include <string>
 #include <sstream>
 #include <tuple>
+#include <utility>
 
 #include <mesos/v1/mesos.hpp>
 #include <mesos/v1/scheduler.hpp>
@@ -659,7 +660,7 @@ protected:
           lambda::bind(deserialize<Event>, contentType, lambda::_1),
           reader));
 
-      subscribed = SubscribedResponse {reader, decoder};
+      subscribed = SubscribedResponse {reader, std::move(decoder)};
 
       // Responses to SUBSCRIBE calls should always include a stream ID.
       CHECK(response->headers.contains("Mesos-Stream-Id"));

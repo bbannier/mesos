@@ -326,7 +326,7 @@ void GenericRegistrarProcess::_update(
 
   // Remove the operations.
   while (!applied.empty()) {
-    Owned<Registrar::Operation> operation = applied.front();
+    Owned<Registrar::Operation> operation(applied.front().release());
     applied.pop_front();
 
     operation->set();

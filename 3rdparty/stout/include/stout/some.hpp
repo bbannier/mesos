@@ -41,7 +41,12 @@ struct _Some
 template <typename T>
 _Some<typename std::decay<T>::type> Some(T&& t)
 {
+  // FIXME(bbannier): Add a comment why this is needed here, not very obvious.
+  // FIXME(bbannier): we cannot use the OWNED_UNSAFE macro here.
+  _Pragma("GCC diagnostic push");
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated\"");
   return _Some<typename std::decay<T>::type>(std::forward<T>(t));
+  _Pragma("GCC diagnostic pop");
 }
 
 #endif // __STOUT_SOME_HPP__

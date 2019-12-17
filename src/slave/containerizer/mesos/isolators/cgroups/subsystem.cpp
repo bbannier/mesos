@@ -98,7 +98,8 @@ Try<Owned<Subsystem>> Subsystem::create(
         subsystemProcess.error());
   }
 
-  return Owned<Subsystem>(new Subsystem(subsystemProcess.get()));
+  return Owned<Subsystem>(
+      new Subsystem(Owned<SubsystemProcess>(subsystemProcess->release())));
 }
 
 

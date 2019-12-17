@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 
 #include <mesos/slave/container_logger.hpp>
 
@@ -76,13 +77,12 @@ public:
   DockerContainerizer(
       const Flags& flags,
       Fetcher* fetcher,
-      const process::Owned<mesos::slave::ContainerLogger>& logger,
+      process::Owned<mesos::slave::ContainerLogger> logger,
       process::Shared<Docker> docker,
       const Option<NvidiaComponents>& nvidia = None());
 
   // This is only public for tests.
-  DockerContainerizer(
-      const process::Owned<DockerContainerizerProcess>& _process);
+  DockerContainerizer(process::Owned<DockerContainerizerProcess> _process);
 
   ~DockerContainerizer() override;
 
@@ -129,12 +129,12 @@ public:
   DockerContainerizerProcess(
       const Flags& _flags,
       Fetcher* _fetcher,
-      const process::Owned<mesos::slave::ContainerLogger>& _logger,
+      process::Owned<mesos::slave::ContainerLogger> _logger,
       process::Shared<Docker> _docker,
       const Option<NvidiaComponents>& _nvidia)
     : flags(_flags),
       fetcher(_fetcher),
-      logger(_logger),
+      logger(std::move(_logger)),
       docker(_docker),
       nvidia(_nvidia) {}
 

@@ -16,6 +16,8 @@
 
 #include "master/contender/zookeeper.hpp"
 
+#include <utility>
+
 #include <mesos/master/contender.hpp>
 
 #include <mesos/zookeeper/contender.hpp>
@@ -82,7 +84,7 @@ ZooKeeperMasterContender::ZooKeeperMasterContender(
 
 ZooKeeperMasterContender::ZooKeeperMasterContender(Owned<Group> group)
 {
-  process = new ZooKeeperMasterContenderProcess(group);
+  process = new ZooKeeperMasterContenderProcess(std::move(group));
   spawn(process);
 }
 
@@ -117,7 +119,7 @@ ZooKeeperMasterContenderProcess::ZooKeeperMasterContenderProcess(
 ZooKeeperMasterContenderProcess::ZooKeeperMasterContenderProcess(
     Owned<Group> _group)
   : ProcessBase(ID::generate("zookeeper-master-contender")),
-    group(_group),
+    group(std::move(_group)),
     contender(nullptr) {}
 
 

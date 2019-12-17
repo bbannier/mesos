@@ -1510,7 +1510,7 @@ mesos::master::Response::GetAgents::Agent createAgentResponse(
     const mesos::internal::master::Slave& slave,
     const Option<DrainInfo>& drainInfo,
     bool deactivated,
-    const Option<Owned<ObjectApprovers>>& approvers)
+    const Owned<ObjectApprovers>& approvers)
 {
   mesos::master::Response::GetAgents::Agent agent;
 
@@ -1531,27 +1531,31 @@ mesos::master::Response::GetAgents::Agent createAgentResponse(
 
   agent.mutable_agent_info()->clear_resources();
   foreach (const Resource& resource, slave.info.resources()) {
-    if (approvers.isNone() || approvers.get()->approved<VIEW_ROLE>(resource)) {
+    if (
+      approvers == nullptr || approvers.get()->approved<VIEW_ROLE>(resource)) {
       agent.mutable_agent_info()->add_resources()->CopyFrom(resource);
     }
   }
 
   foreach (Resource resource, slave.totalResources) {
-    if (approvers.isNone() || approvers.get()->approved<VIEW_ROLE>(resource)) {
+    if (
+      approvers == nullptr || approvers.get()->approved<VIEW_ROLE>(resource)) {
       convertResourceFormat(&resource, ENDPOINT);
       agent.add_total_resources()->CopyFrom(resource);
     }
   }
 
   foreach (Resource resource, Resources::sum(slave.usedResources)) {
-    if (approvers.isNone() || approvers.get()->approved<VIEW_ROLE>(resource)) {
+    if (
+      approvers == nullptr || approvers.get()->approved<VIEW_ROLE>(resource)) {
       convertResourceFormat(&resource, ENDPOINT);
       agent.add_allocated_resources()->CopyFrom(resource);
     }
   }
 
   foreach (Resource resource, slave.offeredResources) {
-    if (approvers.isNone() || approvers.get()->approved<VIEW_ROLE>(resource)) {
+    if (
+      approvers == nullptr || approvers.get()->approved<VIEW_ROLE>(resource)) {
       convertResourceFormat(&resource, ENDPOINT);
       agent.add_offered_resources()->CopyFrom(resource);
     }

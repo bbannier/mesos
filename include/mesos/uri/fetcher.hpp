@@ -88,7 +88,7 @@ public:
    *
    * @param plugins a list of plugins to register.
    */
-  Fetcher(const std::vector<process::Owned<Plugin>>& plugins);
+  Fetcher(std::vector<process::Owned<Plugin>>& plugins);
 
   /**
    * Fetches a URI to the given directory. This method will dispatch

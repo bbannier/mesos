@@ -76,7 +76,7 @@ public:
   Fetcher(const Flags& flags);
 
   // This is only public for tests.
-  Fetcher(const process::Owned<FetcherProcess>& process);
+  Fetcher(process::Owned<FetcherProcess> process);
 
   virtual ~Fetcher();
 

@@ -48,6 +48,7 @@
 #include <process/future.hpp>
 #include <process/help.hpp>
 #include <process/logging.hpp>
+#include <process/owned.hpp>
 
 #include <process/metrics/metrics.hpp>
 
@@ -528,7 +529,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifySubscribe(
   //       DEFAULT_HEARTBEAT_INTERVAL.secs());
 
   // TODO(bmahler): This copies the Owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     const google::protobuf::Descriptor* descriptor =
       v1::master::Event::Subscribed::descriptor();
 
@@ -1384,12 +1385,12 @@ Future<Response> Master::Http::frameworks(
       {VIEW_FRAMEWORK, VIEW_TASK, VIEW_EXECUTOR})
     .then(defer(
         master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
           return deferBatchedRequest(
               &Master::ReadOnlyHandler::frameworks,
               principal,
               request.url.query,
-              approvers);
+              std::move(approvers));
         }));
 }
 
@@ -1536,7 +1537,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetFrameworks(
   // bother with the more efficient approach.
 
   // TODO(bmahler): This copies the Owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     const google::protobuf::Descriptor* descriptor =
       v1::master::Response::GetFrameworks::descriptor();
 
@@ -1752,7 +1753,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetExecutors(
   //     *executor->mutable_slave_id() = slaveId;
 
   // TODO(bmahler): This copies the owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     // Construct framework list with both active and completed frameworks.
     vector<const Framework*> frameworks;
     foreachvalue (Framework* framework, master->frameworks.registered) {
@@ -2052,7 +2053,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetState(
   //   *getState.mutable_get_agents() = _getAgents(approvers);
 
   // TODO(bmahler): This copies the Owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     const google::protobuf::Descriptor* descriptor =
       v1::master::Response::GetState::descriptor();
 
@@ -2887,12 +2888,12 @@ Future<Response> Master::Http::slaves(
   return ObjectApprovers::create(master->authorizer, principal, {VIEW_ROLE})
     .then(defer(
         master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
           return deferBatchedRequest(
               &Master::ReadOnlyHandler::slaves,
               principal,
               request.url.query,
-              approvers);
+              std::move(approvers));
         }));
 }
 
@@ -2990,7 +2991,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetAgents(
   //         *agent->add_resources() = resource;
 
   // TODO(bmahler): This copies the Owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     const google::protobuf::Descriptor* descriptor =
       v1::master::Response::GetAgents::descriptor();
 
@@ -3008,7 +3009,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetAgents(
                 *slave,
                 master->slaves.draining.get(slave->id),
                 master->slaves.deactivated.contains(slave->id),
-                approvers);
+                std::move(approvers));
 
         writer->element(asV1Protobuf(agent));
       }
@@ -3383,12 +3384,12 @@ Future<Response> Master::Http::state(
       {VIEW_ROLE, VIEW_FRAMEWORK, VIEW_TASK, VIEW_EXECUTOR, VIEW_FLAGS})
     .then(defer(
         master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
           return deferBatchedRequest(
               &Master::ReadOnlyHandler::state,
               principal,
               request.url.query,
-              approvers);
+              std::move(approvers));
         }));
 }
 
@@ -3397,7 +3398,7 @@ Future<Response> Master::Http::deferBatchedRequest(
     ReadOnlyRequestHandler handler,
     const Option<Principal>& principal,
     const hashmap<std::string, std::string>& queryParameters,
-    const Owned<ObjectApprovers>& approvers) const
+    Owned<ObjectApprovers> approvers) const
 {
   bool scheduleBatch = batchedRequests.empty();
 
@@ -3431,7 +3432,7 @@ Future<Response> Master::Http::deferBatchedRequest(
         handler,
         queryParameters,
         principal,
-        approvers,
+        std::move(approvers),
         std::move(promise)});
   }
 
@@ -3459,15 +3460,17 @@ void Master::Http::processRequestsBatch() const
   // TODO(alexr): Consider moving `BatchedStateRequest`'s fields into
   // `process::async` once it supports moving.
   foreach (BatchedRequest& request, batchedRequests) {
-    request.promise.associate(process::async(
-        [this](ReadOnlyRequestHandler handler,
-               const hashmap<std::string, std::string>& queryParameters,
-               const process::Owned<ObjectApprovers>& approvers) {
-          return (readonlyHandler.*handler)(queryParameters, approvers);
-        },
-        request.handler,
-        request.queryParameters,
-        request.approvers));
+    PROCESS_OWNED_COPY_UNSAFE(request.promise.associate(process::async(
+      [this](
+        ReadOnlyRequestHandler handler,
+        const hashmap<string, string>& queryParameters,
+        const Owned<ObjectApprovers>& approvers) {
+        return (readonlyHandler.*handler)(
+          queryParameters, approvers);
+      },
+      request.handler,
+      request.queryParameters,
+      std::move(request.approvers))));
   }
 
   // Block the master actor until all workers have generated state responses.
@@ -3588,12 +3591,12 @@ Future<Response> Master::Http::stateSummary(
       {VIEW_ROLE, VIEW_FRAMEWORK})
     .then(defer(
         master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
           return deferBatchedRequest(
               &Master::ReadOnlyHandler::stateSummary,
               principal,
               request.url.query,
-              approvers);
+              std::move(approvers));
         }));
 }
 
@@ -3641,12 +3644,12 @@ Future<Response> Master::Http::roles(
 
   return ObjectApprovers::create(master->authorizer, principal, {VIEW_ROLE})
     .then(defer(master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
             return deferBatchedRequest(
                 &Master::ReadOnlyHandler::roles,
                 principal,
                 request.url.query,
-                approvers);
+                std::move(approvers));
           }));
 }
 
@@ -4034,12 +4037,12 @@ Future<Response> Master::Http::tasks(
       {VIEW_FRAMEWORK, VIEW_TASK})
     .then(defer(
         master->self(),
-        [this, request, principal](const Owned<ObjectApprovers>& approvers) {
+        [this, request, principal](Owned<ObjectApprovers> approvers) {
           return deferBatchedRequest(
               &Master::ReadOnlyHandler::tasks,
               principal,
               request.url.query,
-              approvers);
+              std::move(approvers));
         }));
 }
 
@@ -4136,7 +4139,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetTasks(
   //    *getTasks.add_completed_tasks() = *task;
 
   // TODO(bmahler): This copies the Owned object approvers.
-  return [=](JSON::ObjectWriter* writer) {
+  return PROCESS_OWNED_COPY_UNSAFE([=])(JSON::ObjectWriter* writer) {
     // Construct framework list with both active and completed frameworks.
     vector<const Framework*> frameworks;
     foreachvalue (Framework* framework, master->frameworks.registered) {
@@ -4220,7 +4223,8 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetTasks(
         descriptor->FindFieldByNumber(field)->name(),
         [&](JSON::ArrayWriter* writer) {
           foreach (const Framework* framework, frameworks) {
-            foreach (const Owned<Task>& task, framework->completedTasks) {
+            foreach (
+              const std::unique_ptr<Task>& task, framework->completedTasks) {
               // Skip unauthorized tasks.
               if (!approvers->approved<VIEW_TASK>(*task, framework->info)) {
                 continue;
@@ -4319,7 +4323,7 @@ string Master::Http::serializeGetTasks(
     }
 
     // Completed tasks.
-    foreach (const Owned<Task>& task, framework->completedTasks) {
+    foreach (const std::unique_ptr<Task>& task, framework->completedTasks) {
       // Skip unauthorized tasks.
       if (!approvers->approved<VIEW_TASK>(*task, framework->info)) {
         continue;
@@ -4404,7 +4408,7 @@ mesos::master::Response::GetTasks Master::Http::_getTasks(
     }
 
     // Completed tasks.
-    foreach (const Owned<Task>& task, framework->completedTasks) {
+    foreach (const std::unique_ptr<Task>& task, framework->completedTasks) {
       // Skip unauthorized tasks.
       if (!approvers->approved<VIEW_TASK>(*task, framework->info)) {
         continue;
@@ -5097,7 +5101,7 @@ Future<mesos::maintenance::ClusterStatus> Master::Http::_getMaintenanceStatus(
   return master->allocator->getInverseOfferStatuses()
     .then(defer(
         master->self(),
-        [=](hashmap<
+        PROCESS_OWNED_COPY_UNSAFE([=])(hashmap<
             SlaveID,
             hashmap<FrameworkID, mesos::allocator::InverseOfferStatus>> result)
           -> Future<mesos::maintenance::ClusterStatus> {

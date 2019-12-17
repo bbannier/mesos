@@ -609,7 +609,7 @@ protected:
           return;
         }
 
-        container->checker = checker.get();
+        container->checker = Owned<checks::Checker>(checker->release());
       }
 
       if (task.has_health_check()) {
@@ -629,7 +629,8 @@ protected:
           return;
         }
 
-        container->healthChecker = healthChecker.get();
+        container->healthChecker =
+          Owned<checks::HealthChecker>(healthChecker->release());
       }
 
       // Setup timer for max_completion_time.

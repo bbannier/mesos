@@ -18,6 +18,7 @@
 
 #include <climits>
 #include <sstream>
+#include <utility>
 
 #include <process/collect.hpp>
 #include <process/defer.hpp>
@@ -585,7 +586,8 @@ void MemorySubsystemProcess::pressureListen(
                  << "events for container " << containerId << ": "
                  << counter.error();
     } else {
-      infos[containerId]->pressureCounters[level] = counter.get();
+      infos[containerId]->pressureCounters[level] =
+        Owned<cgroups::memory::pressure::Counter>(counter->release());
 
       LOG(INFO) << "Started listening on '" << level << "' memory pressure "
                 << "events for container " << containerId;

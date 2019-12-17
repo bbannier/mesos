@@ -349,7 +349,8 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   Owned<Launcher> launcher = Owned<Launcher>(_launcher.get());
 
   if (futureTracker != nullptr) {
-    launcher = Owned<Launcher>(new LauncherTracker(launcher, futureTracker));
+    launcher =
+      Owned<Launcher>(new LauncherTracker(std::move(launcher), futureTracker));
   }
 
   Try<Owned<Provisioner>> _provisioner =
@@ -557,8 +558,10 @@ Try<MesosContainerizer*> MesosContainerizer::create(
     Owned<Isolator> isolator(_isolator.get());
 
     if (futureTracker != nullptr) {
-      isolator = Owned<Isolator>(
-          new IsolatorTracker(isolator, creator.first, futureTracker));
+      isolator = Owned<Isolator>(new IsolatorTracker(
+          std::move(isolator),
+          creator.first,
+          futureTracker));
     }
 
     isolators.push_back(isolator);
@@ -578,7 +581,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
 
       if (futureTracker != nullptr) {
         isolator = Owned<Isolator>(
-            new IsolatorTracker(isolator, name, futureTracker));
+            new IsolatorTracker(std::move(isolator), name, futureTracker));
       }
 
       isolators.push_back(isolator);
@@ -606,7 +609,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
       local,
       fetcher,
       gc,
-      launcher,
+      std::move(launcher),
       provisioner,
       isolators,
       volumeGidManager);
@@ -618,7 +621,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
     bool local,
     Fetcher* fetcher,
     GarbageCollector* gc,
-    const Owned<Launcher>& launcher,
+    Owned<Launcher> launcher,
     const Shared<Provisioner>& provisioner,
     const vector<Owned<Isolator>>& isolators,
     VolumeGidManager* volumeGidManager)
@@ -676,7 +679,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
           fetcher,
           gc,
           ioSwitchboard.get(),
-          launcher,
+          std::move(launcher),
           provisioner,
           _isolators,
           volumeGidManager,
@@ -686,8 +689,8 @@ Try<MesosContainerizer*> MesosContainerizer::create(
 
 
 MesosContainerizer::MesosContainerizer(
-    const Owned<MesosContainerizerProcess>& _process)
-  : process(_process)
+    Owned<MesosContainerizerProcess> _process)
+  : process(std::move(_process))
 {
   spawn(process.get());
 }
@@ -941,7 +944,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
               << ", this means image pruning will be disabled.";
     }
 
-    containers_[containerId] = container;
+    containers_[containerId] = std::move(container);
   }
 
   // TODO(gilbert): Draw the logic VENN Diagram here in comment.
@@ -1067,7 +1070,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
               << "be disabled.";
     }
 
-    containers_[containerId] = container;
+    containers_[containerId] = std::move(container);
 
     // TODO(klueska): The final check in the if statement makes sure
     // that this container was not marked for forcible destruction on
@@ -1132,7 +1135,7 @@ Future<Nothing> MesosContainerizerProcess::recover(
         Owned<Container> container(new Container());
         container->state = RUNNING;
         container->status = Future<Option<int>>(None());
-        containers_[containerId] = container;
+        containers_[containerId] = std::move(container);
 
         _orphans.insert(containerId);
       }
@@ -1590,7 +1593,7 @@ Future<Nothing> MesosContainerizerProcess::prepare(
     }
 
     // Chain together preparing each isolator.
-    f = f.then([=](vector<Option<ContainerLaunchInfo>> launchInfos) {
+    f = f.then(PROCESS_OWNED_COPY_UNSAFE([=])(vector<Option<ContainerLaunchInfo>> launchInfos) {
       return isolator->prepare(containerId, containerConfig)
         .then([=](const Option<ContainerLaunchInfo>& launchInfo) mutable {
           launchInfos.push_back(launchInfo);
@@ -2796,7 +2799,7 @@ void MesosContainerizerProcess::____destroy(
               << containerId;
 
       volumeGidManager->deallocate(container->config->directory())
-        .onAny(defer(self(), [=](const Future<Nothing>& future) {
+        .onAny(defer(self(), PROCESS_OWNED_COPY_UNSAFE([=])(const Future<Nothing>& future) {
           CHECK(containers_.contains(containerId));
 
           if (!future.isReady()) {
@@ -3287,7 +3290,7 @@ Future<vector<Future<Nothing>>> MesosContainerizerProcess::cleanupIsolators(
     // complete and continuing if one fails.
     // TODO(jieyu): Technically, we cannot bind 'isolator' here
     // because the ownership will be transferred after the bind.
-    f = f.then([=](vector<Future<Nothing>> cleanups) {
+    f = f.then(PROCESS_OWNED_COPY_UNSAFE([=])(vector<Future<Nothing>> cleanups) {
       // Accumulate but do not propagate any failure.
       Future<Nothing> cleanup = isolator->cleanup(containerId);
       cleanups.push_back(cleanup);

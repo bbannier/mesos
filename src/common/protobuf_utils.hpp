@@ -601,7 +601,7 @@ mesos::master::Response::GetAgents::Agent createAgentResponse(
     const mesos::internal::master::Slave& slave,
     const Option<DrainInfo>& drainInfo,
     bool deactivated,
-    const Option<process::Owned<ObjectApprovers>>& approvers = None());
+    const process::Owned<ObjectApprovers>& approvers = nullptr);
 
 
 // Helper for creating an `AGENT_ADDED` event from a `Slave`.

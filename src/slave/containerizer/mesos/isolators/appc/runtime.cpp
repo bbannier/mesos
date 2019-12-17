@@ -16,6 +16,7 @@
 
 #include <list>
 #include <string>
+#include <utility>
 
 #include <glog/logging.h>
 
@@ -73,7 +74,7 @@ Try<Isolator*> AppcRuntimeIsolatorProcess::create(const Flags& flags)
   process::Owned<MesosIsolatorProcess> process(
       new AppcRuntimeIsolatorProcess(flags));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

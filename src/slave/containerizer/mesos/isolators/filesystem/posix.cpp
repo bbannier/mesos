@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <process/collect.hpp>
@@ -63,7 +64,7 @@ Try<Isolator*> PosixFilesystemIsolatorProcess::create(
   process::Owned<MesosIsolatorProcess> process(
       new PosixFilesystemIsolatorProcess(flags, volumeGidManager));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

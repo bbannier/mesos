@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <utility>
+
 #include <process/dispatch.hpp>
 #include <process/id.hpp>
 #include <process/process.hpp>
@@ -81,7 +83,7 @@ BindBackend::~BindBackend()
 
 
 BindBackend::BindBackend(Owned<BindBackendProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

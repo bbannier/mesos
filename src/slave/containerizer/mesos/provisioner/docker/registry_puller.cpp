@@ -14,6 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/docker/registry_puller.hpp"
+
+#include <utility>
+
 #include <glog/logging.h>
 
 #include <mesos/secret/resolver.hpp>
@@ -34,7 +38,6 @@
 #include "uri/schemes/docker.hpp"
 
 #include "slave/containerizer/mesos/provisioner/docker/paths.hpp"
-#include "slave/containerizer/mesos/provisioner/docker/registry_puller.hpp"
 
 namespace http = process::http;
 namespace spec = docker::spec;
@@ -157,12 +160,12 @@ Try<Owned<Puller>> RegistryPuller::create(
           fetcher,
           secretResolver));
 
-  return Owned<Puller>(new RegistryPuller(process));
+  return Owned<Puller>(new RegistryPuller(std::move(process)));
 }
 
 
 RegistryPuller::RegistryPuller(Owned<RegistryPullerProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

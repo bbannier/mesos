@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <set>
+#include <utility>
 
 #include <mesos/type_utils.hpp>
 
@@ -420,13 +421,13 @@ class RecoverProcess : public Process<RecoverProcess>
 public:
   RecoverProcess(
       size_t _quorum,
-      const Owned<Replica>& _replica,
-      const Shared<Network>& _network,
+      Owned<Replica> _replica,
+      Shared<Network> _network,
       bool _autoInitialize)
     : ProcessBase(ID::generate("log-recover")),
       quorum(_quorum),
-      replica(_replica),
-      network(_network),
+      replica(std::move(_replica)),
+      network(std::move(_network)),
       autoInitialize(_autoInitialize) {}
 
   Future<Owned<Replica>> future() { return promise.future(); }
@@ -584,13 +585,15 @@ private:
   Future<bool> getReplicaOwnership(Shared<Replica> shared)
   {
     // Try to re-gain the ownership of the replica.
+    PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN;
     return shared.own()
-      .then(defer(self(), &Self::_getReplicaOwnership, lambda::_1));
+      .then(defer(self(), &Self::_getReplicaOwnership, std::move(lambda::_1)));
+    PROCESS_UNSAFE_ALLOW_OWNED_COPY_END;
   }
 
   Future<bool> _getReplicaOwnership(Owned<Replica> owned)
   {
-    replica = owned;
+    replica = std::move(owned);
 
     return true;
   }
@@ -634,15 +637,15 @@ private:
 
 Future<Owned<Replica>> recover(
     size_t quorum,
-    const Owned<Replica>& replica,
-    const Shared<Network>& network,
+    Owned<Replica> replica,
+    Shared<Network> network,
     bool autoInitialize)
 {
   RecoverProcess* process =
     new RecoverProcess(
         quorum,
-        replica,
-        network,
+        std::move(replica),
+        std::move(network),
         autoInitialize);
 
   Future<Owned<Replica>> future = process->future();

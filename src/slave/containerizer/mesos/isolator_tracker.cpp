@@ -16,6 +16,8 @@
 
 #include "common/future_tracker.hpp"
 
+#include <utility>
+
 #include "slave/constants.hpp"
 
 #include "slave/containerizer/mesos/isolator_tracker.hpp"
@@ -36,10 +38,10 @@ namespace internal {
 namespace slave {
 
 IsolatorTracker::IsolatorTracker(
-    const Owned<mesos::slave::Isolator>& _isolator,
+    Owned<mesos::slave::Isolator> _isolator,
     const string& _isolatorName,
     PendingFutureTracker* _tracker)
-  : isolator(_isolator),
+  : isolator(std::move(_isolator)),
     isolatorName(_isolatorName),
     tracker(_tracker)
 {}

@@ -14,7 +14,15 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <stout/duration.hpp>
+#include <stout/error.hpp>
+#include <stout/foreach.hpp>
+#include <stout/numify.hpp>
+#include <stout/option.hpp>
+#include <stout/os.hpp>
 
 #include <process/after.hpp>
 #include <process/collect.hpp>
@@ -24,13 +32,6 @@
 #include <process/process.hpp>
 
 #include <process/metrics/metrics.hpp>
-
-#include <stout/duration.hpp>
-#include <stout/error.hpp>
-#include <stout/foreach.hpp>
-#include <stout/numify.hpp>
-#include <stout/option.hpp>
-#include <stout/os.hpp>
 
 using std::map;
 using std::string;
@@ -88,7 +89,7 @@ MetricsProcess* MetricsProcess::create(
     }
   }
 
-  return new MetricsProcess(limiter, authenticationRealm);
+  return new MetricsProcess(std::move(limiter), authenticationRealm);
 }
 
 

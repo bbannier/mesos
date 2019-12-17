@@ -558,7 +558,7 @@ bool Pipe::Writer::write(string s)
         if (data->reads.empty()) {
           data->writes.push(std::move(s));
         } else {
-          read = data->reads.front();
+          PROCESS_OWNED_COPY_UNSAFE(read = data->reads.front());
           data->reads.pop();
         }
       }

@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <mesos/slave/container_logger.hpp>
@@ -206,8 +207,8 @@ Try<DockerContainerizer*> DockerContainerizer::create(
 
 
 DockerContainerizer::DockerContainerizer(
-    const Owned<DockerContainerizerProcess>& _process)
-  : process(_process)
+    Owned<DockerContainerizerProcess> _process)
+  : process(std::move(_process))
 {
   spawn(process.get());
 }
@@ -216,13 +217,13 @@ DockerContainerizer::DockerContainerizer(
 DockerContainerizer::DockerContainerizer(
     const Flags& flags,
     Fetcher* fetcher,
-    const Owned<ContainerLogger>& logger,
+    Owned<ContainerLogger> logger,
     Shared<Docker> docker,
     const Option<NvidiaComponents>& nvidia)
   : process(new DockerContainerizerProcess(
       flags,
       fetcher,
-      logger,
+      std::move(logger),
       docker,
       nvidia))
 {

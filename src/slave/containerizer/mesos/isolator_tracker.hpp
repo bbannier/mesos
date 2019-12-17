@@ -30,7 +30,7 @@ class IsolatorTracker : public mesos::slave::Isolator
 {
 public:
   IsolatorTracker(
-      const process::Owned<mesos::slave::Isolator>& _isolator,
+      process::Owned<mesos::slave::Isolator> _isolator,
       const std::string& _isolatorName,
       PendingFutureTracker* _tracker);
 

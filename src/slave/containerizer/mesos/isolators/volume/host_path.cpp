@@ -14,7 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/volume/host_path.hpp"
+
 #include <sys/mount.h>
+
+#include <utility>
 
 #include <glog/logging.h>
 
@@ -37,7 +41,6 @@
 
 #include "linux/fs.hpp"
 
-#include "slave/containerizer/mesos/isolators/volume/host_path.hpp"
 #include "slave/containerizer/mesos/isolators/volume/utils.hpp"
 
 using std::string;
@@ -78,7 +81,7 @@ Try<Isolator*> VolumeHostPathIsolatorProcess::create(
             PathValidator::parse(flags.host_path_volume_force_creation.get()))
       : new VolumeHostPathIsolatorProcess(flags));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

@@ -14,12 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/io/switchboard.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <list>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <process/address.hpp>
@@ -72,8 +75,6 @@
 #include "slave/state.hpp"
 
 #include "slave/containerizer/mesos/paths.hpp"
-
-#include "slave/containerizer/mesos/io/switchboard.hpp"
 
 namespace http = process::http;
 
@@ -144,7 +145,7 @@ IOSwitchboard::IOSwitchboard(
     Owned<ContainerLogger> _logger)
   : flags(_flags),
     local(_local),
-    logger(_logger) {}
+    logger(std::move(_logger)) {}
 
 
 IOSwitchboard::~IOSwitchboard() {}
@@ -1495,7 +1496,7 @@ Future<http::Response> IOSwitchboardServerProcess::handler(
     return reader->read()
       .then(defer(
           self(),
-          [=](const Result<agent::Call>& call) -> Future<http::Response> {
+          PROCESS_OWNED_COPY_UNSAFE([=])(const Result<agent::Call>& call) -> Future<http::Response> {
             if (call.isNone()) {
               return http::BadRequest(
                   "IOSwitchboard received EOF while reading request body");
@@ -1669,7 +1670,7 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
   // response once the last record has been fully processed.
   auto readLoop = loop(
       self(),
-      [=]() {
+      PROCESS_OWNED_COPY_UNSAFE([=])() {
         return reader->read();
       },
       [=](const Result<agent::Call>& record)
@@ -1769,7 +1770,7 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
   Owned<Promise<http::Response>> promise(new Promise<http::Response>());
 
   readLoop.onAny(
-      defer(self(), [promise](const Future<http::Response>& response) {
+      defer(self(), PROCESS_OWNED_COPY_UNSAFE([promise])(const Future<http::Response>& response) {
         promise->set(response);
       }));
 
@@ -1779,11 +1780,15 @@ Future<http::Response> IOSwitchboardServerProcess::attachContainerInput(
   // read the final message. Otherwise, the agent might get `HTTP 500`
   // "broken pipe" while attempting to write the final message.
   redirectFinished.future().onAny(
-      defer(self(), [=](const Future<http::Response>& response) {
+      defer(self(), PROCESS_OWNED_COPY_UNSAFE([=])(const Future<http::Response>& response) {
         // TODO(abudnik): Ideally, we would have used `process::delay()` to
         // delay a dispatch of the lambda to this process.
         after(Seconds(1))
-          .onAny(defer(self(), [promise, response](const Future<Nothing>&) {
+          .onAny(defer(self(), 
+                PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+                [promise, response]
+                PROCESS_UNSAFE_ALLOW_OWNED_COPY_END
+                (const Future<Nothing>&) {
             promise->set(response);
           }));
       }));

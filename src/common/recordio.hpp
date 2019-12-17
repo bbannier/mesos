@@ -116,7 +116,7 @@ process::Future<Nothing> transform(
 {
   return process::loop(
       None(),
-      [=]() {
+      PROCESS_OWNED_COPY_UNSAFE([=])() {
         return reader->read();
       },
       [=](const Result<T>& record) mutable

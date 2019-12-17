@@ -14,9 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <process/dispatch.hpp>
-
 #include "slave/containerizer/mesos/isolator.hpp"
+
+#include <utility>
+
+#include <process/dispatch.hpp>
 
 using namespace process;
 
@@ -33,7 +35,7 @@ namespace internal {
 namespace slave {
 
 MesosIsolator::MesosIsolator(Owned<MesosIsolatorProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

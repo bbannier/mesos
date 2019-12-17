@@ -1420,7 +1420,10 @@ void Docker::_inspect(
       return;
     }
 
-    callback->first = [promise, s, cmd]() {
+    callback->first =
+      PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+      [promise, s, cmd]
+      PROCESS_UNSAFE_ALLOW_OWNED_COPY_END() {
       promise->discard();
       CHECK_SOME(s);
       commandDiscarded(s.get(), cmd);
@@ -1433,7 +1436,7 @@ void Docker::_inspect(
   const Future<string> output = io::read(s->out().get());
 
   s->status()
-    .onAny([=]() {
+    .onAny(PROCESS_OWNED_COPY_UNSAFE([=])() {
       __inspect(argv, promise, retryInterval, output, s.get(), callback);
     });
 }
@@ -1466,8 +1469,11 @@ void Docker::__inspect(
     if (retryInterval.isSome()) {
       VLOG(1) << "Retrying inspect with non-zero status code. cmd: '"
               << cmd << "', interval: " << stringify(retryInterval.get());
-      Clock::timer(retryInterval.get(),
-                   [=]() { _inspect(argv, promise, retryInterval, callback); });
+      Clock::timer(
+          retryInterval.get(),
+          PROCESS_OWNED_COPY_UNSAFE([=])() {
+            _inspect(argv, promise, retryInterval, callback);
+          });
       return;
     }
 
@@ -1478,7 +1484,7 @@ void Docker::__inspect(
                 cmd,
                 status.get(),
                 lambda::_1))
-      .onAny([=](const Future<Nothing>& future) {
+      .onAny(PROCESS_OWNED_COPY_UNSAFE([=])(const Future<Nothing>& future) {
           CHECK_FAILED(future);
           promise->fail(future.failure());
       });
@@ -1488,7 +1494,7 @@ void Docker::__inspect(
   // Read to EOF.
   CHECK_SOME(s.out());
   output
-    .onAny([=](const Future<string>& output) {
+    .onAny(PROCESS_OWNED_COPY_UNSAFE([=])(const Future<string>& output) {
       ___inspect(argv, promise, retryInterval, output, callback);
     });
 }
@@ -1523,8 +1529,11 @@ void Docker::___inspect(
   if (retryInterval.isSome() && !container->started) {
     VLOG(1) << "Retrying inspect since container not yet started. cmd: '"
             << cmd << "', interval: " << stringify(retryInterval.get());
-    Clock::timer(retryInterval.get(),
-                 [=]() { _inspect(argv, promise, retryInterval, callback); });
+    Clock::timer(
+        retryInterval.get(),
+        PROCESS_OWNED_COPY_UNSAFE([=])() {
+          _inspect(argv, promise, retryInterval, callback);
+        });
     return;
   }
 
@@ -1620,7 +1629,12 @@ Future<vector<Docker::Container>> Docker::__ps(
 
   // Limit number of parallel calls to docker inspect at once to prevent
   // reaching system's open file descriptor limit.
-  inspectBatches(containers, lines, promise, docker, prefix);
+  inspectBatches(
+      std::move(containers),
+      std::move(lines),
+      std::move(promise),
+      docker,
+      prefix);
 
   return promise->future();
 }
@@ -1636,9 +1650,10 @@ void Docker::inspectBatches(
     const Option<string>& prefix)
 {
   vector<Future<Docker::Container>> batch =
-    createInspectBatch(lines, docker, prefix);
+    createInspectBatch(std::move(lines), docker, prefix);
 
-  collect(batch).onAny([=](const Future<vector<Docker::Container>>& c) {
+  collect(batch).onAny(PROCESS_OWNED_COPY_UNSAFE([=])(
+      const Future<vector<Docker::Container>>& c) mutable {
     if (c.isReady()) {
       foreach (const Docker::Container& container, c.get()) {
         containers->push_back(container);
@@ -1647,7 +1662,12 @@ void Docker::inspectBatches(
         promise->set(*containers);
       }
       else {
-        inspectBatches(containers, lines, promise, docker, prefix);
+        inspectBatches(
+            std::move(containers),
+            std::move(lines),
+            std::move(promise),
+            docker,
+            prefix);
       }
     } else {
       if (c.isFailed()) {

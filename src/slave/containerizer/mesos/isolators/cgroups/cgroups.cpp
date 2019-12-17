@@ -14,8 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/cgroups/cgroups.hpp"
+
 #include <set>
 #include <vector>
+#include <utility>
 
 #include <process/collect.hpp>
 #include <process/defer.hpp>
@@ -39,7 +42,6 @@
 #include "slave/containerizer/mesos/constants.hpp"
 #include "slave/containerizer/mesos/paths.hpp"
 
-#include "slave/containerizer/mesos/isolators/cgroups/cgroups.hpp"
 #include "slave/containerizer/mesos/isolators/cgroups/constants.hpp"
 
 using mesos::internal::protobuf::slave::containerSymlinkOperation;
@@ -182,7 +184,7 @@ Try<Isolator*> CgroupsIsolatorProcess::create(const Flags& flags)
   Owned<MesosIsolatorProcess> process(
       new CgroupsIsolatorProcess(flags, subsystems));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

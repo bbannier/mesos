@@ -132,8 +132,12 @@ int main(int argc, char** argv)
                           " " << server.error();
   }
 
+  Owned<IOSwitchboardServer> server_(server->release());
+
+  Future<Nothing> run = server_->run();
+
   io::poll(unblockFds[0], io::READ)
-    .onAny([server](const Future<short>& future) {
+    .onAny(PROCESS_OWNED_COPY_UNSAFE([server_])(const Future<short>& future) {
       os::close(unblockFds[0]);
 
       if (!future.isReady()) {
@@ -143,13 +147,10 @@ int main(int argc, char** argv)
                                "discarded");
       }
 
-      server.get()->unblock();
+      server_->unblock();
     });
 
-  Future<Nothing> run = server.get()->run();
   run.await();
-
-  server->reset();
 
   if (!run.isReady()) {
     EXIT(EXIT_FAILURE) << "The io switchboard server failed: "

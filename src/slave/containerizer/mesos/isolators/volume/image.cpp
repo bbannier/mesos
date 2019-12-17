@@ -14,10 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/volume/image.hpp"
+
 #include <sys/mount.h>
 
 #include <list>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -34,8 +37,6 @@
 #include <stout/os/mkdir.hpp>
 
 #include "common/protobuf_utils.hpp"
-
-#include "slave/containerizer/mesos/isolators/volume/image.hpp"
 
 #include "slave/containerizer/mesos/provisioner/provisioner.hpp"
 
@@ -99,7 +100,7 @@ Try<Isolator*> VolumeImageIsolatorProcess::create(
   process::Owned<MesosIsolatorProcess> process(
       new VolumeImageIsolatorProcess(flags, provisioner));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

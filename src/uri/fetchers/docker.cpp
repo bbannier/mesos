@@ -14,9 +14,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "uri/fetchers/docker.hpp"
+
 #include <string>
 #include <tuple>
 #include <vector>
+#include <utility>
 
 #include <process/collect.hpp>
 #include <process/dispatch.hpp>
@@ -40,8 +43,6 @@
 #include <mesos/docker/spec.hpp>
 
 #include "uri/utils.hpp"
-
-#include "uri/fetchers/docker.hpp"
 
 #include "uri/schemes/docker.hpp"
 #include "uri/schemes/http.hpp"
@@ -560,7 +561,7 @@ Try<Owned<Fetcher::Plugin>> DockerFetcherPlugin::create(const Flags& flags)
       hashmap<string, spec::Config::Auth>(auths),
       flags.docker_stall_timeout));
 
-  return Owned<Fetcher::Plugin>(new DockerFetcherPlugin(process));
+  return Owned<Fetcher::Plugin>(new DockerFetcherPlugin(std::move(process)));
 }
 
 
@@ -592,7 +593,7 @@ string DockerFetcherPlugin::getBlobPath(
 
 DockerFetcherPlugin::DockerFetcherPlugin(
     Owned<DockerFetcherPluginProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

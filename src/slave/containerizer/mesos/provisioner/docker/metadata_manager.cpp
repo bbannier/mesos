@@ -14,7 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/docker/metadata_manager.hpp"
+
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -34,7 +37,6 @@
 
 #include "slave/containerizer/mesos/provisioner/docker/paths.hpp"
 #include "slave/containerizer/mesos/provisioner/docker/message.hpp"
-#include "slave/containerizer/mesos/provisioner/docker/metadata_manager.hpp"
 
 namespace spec = docker::spec;
 
@@ -85,12 +87,12 @@ Try<Owned<MetadataManager>> MetadataManager::create(const Flags& flags)
 {
   Owned<MetadataManagerProcess> process(new MetadataManagerProcess(flags));
 
-  return Owned<MetadataManager>(new MetadataManager(process));
+  return Owned<MetadataManager>(new MetadataManager(std::move(process)));
 }
 
 
 MetadataManager::MetadataManager(Owned<MetadataManagerProcess> process)
-  : process(process)
+  : process(std::move(process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

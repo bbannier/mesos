@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -134,12 +135,12 @@ Try<Owned<Puller>> ImageTarPuller::create(
           uri.get(),
           fetcher));
 
-  return Owned<Puller>(new ImageTarPuller(process));
+  return Owned<Puller>(new ImageTarPuller(std::move(process)));
 }
 
 
 ImageTarPuller::ImageTarPuller(Owned<ImageTarPullerProcess> _process)
-  : process(_process)
+  : process(std::move(_process))
 {
   spawn(process.get());
 }

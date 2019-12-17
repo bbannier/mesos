@@ -26,6 +26,8 @@
 #include <stout/preprocessor.hpp>
 #include <stout/result_of.hpp>
 
+#pragma GCC system_header // FIXME(bbannier)
+
 namespace process {
 
 // Provides an abstraction for asynchronously executing a function

@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include <string>
+#include <utility>
 
 #include <mesos/resources.hpp>
 
@@ -342,7 +343,7 @@ public:
           }));
 
         promise->associate(future);
-        setting[path] = promise;
+        setting[path] = std::move(promise);
 
         return promise->future();
       }
@@ -559,8 +560,8 @@ Try<VolumeGidManager*> VolumeGidManager::create(const Flags& flags)
 
 
 VolumeGidManager::VolumeGidManager(
-    const Owned<VolumeGidManagerProcess>& _process)
-  : process(_process)
+    Owned<VolumeGidManagerProcess> _process)
+  : process(std::move(_process))
 {
   spawn(process.get());
 }

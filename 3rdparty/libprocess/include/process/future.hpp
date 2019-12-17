@@ -888,6 +888,9 @@ bool Promise<T>::associate(const Future<T>& future)
     // Need to disambiguate for the compiler.
     bool (Future<T>::*set)(const T&) = &Future<T>::set;
 
+    // FIXME(bbannier): If `T` is a semantically move-only type like `Owned`,
+    // `set` will trigger a copy when setting the `Future`'s `Result` as we
+    // picked the lvalue overload above.
     future
       .onReady(lambda::bind(set, f, lambda::_1))
       .onFailed(lambda::bind(&Future<T>::fail, f, lambda::_1))

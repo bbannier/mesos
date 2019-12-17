@@ -7923,14 +7923,16 @@ void Master::__reregisterSlave(
         //
         // Avoid tracking a task as both terminal and non-terminal by
         // garbage-collected completed tasks which come back as running.
-        framework->completedTasks.erase(
+        PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN;
+        framework->completedTasks.erase( // FIXME(bbannier)
             std::remove_if(
                 framework->completedTasks.begin(),
                 framework->completedTasks.end(),
-                [&](const Owned<Task>& task_) {
+                [&](const std::unique_ptr<Task>& task_) {
                   return task_.get() && task_->task_id() == task.task_id();
                 }),
             framework->completedTasks.end());
+        PROCESS_UNSAFE_ALLOW_OWNED_COPY_END;
       }
 
       const string message = slaves.unreachable.contains(slaveInfo.id())
@@ -13271,7 +13273,7 @@ void Master::Subscribers::send(
         {VIEW_ROLE, VIEW_FRAMEWORK, VIEW_TASK, VIEW_EXECUTOR})
       .then(defer(
           master->self(),
-          [=](const Owned<ObjectApprovers>& approvers) {
+          PROCESS_OWNED_COPY_UNSAFE([=])(Owned<ObjectApprovers> approvers) {
             subscriber->send(
                 sharedEvent,
                 approvers,

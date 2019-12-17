@@ -27,6 +27,8 @@
 #include <stout/none.hpp>
 #include <stout/option.hpp>
 
+#include "slave/flags.hpp"
+
 #include "slave/containerizer/mesos/isolator.hpp"
 
 #include "slave/containerizer/mesos/isolators/docker/volume/driver.hpp"
@@ -47,7 +49,7 @@ public:
   // This allows the driver client to be mock for testing.
   static Try<mesos::slave::Isolator*> _create(
       const Flags& flags,
-      const process::Owned<docker::volume::DriverClient>& client);
+      process::Owned<docker::volume::DriverClient> client);
 
   ~DockerVolumeIsolatorProcess() override;
 
@@ -77,7 +79,7 @@ private:
   DockerVolumeIsolatorProcess(
       const Flags& flags,
       const std::string& rootDir,
-      const process::Owned<docker::volume::DriverClient>& client);
+      process::Owned<docker::volume::DriverClient> client);
 
   process::Future<Option<mesos::slave::ContainerLaunchInfo>> _prepare(
       const ContainerID& containerId,

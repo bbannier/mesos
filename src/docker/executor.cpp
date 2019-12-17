@@ -18,6 +18,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 
 #include <mesos/executor.hpp>
 #include <mesos/mesos.hpp>
@@ -93,7 +94,7 @@ class DockerExecutorProcess : public ProtobufProcess<DockerExecutorProcess>
 {
 public:
   DockerExecutorProcess(
-      const Owned<Docker>& docker,
+      Owned<Docker> docker,
       const string& containerName,
       const string& sandboxDirectory,
       const string& mappedDirectory,
@@ -108,7 +109,7 @@ public:
       killedByHealthCheck(false),
       killedByTaskCompletionTimeout(false),
       launcherDir(launcherDir),
-      docker(docker),
+      docker(std::move(docker)),
       containerName(containerName),
       sandboxDirectory(sandboxDirectory),
       mappedDirectory(mappedDirectory),
@@ -836,7 +837,7 @@ private:
       LOG(ERROR) << "Failed to create health checker: "
                  << _checker.error();
     } else {
-      checker = _checker.get();
+      checker = Owned<checks::HealthChecker>(_checker->release());
     }
   }
 
@@ -873,7 +874,7 @@ private:
 
 
 DockerExecutor::DockerExecutor(
-    const Owned<Docker>& docker,
+    Owned<Docker> docker,
     const string& container,
     const string& sandboxDirectory,
     const string& mappedDirectory,
@@ -884,7 +885,7 @@ DockerExecutor::DockerExecutor(
     bool cgroupsEnableCfs)
 {
   process = Owned<DockerExecutorProcess>(new DockerExecutorProcess(
-      docker,
+      std::move(docker),
       container,
       sandboxDirectory,
       mappedDirectory,

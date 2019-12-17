@@ -571,7 +571,8 @@ Future<Nothing> setAuthenticator(
 {
   process::initialize();
 
-  return authenticator_manager->setAuthenticator(realm, authenticator);
+  return authenticator_manager->setAuthenticator(
+      realm, std::move(authenticator));
 }
 
 
@@ -720,13 +721,14 @@ static Future<Owned<Request>> convert(Owned<Request>&& pipeRequest)
   CHECK_SOME(pipeRequest->reader);
   CHECK(pipeRequest->body.empty());
 
-  return pipeRequest->reader->readAll()
-    .then([pipeRequest](const string& body) -> Future<Owned<Request>> {
+  return pipeRequest->reader->readAll().then(
+    PROCESS_OWNED_COPY_UNSAFE([pipeRequest])(
+      const string& body) mutable->Future<Owned<Request>> {
       pipeRequest->type = Request::BODY;
       pipeRequest->body = body;
       pipeRequest->reader = None(); // Remove the reader.
 
-      return pipeRequest;
+      return std::move(pipeRequest);
     });
 }
 
@@ -3804,7 +3806,10 @@ Future<Response> ProcessBase::_consume(
       [authentication]() { return authentication; });
 
   return authentication
-    .then(defer(self(), [this, endpoint, request, name](
+    .then(defer(self(),
+          PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+          [this, endpoint, request, name]
+          PROCESS_UNSAFE_ALLOW_OWNED_COPY_END(
         const Option<AuthenticationResult>& authentication)
           -> Future<Response> {
       Option<Principal> principal = None();
@@ -3863,7 +3868,10 @@ Future<Response> ProcessBase::_consume(
 
       // Install a callback on the authorization result.
       return authorization
-        .then(defer(self(), [endpoint, request, principal](
+        .then(defer(self(),
+              PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN
+              [endpoint, request, principal]
+              PROCESS_UNSAFE_ALLOW_OWNED_COPY_END(
             bool authorization) -> Future<Response> {
           if (authorization) {
             // Authorization succeeded, so forward request to the handler.

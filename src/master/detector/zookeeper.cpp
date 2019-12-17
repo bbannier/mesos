@@ -18,6 +18,7 @@
 
 #include <set>
 #include <string>
+#include <utility>
 
 #include <mesos/master/detector.hpp>
 
@@ -102,7 +103,7 @@ ZooKeeperMasterDetectorProcess::ZooKeeperMasterDetectorProcess(
 ZooKeeperMasterDetectorProcess::ZooKeeperMasterDetectorProcess(
     Owned<Group> _group)
   : ProcessBase(ID::generate("zookeeper-master-detector")),
-    group(_group),
+    group(std::move(_group)),
     detector(group.get()),
     leader(None()) {}
 
@@ -277,7 +278,7 @@ ZooKeeperMasterDetector::ZooKeeperMasterDetector(
 
 ZooKeeperMasterDetector::ZooKeeperMasterDetector(Owned<Group> group)
 {
-  process = new ZooKeeperMasterDetectorProcess(group);
+  process = new ZooKeeperMasterDetectorProcess(std::move(group));
   spawn(process);
 }
 

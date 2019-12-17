@@ -40,6 +40,12 @@ public:
   explicit Owned(T* t);
   /*implicit*/ Owned(std::nullptr_t) : Owned(static_cast<T*>(nullptr)) {};
 
+  [[deprecated]] Owned(const Owned&) = default;
+  Owned(Owned&&) noexcept = default;
+
+  [[deprecated]] Owned& operator=(const Owned&) = default;
+  Owned& operator=(Owned&&) noexcept = default;
+
   bool operator==(const Owned<T>& that) const;
   bool operator<(const Owned<T>& that) const;
 
@@ -70,6 +76,22 @@ private:
 
   std::shared_ptr<Data> data;
 };
+
+
+#define PROCESS_OWNED_COPY_UNSAFE(m)                              \
+  _Pragma("GCC diagnostic push")                                  \
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated\"")              \
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"") \
+  m                                                               \
+  _Pragma("GCC diagnostic pop")
+
+#define PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN          \
+  _Pragma("GCC diagnostic push")                       \
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated\"")   \
+  _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+
+#define PROCESS_UNSAFE_ALLOW_OWNED_COPY_END            \
+  _Pragma("GCC diagnostic pop")
 
 
 template <typename T>

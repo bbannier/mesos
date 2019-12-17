@@ -17,6 +17,7 @@
 #include "slave/gc.hpp"
 
 #include <list>
+#include <utility>
 
 #include <process/check.hpp>
 #include <process/defer.hpp>
@@ -183,14 +184,14 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
   if (paths.count(removalTime) > 0) {
     list<Owned<PathInfo>> infos;
 
-    foreach (const Owned<PathInfo> info, paths.get(removalTime)) {
+    foreach (Owned<PathInfo>& info, paths.get(removalTime)) {
       if (info->removing) {
         VLOG(1) << "Skipping deletion of '" << info-> path
                 << "'  as it is already in progress";
         continue;
       }
 
-      infos.push_back(info);
+      infos.push_back(Owned<PathInfo>(info.release()));
 
       // Set `removing` to signify that the path is being cleaned up.
       info->removing = true;

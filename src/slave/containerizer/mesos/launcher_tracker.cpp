@@ -14,13 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/launcher_tracker.hpp"
+
+#include <utility>
+
 #include <process/async.hpp>
 
 #include "common/future_tracker.hpp"
 
 #include "slave/constants.hpp"
-
-#include "slave/containerizer/mesos/launcher_tracker.hpp"
 
 using std::map;
 using std::string;
@@ -34,8 +36,8 @@ namespace internal {
 namespace slave {
 
 LauncherTracker::LauncherTracker(
-    const process::Owned<Launcher>& _launcher, PendingFutureTracker* _tracker)
-  : launcher(_launcher), tracker(_tracker)
+    process::Owned<Launcher> _launcher, PendingFutureTracker* _tracker)
+  : launcher(std::move(_launcher)), tracker(_tracker)
 {}
 
 

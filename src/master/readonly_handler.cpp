@@ -240,7 +240,7 @@ void FullFrameworkWriter::operator()(JSON::ObjectWriter* writer) const
   });
 
   writer->field("completed_tasks", [this](JSON::ArrayWriter* writer) {
-    foreach (const Owned<Task>& task, framework_->completedTasks) {
+    foreach (const std::unique_ptr<Task>& task, framework_->completedTasks) {
       // Skip unauthorized tasks.
       if (!approvers_->approved<VIEW_TASK>(*task, framework_->info)) {
         continue;
@@ -512,7 +512,7 @@ public:
         slavesToFrameworks[task->slave_id()].insert(frameworkId);
       }
 
-      foreach (const Owned<Task>& task, framework->completedTasks) {
+      foreach (const std::unique_ptr<Task>& task, framework->completedTasks) {
         frameworksToSlaves[frameworkId].insert(task->slave_id());
         slavesToFrameworks[task->slave_id()].insert(frameworkId);
       }
@@ -633,7 +633,7 @@ public:
         slaveTaskSummaries[task->slave_id()].count(*task);
       }
 
-      foreach (const Owned<Task>& task, framework->completedTasks) {
+      foreach (const std::unique_ptr<Task>& task, framework->completedTasks) {
         frameworkTaskSummaries[frameworkId].count(*task);
         slaveTaskSummaries[task->slave_id()].count(*task);
       }
@@ -1221,7 +1221,7 @@ process::http::Response Master::ReadOnlyHandler::tasks(
       tasks.push_back(task.get());
     }
 
-    foreach (const Owned<Task>& task, framework->completedTasks) {
+    foreach (const std::unique_ptr<Task>& task, framework->completedTasks) {
       // Skip unauthorized tasks or tasks without matching task ID.
       if (!selectTaskId.accept(task->task_id()) ||
           !approvers->approved<VIEW_TASK>(*task, framework->info)) {

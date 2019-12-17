@@ -43,7 +43,7 @@ public:
       if (data->promises.empty()) {
         data->elements.push(t);
       } else {
-        promise = data->promises.front();
+        PROCESS_OWNED_COPY_UNSAFE(promise = data->promises.front());
         data->promises.pop_front();
       }
     }

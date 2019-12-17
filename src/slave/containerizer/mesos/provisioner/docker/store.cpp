@@ -14,7 +14,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/docker/store.hpp"
+
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <glog/logging.h>
@@ -43,7 +46,6 @@
 #include "slave/containerizer/mesos/provisioner/docker/metadata_manager.hpp"
 #include "slave/containerizer/mesos/provisioner/docker/paths.hpp"
 #include "slave/containerizer/mesos/provisioner/docker/puller.hpp"
-#include "slave/containerizer/mesos/provisioner/docker/store.hpp"
 
 #include "uri/fetcher.hpp"
 
@@ -75,14 +77,12 @@ class StoreProcess : public Process<StoreProcess>
 public:
   StoreProcess(
       const Flags& _flags,
-      const Owned<MetadataManager>& _metadataManager,
-      const Owned<Puller>& _puller)
+      Owned<MetadataManager> _metadataManager,
+      Owned<Puller> _puller)
     : ProcessBase(process::ID::generate("docker-provisioner-store")),
       flags(_flags),
-      metadataManager(_metadataManager),
-      puller(_puller)
-  {
-  }
+      metadataManager(std::move(_metadataManager)),
+      puller(std::move(_puller)) {}
 
   ~StoreProcess() override {}
 
@@ -180,7 +180,9 @@ Try<Owned<slave::Store>> Store::create(
     return Error("Failed to create Docker puller: " + puller.error());
   }
 
-  Try<Owned<slave::Store>> store = Store::create(flags, puller.get());
+  Try<Owned<slave::Store>> store =
+    Store::create(flags, Owned<Puller>(puller->release()));
+
   if (store.isError()) {
     return Error("Failed to create Docker store: " + store.error());
   }
@@ -191,7 +193,7 @@ Try<Owned<slave::Store>> Store::create(
 
 Try<Owned<slave::Store>> Store::create(
     const Flags& flags,
-    const Owned<Puller>& puller)
+    Owned<Puller> puller)
 {
   Try<Nothing> mkdir = os::mkdir(flags.docker_store_dir);
   if (mkdir.isError()) {
@@ -216,14 +218,16 @@ Try<Owned<slave::Store>> Store::create(
     return Error(metadataManager.error());
   }
 
-  Owned<StoreProcess> process(
-      new StoreProcess(flags, metadataManager.get(), puller));
+  Owned<StoreProcess> process(new StoreProcess(
+      flags,
+      Owned<MetadataManager>(metadataManager->release()),
+      std::move(puller)));
 
-  return Owned<slave::Store>(new Store(process));
+  return Owned<slave::Store>(new Store(std::move(process)));
 }
 
 
-Store::Store(Owned<StoreProcess> _process) : process(_process)
+Store::Store(Owned<StoreProcess> _process) : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }

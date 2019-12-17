@@ -24,6 +24,7 @@
 #include <iostream>
 #include <list>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <mesos/mesos.hpp>
@@ -765,7 +766,7 @@ protected:
         // TODO(alexr): Consider ABORT and return a TASK_FAILED here.
         LOG(ERROR) << "Failed to create checker: " << _checker.error();
       } else {
-        checker = _checker.get();
+        checker = Owned<checks::Checker>(_checker->release());
       }
     }
 
@@ -796,7 +797,7 @@ protected:
         LOG(ERROR) << "Failed to create health checker: "
                    << _healthChecker.error();
       } else {
-        healthChecker = _healthChecker.get();
+        healthChecker = Owned<checks::HealthChecker>(_healthChecker->release());
       }
     }
 

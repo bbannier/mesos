@@ -14,13 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/provisioner/docker/puller.hpp"
+
+#include <utility>
+
 #include <mesos/secret/resolver.hpp>
 
 #include <stout/strings.hpp>
 #include <stout/try.hpp>
 
 #include "slave/containerizer/mesos/provisioner/docker/image_tar_puller.hpp"
-#include "slave/containerizer/mesos/provisioner/docker/puller.hpp"
 #include "slave/containerizer/mesos/provisioner/docker/registry_puller.hpp"
 
 using process::Owned;
@@ -50,7 +53,7 @@ Try<Owned<Puller>> Puller::create(
       return Error("Failed to create image tar puller " + puller.error());
     }
 
-    return puller.get();
+    return puller;
   }
 
   Try<Owned<Puller>> puller =
@@ -60,7 +63,7 @@ Try<Owned<Puller>> Puller::create(
     return Error("Failed to create registry puller: " + puller.error());
   }
 
-  return puller.get();
+  return std::move(puller.get());
 }
 
 } // namespace docker {

@@ -16,6 +16,7 @@
 
 #include <deque>
 #include <string>
+#include <utility>
 
 #include <mesos/type_utils.hpp>
 
@@ -548,7 +549,7 @@ void RegistrarProcess::_update(
 
   // Remove the operations.
   while (!applied.empty()) {
-    Owned<RegistryOperation> operation = applied.front();
+    Owned<RegistryOperation> operation(applied.front().release());
     applied.pop_front();
 
     operation->set();

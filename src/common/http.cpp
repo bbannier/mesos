@@ -1199,7 +1199,8 @@ Future<Owned<ObjectApprovers>> ObjectApprovers::create(
         return authorizer.get()->getObjectApprover(subject, action);
       },
       _actions))
-    .then([=](const vector<Owned<ObjectApprover>>& _approvers) {
+    .then(PROCESS_OWNED_COPY_UNSAFE([=])
+          (const vector<Owned<ObjectApprover>>& _approvers) {
       return Owned<ObjectApprovers>(
           new ObjectApprovers(lambda::zip(_actions, _approvers), principal));
     });

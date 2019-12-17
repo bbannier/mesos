@@ -56,8 +56,7 @@ public:
   process::Future<Nothing> deallocate(const std::string& path) const;
 
 private:
-  explicit VolumeGidManager(
-      const process::Owned<VolumeGidManagerProcess>& process);
+  explicit VolumeGidManager(process::Owned<VolumeGidManagerProcess> process);
 
   process::Owned<VolumeGidManagerProcess> process;
 #endif // __WINDOWS__

@@ -278,13 +278,13 @@ Future<AuthenticationResult> CombinedAuthenticatorProcess::authenticate(
   return loop(
       self(),
       [iter, end]() mutable {
-        return iter == end ? Option<Owned<Authenticator>>::none() : *(iter++);
+        return iter == end ? nullptr : (iter++)->get();
       },
       [request, results, self_](
-          const Option<Owned<Authenticator>>& authenticator) mutable
+          Authenticator* authenticator) mutable
               -> Future<ControlFlow<AuthenticationResult>> {
         // All authentication attempts have failed. Combine them and return.
-        if (authenticator.isNone()) {
+        if (authenticator == nullptr) {
           return combineFailed(results);
         }
 
@@ -296,9 +296,9 @@ Future<AuthenticationResult> CombinedAuthenticatorProcess::authenticate(
         // reference could cause the authenticator's destructor to be called
         // from within its own context when the callback completes, leading to a
         // deadlock. See MESOS-7065.
-        const string scheme = authenticator.get()->scheme();
+        const string scheme = authenticator->scheme();
 
-        return authenticator.get()->authenticate(request)
+        return authenticator->authenticate(request)
           .then(defer(
               self_,
               [&results, scheme](const AuthenticationResult& result)

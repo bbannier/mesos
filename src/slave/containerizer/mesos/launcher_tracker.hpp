@@ -29,7 +29,7 @@ class LauncherTracker : public Launcher
 {
 public:
   LauncherTracker(
-      const process::Owned<Launcher>& _launcher,
+      process::Owned<Launcher> _launcher,
       PendingFutureTracker* _tracker);
 
   process::Future<hashset<ContainerID>> recover(

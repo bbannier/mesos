@@ -20,6 +20,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <process/defer.hpp>
@@ -142,8 +143,8 @@ public:
 
 private:
   explicit PendingFutureTracker(
-      const process::Owned<PendingFutureTrackerProcess>& _process)
-    : process(_process)
+      process::Owned<PendingFutureTrackerProcess> _process)
+    : process(std::move(_process))
   {
     spawn(process.get());
   }

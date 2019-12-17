@@ -203,7 +203,7 @@ void Framework::addCompletedTask(Task&& task)
   // means that there might be multiple completed tasks with the
   // same task ID. We should consider rejecting attempts to reuse
   // task IDs (MESOS-6779).
-  completedTasks.push_back(process::Owned<Task>(new Task(std::move(task))));
+  completedTasks.push_back(std::unique_ptr<Task>(new Task(std::move(task))));
 }
 
 

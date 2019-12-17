@@ -14,14 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "slave/containerizer/mesos/paths.hpp"
-
 #include "slave/containerizer/mesos/isolators/volume/secret.hpp"
 
 #include <sys/mount.h>
 
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <mesos/secret/resolver.hpp>
 
@@ -45,6 +44,8 @@
 
 #include "common/protobuf_utils.hpp"
 #include "common/validation.hpp"
+
+#include "slave/containerizer/mesos/paths.hpp"
 
 using std::string;
 using std::vector;
@@ -93,7 +94,7 @@ Try<Isolator*> VolumeSecretIsolatorProcess::create(
       flags,
       secretResolver));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

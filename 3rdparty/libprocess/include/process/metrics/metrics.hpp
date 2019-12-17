@@ -15,7 +15,11 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <stout/nothing.hpp>
+#include <stout/option.hpp>
 
 #include <process/dispatch.hpp>
 #include <process/future.hpp>
@@ -24,9 +28,6 @@
 #include <process/process.hpp>
 
 #include <process/metrics/metric.hpp>
-
-#include <stout/nothing.hpp>
-#include <stout/option.hpp>
 
 namespace process {
 namespace metrics {
@@ -51,12 +52,11 @@ private:
   static std::string help();
 
   MetricsProcess(
-      const Option<Owned<RateLimiter>>& _limiter,
+      Option<Owned<RateLimiter>> _limiter,
       const Option<std::string>& _authenticationRealm)
     : ProcessBase("metrics"),
-      limiter(_limiter),
-      authenticationRealm(_authenticationRealm)
-  {}
+      limiter(std::move(_limiter)),
+      authenticationRealm(_authenticationRealm) {}
 
   // Non-copyable, non-assignable.
   MetricsProcess(const MetricsProcess&);

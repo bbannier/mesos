@@ -13,6 +13,7 @@
 #include "authenticator_manager.hpp"
 
 #include <string>
+#include <utility>
 
 #include <process/authenticator.hpp>
 #include <process/dispatch.hpp>
@@ -63,7 +64,7 @@ Future<Nothing> AuthenticatorManagerProcess::setAuthenticator(
     Owned<Authenticator> authenticator)
 {
   CHECK_NOTNULL(authenticator.get());
-  authenticators_[realm] = authenticator;
+  authenticators_[realm] = std::move(authenticator);
   return Nothing();
 }
 

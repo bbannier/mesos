@@ -14,7 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "slave/containerizer/mesos/isolators/docker/volume/isolator.hpp"
+
 #include <sys/mount.h>
+
+#include <utility>
 
 #include <process/collect.hpp>
 #include <process/id.hpp>
@@ -28,10 +32,7 @@
 
 #include "linux/ns.hpp"
 
-#include "slave/flags.hpp"
 #include "slave/state.hpp"
-
-#include "slave/containerizer/mesos/isolators/docker/volume/isolator.hpp"
 
 namespace paths = mesos::internal::slave::docker::volume::paths;
 
@@ -60,11 +61,11 @@ namespace slave {
 DockerVolumeIsolatorProcess::DockerVolumeIsolatorProcess(
     const Flags& _flags,
     const string& _rootDir,
-    const Owned<DriverClient>& _client)
+    Owned<DriverClient> _client)
   : ProcessBase(process::ID::generate("docker-volume-isolator")),
     flags(_flags),
     rootDir(_rootDir),
-    client(_client) {}
+    client(std::move(_client)) {}
 
 
 DockerVolumeIsolatorProcess::~DockerVolumeIsolatorProcess() {}
@@ -110,8 +111,8 @@ Try<Isolator*> DockerVolumeIsolatorProcess::create(const Flags& flags)
         "Unable to create docker volume driver client: " + client.error());
   }
 
-  Try<Isolator*> isolator =
-    DockerVolumeIsolatorProcess::_create(flags, client.get());
+  Try<Isolator*> isolator = DockerVolumeIsolatorProcess::_create(
+      flags, Owned<DriverClient>(client->release()));
 
   if (isolator.isError()) {
     return Error(isolator.error());
@@ -123,7 +124,7 @@ Try<Isolator*> DockerVolumeIsolatorProcess::create(const Flags& flags)
 
 Try<Isolator*> DockerVolumeIsolatorProcess::_create(
     const Flags& flags,
-    const Owned<DriverClient>& client)
+    Owned<DriverClient> client)
 {
   // Create the docker volume information root directory if it does
   // not exist, this directory is used to checkpoint the docker
@@ -150,9 +151,9 @@ Try<Isolator*> DockerVolumeIsolatorProcess::_create(
       new DockerVolumeIsolatorProcess(
           flags,
           rootDir.get(),
-          client));
+          std::move(client)));
 
-  return new MesosIsolator(process);
+  return new MesosIsolator(std::move(process));
 }
 
 

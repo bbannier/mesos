@@ -16,6 +16,8 @@
 
 #include "slave/containerizer/fetcher.hpp"
 
+#include <utility>
+
 #include <process/async.hpp>
 #include <process/check.hpp>
 #include <process/collect.hpp>
@@ -87,8 +89,8 @@ Fetcher::Fetcher(const Flags& flags) : process(new FetcherProcess(flags))
 }
 
 
-Fetcher::Fetcher(const process::Owned<FetcherProcess>& process)
-  : process(process)
+Fetcher::Fetcher(process::Owned<FetcherProcess> process)
+  : process(std::move(process))
 {
   spawn(process.get());
 }
