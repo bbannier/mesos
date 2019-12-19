@@ -191,10 +191,10 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
         continue;
       }
 
-      infos.push_back(Owned<PathInfo>(info.release()));
-
       // Set `removing` to signify that the path is being cleaned up.
       info->removing = true;
+
+      infos.push_back(Owned<PathInfo>(info.release()));
     }
 
     Counter _succeeded = metrics.path_removals_succeeded;
