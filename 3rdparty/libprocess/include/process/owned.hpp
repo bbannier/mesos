@@ -140,13 +140,10 @@ T* Owned<T>::get() const
 {
   if (data == nullptr) {
     return nullptr;
-  } else {
-    // Static cast to avoid ambiguity in Visual Studio compiler.
-    CHECK(data->t != static_cast<T*>(nullptr))
-      << "This owned pointer has already been shared";
-
-    return data->t;
   }
+
+  return data->t;
+
 }
 
 

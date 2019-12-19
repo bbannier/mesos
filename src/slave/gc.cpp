@@ -112,6 +112,8 @@ Future<Nothing> GarbageCollectorProcess::schedule(
 
   Owned<PathInfo> info(new PathInfo(path));
 
+  Future<Nothing> future = info->promise.future();
+
   paths.put(removalTime, info);
 
   // If the timer is not yet initialized or the timeout is sooner than
@@ -121,7 +123,7 @@ Future<Nothing> GarbageCollectorProcess::schedule(
     reset(); // Schedule the timer for next event.
   }
 
-  return info->promise.future();
+  return future;
 }
 
 
@@ -186,7 +188,7 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
 
     foreach (Owned<PathInfo>& info, paths.get(removalTime)) {
       if (info->removing) {
-        VLOG(1) << "Skipping deletion of '" << info-> path
+        VLOG(1) << "Skipping deletion of '" << info->path
                 << "'  as it is already in progress";
         continue;
       }
