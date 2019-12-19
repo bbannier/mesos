@@ -22,6 +22,7 @@
 #include <process/future.hpp>
 #include <process/gtest_constants.hpp>
 #include <process/http.hpp>
+#include <process/owned.hpp>
 
 #include <stout/duration.hpp>
 #include <stout/gtest.hpp>
@@ -191,8 +192,8 @@ template <typename T>
 {
   process::Owned<process::Latch> latch(new process::Latch());
 
-  actual.onAny([=]() { latch->trigger(); });
-  actual.onAbandoned([=]() { latch->trigger(); });
+  actual.onAny(PROCESS_OWNED_COPY_UNSAFE([=])() { latch->trigger(); });
+  actual.onAbandoned(PROCESS_OWNED_COPY_UNSAFE([=])() { latch->trigger(); });
 
   if (!latch->await(duration)) {
     return ::testing::AssertionFailure()

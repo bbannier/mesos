@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <process/address.hpp>
@@ -1868,7 +1869,7 @@ protected:
   {
     realms.insert(realm);
 
-    return authentication::setAuthenticator(realm, authenticator);
+    return authentication::setAuthenticator(realm, std::move(authenticator));
   }
 
   void TearDown() override
@@ -2073,7 +2074,7 @@ TEST_F(HttpAuthenticationTest, Basic)
   Owned<Authenticator> authenticator(
     new BasicAuthenticator("realm", {{"user", "password"}}));
 
-  AWAIT_READY(setAuthenticator("realm", authenticator));
+  AWAIT_READY(setAuthenticator("realm", std::move(authenticator)));
 
   // No credentials provided.
   {
@@ -2131,7 +2132,7 @@ TEST_F(HttpAuthenticationTest, JWT)
 
   Owned<Authenticator> authenticator(new JWTAuthenticator("realm", "secret"));
 
-  AWAIT_READY(setAuthenticator("realm", authenticator));
+  AWAIT_READY(setAuthenticator("realm", std::move(authenticator)));
 
   // No 'Authorization' header provided.
   {

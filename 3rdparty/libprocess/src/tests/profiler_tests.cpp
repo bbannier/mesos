@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <utility>
 
 #include <stout/duration.hpp>
 #include <stout/gtest.hpp>
@@ -52,7 +53,7 @@ protected:
   {
     realms.insert(realm);
 
-    return authentication::setAuthenticator(realm, authenticator);
+    return authentication::setAuthenticator(realm, std::move(authenticator));
   }
 
   void TearDown() override
@@ -123,8 +124,8 @@ TEST_F(ProfilerTest, StartAndStopAuthenticationEnabled)
     new BasicAuthenticator(
         READWRITE_HTTP_AUTHENTICATION_REALM, {{"foo", "bar"}}));
 
-  AWAIT_READY(
-      setAuthenticator(READWRITE_HTTP_AUTHENTICATION_REALM, authenticator));
+  AWAIT_READY(setAuthenticator(
+      READWRITE_HTTP_AUTHENTICATION_REALM, std::move(authenticator)));
 
   UPID upid("profiler", process::address());
 

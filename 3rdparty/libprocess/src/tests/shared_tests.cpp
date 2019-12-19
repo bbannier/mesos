@@ -114,7 +114,7 @@ TEST(SharedTest, Own)
   shared.reset();
   AWAIT_READY(future);
 
-  Owned<Foo> owned = future.get();
+  const Owned<Foo>& owned = future.get();
   EXPECT_EQ(42, owned->get());
   EXPECT_EQ(42, (*owned).get());
 }

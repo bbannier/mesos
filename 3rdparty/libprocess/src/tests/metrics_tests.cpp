@@ -14,6 +14,7 @@
 
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <stout/base64.hpp>
@@ -100,7 +101,7 @@ protected:
   {
     realms.insert(realm);
 
-    return authentication::setAuthenticator(realm, authenticator);
+    return authentication::setAuthenticator(realm, std::move(authenticator));
   }
 
   void TearDown() override
@@ -608,8 +609,8 @@ TEST_F(MetricsTest, THREADSAFE_SnapshotAuthenticationEnabled)
     new BasicAuthenticator(
         READONLY_HTTP_AUTHENTICATION_REALM, {{"foo", "bar"}}));
 
-  AWAIT_READY(
-      setAuthenticator(READONLY_HTTP_AUTHENTICATION_REALM, authenticator));
+  AWAIT_READY(setAuthenticator(
+      READONLY_HTTP_AUTHENTICATION_REALM, std::move(authenticator)));
 
   UPID upid("metrics", process::address());
 
