@@ -481,6 +481,8 @@ TEST_F(AuthenticationTest, SlaveAuthenticationRetryBackoff)
   Clock::advance(slaveFlags.authentication_backoff_factor);
   AWAIT_READY(authenticate);
 
+  cluster::Slave* slave_ = slave->get();
+
   for (int i = 0; i < 7; i++) {
     EXPECT_EQ(minTimeout, expected[i][0]);
     EXPECT_EQ(maxTimeout, expected[i][1]);
@@ -506,8 +508,8 @@ TEST_F(AuthenticationTest, SlaveAuthenticationRetryBackoff)
           FutureSatisfy(&authenticate)))
       .RetiresOnSaturation();
 
-    process::dispatch(slave.get()->pid, PROCESS_OWNED_COPY_UNSAFE([=]) {
-      slave.get()->mock()->unmocked_authenticate(minTimeout, maxTimeout);
+    process::dispatch(slave_->pid, [=] {
+      slave_->mock()->unmocked_authenticate(minTimeout, maxTimeout);
     });
 
     // Slave should not retry until `slaveFlags.authentication_timeout_min`.
@@ -529,8 +531,8 @@ TEST_F(AuthenticationTest, SlaveAuthenticationRetryBackoff)
   Future<AuthenticationCompletedMessage> authenticationCompletedMessage =
     FUTURE_PROTOBUF(AuthenticationCompletedMessage(), _, _);
 
-  process::dispatch(slave.get()->pid, PROCESS_OWNED_COPY_UNSAFE([=]) {
-    slave.get()->mock()->unmocked_authenticate(minTimeout, maxTimeout);
+  process::dispatch(slave_->pid, [=] {
+    slave_->mock()->unmocked_authenticate(minTimeout, maxTimeout);
   });
 
   Clock::advance(slaveFlags.authentication_timeout_max);
