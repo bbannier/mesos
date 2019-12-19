@@ -659,7 +659,7 @@ TEST_F(CniIsolatorTest, ROOT_DestroyWhilePreparing)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
       {Owned<Isolator>(cniIsolator.get()),
        Owned<Isolator>(mockIsolator)});

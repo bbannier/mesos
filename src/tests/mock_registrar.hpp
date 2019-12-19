@@ -45,10 +45,12 @@ public:
 
   ~MockRegistrar() override;
 
+  PROCESS_UNSAFE_ALLOW_OWNED_COPY_BEGIN;
   MOCK_METHOD1(
       apply,
       process::Future<bool>(
           process::Owned<master::RegistryOperation> operation));
+  PROCESS_UNSAFE_ALLOW_OWNED_COPY_END;
 
   process::Future<bool> unmocked_apply(
       process::Owned<master::RegistryOperation> operation);

@@ -1076,7 +1076,7 @@ protected:
       Try<Owned<Counter>> counter = Counter::create(hierarchy, cgroup, level);
       EXPECT_SOME(counter);
 
-      counters[level] = counter.get();
+      counters[level] = Owned<Counter>(counter->release());
     }
   }
 

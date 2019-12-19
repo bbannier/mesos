@@ -16,6 +16,8 @@
 
 #include "tests/containerizer/launcher.hpp"
 
+#include <utility>
+
 namespace mesos {
 namespace internal {
 namespace tests {
@@ -40,8 +42,8 @@ ACTION_P(InvokeDestroy, launcher)
 }
 
 
-TestLauncher::TestLauncher(const process::Owned<slave::Launcher>& _real)
-  : real(_real)
+TestLauncher::TestLauncher(process::Owned<slave::Launcher> _real)
+  : real(std::move(_real))
 {
   using testing::_;
   using testing::DoDefault;

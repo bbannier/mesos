@@ -150,7 +150,7 @@ protected:
   // LinuxFilesystemIsolator and DockerVolumeIsolator.
   Try<Owned<MesosContainerizer>> createContainerizer(
       const slave::Flags& flags,
-      const Owned<DriverClient>& mockClient)
+      Owned<DriverClient> mockClient)
   {
     fetcher.reset(new Fetcher(flags));
 
@@ -177,7 +177,7 @@ protected:
     Owned<Isolator> runtimeIsolator(runtimeIsolator_.get());
 
     Try<Isolator*> volumeIsolator_ =
-      DockerVolumeIsolatorProcess::_create(flags, mockClient);
+      DockerVolumeIsolatorProcess::_create(flags, std::move(mockClient));
 
     if (volumeIsolator_.isError()) {
       return Error(

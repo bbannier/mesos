@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 
 #include <gmock/gmock.h>
 
@@ -64,7 +65,7 @@ MockRegistrar::~MockRegistrar() {}
 Future<bool> MockRegistrar::unmocked_apply(
     Owned<master::RegistryOperation> operation)
 {
-  return master::Registrar::apply(operation);
+  return master::Registrar::apply(std::move(operation));
 }
 
 } // namespace tests {

@@ -231,7 +231,7 @@ void MasterLoadTest::prepareCluster(Authorizer* authorizer)
       authorizer_.get(), masterFlags);
 
   ASSERT_SOME(master);
-  master_ = master.get();
+  master_ = Owned<cluster::Master>(master->release());
   detector_ = master_->createDetector();
 
   Future<FrameworkRegisteredMessage> frameworkRegisteredMessage =
@@ -256,7 +256,7 @@ void MasterLoadTest::prepareCluster(Authorizer* authorizer)
   Try<Owned<cluster::Slave>> slave = StartSlave(detector_.get(), slaveFlags);
 
   ASSERT_SOME(slave);
-  slave_ = slave.get();
+  slave_ = Owned<cluster::Slave>(slave->release());
 
   AWAIT_READY(slaveRegisteredMessage);
 }
@@ -382,11 +382,12 @@ TEST_F(MasterLoadTest, SimultaneousBatchedRequests)
 
     process::http::authentication::Principal principal(request.principal);
     MockAuthorizer authorizer;
-    Owned<ObjectApprovers> approvers = ObjectApprovers::create(
-        &authorizer,
-        principal,
-        {VIEW_ROLE, VIEW_FLAGS, VIEW_FRAMEWORK, VIEW_TASK, VIEW_EXECUTOR})
-      .get();
+    Owned<ObjectApprovers> approvers = PROCESS_OWNED_COPY_UNSAFE(
+        ObjectApprovers::create(
+            &authorizer,
+            principal,
+            {VIEW_ROLE, VIEW_FLAGS, VIEW_FRAMEWORK, VIEW_TASK, VIEW_EXECUTOR})
+            .get());
 
     Response reference;
     if (request.endpoint == "/state") {

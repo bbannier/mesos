@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #include <string>
+#include <utility>
 
 #include <mesos/slave/container_logger.hpp>
 
@@ -68,19 +69,19 @@ MockDocker::~MockDocker() {}
 MockDockerContainerizer::MockDockerContainerizer(
     const slave::Flags& flags,
     slave::Fetcher* fetcher,
-    const Owned<ContainerLogger>& logger,
+    Owned<ContainerLogger> logger,
     Shared<Docker> docker,
     const Option<NvidiaComponents>& nvidia)
   : slave::DockerContainerizer(
-      flags, fetcher, logger, docker, nvidia)
+      flags, fetcher, std::move(logger), docker, nvidia)
 {
   initialize();
 }
 
 
 MockDockerContainerizer::MockDockerContainerizer(
-    const Owned<slave::DockerContainerizerProcess>& process)
-  : slave::DockerContainerizer(process)
+    Owned<slave::DockerContainerizerProcess> process)
+  : slave::DockerContainerizer(std::move(process))
 {
   initialize();
 }
@@ -92,11 +93,11 @@ MockDockerContainerizer::~MockDockerContainerizer() {}
 MockDockerContainerizerProcess::MockDockerContainerizerProcess(
     const slave::Flags& flags,
     slave::Fetcher* fetcher,
-    const Owned<ContainerLogger>& logger,
+    Owned<ContainerLogger> logger,
     const Shared<Docker>& docker,
     const Option<NvidiaComponents>& nvidia)
   : slave::DockerContainerizerProcess(
-      flags, fetcher, logger, docker, nvidia)
+      flags, fetcher, std::move(logger), docker, nvidia)
 {
   EXPECT_CALL(*this, fetch(_))
     .WillRepeatedly(Invoke(this, &MockDockerContainerizerProcess::_fetch));

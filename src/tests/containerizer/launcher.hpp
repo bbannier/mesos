@@ -46,7 +46,7 @@ namespace tests {
 class TestLauncher : public slave::Launcher
 {
 public:
-  TestLauncher(const process::Owned<slave::Launcher>& _real);
+  TestLauncher(process::Owned<slave::Launcher> _real);
 
   ~TestLauncher() override;
 

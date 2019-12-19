@@ -5335,7 +5335,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponAgentGone)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.
@@ -5506,7 +5506,7 @@ TEST_P(MasterAPITest, OperationUpdatesUponUnreachable)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider->start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider->start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   // Wait until the agent's resources have been updated to include the
   // resource provider resources.

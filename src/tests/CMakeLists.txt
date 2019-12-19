@@ -311,6 +311,7 @@ target_compile_definitions(
 
 add_executable(mesos-tests EXCLUDE_FROM_ALL ${MESOS_TESTS_SRC})
 target_link_libraries(mesos-tests PRIVATE mesos-tests-interface)
+target_compile_options(mesos-tests PRIVATE "-Werror")
 
 target_compile_definitions(
   mesos-tests PRIVATE

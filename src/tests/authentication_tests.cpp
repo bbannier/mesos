@@ -506,7 +506,7 @@ TEST_F(AuthenticationTest, SlaveAuthenticationRetryBackoff)
           FutureSatisfy(&authenticate)))
       .RetiresOnSaturation();
 
-    process::dispatch(slave.get()->pid, [=] {
+    process::dispatch(slave.get()->pid, PROCESS_OWNED_COPY_UNSAFE([=]) {
       slave.get()->mock()->unmocked_authenticate(minTimeout, maxTimeout);
     });
 
@@ -529,7 +529,7 @@ TEST_F(AuthenticationTest, SlaveAuthenticationRetryBackoff)
   Future<AuthenticationCompletedMessage> authenticationCompletedMessage =
     FUTURE_PROTOBUF(AuthenticationCompletedMessage(), _, _);
 
-  process::dispatch(slave.get()->pid, [=] {
+  process::dispatch(slave.get()->pid, PROCESS_OWNED_COPY_UNSAFE([=]) {
     slave.get()->mock()->unmocked_authenticate(minTimeout, maxTimeout);
   });
 

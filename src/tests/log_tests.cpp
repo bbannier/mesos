@@ -19,6 +19,7 @@
 #include <list>
 #include <set>
 #include <string>
+#include <utility>
 
 #include <gmock/gmock.h>
 
@@ -1608,7 +1609,7 @@ TEST_F(CoordinatorTest, RecoveryRace)
   replica1ContinueVoting.set(true);
 
   AWAIT_READY(recovering1);
-  Owned<Replica> shared_ = recovering1.get();
+  Owned<Replica> shared_ = PROCESS_OWNED_COPY_UNSAFE(recovering1.get());
   Shared<Replica> shared = shared_.share();
 
   // Electing a coordinator should fail because we don't have a quorum
@@ -1710,14 +1711,14 @@ TEST_F(RecoverTest, RacingCatchup)
 
   Shared<Network> network2(new Network(pids));
 
-  Future<Owned<Replica>> recovering4 = recover(3, replica4, network2);
-  Future<Owned<Replica>> recovering5 = recover(3, replica5, network2);
+  Future<Owned<Replica>> recovering4 = recover(3, std::move(replica4), network2);
+  Future<Owned<Replica>> recovering5 = recover(3, std::move(replica5), network2);
 
   // Wait until recovery is done.
   AWAIT_READY(recovering4);
   AWAIT_READY(recovering5);
 
-  Owned<Replica> shared4_ = recovering4.get();
+  Owned<Replica> shared4_ = PROCESS_OWNED_COPY_UNSAFE(recovering4.get());
   Shared<Replica> shared4 = shared4_.share();
   Coordinator coord2(3, shared4, network2);
 
@@ -1860,7 +1861,7 @@ TEST_F(RecoverTest, RecoverProtocolRetry)
   set<UPID> pids{replica1->pid(), replica2->pid(), replica3->pid()};
   Shared<Network> network(new Network(pids));
 
-  Future<Owned<Replica>> recovering = recover(2, replica3, network);
+  Future<Owned<Replica>> recovering = recover(2, std::move(replica3), network);
 
   Clock::pause();
 
@@ -1911,8 +1912,11 @@ TEST_F(RecoverTest, AutoInitialization)
 
   Shared<Network> network(new Network(pids));
 
-  Future<Owned<Replica>> recovering1 = recover(2, replica1, network, true);
-  Future<Owned<Replica>> recovering2 = recover(2, replica2, network, true);
+  Future<Owned<Replica>> recovering1 =
+      recover(2, std::move(replica1), network, true);
+
+  Future<Owned<Replica>> recovering2 =
+      recover(2, std::move(replica2), network, true);
 
   // Verifies that replica1 and replica2 cannot transit into VOTING
   // status because replica3 is still in EMPTY status. We flush the
@@ -1924,7 +1928,8 @@ TEST_F(RecoverTest, AutoInitialization)
   EXPECT_TRUE(recovering1.isPending());
   EXPECT_TRUE(recovering2.isPending());
 
-  Future<Owned<Replica>> recovering3 = recover(2, replica3, network, true);
+  Future<Owned<Replica>> recovering3 = recover(2, std::move(replica3),
+      network, true);
 
   Clock::pause();
   Clock::settle();
@@ -1940,7 +1945,7 @@ TEST_F(RecoverTest, AutoInitialization)
   AWAIT_READY(recovering2);
   AWAIT_READY(recovering3);
 
-  Owned<Replica> shared_ = recovering1.get();
+  Owned<Replica> shared_ = PROCESS_OWNED_COPY_UNSAFE(recovering1.get());
   Shared<Replica> shared = shared_.share();
 
   Coordinator coord(2, shared, network);
@@ -1992,8 +1997,11 @@ TEST_F(RecoverTest, AutoInitializationRetry)
 
   Clock::pause();
 
-  Future<Owned<Replica>> recovering1 = recover(2, replica1, network, true);
-  Future<Owned<Replica>> recovering2 = recover(2, replica2, network, true);
+  Future<Owned<Replica>> recovering1 =
+      recover(2, std::move(replica1), network, true);
+
+  Future<Owned<Replica>> recovering2 =
+      recover(2, std::move(replica2), network, true);
 
   // Flush the event queue.
   Clock::settle();
@@ -2001,7 +2009,8 @@ TEST_F(RecoverTest, AutoInitializationRetry)
   EXPECT_TRUE(recovering1.isPending());
   EXPECT_TRUE(recovering2.isPending());
 
-  Future<Owned<Replica>> recovering3 = recover(2, replica3, network, true);
+  Future<Owned<Replica>> recovering3 =
+      recover(2, std::move(replica3), network, true);
 
   // Replica1 and replica2 will retry recovery after 10 seconds.
   Clock::advance(Seconds(10));
@@ -2013,7 +2022,7 @@ TEST_F(RecoverTest, AutoInitializationRetry)
   AWAIT_READY(recovering2);
   AWAIT_READY(recovering3);
 
-  Owned<Replica> shared_ = recovering1.get();
+  Owned<Replica> shared_ = PROCESS_OWNED_COPY_UNSAFE(recovering1.get());
   Shared<Replica> shared = shared_.share();
 
   Coordinator coord(2, shared, network);

@@ -252,6 +252,16 @@ public:
     spawn(process.get());
   }
 
+  // This class is not copyable due to the presence of an `Owned` member`.
+  //
+  // TODO(bbannier): Use default-generated constructors once
+  // MESOS-5122 is implemented.
+  TestSlave(const TestSlave&) = delete;
+  TestSlave(TestSlave&&) = default;
+
+  TestSlave& operator=(const TestSlave&) = delete;
+  TestSlave& operator=(TestSlave&&) = default;
+
   ~TestSlave()
   {
     terminate(process.get());
@@ -589,12 +599,13 @@ TEST_P(MasterActorResponsiveness_BENCHMARK_Test, WithV0StateLoad)
 
   // A helper sending a single request and measuring the time it takes to
   // receive a response.
-  auto singleRequest = [master](const string& endpoint) -> Future<Duration> {
+  cluster::Master* master_ = master->get();
+  auto singleRequest = [master_](const string& endpoint) -> Future<Duration> {
     shared_ptr<Stopwatch> watch(new Stopwatch);
     watch->start();
 
     Future<http::Response> response = http::get(
-        master.get()->pid,
+        master_->pid,
         endpoint,
         None(),
         createBasicAuthHeaders(DEFAULT_CREDENTIAL));

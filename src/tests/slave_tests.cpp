@@ -2843,9 +2843,9 @@ TEST_F(SlaveTest, ROOT_ContainerizerDebugEndpoint)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
-      {isolator});
+      {std::move(isolator)});
 
   ASSERT_SOME(create);
 
@@ -4022,8 +4022,8 @@ TEST_F(SlaveTest, UnreachableThenUnregisterRace)
 
   // Apply the registry operation to mark the slave unreachable, then
   // pass the result back to the master to allow it to continue.
-  Future<bool> applyUnreachable =
-    master.get()->registrar->unmocked_apply(markUnreachable.get());
+  Future<bool> applyUnreachable = master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(markUnreachable.get()));
 
   AWAIT_READY(applyUnreachable);
   markUnreachableContinue.set(applyUnreachable.get());
@@ -4141,8 +4141,8 @@ TEST_F(SlaveTest, UnregisterThenUnreachableRace)
 
   // Apply the registry operation to remove the slave, then pass the
   // result back to the master to allow it to continue.
-  Future<bool> applyRemove =
-    master.get()->registrar->unmocked_apply(removeSlave.get());
+  Future<bool> applyRemove = master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(removeSlave.get()));
 
   AWAIT_READY(applyRemove);
   removeSlaveContinue.set(applyRemove.get());
@@ -4273,15 +4273,16 @@ TEST_F(SlaveTest, KillTaskBetweenRunTaskParts)
   // since there remain no more tasks.
   AWAIT_READY(removeFramework);
 
-  Future<Nothing> unmocked__run = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         frameworkInfo,
         executorInfo,
         task_,
         taskGroup,
         resourceVersionUuids,
         launchExecutor);
-  });
+    });
 
   // Resume the original continuation once `unmocked__run` is complete.
   promise.associate(unmocked__run);
@@ -4426,25 +4427,26 @@ TEST_F(SlaveTest, KillMultiplePendingTasks)
   AWAIT_READY(removeFramework);
 
   // The `__run` continuations should have no effect.
-  Future<Nothing> unmocked__run1 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run1 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         frameworkInfo1,
         executorInfo1,
         task_1,
         taskGroup1,
         resourceVersionUuids1,
         launchExecutor1);
-  });
+    });
 
-  Future<Nothing> unmocked__run2 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  Future<Nothing> unmocked__run2 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         frameworkInfo2,
         executorInfo2,
         task_2,
         taskGroup2,
         resourceVersionUuids2,
         launchExecutor2);
-  });
+    });
 
   // Resume the original continuation once unmocked__run is complete.
   promise1.associate(unmocked__run1);
@@ -4808,9 +4810,9 @@ TEST_F(SlaveTest, RemoveExecutorUponFailedLaunch)
 
   AWAIT_READY(killTask);
 
-  Future<Nothing> unmocked__run =
-    process::dispatch(slave.get()->pid, [=]() -> Future<Nothing> {
-      return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run = process::dispatch(slave_->pid, [=]() {
+      return slave_->mock()->unmocked__run(
           frameworkInfo,
           executorInfo_,
           task_,
@@ -5497,15 +5499,16 @@ TEST_F(SlaveTest, LaunchTaskGroupsUsingSameExecutorKillFirstTaskGroup)
   AWAIT_READY(killTask1);
 
   // Resume the continuation for `taskGroup1`.
-  Future<Nothing> unmocked__run1 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run1 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo1,
         _executorInfo1,
         _task1,
         _taskGroup1,
         _resourceVersionUuids1,
         _launchExecutor1);
-  });
+    });
 
   promise1.associate(unmocked__run1);
 
@@ -5515,28 +5518,28 @@ TEST_F(SlaveTest, LaunchTaskGroupsUsingSameExecutorKillFirstTaskGroup)
   EXPECT_EQ(v1::TASK_KILLED, task1Killed->status().state());
 
   // Resume the continuation for taskgroup2.
-  Future<Nothing> unmocked__run2 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  Future<Nothing> unmocked__run2 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo2,
         _executorInfo2,
         _task2,
         _taskGroup2,
         _resourceVersionUuids2,
         _launchExecutor2);
-  });
+    });
 
   promise2.associate(unmocked__run2);
 
   // Resume the continuation for taskgroup3.
-  Future<Nothing> unmocked__run3 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  Future<Nothing> unmocked__run3 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo3,
         _executorInfo3,
         _task3,
         _taskGroup3,
         _resourceVersionUuids3,
         _launchExecutor3);
-  });
+    });
 
   promise3.associate(unmocked__run3);
 
@@ -5707,15 +5710,16 @@ TEST_F(SlaveTest, LaunchTaskGroupsUsingSameExecutorKillLaterTaskGroup)
   AWAIT_READY(killTask2);
 
   // Resume the continuation for `taskGroup2`.
-  Future<Nothing> unmocked__run2 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run2 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo2,
         _executorInfo2,
         _task2,
         _taskGroup2,
         _resourceVersionUuids2,
         _launchExecutor2);
-  });
+    });
 
   promise2.associate(unmocked__run2);
 
@@ -5725,15 +5729,15 @@ TEST_F(SlaveTest, LaunchTaskGroupsUsingSameExecutorKillLaterTaskGroup)
   EXPECT_EQ(v1::TASK_KILLED, task2Killed->status().state());
 
   // Resume the continuation for taskgroup1.
-  Future<Nothing> unmocked__run1 = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  Future<Nothing> unmocked__run1 = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo1,
         _executorInfo1,
         _task1,
         _taskGroup1,
         _resourceVersionUuids1,
         _launchExecutor1);
-  });
+    });
 
   promise1.associate(unmocked__run1);
 
@@ -5901,15 +5905,16 @@ TEST_F(SlaveTest, ShutdownExecutorWhileTaskLaunching)
   AWAIT_READY(shutdownExecutor);
 
   // Resume launching `taskGroup2`.
-  Future<Nothing> unmocked__run = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         _frameworkInfo,
         _executorInfo,
         _task,
         _taskGroup,
         _resourceVersionUuids,
         _launchExecutor);
-  });
+    });
 
   promiseTask2.associate(unmocked__run);
 
@@ -6147,12 +6152,13 @@ TEST_F(SlaveTest, KillAllInitialTasksTerminatesExecutor)
 
   // We continue dispatching `___run()` to make sure the `CHECK()` in the
   // continuation passes.
-  Future<Nothing> unmocked___run = process::dispatch(slave.get()->pid, [=] {
-    slave.get()->mock()->unmocked____run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked___run = process::dispatch(slave_->pid, [=] {
+      slave_->mock()->unmocked____run(
         future, frameworkId, executorId, containerId, tasks, taskGroups);
 
-    return Nothing();
-  });
+      return Nothing();
+    });
 
   AWAIT_READY(unmocked___run);
   AWAIT_READY(executorShutdown);
@@ -6398,12 +6404,13 @@ TEST_F(SlaveTest, KillAllInitialTasksTerminatesHTTPExecutor)
 
   // We continue dispatching `___run()` to make sure the `CHECK()` in the
   // continuation passes.
-  Future<Nothing> unmocked____run = process::dispatch(slave.get()->pid, [=] {
-    slave.get()->mock()->unmocked____run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked____run = process::dispatch(slave_->pid, [=] {
+      slave_->mock()->unmocked____run(
         _future, _frameworkId, _executorId, _containerId, _tasks, _taskGroups);
 
-    return Nothing();
-  });
+      return Nothing();
+    });
 
   // The executor is killed because all of its initial tasks are killed
   // and cannot be delivered.
@@ -9344,15 +9351,16 @@ TEST_F(SlaveTest, KillTaskGroupBetweenRunTaskParts)
 
   AWAIT_READY(removeFramework);
 
-  Future<Nothing> unmocked__run = process::dispatch(slave.get()->pid, [=] {
-    return slave.get()->mock()->unmocked__run(
+  cluster::Slave* slave_ = slave->get();
+  Future<Nothing> unmocked__run = process::dispatch(slave_->pid, [=] {
+      return slave_->mock()->unmocked__run(
         frameworkInfo,
         executorInfo_,
         task_,
         taskGroup_,
         resourceVersionUuids,
         launchExecutor);
-  });
+    });
 
   // Resume the original continuation once `unmocked__run` is complete.
   promise.associate(unmocked__run);

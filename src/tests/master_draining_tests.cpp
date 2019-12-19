@@ -87,7 +87,7 @@ public:
     masterFlags = CreateMasterFlags();
     Try<Owned<cluster::Master>> _master = StartMaster(masterFlags);
     ASSERT_SOME(_master);
-    master = _master.get();
+    master = Owned<cluster::Master>(_master->release());
 
     Future<SlaveRegisteredMessage> slaveRegisteredMessage =
       FUTURE_PROTOBUF(SlaveRegisteredMessage(), _, _);
@@ -97,7 +97,7 @@ public:
     detector = master.get()->createDetector();
     Try<Owned<cluster::Slave>> _slave = StartSlave(detector.get(), agentFlags);
     ASSERT_SOME(_slave);
-    slave = _slave.get();
+    slave = Owned<cluster::Slave>(_slave->release());
 
     Clock::advance(agentFlags.registration_backoff_factor);
     AWAIT_READY(slaveRegisteredMessage);

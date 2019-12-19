@@ -9384,7 +9384,7 @@ TEST_F(MasterTest, OperationUpdateCompletedFramework)
 
   updateSlaveMessage = FUTURE_PROTOBUF(UpdateSlaveMessage(), _, _);
 
-  resourceProvider.start(endpointDetector, ContentType::PROTOBUF);
+  resourceProvider.start(std::move(endpointDetector), ContentType::PROTOBUF);
 
   AWAIT_READY(updateSlaveMessage);
 

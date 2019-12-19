@@ -721,7 +721,7 @@ TEST_F(MesosContainerizerDestroyTest, DestroyWhileFetching)
 
   MockFetcherProcess* mockFetcherProcess = new MockFetcherProcess(flags);
   Owned<FetcherProcess> fetcherProcess(mockFetcherProcess);
-  Fetcher fetcher(fetcherProcess);
+  Fetcher fetcher(std::move(fetcherProcess));
 
   Try<Owned<Provisioner>> provisioner = Provisioner::create(flags);
   ASSERT_SOME(provisioner);
@@ -731,7 +731,7 @@ TEST_F(MesosContainerizerDestroyTest, DestroyWhileFetching)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
       vector<Owned<Isolator>>());
 
@@ -809,7 +809,7 @@ TEST_F(MesosContainerizerDestroyTest, DestroyWhilePreparing)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
       {Owned<Isolator>(isolator)});
 
@@ -937,7 +937,7 @@ TEST_F(MesosContainerizerProvisionerTest, ProvisionFailed)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       Shared<Provisioner>(provisioner),
       vector<Owned<Isolator>>());
 
@@ -1062,7 +1062,7 @@ TEST_F(
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
       vector<Owned<Isolator>>());
 
@@ -1164,7 +1164,7 @@ TEST_F(MesosContainerizerProvisionerTest, IsolatorCleanupBeforePrepare)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       Shared<Provisioner>(provisioner),
       {Owned<Isolator>(isolator)});
 
@@ -1260,7 +1260,7 @@ TEST_F(MesosContainerizerDestroyTest, LauncherDestroyFailure)
       true,
       &fetcher,
       nullptr,
-      launcher,
+      std::move(launcher),
       provisioner->share(),
       vector<Owned<Isolator>>());
 

@@ -203,7 +203,7 @@ void FetcherCacheTest::SetUp()
 
   Try<Owned<cluster::Master>> _master = StartMaster();
   ASSERT_SOME(_master);
-  master = _master.get();
+  master = Owned<cluster::Master>(_master->release());
 
   FrameworkInfo frameworkInfo;
   frameworkInfo.set_name("default");
@@ -339,7 +339,7 @@ void FetcherCacheTest::startSlave()
   Try<Owned<cluster::Slave>> _slave =
     StartSlave(detector.get(), containerizer.get(), flags);
   ASSERT_SOME(_slave);
-  slave = _slave.get();
+  slave = Owned<cluster::Slave>(_slave->release());
 
   AWAIT_READY(slaveRegisteredMessage);
   slaveId = slaveRegisteredMessage->slave_id();
@@ -1395,7 +1395,7 @@ TEST_F(FetcherCacheHttpTest, DISABLED_HttpCachedRecovery)
   Try<Owned<cluster::Slave>> _slave =
     StartSlave(detector.get(), containerizer.get(), flags);
   ASSERT_SOME(_slave);
-  slave = _slave.get();
+  slave = Owned<cluster::Slave>(_slave->release());
 
   // Wait until the containerizer is updated.
   AWAIT_READY(update);

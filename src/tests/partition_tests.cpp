@@ -3749,8 +3749,8 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(PartitionTest, RegistryGcRace)
                     master.get()->pid,
                     slave2.get()->pid);
 
-  Future<bool> applyReachable =
-    master.get()->registrar->unmocked_apply(markReachable.get());
+  Future<bool> applyReachable = master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(markReachable.get()));
 
   AWAIT_READY(applyReachable);
   markReachableContinue.set(applyReachable.get());
@@ -3759,8 +3759,8 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(PartitionTest, RegistryGcRace)
 
   // Apply the registry operation to prune the unreachable list, then
   // pass the result back to the master to allow it to continue.
-  Future<bool> applyPrune =
-    master.get()->registrar->unmocked_apply(prune.get());
+  Future<bool> applyPrune = master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(prune.get()));
 
   AWAIT_READY(applyPrune);
   pruneContinue.set(applyPrune.get());
@@ -3922,8 +3922,8 @@ TEST_F(PartitionTest, FailHealthChecksTwice)
 
   // Apply the registry operation, then pass the result back to the
   // master to allow it to continue.
-  Future<bool> applyUnreachable =
-    master.get()->registrar->unmocked_apply(markUnreachable.get());
+  Future<bool> applyUnreachable = master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(markUnreachable.get()));
 
   AWAIT_READY(applyUnreachable);
   markUnreachableContinue.set(applyUnreachable.get());
