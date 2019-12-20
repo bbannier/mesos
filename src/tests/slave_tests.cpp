@@ -3816,11 +3816,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
 
   // Now set the expectation when the agent is one ping timeout away
   // from being deemed unreachable.
+  Promise<bool> applyMarkUnreachable;
   Future<Owned<master::RegistryOperation>> markUnreachable;
   EXPECT_CALL(*master.get()->registrar, apply(_))
-    .WillOnce(DoAll(FutureArg<0>(&markUnreachable),
-                    Invoke(master.get()->registrar.get(),
-                           &MockRegistrar::unmocked_apply)));
+    .WillOnce(DoAll(
+      FutureArg<0>(&markUnreachable), Return(applyMarkUnreachable.future())));
 
   Clock::advance(masterFlags.agent_ping_timeout);
 
@@ -3828,6 +3828,9 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   EXPECT_NE(
       nullptr,
       dynamic_cast<master::MarkSlaveUnreachable*>(markUnreachable->get()));
+
+  applyMarkUnreachable.associate(master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(markUnreachable.get())));
 
   // Make sure the registrar operation completes so the agent will be updated
   // as an unreachable agent in the registry before the master terminates.
@@ -3844,10 +3847,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
     FUTURE_PROTOBUF(SlaveReregisteredMessage(), master.get()->pid, _);
 
   Future<Owned<master::RegistryOperation>> markReachable;
+  Promise<bool> applyMarkReachable;
   EXPECT_CALL(*master.get()->registrar, apply(_))
-    .WillOnce(DoAll(FutureArg<0>(&markReachable),
-                    Invoke(master.get()->registrar.get(),
-                           &MockRegistrar::unmocked_apply)));
+    .WillOnce(DoAll(
+        FutureArg<0>(&markReachable),
+        Return(applyMarkReachable.future())));
 
   detector = master.get()->createDetector();
   slave = StartSlave(detector.get(), slaveFlags);
@@ -3860,6 +3864,11 @@ TEST_F_TEMP_DISABLED_ON_WINDOWS(
   EXPECT_NE(
       nullptr,
       dynamic_cast<master::MarkSlaveReachable*>(markReachable->get()));
+
+  applyMarkReachable.associate(master.get()->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(markReachable.get())));
+
+  Clock::settle();
 
   AWAIT_READY(slaveReregisteredMessage);
 }
