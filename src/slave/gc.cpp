@@ -184,9 +184,11 @@ void GarbageCollectorProcess::reset()
 void GarbageCollectorProcess::remove(const Timeout& removalTime)
 {
   if (paths.count(removalTime) > 0) {
-    list<Owned<PathInfo>> infos;
+    list<Multimap<Timeout, Owned<PathInfo>>::const_iterator> infos;
+    auto range = paths.equal_range(removalTime);
+    for (auto&& it = range.first; it != range.second; ++it) {
+      const Owned<PathInfo>& info = it->second;
 
-    foreach (Owned<PathInfo>& info, paths.get(removalTime)) {
       if (info->removing) {
         VLOG(1) << "Skipping deletion of '" << info->path
                 << "'  as it is already in progress";
@@ -196,7 +198,7 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
       // Set `removing` to signify that the path is being cleaned up.
       info->removing = true;
 
-      infos.push_back(Owned<PathInfo>(info.release()));
+      infos.push_back(it);
     }
 
     Counter _succeeded = metrics.path_removals_succeeded;
@@ -218,7 +220,9 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
                       "MountInfoTable for agent process: "
                    << mountTable.error();
 
-        foreach (const Owned<PathInfo>& info, infos) {
+        foreach (auto&& it, infos) {
+          const Owned<PathInfo>& info = it->second;
+
           info->promise.fail(mountTable.error());
           ++failed;
         }
@@ -236,7 +240,7 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
         }
 
         for (auto it = infos.begin(); it != infos.end(); ) {
-          const Owned<PathInfo>& info = *it;
+          const Owned<PathInfo>& info = (*it)->second;
           // TODO(zhitao): Validate that both `info->path` and `workDir` are
           // real paths.
           if (strings::startsWith(
@@ -266,7 +270,8 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
       }
 #endif // __linux__
 
-      foreach (const Owned<PathInfo>& info, infos) {
+      foreach (auto&& it, infos) {
+        const Owned<PathInfo>& info = it->second;
         // Run the removal operation with 'continueOnError = true'.
         // It's possible for tasks and isolators to lay down files
         // that are not deletable by GC. In the face of such errors
@@ -302,7 +307,7 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
     //   1. They do not block other dispatches (MESOS-6549).
     //   2. They do not occupy all worker threads (MESOS-7964).
     executor.execute(rmdirs)
-      .onAny(defer(self(), &Self::_remove, lambda::_1, infos));
+      .onAny(defer(self(), &Self::_remove, lambda::_1, std::move(infos)));
   } else {
     // This occurs when either:
     //   1. The path(s) has already been removed (e.g. by prune()).
@@ -313,14 +318,14 @@ void GarbageCollectorProcess::remove(const Timeout& removalTime)
   }
 }
 
-
-void GarbageCollectorProcess::_remove(const Future<Nothing>& result,
-                                      const list<Owned<PathInfo>> infos)
+void GarbageCollectorProcess::_remove(
+    const Future<Nothing>& result,
+    const list<Multimap<Timeout, Owned<PathInfo>>::const_iterator>& infos)
 {
   // Remove path records from `paths` and `timeouts` data structures.
-  foreach (const Owned<PathInfo>& info, infos) {
-    CHECK(paths.remove(timeouts[info->path], info));
-    CHECK_EQ(timeouts.erase(info->path), 1u);
+  foreach (auto&& it, infos) {
+    CHECK_EQ(timeouts.erase(it->second->path), 1u);
+    paths.erase(it);
   }
 
   reset();

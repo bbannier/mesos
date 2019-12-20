@@ -86,7 +86,9 @@ private:
   // Callback for `remove` for bookkeeping after path removal.
   void _remove(
       const process::Future<Nothing>& result,
-      const std::list<process::Owned<PathInfo>> infos);
+      const std::list<
+        Multimap<process::Timeout, process::Owned<PathInfo>>::const_iterator>&
+        infos);
 
   struct Metrics
   {
