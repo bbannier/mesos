@@ -143,7 +143,6 @@ T* Owned<T>::get() const
   }
 
   return data->t;
-
 }
 
 
