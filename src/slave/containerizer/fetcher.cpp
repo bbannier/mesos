@@ -89,8 +89,8 @@ Fetcher::Fetcher(const Flags& flags) : process(new FetcherProcess(flags))
 }
 
 
-Fetcher::Fetcher(process::Owned<FetcherProcess> process)
-  : process(std::move(process))
+Fetcher::Fetcher(process::Owned<FetcherProcess> _process)
+  : process(std::move(_process))
 {
   spawn(process.get());
 }
