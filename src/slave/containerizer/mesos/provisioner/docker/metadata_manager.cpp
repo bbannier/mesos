@@ -91,8 +91,8 @@ Try<Owned<MetadataManager>> MetadataManager::create(const Flags& flags)
 }
 
 
-MetadataManager::MetadataManager(Owned<MetadataManagerProcess> process)
-  : process(std::move(process))
+MetadataManager::MetadataManager(Owned<MetadataManagerProcess> _process)
+  : process(std::move(_process))
 {
   spawn(CHECK_NOTNULL(process.get()));
 }
