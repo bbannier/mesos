@@ -1092,8 +1092,8 @@ Future<Nothing> MesosContainerizerProcess::recover(
     // Add recoverable nested containers or standalone containers
     // to the list of 'ContainerState'.
     if (isRecoverableNestedContainer || isRecoverableStandaloneContainer) {
-      CHECK_SOME(container->directory);
-      CHECK_SOME(container->pid);
+      CHECK_SOME(directory);
+      CHECK_SOME(pid);
 
       ContainerState state =
         protobuf::slave::createContainerState(
@@ -1102,8 +1102,8 @@ Future<Nothing> MesosContainerizerProcess::recover(
                 Option<ContainerInfo>(config->container_info()) :
                 Option<ContainerInfo>::none(),
             containerId,
-            container->pid.get(),
-            container->directory.get());
+            *pid,
+            *directory);
 
       if (config.isSome()) {
         // Copy the ephemeral volume paths to the ContainerState, since this
