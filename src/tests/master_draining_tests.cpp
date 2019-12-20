@@ -59,6 +59,7 @@ using process::Clock;
 using process::Failure;
 using process::Future;
 using process::Owned;
+using process::Promise;
 
 using testing::_;
 using testing::AllOf;
@@ -353,10 +354,11 @@ TEST_P(MasterAlreadyDrainedTest, DrainAgentDisconnected)
 TEST_P(MasterAlreadyDrainedTest, DrainAgentUnreachable)
 {
   Future<Owned<master::RegistryOperation>> registrarApplyUnreachable;
+  Promise<bool> applyUnreachable;
   EXPECT_CALL(*master->registrar, apply(_))
     .WillOnce(DoAll(
         FutureArg<0>(&registrarApplyUnreachable),
-        Invoke(master->registrar.get(), &MockRegistrar::unmocked_apply)))
+        Return(applyUnreachable.future())))
     .WillRepeatedly(DoDefault());
 
   // Simulate an agent crash, so that it disconnects from the master.
@@ -369,6 +371,9 @@ TEST_P(MasterAlreadyDrainedTest, DrainAgentUnreachable)
       nullptr,
       dynamic_cast<master::MarkSlaveUnreachable*>(
           registrarApplyUnreachable->get()));
+
+  applyUnreachable.associate(master->registrar->unmocked_apply(
+      PROCESS_OWNED_COPY_UNSAFE(registrarApplyUnreachable.get())));
 
   // Start draining the unreachable agent.
   ContentType contentType = GetParam();
