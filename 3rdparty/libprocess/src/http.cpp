@@ -550,6 +550,8 @@ bool Pipe::Writer::write(string s)
   bool written = false;
   Owned<Promise<string>> read;
 
+  string s_ = s;
+
   synchronized (data->lock) {
     // Ignore writes if either end of the pipe is closed or failed!
     if (data->writeEnd == Writer::OPEN && data->readEnd == Reader::OPEN) {
@@ -569,7 +571,7 @@ bool Pipe::Writer::write(string s)
   // NOTE: We set the promise outside the critical section to avoid
   // triggering callbacks that try to reacquire the lock.
   if (read.get() != nullptr) {
-    read->set(std::move(s)); // NOLINT(misc-use-after-move)
+    read->set(std::move(s_));
   }
 
   return written;

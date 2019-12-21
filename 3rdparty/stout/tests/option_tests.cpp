@@ -159,6 +159,8 @@ TEST(OptionTest, StarOperator)
 
   Option<Foo> bar(*std::move(foo));
   EXPECT_EQ("hello", (*bar).s);
+
+  // NOLINTNEXTLINE(bugprone-use-after-move)
   EXPECT_TRUE(foo->moved);
 }
 

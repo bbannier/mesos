@@ -2290,6 +2290,7 @@ void Resources::add(Resource_&& that)
   // Cannot be combined with any existing Resource object.
   if (!found) {
     resourcesNoMutationWithoutExclusiveOwnership.push_back(
+        // NOLINTNEXTLINE(bugprone-use-after-move)
         make_shared<Resource_>(std::move(that)));
   }
 }

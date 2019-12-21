@@ -3009,7 +3009,7 @@ function<void(JSON::ObjectWriter*)> Master::Http::jsonifyGetAgents(
                 *slave,
                 master->slaves.draining.get(slave->id),
                 master->slaves.deactivated.contains(slave->id),
-                std::move(approvers));
+                approvers);
 
         writer->element(asV1Protobuf(agent));
       }

@@ -2058,7 +2058,10 @@ void SocketManager::send(Message&& message, const SocketImpl::Kind& kind)
 
   if (connect) {
     CHECK_SOME(socket);
-    internal::connectSocket(*socket, address, message.to.host)
+
+    Option<string> host = message.to.host;
+
+    internal::connectSocket(*socket, address, host)
       .onAny(lambda::bind(
             // TODO(benh): with C++14 we can use lambda instead of
             // `std::bind` and capture `message` with a `std::move`.

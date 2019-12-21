@@ -342,10 +342,12 @@ public:
             setting.erase(path);
           }));
 
+        Future<gid_t> result = promise->future();
+
         promise->associate(future);
         setting[path] = std::move(promise);
 
-        return promise->future();
+        return result;
       }
     }
 

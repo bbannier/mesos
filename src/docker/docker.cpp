@@ -1627,6 +1627,8 @@ Future<vector<Docker::Container>> Docker::__ps(
   Owned<Promise<vector<Docker::Container>>> promise(
     new Promise<vector<Docker::Container>>());
 
+  Future<Docker::Container> future = promise->future();
+
   // Limit number of parallel calls to docker inspect at once to prevent
   // reaching system's open file descriptor limit.
   inspectBatches(
@@ -1636,7 +1638,7 @@ Future<vector<Docker::Container>> Docker::__ps(
       docker,
       prefix);
 
-  return promise->future();
+  return future;
 }
 
 
@@ -1649,6 +1651,8 @@ void Docker::inspectBatches(
     const Docker& docker,
     const Option<string>& prefix)
 {
+  bool noLines= lines->empty();
+
   vector<Future<Docker::Container>> batch =
     createInspectBatch(std::move(lines), docker, prefix);
 
@@ -1658,7 +1662,7 @@ void Docker::inspectBatches(
       foreach (const Docker::Container& container, c.get()) {
         containers->push_back(container);
       }
-      if (lines->empty()) {
+      if (noLines) {
         promise->set(*containers);
       }
       else {
