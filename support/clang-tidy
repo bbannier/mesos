@@ -1,6 +1,7 @@
 ---
 Checks:
 "\
+bugprone-use-after-move,\
 clang-diagnostic-*,\
 clang-analyzer-*,\
 -clang-analyzer-,\
