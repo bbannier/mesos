@@ -1615,12 +1615,11 @@ Future<vector<Docker::Container>> Docker::__ps(
     const Option<string>& prefix,
     const string& output)
 {
-  Owned<vector<string>> lines(new vector<string>());
-  *lines = strings::tokenize(output, "\n");
+  vector<string> lines = strings::tokenize(output, "\n");
 
   // Skip the header.
-  CHECK(!lines->empty());
-  lines->erase(lines->begin());
+  CHECK(!lines.empty());
+  lines.erase(lines.begin());
 
   Owned<vector<Docker::Container>> containers(new vector<Docker::Container>());
 
@@ -1646,15 +1645,15 @@ Future<vector<Docker::Container>> Docker::__ps(
 // within libprocess.
 void Docker::inspectBatches(
     Owned<vector<Docker::Container>> containers,
-    Owned<vector<string>> lines,
+    vector<string> lines,
     Owned<Promise<vector<Docker::Container>>> promise,
     const Docker& docker,
     const Option<string>& prefix)
 {
-  bool noLines= lines->empty();
+  bool noLines= lines.empty();
 
   vector<Future<Docker::Container>> batch =
-    createInspectBatch(std::move(lines), docker, prefix);
+    createInspectBatch(&lines, docker, prefix);
 
   collect(batch).onAny(PROCESS_OWNED_COPY_UNSAFE([=])(
       const Future<vector<Docker::Container>>& c) mutable {
@@ -1686,7 +1685,7 @@ void Docker::inspectBatches(
 
 
 vector<Future<Docker::Container>> Docker::createInspectBatch(
-    Owned<vector<string>> lines,
+    vector<string>* lines, // FIXME(bbannier)
     const Docker& docker,
     const Option<string>& prefix)
 {

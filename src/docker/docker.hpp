@@ -382,13 +382,13 @@ private:
 
   static void inspectBatches(
       process::Owned<std::vector<Docker::Container>> containers,
-      process::Owned<std::vector<std::string>> lines,
+      std::vector<std::string> lines,
       process::Owned<process::Promise<std::vector<Docker::Container>>> promise,
       const Docker& docker,
       const Option<std::string>& prefix);
 
   static std::vector<process::Future<Docker::Container>> createInspectBatch(
-      process::Owned<std::vector<std::string>> lines,
+      std::vector<std::string>* lines,
       const Docker& docker,
       const Option<std::string>& prefix);
 
