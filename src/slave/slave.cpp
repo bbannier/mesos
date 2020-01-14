@@ -1984,6 +1984,9 @@ void Slave::doReliableRegistration(Duration maxBackoff)
         // Do not reregister with Command (or Docker) Executors
         // because the master doesn't store them; they are generated
         // by the slave.
+        //
+        // TODO(bbannier): Add a test for our handling of Command (or Docker)
+        // executors.
         if (!executor->isGeneratedForCommandTask()) {
           // Ignore terminated executors because they do not consume
           // any resources.
@@ -6590,6 +6593,8 @@ ExecutorInfo Slave::getExecutorInfo(
   executor.mutable_executor_id()->set_value(task.task_id().value());
   executor.mutable_framework_id()->CopyFrom(frameworkInfo.id());
 
+  executor.set_generated_by_agent(true);
+
   if (task.has_container()) {
     // Store the container info in the executor info so it will
     // be checkpointed. This allows the correct containerizer to
@@ -10587,6 +10592,37 @@ Resources Framework::allocatedResources() const
 }
 
 
+// Perfom upgrades of checkpointed executor state.
+static ExecutorInfo upgradeExecutorInfo(
+  ExecutorInfo executor, const Flags& slaveFlags)
+{
+  if (!executor.has_generated_by_agent()) {
+    // TODO(jieyu): The way we determine if an executor is generated for
+    // a command task (either command or docker executor) is really
+    // hacky. We rely on the fact that docker executor launch command is
+    // set in the docker containerizer so that this check is still valid
+    // in the slave.
+    Result<string> executorPath =
+      os::realpath(path::join(slaveFlags.launcher_dir, MESOS_EXECUTOR));
+
+    if (executorPath.isSome()) {
+      bool generatedByAgent =
+        strings::contains(executor.command().value(), executorPath.get());
+
+      if (generatedByAgent) {
+        LOG(INFO)
+          << "Executor " << executor.executor_id()
+          << " detected as created by the agent";
+      }
+
+      executor.set_generated_by_agent(generatedByAgent);
+    }
+  }
+
+  return executor;
+}
+
+
 Executor::Executor(
     Slave* _slave,
     const FrameworkID& _frameworkId,
@@ -10596,9 +10632,9 @@ Executor::Executor(
     const Option<string>& _user,
     bool _checkpoint)
   : state(REGISTERING),
-    slave(_slave),
+    slave(CHECK_NOTNULL(_slave)),
     id(_info.executor_id()),
-    info(_info),
+    info(upgradeExecutorInfo(_info, CHECK_NOTNULL(_slave)->flags)),
     frameworkId(_frameworkId),
     containerId(_containerId),
     directory(_directory),
@@ -10607,8 +10643,6 @@ Executor::Executor(
     http(None()),
     pid(None())
 {
-  CHECK_NOTNULL(slave);
-
   // NOTE: This should be greater than zero because the agent looks
   // for completed tasks to determine (with false positives) whether
   // an executor ever received tasks. See MESOS-8411.
@@ -10622,19 +10656,6 @@ Executor::Executor(
 
   completedTasks =
     circular_buffer<shared_ptr<Task>>(MAX_COMPLETED_TASKS_PER_EXECUTOR);
-
-  // TODO(jieyu): The way we determine if an executor is generated for
-  // a command task (either command or docker executor) is really
-  // hacky. We rely on the fact that docker executor launch command is
-  // set in the docker containerizer so that this check is still valid
-  // in the slave.
-  Result<string> executorPath =
-    os::realpath(path::join(slave->flags.launcher_dir, MESOS_EXECUTOR));
-
-  if (executorPath.isSome()) {
-    isGeneratedForCommandTask_ =
-      strings::contains(info.command().value(), executorPath.get());
-  }
 }
 
 
@@ -11018,7 +11039,7 @@ bool Executor::everSentTask() const
 
 bool Executor::isGeneratedForCommandTask() const
 {
-  return isGeneratedForCommandTask_;
+  return info.has_generated_by_agent() && info.generated_by_agent();
 }
 
 

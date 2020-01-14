@@ -1112,8 +1112,6 @@ public:
 private:
   Executor(const Executor&) = delete;
   Executor& operator=(const Executor&) = delete;
-
-  bool isGeneratedForCommandTask_;
 };
 
 
