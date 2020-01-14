@@ -1613,6 +1613,10 @@ Option<Error> validateExecutor(
       return Error("'ExecutorInfo.type' must be 'CUSTOM'");
     }
 
+    if (executor.has_generated_by_agent()) {
+      return Error("'ExecutorInfo.generated_by_agent' must not be set");
+    }
+
     // While `ExecutorInfo.command` is optional in the protobuf,
     // semantically it is still required for backwards compatibility.
     if (!executor.has_command()) {
@@ -1886,6 +1890,10 @@ Option<Error> validateExecutor(
     return Error(
         "Total resources " + stringify(total) + " required by task group and"
         " its executor are more than available " + stringify(offered));
+  }
+
+  if (executor.has_generated_by_agent()) {
+    return Error("'ExecutorInfo.generated_by_agent' must not be set");
   }
 
   if (executor.has_command()) {
