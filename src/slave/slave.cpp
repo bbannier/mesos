@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <deque>
 #include <iomanip>
 #include <list>
@@ -10606,8 +10607,18 @@ static ExecutorInfo upgradeExecutorInfo(
       os::realpath(path::join(slaveFlags.launcher_dir, MESOS_EXECUTOR));
 
     if (executorPath.isSome()) {
+      // In DC/OS upgrades the SHA of the Mesos package might change
+      // so ignore it when performing our heuristic check.
+      constexpr char SAMPLE_PATH[] =
+        "/opt/mesosphere/packages/"
+        "mesos--0faac59dff0a31c9d39785ba35c55950cc67dcfa/libexec/mesos/"
+        "mesos-executor";
+
       bool generatedByAgent =
-        strings::contains(executor.command().value(), executorPath.get());
+        executorPath->size() == std::strlen(SAMPLE_PATH) &&
+        strings::startsWith(
+          *executorPath, "/opt/mesosphere/packages/mesos--") &&
+        strings::endsWith(*executorPath, "/libexec/mesos/mesos-executor");
 
       if (generatedByAgent) {
         LOG(INFO)
