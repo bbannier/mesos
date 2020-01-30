@@ -610,6 +610,7 @@ Try<process::Owned<Slave>> Slave::create(
     slave->secretGenerator.reset(_secretGenerator);
   }
 
+#ifndef __WINDOWS__
   Option<Socket> executorSocket = None();
   if (flags.http_executor_domain_sockets) {
     // If `http_executor_domain_sockets` is true, then the location should have
@@ -627,6 +628,7 @@ Try<process::Owned<Slave>> Slave::create(
 
     executorSocket = socket.get();
   }
+#endif // __WINDOWS__
 
   // If the task status update manager is not provided, create a default one.
   if (taskStatusUpdateManager.isNone()) {
@@ -664,7 +666,9 @@ Try<process::Owned<Slave>> Slave::create(
         secretGenerator.getOrElse(slave->secretGenerator.get()),
         volumeGidManager,
         futureTracker.getOrElse(slave->futureTracker.get()),
+#ifndef __WINDOWS__
         executorSocket,
+#endif // __WINDOWS__
         authorizer));
   }
 
