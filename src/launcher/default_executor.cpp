@@ -1730,7 +1730,7 @@ int main(int argc, char** argv)
   UPID upid(value.get());
   CHECK(upid) << "Failed to parse MESOS_SLAVE_PID '" << value.get() << "'";
 
-#ifdef __WINDOWS__
+#ifndef __WINDOWS__
   value = os::getenv("MESOS_DOMAIN_SOCKET");
   if (value.isSome()) {
     // The previous value of `scheme` can be ignored here, since we do not
