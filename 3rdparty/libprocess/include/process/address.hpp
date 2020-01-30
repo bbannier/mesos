@@ -201,6 +201,7 @@ public:
 } // namespace inet6 {
 
 
+#ifndef __WINDOWS__
 namespace unix {
 
 class Address
@@ -313,6 +314,7 @@ inline std::ostream& operator<<(
 }
 
 } // namespace unix {
+#endif // __WINDOWS__
 
 
 // Represents a network "address", subsuming the `struct addrinfo` and
@@ -321,13 +323,17 @@ inline std::ostream& operator<<(
 // TODO(jieyu): Move this class to stout.
 class Address :
   public Variant<
+#ifndef __WINDOWS__
   unix::Address,
+#endif // __WINDOWS__
   inet4::Address,
   inet6::Address>
 {
 public:
   enum class Family {
+#ifndef __WINDOWS__
     UNIX,
+#endif // __WINDOWS__
     INET4,
     INET6
   };
@@ -340,6 +346,7 @@ public:
       Option<socklen_t> length = None())
   {
     switch (storage.ss_family) {
+#ifndef __WINDOWS__
       case AF_UNIX:
         // We need to know the length in addition to the address, to
         // distinguish between e.g. an unnamed socket and an abstract
@@ -348,6 +355,7 @@ public:
           return Error("Need length to create unix address from sockaddr.");
         }
         return unix::Address((const sockaddr_un&) storage, *length);
+#endif // __WINDOWS__
       case AF_INET:
         return inet4::Address((const sockaddr_in&) storage);
       case AF_INET6:
@@ -366,30 +374,38 @@ public:
         return address.get();
       }(Address::create((sockaddr_storage) address))) {}
 
+#ifndef __WINDOWS__
   Address(unix::Address address)
     : Variant<
     unix::Address,
     inet4::Address,
     inet6::Address>(std::move(address)) {}
+#endif // __WINDOWS__
 
   Address(inet4::Address address)
     : Variant<
+#ifndef __WINDOWS__
     unix::Address,
+#endif // __WINDOWS__
     inet4::Address,
     inet6::Address>(std::move(address)) {}
 
   Address(inet6::Address address)
     : Variant<
+#ifndef __WINDOWS__
     unix::Address,
+#endif // __WINDOWS__
     inet4::Address,
     inet6::Address>(std::move(address)) {}
 
   Family family() const
   {
     return visit(
+#ifndef __WINDOWS__
         [](const unix::Address& address) {
           return Address::Family::UNIX;
         },
+#endif // __WINDOWS__
         [](const inet4::Address& address) {
           return Address::Family::INET4;
         },
@@ -402,9 +418,11 @@ public:
   size_t size() const
   {
     return visit(
+#ifndef __WINDOWS__
         [](const unix::Address& address) {
           return address.size();
         },
+#endif // __WINDOWS__
         [](const inet4::Address& address) {
           return sizeof(sockaddr_in);
         },
@@ -417,9 +435,11 @@ public:
   operator sockaddr_storage() const
   {
     return visit(
+#ifndef __WINDOWS__
         [](const unix::Address& address) {
           return (sockaddr_storage) address;
         },
+#endif // __WINDOWS__
         [](const inet4::Address& address) {
           return (sockaddr_storage) address;
         },
@@ -459,6 +479,7 @@ Try<AddressType> convert(Try<Address>&& address);
 // }
 
 
+#ifndef __WINDOWS__
 template <>
 inline Try<unix::Address> convert(Try<Address>&& address)
 {
@@ -477,6 +498,7 @@ inline Try<unix::Address> convert(Try<Address>&& address)
         return Error("Unexpected address family");
       });
 }
+#endif // __WINDOWS__
 
 
 template <>
@@ -487,9 +509,11 @@ inline Try<inet4::Address> convert(Try<Address>&& address)
   }
 
   return address->visit(
+#ifndef __WINDOWS__
       [](const unix::Address&) -> Try<inet4::Address> {
         return Error("Unexpected address family");
       },
+#endif // __WINDOWS__
       [](const inet4::Address& address) -> Try<inet4::Address> {
         return address;
       },
@@ -507,9 +531,11 @@ inline Try<inet6::Address> convert(Try<Address>&& address)
   }
 
   return address->visit(
+#ifndef __WINDOWS__
       [](const unix::Address&) -> Try<inet6::Address> {
         return Error("Unexpected address family");
       },
+#endif // __WINDOWS__
       [](const inet4::Address&) -> Try<inet6::Address> {
         return Error("Unexpected address family");
       },
@@ -529,9 +555,11 @@ inline Try<inet::Address> convert(Try<Address>&& address)
   }
 
   return address->visit(
+#ifndef __WINDOWS__
       [](const unix::Address& address) -> Try<inet::Address> {
         return Error("Unexpected address family");
       },
+#endif // __WINDOWS__
       [](const inet4::Address& address) -> Try<inet::Address> {
         return address;
       },
