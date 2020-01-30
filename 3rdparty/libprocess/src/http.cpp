@@ -1620,7 +1620,6 @@ Future<Connection> connect(const URL& url)
 #endif
   }
 
-#ifndef __WINDOWS__
   if (scheme == "http+unix") {
     if (!url.domain.isSome()) {
       return Failure("'http+unix' scheme requires domain (filesystem path)");
@@ -1638,7 +1637,6 @@ Future<Connection> connect(const URL& url)
 
     return connect(*address, Scheme::HTTP, url.domain);
   }
-#endif // __WINDOWS__
 
   return Failure("Unsupported URL scheme");
 }

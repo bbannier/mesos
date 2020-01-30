@@ -469,14 +469,9 @@ namespace inet {
 using Socket = network::internal::Socket<inet::Address>;
 } // namespace inet {
 
-#ifndef __WINDOWS__
 namespace unix {
 using Socket = network::internal::Socket<unix::Address>;
 } // namespace unix {
-#else
-// We introduce a dummy type to minimize ifdefs in the code.
-struct Socket {};
-#endif // __WINDOWS__
 
 
 namespace internal {
@@ -520,7 +515,6 @@ Try<Socket<inet::Address>> Socket<inet::Address>::create(
     SocketImpl::Kind kind) = delete;
 
 
-#ifndef __WINDOWS__
 template <>
 inline Try<Socket<unix::Address>> Socket<unix::Address>::create(
     SocketImpl::Kind kind)
@@ -538,7 +532,6 @@ template <>
 Try<Socket<unix::Address>> Socket<unix::Address>::create(
     Address::Family family,
     SocketImpl::Kind kind) = delete;
-#endif // __WINDOWS__
 
 } // namespace internal {
 } // namespace network {
