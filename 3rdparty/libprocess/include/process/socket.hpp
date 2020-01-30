@@ -473,6 +473,9 @@ using Socket = network::internal::Socket<inet::Address>;
 namespace unix {
 using Socket = network::internal::Socket<unix::Address>;
 } // namespace unix {
+#else
+// We introduce a dummy type to minimize ifdefs in the code.
+struct Socket {};
 #endif // __WINDOWS__
 
 
