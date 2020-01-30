@@ -122,7 +122,9 @@ using mesos::master::detector::ZooKeeperMasterDetector;
 
 using mesos::slave::ContainerTermination;
 
+#ifndef __WINDOWS__
 using process::network::unix::Socket;
+#endif // __WINDOWS__
 
 namespace mesos {
 namespace internal {
