@@ -62,7 +62,9 @@
 
 #include "common/authorization.hpp"
 #include "common/build.hpp"
+#ifndef __WINDOWS__
 #include "common/domain_sockets.hpp"
+#endif // __WINDOWS__
 #include "common/http.hpp"
 
 #include "hook/manager.hpp"
@@ -352,6 +354,7 @@ int main(int argc, char** argv)
     os::setenv("LIBPROCESS_ADVERTISE_PORT", flags.advertise_port.get());
   }
 
+#ifndef __WINDOWS__
   if (flags.http_executor_domain_sockets) {
     if (flags.domain_socket_location.isNone()) {
       flags.domain_socket_location =
@@ -365,6 +368,7 @@ int main(int argc, char** argv)
         << " must have less than 108 characters.";
     }
   }
+#endif // __WINDOWS__
 
   os::setenv("LIBPROCESS_MEMORY_PROFILING", stringify(flags.memory_profiling));
 
@@ -631,6 +635,7 @@ int main(int argc, char** argv)
 
   // Create executor domain socket if the user so desires.
   Option<Socket> executorSocket = None();
+#ifndef __WINDOWS__
   if (flags.http_executor_domain_sockets) {
     // If `http_executor_domain_sockets` is true, then the location should have
     // been set by the user or automatically during startup.
@@ -696,6 +701,7 @@ int main(int argc, char** argv)
 
     LOG(INFO) << "Using domain socket at " << *flags.domain_socket_location;
   }
+#endif // __WINDOWS__
 
   Slave* slave = new Slave(
       id,
@@ -710,7 +716,9 @@ int main(int argc, char** argv)
       secretGenerator,
       volumeGidManager,
       futureTracker.get(),
+#ifndef __WINDOWS__
       executorSocket,
+#endif // __WINDOWS__
       authorizer_);
 
   process::spawn(slave);
