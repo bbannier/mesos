@@ -114,7 +114,9 @@ using process::Owned;
 using process::firewall::DisabledEndpointsFirewallRule;
 using process::firewall::FirewallRule;
 
+#ifndef __WINDOWS__
 using process::network::unix::Socket;
+#endif // __WINDOWS__
 
 using std::cerr;
 using std::cout;
