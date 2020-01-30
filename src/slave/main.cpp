@@ -635,9 +635,9 @@ int main(int argc, char** argv)
   }
 #endif // USE_SSL_SOCKET
 
+#ifndef __WINDOWS__
   // Create executor domain socket if the user so desires.
   Option<Socket> executorSocket = None();
-#ifndef __WINDOWS__
   if (flags.http_executor_domain_sockets) {
     // If `http_executor_domain_sockets` is true, then the location should have
     // been set by the user or automatically during startup.
