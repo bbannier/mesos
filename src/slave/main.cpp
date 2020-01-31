@@ -62,9 +62,11 @@
 
 #include "common/authorization.hpp"
 #include "common/build.hpp"
+
 #ifndef __WINDOWS__
 #include "common/domain_sockets.hpp"
 #endif // __WINDOWS__
+
 #include "common/http.hpp"
 
 #include "hook/manager.hpp"

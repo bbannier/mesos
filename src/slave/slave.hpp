@@ -879,6 +879,7 @@ private:
 #ifndef __WINDOWS__
   Option<process::network::unix::Socket> executorSocket;
 #endif // __WINDOWS__
+
   Option<process::http::Server> executorSocketServer;
 
   const Option<Authorizer*> authorizer;

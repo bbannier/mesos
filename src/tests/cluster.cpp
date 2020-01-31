@@ -71,9 +71,11 @@
 #include "authorizer/local/authorizer.hpp"
 
 #include "common/authorization.hpp"
+
 #ifndef __WINDOWS__
 #include "common/domain_sockets.hpp"
 #endif // __WINDOWS__
+
 #include "common/future_tracker.hpp"
 #include "common/http.hpp"
 
